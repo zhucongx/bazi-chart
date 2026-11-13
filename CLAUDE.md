@@ -7,7 +7,7 @@
 项目分成两部分：
 
 - **公开的通用部分**：git 管理的全部内容，发布在 GitHub 上。仓库根目录的 `index.html` 就是网页，由 GitHub Pages 直接托管。页面自带几位历史人物作示例；使用者自己添加的人只保存在他们的浏览器里。
-- **个人数据**：`private/`，写在 `.gitignore` 里，永远不入库。个人部分的说明在 `private/CLAUDE.md`，这个文件存在时先读它。
+- **个人数据**：`private/`，写在 `.gitignore` 里，永远不入库。个人部分的说明在 `private/CLAUDE.md`，这个文件存在时先读它。`private/` 里要保留的只有 `people/` 下的 JSON 和这份说明；`private/build/` 是生成的，随时可以整个删掉。
 
 ## 命令
 
@@ -20,7 +20,7 @@ python3 tools/build.py                         # 构建公开的页面：src/ + 
 node tests/check_page.js                       # 检查示例页面，约半分钟；加 --quick 只要几秒
 .venv/bin/python tools/shot.py                 # 截图到 shots/
 
-# 个人页面：同样的四条命令，各加 --private，读写的都是 private/ 里的对应文件，页面是 private/index.html
+# 个人页面：同样的四条命令，各加 --private。读的是 private/people/，生成的东西都在 private/build/ 里，页面是 private/build/index.html
 .venv/bin/python tools/gen_data.py --private
 python3 tools/build.py --private
 node tests/check_page.js --private
@@ -38,16 +38,16 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 1. 真实的出生信息、四柱、个人页面、手写解读、artifact 链接，只能出现在 `private/` 里。不要把它们写进其他任何文件，也不要写进提交信息、示例、测试数据。四柱连在一起就能反推出出生日期和时辰，所以四柱本身也算个人数据。
 2. 提交之前运行 `python3 tools/check_private.py`，有命中就不提交。
 3. 公开部分的示例只用已经去世的历史人物。出生日期和时辰必须有查得到的出处，出处写在人物文件的 `source` 里，由公历换算出来的农历日期用 `expectLunar` 核对。不放在世的人，也不放用户身边的人。测试和随机检查用虚构的出生时间。
-4. 截图里有个人页面时，只存到 `private/shots/`。
+4. 截图里有个人页面时，只存到 `private/build/shots/`。
 
 ## 工作方式
 
-- 页面的源文件在 `src/`：`page.tpl.html`（结构和样式）、`engine.js`（干支计算）、`chart.js`（页面内排盘）、`classics.js`（典籍引文）、`text.js`（解释文字）、`ui.js`（渲染、事件、人物管理）。`index.html` 和 `private/index.html` 是构建产物，不要手改。
+- 页面的源文件在 `src/`：`page.tpl.html`（结构和样式）、`engine.js`（干支计算）、`chart.js`（页面内排盘）、`classics.js`（典籍引文）、`text.js`（解释文字）、`ui.js`（渲染、事件、人物管理）。`index.html` 和 `private/build/index.html` 是构建产物，不要手改。
 - 公开的页面发布在 <https://zhucongx.github.io/bazi-chart/>，由 GitHub Pages 从 `main` 分支的根目录托管，推送之后一两分钟生效。改了 `src/` 之后要重新构建并把 `index.html` 一起提交，否则线上还是旧的页面。
 - 每次改动之后：两份页面都构建、都跑检查，运行 `tools/fuzz.py` 和 `tools/check_private.py`，截图看一眼桌面、手机、深色三种情况，然后才说完成。检查没过就不算完成。
 - 改了 `src/classics.js` 里的引文，运行 `node tools/check_quotes.js`，通过之后把 `data/quotes_check.json` 一起提交。不要为了核对去安装新的依赖；要装之前先问用户。
-- 改了取法，同步更新 `docs/取法约定.md`。改了某个人的事实，同步更新对应的 `tests/facts.json`（个人的在 `private/tests/facts.json`）。
-- 用户要看效果时，把个人页面 `private/index.html` 发布成 artifact，链接记在 `private/CLAUDE.md` 里，之后的改动发布到同一个链接。公开的页面通过 GitHub Pages 发布，不发布成 artifact，除非用户要求。
+- 改了取法，同步更新 `docs/取法约定.md`。改了某个人的事实，同步更新这个人的 `people/<id>.facts.json`（个人的在 `private/people/`）。
+- 用户要看效果时，把个人页面 `private/build/index.html` 发布成 artifact，链接记在 `private/CLAUDE.md` 里，之后的改动发布到同一个链接。公开的页面通过 GitHub Pages 发布，不发布成 artifact，除非用户要求。
 - 页面必须是单个自包含文件。外部资源只允许 Google Fonts 的字体，其他样式、脚本、数据、图片全部内联。
 - 做 `docs/进度与待办.md` 里的待办之前先问用户要哪一项，不要自己挑着做。
 - 提交和推送都等用户开口。
@@ -89,4 +89,5 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 
 - 采用的取法和流派分歧：`docs/取法约定.md`
 - 待办：`docs/进度与待办.md`
-- 出生信息文件和手写解读的格式：`README.md`
+- 出生信息、手写解读、核对过的事实这三种文件的格式：`docs/数据格式.md`
+- `README.md` 只写给使用页面的人看：这是什么、怎么用。目录、构建、核对这类内容不往里写。

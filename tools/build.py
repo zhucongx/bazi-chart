@@ -2,7 +2,7 @@
 """把模板、脚本和数据合成一个自包含的页面。只用标准库。
 
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
-  python3 tools/build.py --private   private/data/people.json → private/index.html
+  python3 tools/build.py --private   private/build/data/people.json → private/build/index.html
 
 模板 src/page.tpl.html 里有八个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
@@ -87,7 +87,7 @@ def main():
     if unknown:
         raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
     private = '--private' in sys.argv
-    base = ROOT / 'private' if private else ROOT
+    base = ROOT / 'private' / 'build' if private else ROOT          # 个人的生成物都放在 private/build/ 里
     rel = lambda p: str(p.relative_to(ROOT))
 
     data_file = base / 'data' / 'people.json'
