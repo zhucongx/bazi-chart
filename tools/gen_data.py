@@ -11,8 +11,12 @@ people.json 是页面的数据。expected.json 是用 lunar_python 自己的方�
 出生信息文件，每人一个：
   { "id": "example-a", "name": "示例甲", "gender": "男", "birth": "2000-01-01 12:00",
     "place": "北京市", "lon": 116.4, "order": 1 }
+  只记到时辰的（比如史料里的古人），birth 只写日期，另外写 "shichen": "巳"，不用写 lon：
+  { "id": "…", "name": "…", "gender": "男", "birth": "1654-05-04", "shichen": "巳", "place": "…", "order": 1 }
+  这时取这个时辰的中点，直接当作真太阳时来排，不做经度和均时差的换算；子时取零点。
   可选字段：
     "dst": true                           出生时间是夏令时，先减一小时
+    "expectLunar": "甲午年三月十八"        由公历换算出来的农历必须等于它，否则报错退出（史料多记农历，用它防止换算错）
     "source": "出生证"                    出生时间的来源
     "expect": ["年柱","月柱","日柱","时柱"]  排出来的四柱必须等于它，否则报错退出
     "expectYunStart": "YYYY-MM-DD"        起运日期必须等于它，否则报错退出
@@ -102,8 +106,8 @@ CHANG_SHENG = ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '
 CHANG_SHENG_AT = dict(zip('甲丙戊庚壬乙丁己辛癸', '亥寅寅巳申午酉酉子卯'))  # 每个天干的长生落在哪个地支
 J2000 = datetime.datetime(2000, 1, 1, 12)
 
-REQUIRED = ['id', 'name', 'gender', 'birth', 'place', 'lon', 'order']
-OPTIONAL = ['dst', 'source', 'expect', 'expectYunStart', 'expectTst']
+REQUIRED = ['id', 'name', 'gender', 'birth', 'place', 'order']       # 另外，没写 shichen 的必须有 lon
+OPTIONAL = ['lon', 'shichen', 'dst', 'source', 'expect', 'expectYunStart', 'expectTst', 'expectLunar']
 
 
 # ---- 真太阳时 ------------------------------------------------------------------
@@ -229,7 +233,12 @@ def load_people(src_dir):
             print(f'提醒：{name} 里有不认识的字段 {extra}，已忽略。')
         if src['gender'] not in ('男', '女'):
             raise SystemExit(f'{name} 的 gender 应当是 "男" 或 "女"，现在是 {src["gender"]!r}')
-        if isinstance(src['lon'], bool) or not isinstance(src['lon'], (int, float)) or not -180 <= src['lon'] <= 180:
+        if 'shichen' in src:
+            if src['shichen'] not in Z:
+                raise SystemExit(f'{name} 的 shichen 应当是十二地支之一，现在是 {src["shichen"]!r}')
+        elif 'lon' not in src:
+            raise SystemExit(f'{name} 缺少字段：lon（只记到时辰的写 shichen，可以不写 lon）')
+        elif isinstance(src['lon'], bool) or not isinstance(src['lon'], (int, float)) or not -180 <= src['lon'] <= 180:
             raise SystemExit(f'{name} 的 lon 应当是经度的度数（东经为正），现在是 {src["lon"]!r}')
         if isinstance(src['order'], bool) or not isinstance(src['order'], (int, float)):
             raise SystemExit(f'{name} 的 order 应当是数字，现在是 {src["order"]!r}')
@@ -251,13 +260,23 @@ def load_people(src_dir):
 
 def chart(name, src, notes, nayin_el):
     """排一个人。返回 (people.json 里的这个人, expected.json 里的这个人)。"""
-    birth = parse_time(src['birth'], f'{name} 的 birth')
-    if 1986 <= birth.year <= 1991 and 4 <= birth.month <= 9 and 'dst' not in src:
-        print(f'提醒：{name} 的出生日期在 1986 到 1991 年的 4 到 9 月，那几年中国实行过夏令时。'
-              '请确认记录的时间是不是夏令时，然后写上 "dst": true 或 "dst": false。')
-    clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
     gender = 1 if src['gender'] == '男' else 0          # lunar_python 的约定：1 男，0 女
-    dlon, eot, tst = true_solar_time(clock, src['lon'])
+    shichen = src.get('shichen')
+    if shichen:
+        # 只记到时辰：取这个时辰的中点，直接当作真太阳时，不做经度和均时差的换算。子时取零点。
+        try:
+            day = datetime.datetime.strptime(src['birth'], '%Y-%m-%d')
+        except (ValueError, TypeError):
+            raise SystemExit(f'{name} 写了 shichen，birth 的格式应当是 "YYYY-MM-DD"，现在是 {src["birth"]!r}')
+        clock = tst = day + datetime.timedelta(hours=2 * Z.index(shichen))
+        dlon = eot = 0
+    else:
+        birth = parse_time(src['birth'], f'{name} 的 birth')
+        if 1986 <= birth.year <= 1991 and 4 <= birth.month <= 9 and 'dst' not in src:
+            print(f'提醒：{name} 的出生日期在 1986 到 1991 年的 4 到 9 月，那几年中国实行过夏令时。'
+                  '请确认记录的时间是不是夏令时，然后写上 "dst": true 或 "dst": false。')
+        clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
+        dlon, eot, tst = true_solar_time(clock, src['lon'])
 
     # 四柱：按真太阳时。另按钟表时间排一遍。
     lunar = solar_of(tst).getLunar()
@@ -286,8 +305,11 @@ def chart(name, src, notes, nayin_el):
 
     # 摘要
     print(f'【{src["id"]}】{src["name"]}，{src["gender"]}')
-    print(f'  钟表时间 {clock}（北京时间' + ('，已减去夏令时的 1 小时' if src.get('dst') else '') + f'），{src["place"]}，经度 {src["lon"]}')
-    print(f'  经度修正 {dlon} 秒，均时差 {eot} 秒，真太阳时 {tst}')
+    if shichen:
+        print(f'  只记到时辰：{clock:%Y-%m-%d} {shichen}时，取中点 {clock:%H:%M}，{src["place"]}')
+    else:
+        print(f'  钟表时间 {clock}（北京时间' + ('，已减去夏令时的 1 小时' if src.get('dst') else '') + f'），{src["place"]}，经度 {src["lon"]}')
+        print(f'  经度修正 {dlon} 秒，均时差 {eot} 秒，真太阳时 {tst}')
     print(f'  农历 {lunar.getYearInGanZhi()}年 {lunar.getMonthInChinese()}月 {lunar.getDayInChinese()}，星座 {solar_of(tst).getXingZuo()}')
     print(f'  四柱 {" ".join(pillars)}' + ('' if pillars == pillars_clock else f'；按钟表时间排是 {" ".join(pillars_clock)}'))
     print(f'  上一个节 {prev_jie.getName()} {prev_at}，在 {span(prev_min)}之前；下一个节 {next_jie.getName()} {next_at}，在 {span(next_min)}之后')
@@ -311,14 +333,22 @@ def chart(name, src, notes, nayin_el):
         raise SystemExit(f'{name}：起运日期是 {start.toYmd()}，和 expectYunStart 写的 {src["expectYunStart"]} 不一致。')
     if 'expectTst' in src and tst != parse_time(src['expectTst'], f'{name} 的 expectTst'):
         raise SystemExit(f'{name}：真太阳时是 {tst}，和 expectTst 写的 {src["expectTst"]} 不一致。')
+    lunar_text = f'{lunar.getYearInGanZhi()}年{lunar.getMonthInChinese()}月{lunar.getDayInChinese()}'
+    if 'expectLunar' in src and lunar_text != src['expectLunar']:
+        raise SystemExit(f'{name}：换算出来的农历是 {lunar_text}，和 expectLunar 写的 {src["expectLunar"]} 不一致。')
 
     person = {'id': src['id'], 'name': src['name'], 'gender': gender, 'clock': six(clock)}
-    if src.get('dst'):
+    if shichen:
+        person['shichen'] = shichen
+    if src.get('dst') and not shichen:
         person['dst'] = True
     if 'source' in src:
         person['source'] = src['source']
+    person['place'] = src['place']
+    if not shichen:
+        person['lon'] = src['lon']
     person.update({
-        'place': src['place'], 'lon': src['lon'], 'dlonSec': dlon, 'eotSec': eot, 'tst': six(tst),
+        'dlonSec': dlon, 'eotSec': eot, 'tst': six(tst),
         'lunar': {'year': lunar.getYearInGanZhi(), 'month': lunar.getMonthInChinese(), 'day': lunar.getDayInChinese(),
                   'leap': lunar.getMonth() < 0},
         'xingzuo': solar_of(tst).getXingZuo(),

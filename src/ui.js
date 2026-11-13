@@ -8,7 +8,7 @@ const REAL_Y=(()=>{const y=now.getFullYear(), lc=jieMD(y)?md(y,jieMD(y)[0]):new 
 /* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
 let NOW_DY=-1, NOW_M=-1;
 /* 选中的人、大运、流年、流月、流日，以及打开的解释 */
-const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null};
+const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0};     // x 是打开的解释，xn 是点的第几个同名的字
 
 /* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
 const PEOPLE=DATA.people.slice();
@@ -55,32 +55,48 @@ function usePerson(i){
   const inRange=REAL_Y>=Y_MIN&&REAL_Y<=Y_MAX;
   NOW_DY=inRange?P.dayun.findIndex(d=>REAL_Y>=d.y0&&REAL_Y<=d.y1):-1;
   NOW_M=inRange?currentMonth(REAL_Y):-1;
-  sel.dy=inRange?NOW_DY:(REAL_Y<Y_MIN?0:P.dayun.length-1);
-  sel.y=inRange?REAL_Y:(REAL_Y<Y_MIN?Y_MIN:Y_MAX);
+  sel.dy=inRange?NOW_DY:0;          // 今天不在这个人的大运范围里（古人，或者还没起运），就从第一步大运看起
+  sel.y=inRange?REAL_Y:Y_MIN;
   sel.m=NOW_M<0?0:NOW_M; sel.d=TODAY; sel.x=null;
-  $('sheet').hidden=true;document.body.classList.remove('has-sheet');
+  $('sheet').hidden=true;
   try{localStorage.setItem('bz-person',P.id);}catch(e){}
   renderPerson();
 }
 
-/* ---------- 解释面板 ---------- */
+/* ---------- 解释卡片：贴在所点的字旁边 ---------- */
 function markOn(){document.querySelectorAll('[data-x]').forEach(n=>n.classList.toggle('on',n.dataset.x===sel.x));}
-function closeSheet(){sel.x=null;$('sheet').hidden=true;document.body.classList.remove('has-sheet');markOn();}
+function closeSheet(){sel.x=null;$('sheet').hidden=true;markOn();}
+/* 同一个解释可能挂在两个字上（主星和天干指的是同一个字），所以记下点的是第几个 */
+function anchorOf(key,n){const all=[...document.querySelectorAll('[data-x]')].filter(x=>x.dataset.x===key);return all[n]||all[0]||null;}
+/* 把卡片摆到 el 的下面；下面放不下而上面更宽裕时摆到上面。左右不出屏幕，小三角对准 el。 */
+function placeSheet(el){
+  const s=$('sheet'), inn=s.firstElementChild;
+  if(!el||!el.getBoundingClientRect) return;
+  const r=el.getBoundingClientRect(), vw=document.documentElement.clientWidth, vh=window.innerHeight;
+  const below=vh-r.bottom, above=r.top, up=below<300&&above>below;
+  inn.style.maxHeight=Math.max(170,Math.min(460,(up?above:below)-24))+'px';
+  s.classList.toggle('up',up);
+  const w=s.offsetWidth, h=s.offsetHeight, mid=r.left+r.width/2;
+  const left=Math.max(12,Math.min(mid-w/2,vw-w-12));
+  s.style.left=(left+window.scrollX)+'px';
+  s.style.top=((up?r.top-h-10:r.bottom+10)+window.scrollY)+'px';
+  s.style.setProperty('--ax',Math.max(20,Math.min(mid-left,w-20))+'px');
+  const over=up?-(r.top-h-18):r.bottom+h+18-vh;            // 屏幕太矮、两头都放不下时，滚动一点让卡片露全
+  if(over>0) window.scrollBy({top:up?-over:over,behavior:window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+}
 function openSheet(key,el){
   const r=X(key); if(!r){closeSheet();return;}
   sel.x=key;
+  if(el) sel.xn=Math.max(0,[...document.querySelectorAll('[data-x]')].filter(x=>x.dataset.x===key).indexOf(el));
   $('sheet-t').textContent=r.t;
-  $('sheet-b').innerHTML=r.p.filter(Boolean).map(([l,t])=>`<p><span class="lb">${l}</span>${t}</p>`).join('');
-  $('sheet').hidden=false;document.body.classList.add('has-sheet');markOn();
-  if(el&&el.getBoundingClientRect){
-    const over=el.getBoundingClientRect().bottom-(window.innerHeight-$('sheet').offsetHeight-28);
-    if(over>0) window.scrollBy({top:over,behavior:window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
-  }
+  $('sheet-b').innerHTML=r.p.filter(Boolean).map(([l,t])=>`<p><span class="lb">${l}</span><span class="tx">${t}</span></p>`).join('');
+  $('sheet').hidden=false;markOn();
+  $('sheet').firstElementChild.scrollTop=0;
+  placeSheet(el||anchorOf(key,sel.xn));
 }
 function refreshSheet(){
   if(!sel.x) return;
-  const el=[...document.querySelectorAll('[data-x]')].find(n=>n.dataset.x===sel.x);
-  if(el) openSheet(sel.x,null); else closeSheet();
+  if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
 }
 function setRead(on){
   document.documentElement.dataset.read=on?'on':'off';
@@ -90,6 +106,12 @@ function setRead(on){
 
 /* ---------- 渲染 ---------- */
 const xb=(cls,key,html)=>`<button type="button" class="${cls}" data-x="${esc(key)}">${html}</button>`;
+const ic=i=>`<svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${ELC[i]}"/></svg>`;      // 五行的小图标
+/* 细盘里的干支大字。kind 是 'g'（天干）或 'z'（地支）；地支带上生肖，由样式显示在右下角 */
+function glyph(kind,c){
+  const ch=kind==='g'?c.g:c.z, e=kind==='g'?gEl(ch):zEl(ch);
+  return `<button type="button" class="glyph ${ELC[e]}" data-x="${esc(kind+'|'+c.k+'|'+ch)}"${kind==='z'?` data-z="${ANIMALS[Z.indexOf(ch)]}"`:''}>${ch}${ic(e)}</button>`;
+}
 function gzSpan(gz){return `<span class="${gCls(gz[0])}">${gz[0]}</span><span class="${zCls(gz[1])}">${gz[1]}</span>`;}
 function relChips(list){
   if(!list.length) return '<span class="none">没有</span>';
@@ -111,7 +133,6 @@ function renderPerson(){
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
   const kv=kvRows();
-  $('h-tk').textContent=kv.some(r=>r.k==='调候参考')?'日主与调候':'日主';
   $('kv').innerHTML=kv.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('');
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
@@ -122,8 +143,8 @@ function renderPan(){
   const row=(label,fn)=>`<tr><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
     row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
-    row('天干',c=>xb('glyph '+gCls(c.g),`g|${c.k}|${c.g}`,c.g))+
-    row('地支',c=>xb('glyph '+zCls(c.z),`z|${c.k}|${c.z}`,c.z))+
+    row('天干',c=>glyph('g',c))+
+    row('地支',c=>glyph('z',c))+
     row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''))+
     row('星运',c=>xb('x sm','st|'+c.k,stage(DM,c.z)))+
     row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
@@ -190,14 +211,14 @@ function renderRelations(){
 }
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
-  $('bars').innerHTML=cnt.map((n,i)=>`${xb('x el '+ELC[i],'wx|'+i,EL[i])}<span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个（${face[i]}）</span><span class="st">${wxState(i)}</span>`).join('');
+  $('bars').innerHTML=cnt.map((n,i)=>`${xb('x el '+ELC[i],'wx|'+i,ic(i)+EL[i])}<span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个（${face[i]}）</span><span class="st">${wxState(i)}</span>`).join('');
 }
 const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
 function renderGods(){
   const present=new Set(natalStems().concat(natalHidden())), de=gEl(DM), yin=isYin(DM)?1:0;
   const cell=g=>`<td class="${present.has(g)?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）</td>`;
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
-    return `<tr><td>${r[1]}</td><td class="${ELC[e]}">${EL[e]}</td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
+    return `<tr><td>${r[1]}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
 }
 function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();}
 
@@ -209,13 +230,14 @@ function formMsg(s){F('msg').textContent=s||'';F('msg').hidden=!s;}
 const NO_STORE='这个环境不能保存数据，关掉页面以后刚才添加的人会消失。可以先点「导出」把他们存成文件。';
 function openForm(info){
   editing=info?info.id:null;
-  const b=info&&parseBirth(info.birth), p2=n=>String(n).padStart(2,'0');
+  const b=info&&(info.shichen?parseDay(info.birth):parseBirth(info.birth)), p2=n=>String(n).padStart(2,'0');
   F('name').value=info?info.name:'';
   F('gender').value=info?info.gender:'男';
   F('date').value=b?`${b[0]}-${p2(b[1])}-${p2(b[2])}`:'';
-  F('time').value=b?`${p2(b[3])}:${p2(b[4])}`:'';
+  F('time').value=b&&b.length>3?`${p2(b[3])}:${p2(b[4])}`:'';
+  F('shichen').value=info&&info.shichen||'';
   F('place').value=info&&info.place||'';
-  F('lon').value=info?info.lon:120;
+  F('lon').value=info&&typeof info.lon==='number'?info.lon:120;
   F('dst').checked=!!(info&&info.dst);
   F('del').hidden=!info;F('del').textContent='删除这一位';F('del').dataset.sure='';
   formMsg('');say('');
@@ -228,6 +250,8 @@ function saveForm(){
   const info=Object.assign({},old,{id:old?old.id:newId(),name:F('name').value.trim().slice(0,20)||'未命名',gender:F('gender').value,
     birth:`${F('date').value} ${F('time').value}`,place:F('place').value.trim().slice(0,30),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
   if(F('dst').checked) info.dst=true; else delete info.dst;
+  if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;}   // 只知道时辰：时间和经度都不用
+  else delete info.shichen;
   const bad=checkInfo(info);
   if(bad){formMsg(bad);return;}
   if(old) LOCAL[LOCAL.indexOf(old)]=info; else LOCAL.push(info);
@@ -264,9 +288,10 @@ function importText(text){
     if(!x||typeof x!=='object'){errs.push('有一项不是人物数据');return;}
     const src=Array.isArray(x.clock)?infoFrom(x):x;      // 排好的人，取回出生信息；本来就是出生信息的照用
     const info={id:typeof src.id==='string'&&src.id?src.id:newId(),name:String(src.name||'未命名').slice(0,20),gender:src.gender,
-      birth:src.birth,place:String(src.place||'').slice(0,30),lon:typeof src.lon==='number'?src.lon:Number(src.lon)};
-    if(src.dst===true) info.dst=true;
-    if(typeof src.source==='string'&&src.source) info.source=src.source.slice(0,20);
+      birth:src.birth,place:String(src.place||'').slice(0,30)};
+    if(src.shichen) info.shichen=src.shichen; else info.lon=typeof src.lon==='number'?src.lon:Number(src.lon);
+    if(src.dst===true&&!src.shichen) info.dst=true;
+    if(typeof src.source==='string'&&src.source) info.source=src.source.slice(0,120);
     if(src.notes&&typeof src.notes==='object') info.notes=cleanNotes(src.notes);
     const bad=checkInfo(info);
     if(bad){errs.push(`${info.name}：${bad}`);return;}
@@ -291,7 +316,8 @@ function exportLocal(){
 
 /* ---------- 事件 ---------- */
 document.addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b) return;
+  const b=e.target.closest('button');
+  if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
   if(b.id==='sheet-x'){closeSheet();return;}
   if(b.id==='pp-add'){openForm(null);return;}
@@ -324,6 +350,7 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel.x) closeSheet();});
+window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
 
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);

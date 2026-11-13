@@ -13,6 +13,7 @@
 
 专挑的边界：出生在立春、清明交接前后几分钟到一个半小时；晚上 11 点前后和零点前后；
 闰日、元旦、年末；经度很偏的地方；夏令时；1900 年初和 2100 年末，也就是页面支持的两头。
+另外有一部分人只知道时辰，还有一部分出生在 1645 到 1899 年（页面自带的历史人物就在这个范围）。
 生成的东西都在 tmp/ 里，不入库。需要 lunar_python 和 node。
 """
 import contextlib
@@ -49,6 +50,16 @@ def make_people(n, seed):
         out.append({'id': f'r{i:04d}', 'name': f'随机{i}', 'gender': gender, 'birth': birth.strftime('%Y-%m-%d %H:%M:%S'),
                     'place': '虚构的地方', 'lon': lon, 'order': i, 'dst': dst})
 
+    def add_shichen(day, shichen, gender):
+        i = len(out)
+        out.append({'id': f'r{i:04d}', 'name': f'随机{i}', 'gender': gender, 'birth': day.strftime('%Y-%m-%d'),
+                    'shichen': shichen, 'place': '虚构的地方', 'order': i})
+
+    # tests/check_page.js 里写死的两组对照，每次在这里重新和 lunar_python 对一遍
+    add(datetime.datetime(2000, 1, 1, 12, 0), 116.4, '男')
+    add(datetime.datetime(1993, 10, 10, 9, 30), 104.07, '女')
+    add_shichen(datetime.datetime(1993, 10, 10), '辰', '女')
+
     # 节气交接前后
     for y in (1960, 1984, 2000, 2024):
         t = jie_time(y, '立春')
@@ -72,7 +83,16 @@ def make_people(n, seed):
     start = datetime.datetime(1900, 1, 1)
     days = (datetime.datetime(2101, 1, 1) - start).days
     for _ in range(n):
-        add(start + datetime.timedelta(days=rnd.randrange(days), minutes=rnd.randrange(1440)), round(rnd.uniform(75, 135), 2), rnd.choice('男女'))
+        when = start + datetime.timedelta(days=rnd.randrange(days), minutes=rnd.randrange(1440))
+        if rnd.random() < 0.2:          # 五分之一只知道时辰
+            add_shichen(when, rnd.choice(gen_data.Z), rnd.choice('男女'))
+        else:
+            add(when, round(rnd.uniform(75, 135), 2), rnd.choice('男女'))
+    # 1900 年以前的人：页面内排盘不支持，但页面自带的示例里有，所以细盘和解释要照样检查
+    old = datetime.datetime(1645, 3, 1)
+    old_days = (datetime.datetime(1899, 12, 1) - old).days
+    for _ in range(max(20, n // 10)):
+        add_shichen(old + datetime.timedelta(days=rnd.randrange(old_days)), rnd.choice(gen_data.Z), rnd.choice('男女'))
     return out
 
 
@@ -111,7 +131,8 @@ def main():
     (TMP / 'index.html').write_text(page, encoding='utf-8', newline='\n')
 
     print(f'{len(people)} 个虚构的人（随机种子 {seed}），出生在 {min(p["clock"][0] for p in people)} 到 {max(p["clock"][0] for p in people)} 年。')
-    print(f'其中 {near} 个按真太阳时和按钟表时间排出的年柱或月柱不同，{other_hour} 个日柱或时柱不同。')
+    print(f'其中 {sum(1 for p in people if "shichen" in p)} 个只知道时辰，{sum(1 for p in people if p["clock"][0] < 1900)} 个出生在 1900 年以前；'
+          f'{near} 个按真太阳时和按钟表时间排出的年柱或月柱不同，{other_hour} 个日柱或时柱不同。')
     print(f'页面 tmp/index.html，{len(page.encode("utf-8"))} 字节。开始检查：')
     r = subprocess.run(['node', str(ROOT / 'tests' / 'check_page.js'), '--base', str(TMP), '--quick', '--quiet'], cwd=ROOT)
     sys.exit(r.returncode)
