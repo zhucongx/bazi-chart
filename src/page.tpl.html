@@ -139,15 +139,21 @@ table{border-collapse:collapse;width:100%}
 .glyph:hover,.glyph.on,.hs.on{border-color:currentColor}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
-.pk{position:relative;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 4px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-variant-numeric:tabular-nums}
+/* 四行选择器：每行一条横着排的带子，放不下就横向滚动 */
+.prow{display:grid;grid-template-columns:86px minmax(0,1fr);gap:4px 12px;align-items:center}
+.prow h3{display:flex;flex-direction:column;gap:1px;font-size:14px;color:var(--ink)}
+.prow h3 small{font-size:12px;font-weight:400;color:var(--ink3);font-variant-numeric:tabular-nums}
+.picker{position:relative;display:flex;gap:6px;overflow-x:auto;padding:10px 2px 8px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.pk{position:relative;flex:1 0 76px;scroll-snap-align:start;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 3px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-variant-numeric:tabular-nums}
+#liunian .pk{flex-basis:70px}
+#liuyue .pk{flex-basis:62px}
+#liuri .pk{flex:0 0 62px}
 .pk:hover{border-color:var(--ink3)}
 .pk[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
-.pk .yr{font-size:12px;color:var(--ink2)}
+.pk .yr{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
-.pk .gd{font-size:12px;color:var(--ink2)}
-.pk .ag{font-size:12px;color:var(--ink3)}
-#liuri{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+.pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.pk .ag{font-size:11.5px;color:var(--ink3)}
 #liuri .pk.now::after{content:"今天"}
 .pk.now::after{content:"当前";position:absolute;top:-8px;right:6px;font-size:10.5px;line-height:1;letter-spacing:.06em;padding:3px 4px 3px 5px;border-radius:4px;background:var(--seal);color:var(--seal-ink)}
 
@@ -203,32 +209,32 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 .sheet-b .tx{min-width:0;overflow-wrap:anywhere}
 
 @media (min-width:760px){
-  #dayun{grid-template-columns:repeat(8,1fr)}
-  #liunian{grid-template-columns:repeat(5,1fr)}
-  #liuyue{grid-template-columns:repeat(6,1fr)}
-  #liuri{grid-template-columns:repeat(10,1fr)}
   .read .cols{columns:2;column-gap:40px}
 }
 @media (max-width:560px){
   .layers>div{grid-template-columns:1fr}
+  .prow{grid-template-columns:1fr}
+  .prow h3{flex-direction:row;align-items:baseline;gap:8px}
 }
 @media (max-width:480px){
   main{gap:18px}
   section{padding:15px 11px 17px}
   .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
   .read{padding:11px 13px 13px}
+  /* 八列挤在手机上：每列不到 40 像素。干支的色块缩小，生肖不显示，四个字的神煞折成两行 */
   .pan{min-width:0;table-layout:fixed}
-  .pan th,.pan td{padding:6px 1px}
-  .pan thead th{font-size:12px}
-  .pan thead small{font-size:11px}
-  .pan tbody th{width:30px;font-size:11px}
-  .pan .sm{font-size:12px}
-  .pan .ss{font-size:11px}
-  .glyph{width:44px;height:46px;font-size:24px;border-radius:10px}
-  .glyph .ic{top:3px;right:3px;width:10px;height:10px}
-  .glyph[data-z]::after{right:3px;bottom:3px;font-size:9px}
-  .hs{font-size:12px;padding:1px 0}
-  .hs small{font-size:11px;margin-left:2px}
+  .pan th,.pan td{padding:5px 0}
+  .pan thead th{font-size:11px}
+  .pan thead small{font-size:10px;line-height:1.3}
+  .pan tbody th{width:26px;font-size:10.5px}
+  .pan .sm{font-size:11px}
+  .pan .ss{font-size:10.5px;line-height:1.6}
+  .pan .ss .w4{max-width:2.1em;white-space:normal;line-height:1.25;margin-bottom:3px}
+  .glyph{width:36px;height:38px;font-size:20px;border-radius:8px}
+  .glyph .ic{top:2px;right:2px;width:8px;height:8px}
+  .glyph[data-z]::after{display:none}
+  .hs{font-size:10.5px;padding:1px 0}
+  .hs small{font-size:10px;margin-left:1px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
 }
 @media (prefers-reduced-motion:no-preference){
@@ -289,13 +295,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <dl class="meta" id="meta"></dl>
 </header>
 
+<section aria-labelledby="h-yun">
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
+  <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
+  <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
+  <div class="prow"><h3 id="h-ly"></h3><div class="picker" id="liuyue" role="group" aria-label="流月"></div></div>
+  <div class="prow"><h3 id="h-lr"></h3><div class="picker" id="liuri" role="group" aria-label="流日"></div></div>
+  <p class="note" id="note-yun"></p>
+</section>
+
 <section aria-labelledby="h-pan">
-  <h2 id="h-pan">四柱细盘 <small>前两列是下方选中的流年和大运</small></h2>
+  <h2 id="h-pan">四柱细盘 <small>前四列是上面选中的流日、流月、流年和大运</small></h2>
   <div class="tablewrap">
     <table class="pan">
       <thead>
         <tr>
           <th></th>
+          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流日">流日</button><small id="hd-lr"></small></th>
+          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流月">流月</button><small id="hd-ly"></small></th>
           <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流年">流年</button><small id="hd-ln"></small></th>
           <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
           <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
@@ -308,19 +325,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </table>
   </div>
   <div class="read" id="rd-pan"></div>
-</section>
-
-<section aria-labelledby="h-yun">
-  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>四行都可以点选；大运和流年会更新上面的细盘，四者都会更新下面的干支关系</small></h2>
-  <h3>大运（十年一步）</h3>
-  <div class="picker" id="dayun" role="group" aria-label="大运"></div>
-  <h3 id="h-ln"></h3>
-  <div class="picker" id="liunian" role="group" aria-label="流年"></div>
-  <h3 id="h-ly"></h3>
-  <div class="picker" id="liuyue" role="group" aria-label="流月"></div>
-  <h3 id="h-lr"></h3>
-  <div class="picker" id="liuri" role="group" aria-label="流日"></div>
-  <p class="note" id="note-yun"></p>
   <div class="read" id="rd-yun"></div>
 </section>
 

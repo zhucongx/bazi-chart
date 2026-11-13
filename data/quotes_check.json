@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-14",
- "total": 206,
- "hash": 1731043282,
+ "total": 273,
+ "hash": 2709669988,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -22,33 +22,71 @@
   },
   "yhzp": {
    "book": "《渊海子平》",
-   "quotes": 27,
+   "quotes": 29,
    "pages": [
     "淵海子平（版本 2593607）"
    ]
   },
   "sftk": {
    "book": "《神峰通考》",
-   "quotes": 6,
+   "quotes": 8,
    "pages": [
     "神峰通考（版本 1378606）"
    ]
   },
   "smth": {
    "book": "《三命通会》",
-   "quotes": 16,
+   "quotes": 47,
    "pages": [
     "三命通會 (四庫全書本)/卷02（版本 761691）",
     "三命通會 (四庫全書本)/卷03（版本 657369）",
-    "三命通會 (四庫全書本)/卷05（版本 2082207）"
+    "三命通會 (四庫全書本)/卷05（版本 2082207）",
+    "三命通會 (四庫全書本)/卷06（版本 657375）"
    ]
   },
   "xjbf": {
    "book": "《协纪辨方书》",
-   "quotes": 4,
+   "quotes": 11,
    "pages": [
     "欽定協紀辨方書 (四庫全書本)/卷03（版本 787338）",
-    "欽定協紀辨方書 (四庫全書本)/卷05（版本 787341）"
+    "欽定協紀辨方書 (四庫全書本)/卷04（版本 787340）",
+    "欽定協紀辨方書 (四庫全書本)/卷05（版本 787341）",
+    "欽定協紀辨方書 (四庫全書本)/卷06（版本 787343）"
+   ]
+  },
+  "xxdc": {
+   "book": "《星学大成》",
+   "quotes": 5,
+   "pages": [
+    "星學大成 (四庫全書本)/卷01（版本 626726）"
+   ]
+  },
+  "wz": {
+   "book": "问真八字《神煞大全》",
+   "quotes": 16,
+   "pages": [
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_7.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_9.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_11.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_14.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_15.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_17.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_25.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_37.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_38.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_41.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_46.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_47.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_48.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_50.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_0_51.html"
+   ]
+  },
+  "qlmg": {
+   "book": "《千里命稿》",
+   "quotes": 4,
+   "pages": [
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_16.html"
    ]
   },
   "zpzq": {
