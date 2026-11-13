@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: one column of ruled panels; the six-column chart table is the centrepiece, pickers below drive its first two columns;
+     every panel carries a paper-coloured reading box, and any dotted word opens a note docked at the bottom of the screen */
+  --paper:#eef2ee; --card:#fbfcfa; --ink:#18211f; --ink2:#51605b; --ink3:#7f8c87; --line:#d3dad5;
+  --accent:#27518a; --accent-soft:#e2eaf5; --warn:#8a4a1c; --warn-soft:#f5e9dd;
+  --wood:#2a7a4b; --fire:#bf3a2b; --earth:#8a5a2b; --metal:#a07c14; --water:#2463ad;
+  --display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --body:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121817; --card:#1a2120; --ink:#e7ece9; --ink2:#aab5b1; --ink3:#7d8985; --line:#2d3735;
+    --accent:#86b0e6; --accent-soft:#1e2b3c; --warn:#e0a071; --warn-soft:#32251a;
+    --wood:#62c08a; --fire:#f08375; --earth:#d6a567; --metal:#e3c55f; --water:#74acf2;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121817; --card:#1a2120; --ink:#e7ece9; --ink2:#aab5b1; --ink3:#7d8985; --line:#2d3735;
+  --accent:#86b0e6; --accent-soft:#1e2b3c; --warn:#e0a071; --warn-soft:#32251a;
+  --wood:#62c08a; --fire:#f08375; --earth:#d6a567; --metal:#e3c55f; --water:#74acf2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 var(--body)}
+main{max-width:980px;margin:0 auto;padding:28px 16px 48px;display:flex;flex-direction:column;gap:20px}
+.x{font:inherit;color:inherit;background:none;border:0;border-radius:4px;padding:0;margin:0;cursor:pointer;text-align:inherit;text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+.wood{color:var(--wood)} .fire{color:var(--fire)} .earth{color:var(--earth)} .metal{color:var(--metal)} .water{color:var(--water)}
+
+.top{display:flex;flex-direction:column;gap:14px}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.eyebrow{margin:0;font-size:13px;color:var(--ink2);letter-spacing:.08em}
+.switch{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.switch .knob{position:relative;flex:none;width:28px;height:16px;border-radius:999px;background:var(--ink3)}
+.switch .knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--card)}
+.switch[aria-pressed="true"]{color:var(--ink)}
+.switch[aria-pressed="true"] .knob{background:var(--accent)}
+.switch[aria-pressed="true"] .knob::after{left:14px}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(30px,7vw,46px);line-height:1.15;display:flex;flex-wrap:wrap;gap:.1em .55em;text-wrap:balance}
+h1 span{white-space:nowrap}
+.meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:6px 28px}
+.meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:5px 0}
+.meta dt{flex:0 0 5em;font-size:13px;color:var(--ink3)}
+.meta dd{margin:0;font-variant-numeric:tabular-nums}
+.people{display:flex;flex-wrap:wrap;gap:8px}
+.people[hidden]{display:none}
+.pp{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 14px;cursor:pointer}
+.pp:hover{border-color:var(--ink3)}
+.pp[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:13px;font-weight:400;color:var(--ink3)}
+h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
+p{margin:0}
+.note{font-size:13px;color:var(--ink2)}
+
+.read{background:var(--paper);border-radius:8px;padding:12px 16px 14px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.top .read{background:var(--card);border:1px solid var(--line)}
+.rd-h{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--accent)}
+.read ol,.read ul{margin:0;padding-left:1.4em}
+.read li{margin:0 0 6px;break-inside:avoid}
+.read li:last-child{margin-bottom:0}
+.read>p:not(.rd-h){max-width:46em}
+.read b{font-weight:600}
+:root[data-read="off"] .read{display:none}
+.layers{margin:0;display:flex;flex-direction:column;gap:8px}
+.layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
+.layers dt{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;font-size:13px;color:var(--ink2)}
+.layers dt b{font-family:var(--display);font-weight:700;font-size:17px}
+.layers dt small{flex-basis:100%;font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.layers dd{margin:0}
+
+.tablewrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+table{border-collapse:collapse;width:100%}
+.pan{min-width:600px;text-align:center;font-variant-numeric:tabular-nums}
+.pan th,.pan td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pan thead th{font-size:13px;font-weight:600;vertical-align:bottom}
+.pan thead .x{font-weight:600}
+.pan thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
+.pan tbody th{width:52px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.pan .dyn{background:var(--accent-soft)}
+.pan .dyn.last{border-right:2px solid var(--line)}
+.pan .day{box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+.pan tr:last-child th,.pan tr:last-child td{border-bottom:0}
+.pan .sm{font-size:13px;color:var(--ink2)}
+.pan .ss{display:block;font-size:12px;color:var(--ink2);line-height:1.7}
+.pan .ss .x{display:block;margin:0 auto}
+.glyph{font-family:var(--display);font-weight:700;font-size:31px;line-height:1.2;background:none;border:1px solid transparent;border-radius:8px;padding:2px 9px;cursor:pointer}
+.hs{display:block;margin:0 auto;font:inherit;font-size:13px;background:none;border:1px solid transparent;border-radius:6px;padding:1px 6px;cursor:pointer;white-space:nowrap}
+.hs small{font-size:12px;color:var(--ink2);margin-left:5px}
+.glyph:hover,.hs:hover{border-color:var(--line)}
+.glyph.on,.hs.on{border-color:currentColor}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.pk{position:relative;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-variant-numeric:tabular-nums}
+.pk:hover{border-color:var(--ink3)}
+.pk[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.pk .yr{font-size:12px;color:var(--ink2)}
+.pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
+.pk .gd{font-size:12px;color:var(--ink2)}
+.pk .ag{font-size:12px;color:var(--ink3)}
+#liuri{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+#liuri .pk.now::after{content:"今天"}
+.pk.now::after{content:"当前";position:absolute;top:-8px;right:6px;font-size:11px;line-height:1;padding:3px 6px;border-radius:999px;background:var(--accent);color:var(--card)}
+
+.rels{display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
+.rel{display:inline-flex;align-items:baseline;gap:6px;padding:4px 11px;border:0;border-radius:999px;font:inherit;font-size:13px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.rel.bad{background:var(--warn-soft);color:var(--warn)}
+.rel b{font-family:var(--display);font-weight:700;font-size:15px}
+.rel small{font-size:12px}
+.rel:hover,.rel.on{box-shadow:inset 0 0 0 1.5px currentColor}
+.none{font-size:13px;color:var(--ink3)}
+.relblock{display:flex;flex-direction:column;gap:8px}
+.relgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 28px;border-top:1px solid var(--line);padding-top:14px}
+.relgrid>div{display:flex;flex-direction:column;gap:8px;align-content:start}
+.relgrid .rels{align-items:flex-start}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.bars{display:grid;grid-template-columns:auto 1fr auto auto;gap:9px 12px;align-items:center;font-variant-numeric:tabular-nums}
+.bars .el{font-family:var(--display);font-weight:700;font-size:18px}
+.bars .track{height:10px;border-radius:5px;background:var(--paper);overflow:hidden}
+.bars .fill{display:block;height:100%;border-radius:5px;background:currentColor}
+.bars .n{font-size:13px;color:var(--ink2);white-space:nowrap}
+.bars .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
+.kv dd{margin:0}
+.gods{font-size:14px;text-align:left}
+.gods th,.gods td{padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+.gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
+.gods tr:last-child td{border-bottom:0}
+.gods .have{font-weight:600}
+.x:hover{color:var(--accent);text-decoration-color:var(--accent)}
+.x.on{color:var(--accent);text-decoration:underline solid var(--accent)}
+footer{font-size:13px;color:var(--ink2)}
+footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+
+.sheet{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:20;width:min(720px,calc(100% - 24px));max-height:min(52vh,440px);overflow-y:auto;background:var(--card);color:var(--ink);border:1px solid var(--ink3);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.24);padding:12px 16px 14px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.sheet[hidden]{display:none}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sheet-h h3{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink)}
+.sheet-x{flex:none;font:inherit;font-size:13px;color:var(--ink2);background:none;border:1px solid var(--line);border-radius:999px;padding:2px 12px;cursor:pointer}
+.sheet-b{display:flex;flex-direction:column;gap:6px}
+.sheet-b .lb{font-size:13px;font-weight:600;color:var(--accent);margin-right:8px}
+body.has-sheet main{padding-bottom:min(58vh,480px)}
+
+@media (min-width:760px){
+  #dayun{grid-template-columns:repeat(8,1fr)}
+  #liunian{grid-template-columns:repeat(5,1fr)}
+  #liuyue{grid-template-columns:repeat(6,1fr)}
+  #liuri{grid-template-columns:repeat(10,1fr)}
+  .read .cols{columns:2;column-gap:40px}
+}
+@media (max-width:560px){
+  .layers>div{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  section{padding:14px 10px 16px}
+  .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
+  .read{padding:10px 12px 12px}
+  .pan{min-width:0;table-layout:fixed}
+  .pan th,.pan td{padding:6px 1px}
+  .pan thead th{font-size:12px}
+  .pan thead small{font-size:11px}
+  .pan tbody th{width:30px;font-size:11px}
+  .pan .sm{font-size:12px}
+  .pan .ss{font-size:11px}
+  .glyph{font-size:24px;padding:0 3px}
+  .hs{font-size:12px;padding:1px 0}
+  .hs small{font-size:11px;margin-left:2px}
+}
+@media (prefers-reduced-motion:no-preference){.pk,.pp,.glyph,.hs,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,left .12s}}
+</style>
+</head>
+<body>
+<main>
+
+<header class="top">
+  <div class="toprow">
+    <p class="eyebrow" id="eyebrow"></p>
+    <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
+  </div>
+  <div class="people" id="people" role="group" aria-label="选择命盘" hidden></div>
+  <h1 id="title"></h1>
+  <div class="read">
+    <p class="rd-h">解读 · 怎么看这一页</p>
+    <ul class="cols">
+      <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
+      <li>带虚线的字都可以点，盘上的干支和每一条合冲刑害也可以点。解释出现在屏幕底部，再点一次收起。</li>
+      <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
+    </ul>
+  </div>
+  <dl class="meta" id="meta"></dl>
+</header>
+
+<section aria-labelledby="h-pan">
+  <h2 id="h-pan">四柱细盘 <small>前两列是下方选中的流年和大运</small></h2>
+  <div class="tablewrap">
+    <table class="pan">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流年">流年</button><small id="hd-ln"></small></th>
+          <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
+          <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small>自己 · 配偶</small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
+        </tr>
+      </thead>
+      <tbody id="pan"></tbody>
+    </table>
+  </div>
+  <div class="read" id="rd-pan"></div>
+</section>
+
+<section aria-labelledby="h-yun">
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>四行都可以点选；大运和流年会更新上面的细盘，四者都会更新下面的干支关系</small></h2>
+  <h3>大运（十年一步）</h3>
+  <div class="picker" id="dayun" role="group" aria-label="大运"></div>
+  <h3 id="h-ln"></h3>
+  <div class="picker" id="liunian" role="group" aria-label="流年"></div>
+  <h3 id="h-ly"></h3>
+  <div class="picker" id="liuyue" role="group" aria-label="流月"></div>
+  <h3 id="h-lr"></h3>
+  <div class="picker" id="liuri" role="group" aria-label="流日"></div>
+  <p class="note" id="note-yun"></p>
+  <div class="read" id="rd-yun"></div>
+</section>
+
+<section aria-labelledby="h-rel">
+  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
+  <div class="relblock">
+    <h3>原局 · 天干</h3>
+    <div class="rels" id="rel-ng"></div>
+    <h3>原局 · 地支</h3>
+    <div class="rels" id="rel-nz"></div>
+  </div>
+  <div class="read" id="rd-rel"></div>
+  <div class="relgrid">
+    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
+    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
+    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
+    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+  </div>
+  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
+  <div class="read" id="rd-rel2"></div>
+</section>
+
+<div class="two">
+  <section aria-labelledby="h-wx">
+    <h2 id="h-wx">五行 <small id="h-wx-s"></small></h2>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="note-wx"></p>
+    <div class="read" id="rd-wx"></div>
+  </section>
+  <section aria-labelledby="h-tk">
+    <h2 id="h-tk"></h2>
+    <dl class="kv" id="kv"></dl>
+    <div class="read" id="rd-tk"></div>
+  </section>
+</div>
+
+<section aria-labelledby="h-gods">
+  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+      <tbody id="gods"></tbody>
+    </table>
+  </div>
+  <div class="read" id="rd-gods"></div>
+</section>
+
+<footer>
+  <ul id="foot"></ul>
+</footer>
+
+</main>
+
+<aside class="sheet" id="sheet" aria-label="解释" hidden>
+  <div class="sheet-h"><h3 id="sheet-t"></h3><button class="sheet-x" id="sheet-x" type="button">关闭</button></div>
+  <div class="sheet-b" id="sheet-b" aria-live="polite"></div>
+</aside>
+
+<script>
+const DATA=/*DATA*/;
+/*ENGINE*/
+/*TEXT*/
+/*UI*/
+</script>
+</body>
+</html>

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>八字命盘</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: one column of ruled panels; the six-column chart table is the centrepiece, pickers below drive its first two columns;
+     every panel carries a paper-coloured reading box, and any dotted word opens a note docked at the bottom of the screen */
+  --paper:#eef2ee; --card:#fbfcfa; --ink:#18211f; --ink2:#51605b; --ink3:#7f8c87; --line:#d3dad5;
+  --accent:#27518a; --accent-soft:#e2eaf5; --warn:#8a4a1c; --warn-soft:#f5e9dd;
+  --wood:#2a7a4b; --fire:#bf3a2b; --earth:#8a5a2b; --metal:#a07c14; --water:#2463ad;
+  --display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --body:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121817; --card:#1a2120; --ink:#e7ece9; --ink2:#aab5b1; --ink3:#7d8985; --line:#2d3735;
+    --accent:#86b0e6; --accent-soft:#1e2b3c; --warn:#e0a071; --warn-soft:#32251a;
+    --wood:#62c08a; --fire:#f08375; --earth:#d6a567; --metal:#e3c55f; --water:#74acf2;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121817; --card:#1a2120; --ink:#e7ece9; --ink2:#aab5b1; --ink3:#7d8985; --line:#2d3735;
+  --accent:#86b0e6; --accent-soft:#1e2b3c; --warn:#e0a071; --warn-soft:#32251a;
+  --wood:#62c08a; --fire:#f08375; --earth:#d6a567; --metal:#e3c55f; --water:#74acf2;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 var(--body)}
+main{max-width:980px;margin:0 auto;padding:28px 16px 48px;display:flex;flex-direction:column;gap:20px}
+.x{font:inherit;color:inherit;background:none;border:0;border-radius:4px;padding:0;margin:0;cursor:pointer;text-align:inherit;text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+.wood{color:var(--wood)} .fire{color:var(--fire)} .earth{color:var(--earth)} .metal{color:var(--metal)} .water{color:var(--water)}
+
+.top{display:flex;flex-direction:column;gap:14px}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.eyebrow{margin:0;font-size:13px;color:var(--ink2);letter-spacing:.08em}
+.switch{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.switch .knob{position:relative;flex:none;width:28px;height:16px;border-radius:999px;background:var(--ink3)}
+.switch .knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--card)}
+.switch[aria-pressed="true"]{color:var(--ink)}
+.switch[aria-pressed="true"] .knob{background:var(--accent)}
+.switch[aria-pressed="true"] .knob::after{left:14px}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(30px,7vw,46px);line-height:1.15;display:flex;flex-wrap:wrap;gap:.1em .55em;text-wrap:balance}
+h1 span{white-space:nowrap}
+.meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:6px 28px}
+.meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:5px 0}
+.meta dt{flex:0 0 5em;font-size:13px;color:var(--ink3)}
+.meta dd{margin:0;font-variant-numeric:tabular-nums}
+.people{display:flex;flex-wrap:wrap;gap:8px}
+.people[hidden]{display:none}
+.pp{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 14px;cursor:pointer}
+.pp:hover{border-color:var(--ink3)}
+.pp[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:13px;font-weight:400;color:var(--ink3)}
+h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
+p{margin:0}
+.note{font-size:13px;color:var(--ink2)}
+
+.read{background:var(--paper);border-radius:8px;padding:12px 16px 14px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.top .read{background:var(--card);border:1px solid var(--line)}
+.rd-h{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--accent)}
+.read ol,.read ul{margin:0;padding-left:1.4em}
+.read li{margin:0 0 6px;break-inside:avoid}
+.read li:last-child{margin-bottom:0}
+.read>p:not(.rd-h){max-width:46em}
+.read b{font-weight:600}
+:root[data-read="off"] .read{display:none}
+.layers{margin:0;display:flex;flex-direction:column;gap:8px}
+.layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
+.layers dt{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;font-size:13px;color:var(--ink2)}
+.layers dt b{font-family:var(--display);font-weight:700;font-size:17px}
+.layers dt small{flex-basis:100%;font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.layers dd{margin:0}
+
+.tablewrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+table{border-collapse:collapse;width:100%}
+.pan{min-width:600px;text-align:center;font-variant-numeric:tabular-nums}
+.pan th,.pan td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pan thead th{font-size:13px;font-weight:600;vertical-align:bottom}
+.pan thead .x{font-weight:600}
+.pan thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
+.pan tbody th{width:52px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.pan .dyn{background:var(--accent-soft)}
+.pan .dyn.last{border-right:2px solid var(--line)}
+.pan .day{box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+.pan tr:last-child th,.pan tr:last-child td{border-bottom:0}
+.pan .sm{font-size:13px;color:var(--ink2)}
+.pan .ss{display:block;font-size:12px;color:var(--ink2);line-height:1.7}
+.pan .ss .x{display:block;margin:0 auto}
+.glyph{font-family:var(--display);font-weight:700;font-size:31px;line-height:1.2;background:none;border:1px solid transparent;border-radius:8px;padding:2px 9px;cursor:pointer}
+.hs{display:block;margin:0 auto;font:inherit;font-size:13px;background:none;border:1px solid transparent;border-radius:6px;padding:1px 6px;cursor:pointer;white-space:nowrap}
+.hs small{font-size:12px;color:var(--ink2);margin-left:5px}
+.glyph:hover,.hs:hover{border-color:var(--line)}
+.glyph.on,.hs.on{border-color:currentColor}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.pk{position:relative;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;font-variant-numeric:tabular-nums}
+.pk:hover{border-color:var(--ink3)}
+.pk[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.pk .yr{font-size:12px;color:var(--ink2)}
+.pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
+.pk .gd{font-size:12px;color:var(--ink2)}
+.pk .ag{font-size:12px;color:var(--ink3)}
+#liuri{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+#liuri .pk.now::after{content:"今天"}
+.pk.now::after{content:"当前";position:absolute;top:-8px;right:6px;font-size:11px;line-height:1;padding:3px 6px;border-radius:999px;background:var(--accent);color:var(--card)}
+
+.rels{display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
+.rel{display:inline-flex;align-items:baseline;gap:6px;padding:4px 11px;border:0;border-radius:999px;font:inherit;font-size:13px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.rel.bad{background:var(--warn-soft);color:var(--warn)}
+.rel b{font-family:var(--display);font-weight:700;font-size:15px}
+.rel small{font-size:12px}
+.rel:hover,.rel.on{box-shadow:inset 0 0 0 1.5px currentColor}
+.none{font-size:13px;color:var(--ink3)}
+.relblock{display:flex;flex-direction:column;gap:8px}
+.relgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 28px;border-top:1px solid var(--line);padding-top:14px}
+.relgrid>div{display:flex;flex-direction:column;gap:8px;align-content:start}
+.relgrid .rels{align-items:flex-start}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.bars{display:grid;grid-template-columns:auto 1fr auto auto;gap:9px 12px;align-items:center;font-variant-numeric:tabular-nums}
+.bars .el{font-family:var(--display);font-weight:700;font-size:18px}
+.bars .track{height:10px;border-radius:5px;background:var(--paper);overflow:hidden}
+.bars .fill{display:block;height:100%;border-radius:5px;background:currentColor}
+.bars .n{font-size:13px;color:var(--ink2);white-space:nowrap}
+.bars .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
+.kv dd{margin:0}
+.gods{font-size:14px;text-align:left}
+.gods th,.gods td{padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+.gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
+.gods tr:last-child td{border-bottom:0}
+.gods .have{font-weight:600}
+.x:hover{color:var(--accent);text-decoration-color:var(--accent)}
+.x.on{color:var(--accent);text-decoration:underline solid var(--accent)}
+footer{font-size:13px;color:var(--ink2)}
+footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
+
+.sheet{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:20;width:min(720px,calc(100% - 24px));max-height:min(52vh,440px);overflow-y:auto;background:var(--card);color:var(--ink);border:1px solid var(--ink3);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.24);padding:12px 16px 14px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.sheet[hidden]{display:none}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sheet-h h3{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink)}
+.sheet-x{flex:none;font:inherit;font-size:13px;color:var(--ink2);background:none;border:1px solid var(--line);border-radius:999px;padding:2px 12px;cursor:pointer}
+.sheet-b{display:flex;flex-direction:column;gap:6px}
+.sheet-b .lb{font-size:13px;font-weight:600;color:var(--accent);margin-right:8px}
+body.has-sheet main{padding-bottom:min(58vh,480px)}
+
+@media (min-width:760px){
+  #dayun{grid-template-columns:repeat(8,1fr)}
+  #liunian{grid-template-columns:repeat(5,1fr)}
+  #liuyue{grid-template-columns:repeat(6,1fr)}
+  #liuri{grid-template-columns:repeat(10,1fr)}
+  .read .cols{columns:2;column-gap:40px}
+}
+@media (max-width:560px){
+  .layers>div{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  section{padding:14px 10px 16px}
+  .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
+  .read{padding:10px 12px 12px}
+  .pan{min-width:0;table-layout:fixed}
+  .pan th,.pan td{padding:6px 1px}
+  .pan thead th{font-size:12px}
+  .pan thead small{font-size:11px}
+  .pan tbody th{width:30px;font-size:11px}
+  .pan .sm{font-size:12px}
+  .pan .ss{font-size:11px}
+  .glyph{font-size:24px;padding:0 3px}
+  .hs{font-size:12px;padding:1px 0}
+  .hs small{font-size:11px;margin-left:2px}
+}
+@media (prefers-reduced-motion:no-preference){.pk,.pp,.glyph,.hs,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,left .12s}}
+</style>
+</head>
+<body>
+<main>
+
+<header class="top">
+  <div class="toprow">
+    <p class="eyebrow" id="eyebrow"></p>
+    <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
+  </div>
+  <div class="people" id="people" role="group" aria-label="选择命盘" hidden></div>
+  <h1 id="title"></h1>
+  <div class="read">
+    <p class="rd-h">解读 · 怎么看这一页</p>
+    <ul class="cols">
+      <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
+      <li>带虚线的字都可以点，盘上的干支和每一条合冲刑害也可以点。解释出现在屏幕底部，再点一次收起。</li>
+      <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
+    </ul>
+  </div>
+  <dl class="meta" id="meta"></dl>
+</header>
+
+<section aria-labelledby="h-pan">
+  <h2 id="h-pan">四柱细盘 <small>前两列是下方选中的流年和大运</small></h2>
+  <div class="tablewrap">
+    <table class="pan">
+      <thead>
+        <tr>
+          <th></th>
+          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流年">流年</button><small id="hd-ln"></small></th>
+          <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
+          <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small>自己 · 配偶</small></th>
+          <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
+        </tr>
+      </thead>
+      <tbody id="pan"></tbody>
+    </table>
+  </div>
+  <div class="read" id="rd-pan"></div>
+</section>
+
+<section aria-labelledby="h-yun">
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>四行都可以点选；大运和流年会更新上面的细盘，四者都会更新下面的干支关系</small></h2>
+  <h3>大运（十年一步）</h3>
+  <div class="picker" id="dayun" role="group" aria-label="大运"></div>
+  <h3 id="h-ln"></h3>
+  <div class="picker" id="liunian" role="group" aria-label="流年"></div>
+  <h3 id="h-ly"></h3>
+  <div class="picker" id="liuyue" role="group" aria-label="流月"></div>
+  <h3 id="h-lr"></h3>
+  <div class="picker" id="liuri" role="group" aria-label="流日"></div>
+  <p class="note" id="note-yun"></p>
+  <div class="read" id="rd-yun"></div>
+</section>
+
+<section aria-labelledby="h-rel">
+  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
+  <div class="relblock">
+    <h3>原局 · 天干</h3>
+    <div class="rels" id="rel-ng"></div>
+    <h3>原局 · 地支</h3>
+    <div class="rels" id="rel-nz"></div>
+  </div>
+  <div class="read" id="rd-rel"></div>
+  <div class="relgrid">
+    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
+    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
+    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
+    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+  </div>
+  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
+  <div class="read" id="rd-rel2"></div>
+</section>
+
+<div class="two">
+  <section aria-labelledby="h-wx">
+    <h2 id="h-wx">五行 <small id="h-wx-s"></small></h2>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="note-wx"></p>
+    <div class="read" id="rd-wx"></div>
+  </section>
+  <section aria-labelledby="h-tk">
+    <h2 id="h-tk"></h2>
+    <dl class="kv" id="kv"></dl>
+    <div class="read" id="rd-tk"></div>
+  </section>
+</div>
+
+<section aria-labelledby="h-gods">
+  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+      <tbody id="gods"></tbody>
+    </table>
+  </div>
+  <div class="read" id="rd-gods"></div>
+</section>
+
+<footer>
+  <ul id="foot"></ul>
+</footer>
+
+</main>
+
+<aside class="sheet" id="sheet" aria-label="解释" hidden>
+  <div class="sheet-h"><h3 id="sheet-t"></h3><button class="sheet-x" id="sheet-x" type="button">关闭</button></div>
+  <div class="sheet-b" id="sheet-b" aria-live="polite"></div>
+</aside>
+
+<script>
+const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"jie":{"2003":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/9","11/8","12/7","1/6"],"2004":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2005":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2006":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2007":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/9","11/8","12/7","1/6"],"2008":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2009":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2010":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2011":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2012":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2013":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2014":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2015":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2016":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2017":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2018":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/5"],"2019":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2020":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2021":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2022":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2023":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2024":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2025":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2026":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2027":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/7","12/7","1/6"],"2028":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2029":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2030":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2031":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/7","12/7","1/6"],"2032":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2033":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2034":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2035":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2036":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2037":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2038":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2039":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2040":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2041":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2042":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2043":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2044":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2045":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2046":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2047":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2048":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2049":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2050":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2051":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2052":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2053":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2054":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2055":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2056":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2057":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2058":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2059":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2060":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/6","12/6","1/5"],"2061":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2062":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2063":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2064":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/6","12/6","1/5"],"2065":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2066":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2067":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2068":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2069":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2070":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2071":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2072":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2073":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2074":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2075":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2076":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2077":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2078":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2079":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2080":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2081":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2082":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2083":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2084":["2/4","3/4","4/4","5/4","6/5","7/6","8/6","9/6","10/7","11/6","12/6","1/4"],"2085":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2086":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2087":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2088":["2/4","3/4","4/4","5/4","6/4","7/6","8/6","9/6","10/7","11/6","12/6","1/4"]},"freq":{"丧门":23.0,"亡神":38.5,"劫煞":38.5,"华盖":38.6,"四废日":3.3,"国印贵人":47.2,"天乙贵人":67.6,"天德合":30.5,"孤鸾煞":10.0,"德秀贵人":88.0,"披麻":23.0,"月德合":34.6,"流霞":25.6,"福星贵人":69.2,"空亡":64.7,"羊刃":30.7,"词馆":23.0,"金舆":47.3,"飞刃":30.6,"驿马":36.5},"people":[{"id":"example-a","name":"示例甲","gender":1,"clock":[2000,1,1,12,0,0],"place":"北京市","lon":116.4,"dlonSec":-864,"eotSec":-189,"tst":[2000,1,1,11,42,27],"lunar":{"year":"己卯","month":"冬","day":"廿五","leap":false},"xingzuo":"摩羯","pillars":["己卯","丙子","戊午","戊午"],"pillarsClock":["己卯","丙子","戊午","戊午"],"prevJie":{"name":"大雪","at":[1999,12,7,21,47,27],"min":35395},"nextJie":{"name":"小寒","at":[2000,1,6,9,0,42],"min":7038},"taiyuan":"丁卯","minggong":"乙亥","shengong":"辛未","taixi":"癸未","yun":{"forward":false,"y":8,"m":2,"d":11,"h":2,"start":[2008,3,12],"jie":"大雪","gapMin":35413},"dayun":[{"gz":"乙亥","y0":2008,"y1":2017,"a0":9,"a1":18},{"gz":"甲戌","y0":2018,"y1":2027,"a0":19,"a1":28},{"gz":"癸酉","y0":2028,"y1":2037,"a0":29,"a1":38},{"gz":"壬申","y0":2038,"y1":2047,"a0":39,"a1":48},{"gz":"辛未","y0":2048,"y1":2057,"a0":49,"a1":58},{"gz":"庚午","y0":2058,"y1":2067,"a0":59,"a1":68},{"gz":"己巳","y0":2068,"y1":2077,"a0":69,"a1":78},{"gz":"戊辰","y0":2078,"y1":2087,"a0":79,"a1":88}]},{"id":"example-b","name":"示例乙","gender":0,"clock":[1993,10,10,9,30,0],"place":"成都市","lon":104.07,"dlonSec":-3823,"eotSec":774,"tst":[1993,10,10,8,39,11],"lunar":{"year":"癸酉","month":"八","day":"廿五","leap":false},"xingzuo":"天秤","pillars":["癸酉","壬戌","甲子","戊辰"],"pillarsClock":["癸酉","壬戌","甲子","己巳"],"prevJie":{"name":"寒露","at":[1993,10,8,14,40,2],"min":2519},"nextJie":{"name":"立冬","at":[1993,11,7,17,45,33],"min":40866},"taiyuan":"癸丑","minggong":"乙卯","shengong":"乙卯","taixi":"己丑","yun":{"forward":true,"y":9,"m":5,"d":11,"h":6,"start":[2003,3,21],"jie":"立冬","gapMin":40815},"dayun":[{"gz":"癸亥","y0":2003,"y1":2012,"a0":11,"a1":20},{"gz":"甲子","y0":2013,"y1":2022,"a0":21,"a1":30},{"gz":"乙丑","y0":2023,"y1":2032,"a0":31,"a1":40},{"gz":"丙寅","y0":2033,"y1":2042,"a0":41,"a1":50},{"gz":"丁卯","y0":2043,"y1":2052,"a0":51,"a1":60},{"gz":"戊辰","y0":2053,"y1":2062,"a0":61,"a1":70},{"gz":"己巳","y0":2063,"y1":2072,"a0":71,"a1":80},{"gz":"庚午","y0":2073,"y1":2082,"a0":81,"a1":90}]}]};
+/* 干支换算、干支关系、神煞口诀。
+   这个文件只做计算：不碰页面，也不含任何一个人的数据。构建时原样拼进页面。 */
+const G='甲乙丙丁戊己庚辛壬癸', Z='子丑寅卯辰巳午未申酉戌亥', EL='木火土金水';
+const ELC=['wood','fire','earth','metal','water'];
+const Z_EL=[4,2,0,0,2,1,1,2,3,3,2,4];
+const HID={子:'癸',丑:'己癸辛',寅:'甲丙戊',卯:'乙',辰:'戊乙癸',巳:'丙庚戊',午:'丁己',未:'己丁乙',申:'庚壬戊',酉:'辛',戌:'戊辛丁',亥:'壬甲'};
+const GOD_SAME=['比肩','食神','偏财','七杀','偏印'], GOD_DIFF=['劫财','伤官','正财','正官','正印'];
+const STAGES=['长生','沐浴','冠带','临官','帝旺','衰','病','死','墓','绝','胎','养'];
+const CS_START={甲:11,丙:2,戊:2,庚:5,壬:8,乙:6,丁:9,己:9,辛:0,癸:3};
+const JIE=['立春','惊蛰','清明','立夏','芒种','小暑','立秋','白露','寒露','立冬','大雪','小寒'];
+const ANIMALS='鼠牛虎兔龙蛇马羊猴鸡狗猪';
+
+const gEl=g=>G.indexOf(g)>>1, zEl=z=>Z_EL[Z.indexOf(z)];
+const gCls=g=>ELC[gEl(g)], zCls=z=>ELC[zEl(z)];
+const isYin=g=>G.indexOf(g)%2===1;
+const yy=g=>isYin(g)?'阴':'阳';
+/* 天干 g 相对于日主 dm 的五行关系：0 同我，1 我生，2 我克，3 克我，4 生我 */
+function relOf(dm,g){return (gEl(g)-gEl(dm)+5)%5;}
+function godOf(dm,g){return (isYin(g)===isYin(dm)?GOD_SAME:GOD_DIFF)[relOf(dm,g)];}
+/* 十二长生：阳干顺行，阴干逆行，土跟着火走 */
+function stage(g,z){const zi=Z.indexOf(z),s=CS_START[g];return STAGES[isYin(g)?(s-zi+12)%12:(zi-s+12)%12];}
+function xunHead(g,z){return (Z.indexOf(z)-G.indexOf(g)+12)%12;}
+function xunkong(g,z){const head=xunHead(g,z);return Z[(head+10)%12]+Z[(head+11)%12];}
+function yearGZ(y){const i=((y-4)%60+60)%60;return G[i%10]+Z[i%12];}
+/* m 从 0 起，0 是立春开始的寅月，11 是次年一月小寒开始的丑月 */
+function monthGZ(y,m){const ys=G.indexOf(yearGZ(y)[0]);return G[((ys%5)*2+2+m)%10]+Z[(2+m)%12];}
+const DAY=864e5;
+function dayGZ(t){const i=((54+Math.round((t-Date.UTC(2000,0,1))/DAY))%60+60)%60;return G[i%10]+Z[i%12];}
+function gz60(g,z){for(let i=0;i<60;i++) if(G[i%10]===g&&Z[i%12]===z) return i; return -1;}
+
+/* ---------- 干支关系 ---------- */
+function mk(list){const m={};list.forEach(([p,n])=>{m[p]=[p,n];m[p[1]+p[0]]=[p,n];});return m;}
+const G_HE=mk([['甲己','化土'],['乙庚','化金'],['丙辛','化水'],['丁壬','化木'],['戊癸','化火']]);
+const G_CHONG=mk([['甲庚'],['乙辛'],['丙壬'],['丁癸']]);
+const G_KE=mk([['甲戊'],['乙己'],['丙庚'],['丁辛'],['戊壬'],['己癸']]);
+const Z_HE=mk([['子丑','化土'],['寅亥','化木'],['卯戌','化火'],['辰酉','化金'],['巳申','化水'],['午未','化土']]);
+const Z_AN=mk([['寅丑'],['午亥'],['卯申'],['子巳']]);
+const Z_CHONG=mk([['子午'],['丑未'],['寅申'],['卯酉'],['辰戌'],['巳亥']]);
+const Z_XING=mk([['寅巳'],['巳申'],['寅申'],['丑戌'],['戌未'],['丑未'],['子卯']]);
+const Z_HAI=mk([['子未'],['丑午'],['寅巳'],['卯辰'],['申亥'],['酉戌']]);
+const Z_PO=mk([['子酉'],['丑辰'],['寅亥'],['卯午'],['巳申'],['未戌']]);
+const SANHE=[['申','子','辰','水局'],['亥','卯','未','木局'],['寅','午','戌','火局'],['巳','酉','丑','金局']];
+const SANHUI=[['寅','卯','辰','东方木'],['巳','午','未','南方火'],['申','酉','戌','西方金'],['亥','子','丑','北方水']];
+const SANXING=[['寅','巳','申'],['丑','戌','未']];
+const HE_TYPES=['五合','六合','三合','半合','拱合','三会','拱会','暗合'];
+const REL_TYPES=['五合','相冲','相克','六合','三合','半合','拱合','三会','拱会','暗合','相刑','三刑','自刑','相害','相破'];
+const gHe=g=>G[(G.indexOf(g)+5)%10];                                   // 天干五合的另一半
+const zHe=z=>Object.values(Z_HE).find(v=>v[0].includes(z))[0].replace(z,'');   // 地支六合的另一半
+
+/* cols 是若干柱：{k: 名称, g: 天干, z: 地支, layer: 来源}。layer：原局 0（可省略），大运 1，流年 2，流月 3，流日 4。
+   返回每一条关系：类型 t、涉及的字 c、附注 n、最高的层 top、它落在哪些柱上 where。 */
+function relations(cols){
+  const out=[];
+  const add=(grp,kind,t,c,n,ps)=>{
+    const top=Math.max(...ps.map(p=>p.layer||0)), key=[grp,top,t,c].join('|');
+    let it=out.find(o=>o.key===key);
+    if(!it){it={key,grp,top,t,c,n:n||'',where:[]};out.push(it);}
+    const lab=p=>p.layer?p.k:p.k+kind;
+    const ws=top===0?[ps.map(lab).join('–')]:ps.filter(p=>(p.layer||0)<top).map(lab);
+    ws.forEach(w=>{if(!it.where.includes(w)) it.where.push(w);});
+  };
+  const zs=cols.map(c=>c.z), has=z=>zs.includes(z);
+  const full=tri=>tri.slice(0,3).every(has);
+  SANHE.forEach(t=>{if(full(t)) add('z','支','三合',t.slice(0,3).join(''),t[3],cols.filter(c=>t.slice(0,3).includes(c.z)));});
+  SANHUI.forEach(t=>{if(full(t)) add('z','支','三会',t.slice(0,3).join(''),t[3],cols.filter(c=>t.slice(0,3).includes(c.z)));});
+  SANXING.forEach(t=>{if(full(t)) add('z','支','三刑',t.join(''),'',cols.filter(c=>t.includes(c.z)));});
+  for(let i=0;i<cols.length;i++) for(let j=i+1;j<cols.length;j++){
+    const A=cols[i],B=cols[j],ps=[A,B];
+    const gk=A.g+B.g;
+    if(G_HE[gk]) add('g','干','五合',G_HE[gk][0],G_HE[gk][1],ps);
+    if(G_CHONG[gk]) add('g','干','相冲',G_CHONG[gk][0],'',ps);
+    if(G_KE[gk]) add('g','干','相克',G_KE[gk][0],'',ps);
+    const a=A.z,b=B.z,zk=a+b;
+    if(a===b){ if('辰午酉亥'.includes(a)) add('z','支','自刑',a+a,'',ps); continue; }
+    if(Z_HE[zk]) add('z','支','六合',Z_HE[zk][0],Z_HE[zk][1],ps);
+    SANHE.forEach(t=>{
+      const tri=t.slice(0,3);
+      if(tri.includes(a)&&tri.includes(b)&&!full(t)){
+        const o=tri.filter(x=>x===a||x===b).join('');
+        if(a===t[1]||b===t[1]) add('z','支','半合',o,t[3],ps);
+        else add('z','支','拱合',o,`缺${t[1]}的${t[3]}`,ps);
+      }
+    });
+    SANHUI.forEach(t=>{
+      if(((a===t[0]&&b===t[2])||(a===t[2]&&b===t[0]))&&!has(t[1])) add('z','支','拱会',t[0]+t[2],`缺${t[1]}的${t[3]}`,ps);
+    });
+    if(Z_AN[zk]) add('z','支','暗合',Z_AN[zk][0],'',ps);
+    if(Z_CHONG[zk]) add('z','支','相冲',Z_CHONG[zk][0],'',ps);
+    if(Z_XING[zk]&&!SANXING.some(t=>t.includes(a)&&t.includes(b)&&t.every(has))) add('z','支','相刑',Z_XING[zk][0],'',ps);
+    if(Z_HAI[zk]) add('z','支','相害',Z_HAI[zk][0],'',ps);
+    if(Z_PO[zk]) add('z','支','相破',Z_PO[zk][0],'',ps);
+  }
+  return out;
+}
+
+/* ---------- 神煞 ----------
+   这一页只查下面 20 个。口诀和 tools/shensha.py 逐条对应，
+   两份实现在全部 518400 种四柱组合上的结果由 tests/check_page.js 对照 data/shensha_check.json。 */
+const SS_NAMES=['天乙贵人','国印贵人','福星贵人','德秀贵人','天德合','月德合','金舆','词馆','驿马','华盖','羊刃','飞刃','空亡','孤鸾煞','四废日','流霞','劫煞','亡神','丧门','披麻'];
+const SS_TIANYI={甲:'丑未',戊:'丑未',庚:'丑未',乙:'子申',己:'子申',丙:'亥酉',丁:'亥酉',壬:'卯巳',癸:'卯巳',辛:'午寅'};
+const SS_GUOYIN='戌亥丑寅丑寅辰巳未申';          // 下标是天干的序号，下同
+const SS_FUXING={甲:'寅子',丙:'寅子',乙:'丑卯',癸:'丑卯',丁:'亥',戊:'申',己:'未',庚:'午',辛:'巳',壬:'辰'};
+const SS_JINYU='辰巳未申未申戌亥丑寅';
+const SS_YANGREN='卯寅午巳午巳酉申子亥';         // 阴干的取法各派不同
+const SS_LIUXIA='酉戌未申巳午辰卯亥寅';
+const SS_GRP=['申子辰','亥卯未','寅午戌','巳酉丑']; // 四个三合局；下面四行的下标是局的序号
+const SS_YIMA='寅巳申亥', SS_HUAGAI='辰未戌丑', SS_JIESHA='巳申亥寅', SS_WANGSHEN='亥寅巳申';
+const SS_DEXIU=['壬癸戊己丙辛甲','甲乙丁壬','丙丁戊癸','庚辛乙'];
+const SS_YUEDEHE='丁己辛乙';
+const SS_TIANDEHE={寅:'壬',卯:'巳',辰:'丁',巳:'丙',午:'寅',未:'己',申:'戊',酉:'亥',戌:'辛',亥:'庚',子:'申',丑:'乙'};
+const SS_GULUAN=['乙巳','丁巳','辛亥','戊申','甲寅','壬子'];
+const SS_SIFEI=[['寅卯辰','庚申','辛酉'],['巳午未','壬子','癸亥'],['申酉戌','甲寅','乙卯'],['亥子丑','丙午','丁巳']];
+const SS_CIGUAN={火:'巳',金:'申',木:'寅',水:'亥',土:'巳'};   // 年柱纳音五行的临官位，土跟着火
+const ssGrp=z=>SS_GRP.findIndex(s=>s.includes(z));
+const tianDe=mz=>{const h=SS_TIANDEHE[mz];return G.includes(h)?gHe(h):zHe(h);};   // 天德 = 和天德合相合的那个字
+const yueDe=mz=>gHe(SS_YUEDEHE[ssGrp(mz)]);
+
+/* p 是 [年柱, 月柱, 日柱, 时柱]，nayin 是 {干支: 纳音名}。
+   返回四个数组（四柱各一个），每项是 {n: 名字, why: 它为什么落在这一柱}，按 SS_NAMES 的顺序排。 */
+function shenshaOf(p,nayin){
+  const K='年月日时', out=[[],[],[],[]];
+  const gs=p.map(x=>x[0]), zs=p.map(x=>x[1]);
+  const yg=gs[0], yz=zs[0], mz=zs[1], dg=gs[2], dz=zs[2];
+  const add=(i,n,why)=>{const it=out[i].find(o=>o.n===n); if(it){ if(!it.why.includes(why)) it.why+=why; } else out[i].push({n,why});};
+  const kong=(lab,gz,k,z)=>{const xk=xunkong(gz[0],gz[1]);return `${lab}柱${gz}在甲${Z[xunHead(gz[0],gz[1])]}旬，剩下${xk[0]}、${xk[1]}。${k}支是${z}。`;};
+  const mg=ssGrp(mz), tdh=SS_TIANDEHE[mz], ydh=SS_YUEDEHE[mg];
+  const yr=SS_YANGREN[G.indexOf(dg)], fr=Z[(Z.indexOf(yr)+6)%12];
+  const ny=nayin[p[0]], nel=ny[ny.length-1];
+  for(let i=0;i<4;i++){
+    const z=zs[i], g=gs[i], k=K[i];
+    [['年',yg,0],['日',dg,2]].forEach(([lab,s,j])=>{
+      const say=`${lab}干${s}见${z}，落在${k}支${j===i?'，就是它自己坐着的那一支':''}。`;
+      if(SS_TIANYI[s].includes(z)) add(i,'天乙贵人',say);
+      if(SS_GUOYIN[G.indexOf(s)]===z) add(i,'国印贵人',say);
+      if(SS_FUXING[s].includes(z)) add(i,'福星贵人',say);
+      if(SS_JINYU[G.indexOf(s)]===z) add(i,'金舆',say);
+    });
+    [['年',yz,0],['日',dz,2]].forEach(([lab,s,j])=>{
+      if(i===j) return;
+      const gi=ssGrp(s), say=`${lab}支${s}见${z}，落在${k}支。`;
+      if(z===SS_YIMA[gi]) add(i,'驿马',say);
+      if(z===SS_HUAGAI[gi]) add(i,'华盖',say);
+      if(z===SS_JIESHA[gi]) add(i,'劫煞',say);
+      if(z===SS_WANGSHEN[gi]) add(i,'亡神',say);
+    });
+    if(SS_DEXIU[mg].includes(g)) add(i,'德秀贵人',`生在${mz}月，${k}干${g}在${SS_GRP[mg]}月的德秀表里。`);
+    if(g===tdh||z===tdh){
+      const td=tianDe(mz), has=gs.includes(td)||zs.includes(td);
+      add(i,'天德合',`${mz}月的天德是${td}，和${td}相合的是${tdh}。${k}${g===tdh?'干':'支'}是${tdh}。盘里${has?'也有'+td+'，天德本身也在':'没有'+td+'，所以没有天德本身'}。`);
+    }
+    if(g===ydh) add(i,'月德合',`${SS_GRP[mg]}月的月德是${yueDe(mz)}，和${yueDe(mz)}相合的是${ydh}。${k}干是${ydh}。`);
+    if(z===yr) add(i,'羊刃',`日干${dg}见${z}，落在${k}支。它和星运一行的帝旺是同一件事。`);
+    if(z===fr) add(i,'飞刃',`日干${dg}的羊刃在${yr}，${yr}的对面是${fr}，落在${k}支。`+(zs.includes(yr)?`它其实就是原局的${Z_CHONG[yr+fr][0]}相冲换了个名字。`:''));
+    if(z===SS_LIUXIA[G.indexOf(dg)]) add(i,'流霞',`日干${dg}见${z}，落在${k}支。`);
+    if(i!==2&&xunkong(dg,dz).includes(z)) add(i,'空亡',kong('日',p[2],k,z));
+    if(i!==0&&xunkong(yg,yz).includes(z)) add(i,'空亡',kong('年',p[0],k,z));
+    if(i!==0&&z===Z[(Z.indexOf(yz)+2)%12]) add(i,'丧门',`年支${yz}往下数：${Z[(Z.indexOf(yz)+1)%12]}、${z}。${k}支是${z}。`);
+    if(i!==0&&z===Z[(Z.indexOf(yz)+9)%12]) add(i,'披麻',`年支${yz}往回数：${Z[(Z.indexOf(yz)+11)%12]}、${Z[(Z.indexOf(yz)+10)%12]}、${z}。${k}支是${z}。`);
+    if(i!==0&&z===SS_CIGUAN[nel]) add(i,'词馆',`年柱纳音${ny}属${nel}，${nel==='土'?'土跟着火取，临官':nel+'的临官'}在${z}，落在${k}支。`);
+  }
+  if(SS_GULUAN.includes(p[2])) add(2,'孤鸾煞',`日柱是${p[2]}。`);
+  const sf=SS_SIFEI.find(r=>r[0].includes(mz)), si=SS_SIFEI.indexOf(sf);
+  if(sf.slice(1).includes(p[2])){
+    const S='春夏秋冬'[si], SE=EL[[0,1,3,4][si]], E=EL[gEl(dg)];
+    add(2,'四废日',`这条口诀按季节算，${mz}月算${S}天。日柱${p[2]}干支都属${E}，`+(si<2?`${E}本该克${SE}，可是${S}天${SE}正当令，克不动，反而受困。`:`${S}天${SE}当令，正克着${E}。`)+'它说的就是日柱的五行不得月令。');
+  }
+  // 两条顺带的说明：同一个字兼着两个名目；年支和日支互为驿马
+  out.forEach(row=>{const a=row.find(o=>o.n==='天德合'), b=row.find(o=>o.n==='月德合'); if(a&&b&&gs[out.indexOf(row)]===tdh) b.why+='它同时是天德合和月德合。';});
+  const m0=out[0].find(o=>o.n==='驿马'), m2=out[2].find(o=>o.n==='驿马');
+  if(m0&&m2&&m0.why.includes('日支')&&m2.why.includes('年支')) m2.why+=`年支和日支互为驿马，这也是${Z_CHONG[yz+dz][0]}相冲的另一种说法。`;
+  out.forEach(row=>row.sort((a,b)=>SS_NAMES.indexOf(a.n)-SS_NAMES.indexOf(b.n)));
+  return out;
+}
+/* 把一柱的神煞压成一个数，每个神煞占一位。只用于和 Python 那份实现对照。 */
+function shenshaMask(row){return row.reduce((m,o)=>m|(1<<SS_NAMES.indexOf(o.n)),0);}
+
+/* 解释文字。
+   针对某一张盘的句子，都由这里的函数按干支现算出来，换一个人就换一套。
+   手写的解读只来自人物数据里的 notes：公开的示例没有 notes，个人的放在 private/ 里。
+   生成的段落标题用「这张盘」；notes 里标题是「你的盘」的段落会顶替它。 */
+
+/* ---------- 当前这个人（由 ui.js 的 usePerson 设置） ---------- */
+let P=null, DM='', DMN='', NATAL=[], SHENSHA=[[],[],[],[]];
+let Y_MIN=0, Y_MAX=0, MEMO={};
+const memo=(k,f)=>k in MEMO?MEMO[k]:(MEMO[k]=f());
+const rel=g=>relOf(DM,g), god=g=>godOf(DM,g), godZ=z=>god(HID[z][0]);
+function note(...path){let o=P&&P.notes;for(const k of path){if(o==null) return undefined;o=o[k];}return o==null?undefined:o;}
+
+/* ---------- 小工具 ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gN=g=>g+EL[gEl(g)], zN=z=>z+EL[zEl(z)];                 // 丁 → 丁火，巳 → 巳火
+const CN='〇一二三四五六七八九十';
+function cn(n){return n===2?'两':n<=10?CN[n]:n<20?'十'+CN[n-10]:CN[Math.floor(n/10)]+'十'+(n%10?CN[n%10]:'');}
+const pad=n=>String(n).padStart(2,'0');
+const num=x=>String(Math.round(x*100)/100);
+const xun=d=>d<=10?'上旬':d<=20?'中旬':'下旬';
+const hm=a=>`${a[3]}:${pad(a[4])}`;                            // [年,月,日,时,分,秒] → 9:05
+const hms=a=>`${a[3]}:${pad(a[4])}:${pad(a[5])}`;
+const hmOf=sec=>{const t=Math.floor((((sec%86400)+86400)%86400)/60);return `${Math.floor(t/60)}:${pad(t%60)}`;};
+const hmNear=a=>hmOf(a[3]*3600+a[4]*60+a[5]+30);               // 四舍五入到分钟
+const span=min=>{const d=Math.floor(min/1440),h=Math.floor(min%1440/60);return d?`${d} 天 ${h} 小时`:h?`${h} 小时 ${min%60} 分钟`:`${min} 分钟`;};
+const rough=min=>min>=1440?`${Math.floor(min/1440)} 天`:min>=60?`${Math.floor(min/60)} 小时`:`${min} 分钟`;
+const slow=s=>s<0?'慢':'快';
+const MONTHS=['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+const SEASON={寅:'初春',卯:'仲春',辰:'暮春',巳:'初夏',午:'仲夏',未:'晚夏',申:'初秋',酉:'仲秋',戌:'深秋',亥:'初冬',子:'仲冬',丑:'深冬'};
+
+/* ---------- 通用的词条 ---------- */
+const KW={比肩:'自立、同辈、相争',劫财:'冲劲、合群、破耗',食神:'才艺、从容、口福',伤官:'才华、表达、不服管束',偏财:'机会、交际、流动的财',正财:'薪水、积蓄、务实',七杀:'压力、魄力、风险',正官:'职位、规则、责任',偏印:'偏门学问、直觉、独处',正印:'学业、名誉、庇护'};
+const GODS=['比肩','劫财','食神','伤官','偏财','正财','七杀','正官','偏印','正印'];
+const GODX={
+  比肩:'代表和自己一样的人：同辈、同行、朋友。主自立、坚持；多了则固执、与人相争。',
+  劫财:'也是同辈，但带着争夺的意味，名字的意思是劫走财。主冲劲、合群、敢花钱；多了则冒进、破耗。',
+  食神:'温和的产出。主才艺、口福、从容、乐观；多了则散漫。',
+  伤官:'锋利的产出，名字来自它克正官。主才华、口才、创新、不服管束；多了则傲气，容易和上级冲突。',
+  偏财:'不固定的财。主机会、生意、交际、慷慨；多了则浮动、不聚财。',
+  正财:'固定的财。主薪水、积蓄、勤俭、务实；多了则劳碌、拘谨。',
+  七杀:'不留情面的约束。主压力、风险、魄力、权威；有食神制住它时，被看作能成事的力量。',
+  正官:'合乎规矩的约束。主职位、名誉、纪律、责任；多了则拘束。',
+  偏印:'偏门的滋养。主冷门学问、技术、直觉、独处；多了则多虑、孤僻。',
+  正印:'正统的滋养。主学业、文凭、名誉、长辈的庇护；多了则依赖。'
+};
+const GODD={比肩:'和日主五行相同、阴阳也相同的字。',劫财:'和日主五行相同、阴阳不同。',食神:'日主所生、阴阳相同。',伤官:'日主所生、阴阳不同。',偏财:'日主所克、阴阳相同。',正财:'日主所克、阴阳不同。',七杀:'克日主、阴阳相同。',正官:'克日主、阴阳不同。',偏印:'生日主、阴阳相同。',正印:'生日主、阴阳不同。'};
+const GODAKA={七杀:'也叫偏官。',偏印:'也叫枭神。'};
+const stemOfGod=gd=>G.split('').find(g=>god(g)===gd);
+function godDesc(gd){const s=stemOfGod(gd);return GODD[gd]+`对${DMN}来说是${gd==='比肩'?'另一个'+DM:gEl(s)===gEl(DM)?s:gN(s)}。`+(GODAKA[gd]||'');}
+/* 五类十神：名称、和日主的关系、传统上代表什么 */
+const CAT=[['比肩和劫财','同我','和自己一样的人：自我、同辈、朋友和竞争者'],['食神和伤官','我生','自己产出的东西：表达、才艺、作品'],['正财和偏财','我克','自己能支配的东西：财物、资源'],['正官和七杀','克我','约束自己的东西：规则、职位、压力'],['正印和偏印','生我','滋养自己的东西：学问、庇护、长辈']];
+const eff=r=>[`和${DMN}同类，帮身`,`${DMN}生它，泄身`,`${DMN}克它，耗身`,`它克${DMN}，克身`,`它生${DMN}，生身`][r];
+const effx=r=>[`和${DMN}同属${EL[gEl(DM)]}，给${DMN}加力，叫帮身。`,`${DMN}生它，${DMN}的力量流出去，叫泄身。`,`${DMN}克它，克别人也费力气，叫耗身。`,`它克${DMN}，叫克身。`,`它生${DMN}，给${DMN}加力，叫生身。`][r];
+const STG={长生:'像人刚出生，力量开始发起。',沐浴:'像婴儿洗浴，稚嫩不稳。也叫败地，旧说和桃花有关。',冠带:'像成年加冠，渐渐成形。',临官:'像出来做官，力量充足。也叫建禄。',帝旺:'到了顶峰，再往后就要走下坡。',衰:'开始走下坡。',病:'力量明显不足。',死:'气已经尽了。',墓:'被收进仓库，藏起来不用。也叫库。',绝:'最弱的一点，旧的气断了。',胎:'新的一轮开始孕育。',养:'在母腹里慢慢成形，等着出生。'};
+const STATEX={旺:'正当令，力量最足。',相:'被当令的五行所生，力量次之。',休:'它生了当令的五行，自己退下来歇着。',囚:'它本该克当令的五行，克不动，反而受困。',死:'被当令的五行所克，最弱。'};
+/* 五行 i 在出生月份里的状态：和月支同类为旺，月支所生为相，生月支的为休，克月支的为囚，月支所克为死 */
+const wxState=i=>['旺','相','死','囚','休'][(i-zEl(NATAL[1].z)+5)%5];
+const wxRole=i=>[`和${DMN}同类，是比肩和劫财，帮${DMN}。`,`是${DMN}所生的食神和伤官，泄${DMN}的力。`,`是${DMN}所克的财，耗${DMN}的力。`,`是克${DMN}的正官和七杀。`,`是${DMN}的印，生${DMN}。`][(i-gEl(DM)+5)%5];
+
+/* 神煞：k 是旧说里的吉凶归类，w 是什么，q 口诀，c 注意。落在哪一柱、为什么，由 engine.js 的 shenshaOf 算。 */
+const SS={
+  天乙贵人:{k:'吉',w:'神煞里地位最高的吉星。传统上读作遇事有人帮、能逢凶化吉。',q:'用日干或年干查地支：甲戊庚见丑未，乙己见子申，丙丁见亥酉，壬癸见卯巳，辛见午寅。'},
+  国印贵人:{k:'吉',w:'印指官印。传统上读作为人诚实稳重，有任职、掌事的缘分。',q:'用年干或日干查地支：甲见戌，乙见亥，丙见丑，丁见寅，戊见丑，己见寅，庚见辰，辛见巳，壬见未，癸见申。'},
+  福星贵人:{k:'吉',w:'传统上读作福气厚、衣食不愁。',q:'用年干或日干查地支：甲丙见寅或子，乙癸见丑或卯，丁见亥，戊见申，己见未，庚见午，辛见巳，壬见辰。'},
+  德秀贵人:{k:'吉',w:'德和秀指当月的清正之气。传统上读作聪明、品行好。',q:()=>'按月支所在的三合局查天干：'+SS_GRP.map((s,i)=>`${s}月见${SS_DEXIU[i].split('').join('、')}`).join('；')+'。'},
+  天德合:{k:'吉',w:'天德是每个月的德神，传统上读作逢凶化吉。天德合是和天德相合的那个字，力量次一等。',q:()=>'天德按月支取，每个月一个字。天德合是和它相合的那个字。从寅月到丑月，天德和天德合依次是：'+'寅卯辰巳午未申酉戌亥子丑'.split('').map(z=>`${z}月${tianDe(z)}、${SS_TIANDEHE[z]}`).join('，')+'。'},
+  月德合:{k:'吉',w:'月德和天德是一对，读法相同。月德合是和月德相合的那个字。',q:()=>'月德按月支所在的三合局取，月德合是和它相合的那个字：'+SS_GRP.map((s,i)=>`${s}月的月德是${gHe(SS_YUEDEHE[i])}，月德合是${SS_YUEDEHE[i]}`).join('；')+'。'},
+  金舆:{k:'吉',w:'金车。传统上读作出入有车、得配偶之助，主安稳富足。',q:'用日干或年干查。先找它的禄位，也就是它五行最得力的那一支，再顺着数两位。甲见辰，乙见巳，丙戊见未，丁己见申，庚见戌，辛见亥，壬见丑，癸见寅。'},
+  词馆:{k:'吉',w:'和学堂成对的文星。传统上读作文笔、口才、学业。',q:'常见的取法是看年柱纳音的五行，取它临官的那一支：火见巳，金见申，木见寅，水见亥。土跟着火，也见巳。',c:'词馆的取法各书差别很大。'},
+  驿马:{k:'中',w:'驿站的马。传统上读作奔波、迁移、出远门，本身不分吉凶。',q:'用年支或日支查：申子辰见寅，寅午戌见申，巳酉丑见亥，亥卯未见巳。'},
+  华盖:{k:'中',w:'帝王头上的伞盖。传统上读作清高、爱独处、喜欢钻研，和艺术、宗教、玄学有缘。',q:'用年支或日支查它所在三合局的最后一个字：寅午戌见戌，亥卯未见未，申子辰见辰，巳酉丑见丑。'},
+  羊刃:{k:'中',w:'刃是刀。日主五行最旺的那一支，旺到过了头。传统上读作刚强、冲动、敢拼；日主偏弱时反而算帮手。',q:'阳干的羊刃没有争议：甲见卯，丙戊见午，庚见酉，壬见子。阴干有没有羊刃、在哪一支，各派不同，这里按乙见寅，丁己见巳，辛见申，癸见亥。'},
+  飞刃:{k:'凶',w:'羊刃正对面的那一支。传统上归入凶星，读作意外的冲撞。',q:'先找日干的羊刃，再取它对冲的地支。'},
+  空亡:{k:'中',w:'落在空亡里的地支。十个天干配十二个地支，每配完一轮会剩下两个地支，叫空亡。传统上读作这个地支的力量打折扣。',q:'以日柱或年柱所在的那一旬来查。'},
+  孤鸾煞:{k:'凶',w:'鸾是成对的鸟。旧说日柱落在特定几个干支上，婚姻不顺。',q:'口诀列出的日柱：乙巳、丁巳、辛亥、戊申、甲寅、壬子，有的再加丙午、戊午。',c:'只凭日柱一刀切，是神煞里最粗的一类。'},
+  四废日:{k:'凶',w:'日柱的五行在出生的季节最弱。旧说做事费力、有始无终。',q:'春天的庚申、辛酉，夏天的壬子、癸亥，秋天的甲寅、乙卯，冬天的丙午、丁巳。'},
+  流霞:{k:'凶',w:'旧说和血光、意外相关的小凶星。',q:'用日干查地支：甲见酉，乙见戌，丙见未，丁见申，戊见巳，己见午，庚见辰，辛见卯，壬见亥，癸见寅。'},
+  劫煞:{k:'凶',w:'劫是劫夺。传统上归入凶星，读作破耗、意外的损失；也有说带劫煞的人做事果断。',q:'用年支或日支查：申子辰见巳，亥卯未见申，寅午戌见亥，巳酉丑见寅。'},
+  亡神:{k:'凶',w:'亡是失去。传统上归入凶星，读作失落、耗损；也有说主城府深、善谋划。',q:'用年支或日支查：申子辰见亥，亥卯未见寅，寅午戌见巳，巳酉丑见申。'},
+  丧门:{k:'凶',w:'围着年支排的十二个神煞之一，名字取自丧事。旧说归入凶星。',q:'从年支顺着数两位。',c:'口诀只看年支和另一个地支隔了几位，和这个人、这个家庭的具体情况没有任何联系。'},
+  披麻:{k:'凶',w:'名字取自披麻戴孝，和丧门是一类。旧说归入凶星。',q:'从年支倒着数三位。',c:'口诀只看年支和另一个地支隔了几位，和这个人、这个家庭的具体情况没有任何联系。'}
+};
+function howCommon(name){
+  const v=DATA.freq&&DATA.freq[name]; if(v===undefined) return null;
+  const p=v>=10?Math.round(v):v;
+  const tail=p>=80?'几乎人人都有':p>=60?'大多数人都有':p>=42?'将近一半的人有':p>=36?'大约每五个人里有两个':p>=28?'大约每三个人里有一个':p>=20?'大约每四个人里有一个':p>=8?'大约每十个人里有一个':'大约每三十个人里有一个';
+  return `约 ${p}% 的命盘带这个标签，${tail}。`;
+}
+const RT={
+  五合:'天干五合。甲己、乙庚、丙辛、丁壬、戊癸五对，都是阳干克阴干，结果没有打起来，反而结成一对。合住的两个字互相牵制，各自原来的作用减弱。会不会化成新的五行，要看月令支不支持，多数情况只合不化。',
+  相冲g:'天干相冲。甲庚、乙辛、丙壬、丁癸四对，方位正相对，阴阳又相同，是天干里最直接的对抗。',
+  相克:'天干相克。这里只列阴阳相同的相克，力量最直接。阳干克阴干的五对已经算作五合；阴干克阳干力量弱，不单列。',
+  六合:'地支六合。子丑、寅亥、卯戌、辰酉、巳申、午未六对。合住的两支互相牵绊，相邻的才有力。能不能化成新的五行，同样要看条件。',
+  三合:'三合局。申子辰合水，亥卯未合木，寅午戌合火，巳酉丑合金。三个字分别是这一行的长生、帝旺、墓，也就是开头、顶峰、收尾，凑齐了这一行的力量最集中。',
+  半合:'半合。三合局里有了中间的旺支（子、卯、午、酉）和另外一个字，力量次于三合。',
+  拱合:'拱合。三合局只有头尾两个字，缺了中间的旺支。只算有这个趋势，等中间那个字来了才成局。',
+  三会:'三会方。寅卯辰会东方木，巳午未会南方火，申酉戌会西方金，亥子丑会北方水，是同一个季节的三支聚齐。传统上说它的力量比三合还大。',
+  拱会:'拱会。三会方缺了中间一支，只算有这个趋势。',
+  暗合:'暗合。两支里藏的天干彼此五合，表面上看不出来。哪些组合算暗合，各家说法不完全一样。',
+  相冲z:'地支相冲。子午、丑未、寅申、卯酉、辰戌、巳亥，是十二支排成一圈时正对面的两个。两支里藏的天干也互相克。传统上读作变动、对立。',
+  相刑:'相刑。寅巳申三支互刑，丑戌未三支互刑，子卯相刑；辰、午、酉、亥重复出现时叫自刑。来历说法不一。传统上读作内耗、摩擦、反复纠缠，力量小于冲。',
+  三刑:'三刑。寅巳申或丑戌未三个字凑齐，刑的力量最全。',
+  自刑:'自刑。辰、午、酉、亥四支，同一个字出现两次时自己刑自己。传统上读作自寻烦恼。',
+  相害:'相害，也叫六害、相穿。子未、丑午、寅巳、卯辰、申亥、酉戌六对。来历是你冲走了我的六合对象。力量小于冲和刑。',
+  相破:'相破。子酉、丑辰、寅亥、卯午、巳申、未戌六对。地支关系里力量最小的一种，很多流派不用。'
+};
+const AN={午亥:'午里的丁火合亥里的壬水，午里的己土合亥里的甲木。',寅丑:'寅里的甲、丙、戊，分别合丑里的己、辛、癸。',卯申:'卯里的乙木合申里的庚金。',子巳:'子里的癸水合巳里的戊土。'};
+const LAYER=['原局','大运','流年','流月','流日'];
+
+/* ---------- 从这张盘里数出来的东西 ---------- */
+const natalStems=()=>NATAL.filter(p=>!p.day).map(p=>p.g);        // 年、月、时三个天干，不含日主
+const natalHidden=()=>NATAL.flatMap(p=>HID[p.z].split(''));
+/* 满足条件的天干都在哪里：三个天干加全部藏干 */
+function whereGod(test){
+  const out=[];
+  NATAL.forEach(p=>{
+    if(!p.day&&test(p.g)) out.push(`${p.k}干${p.g}`);
+    HID[p.z].split('').forEach((h,i)=>{if(test(h)) out.push(`${p.k}支${p.z}里的${h}${i===0?'（本气）':''}`);});
+  });
+  return out;
+}
+/* 根：地支里和日主同五行的藏干。印：生日主的五行，露在天干上的和藏在地支里的。 */
+function roots(){const out=[];NATAL.forEach(p=>HID[p.z].split('').forEach(h=>{if(gEl(h)===gEl(DM)) out.push({k:p.k,z:p.z,h});}));return out;}
+function seals(){
+  const e=(gEl(DM)+4)%5, out=[];
+  NATAL.forEach(p=>{if(!p.day&&gEl(p.g)===e) out.push({k:p.k,g:p.g,stem:true});});
+  NATAL.forEach(p=>HID[p.z].split('').forEach(h=>{if(gEl(h)===e) out.push({k:p.k,z:p.z,h});}));
+  return out;
+}
+/* 月令透干：月支里藏的天干，有哪些出现在四柱的天干上 */
+function touGan(){
+  const mz=NATAL[1].z, hs=HID[mz].split(''), out=[];
+  hs.forEach((h,i)=>NATAL.forEach(p=>{if(p.g===h) out.push(`${mz}的${i===0?'本气':'藏干'}${gN(h)}透在${p.k}干，${p.day?'就是日主自己':'是'+god(h)}`);}));
+  return out.length?out.join('；'):`${mz}里藏的${hs.map(gN).join('、')}都没有透到天干上`;
+}
+function wxCounts(){
+  const all=NATAL.map(p=>p.g).concat(natalHidden()), cnt=[0,0,0,0,0], face=[0,0,0,0,0];
+  all.forEach(g=>cnt[gEl(g)]++);
+  NATAL.forEach(p=>{face[gEl(p.g)]++;face[zEl(p.z)]++;});
+  return {cnt,face,n:all.length};
+}
+function catCounts(){const c=[0,0,0,0,0];natalStems().concat(natalHidden()).forEach(g=>c[rel(g)]++);return c;}
+/* 从今年往后，第一个满足条件的流年；哪一年、哪一步大运会带来某个地支 */
+function nextYearWith(test){for(let y=Math.max(REAL_Y,Y_MIN);y<=Y_MAX;y++) if(test(y)) return y;return 0;}
+function bringers(z){
+  const out=[], y=nextYearWith(v=>yearGZ(v)[1]===z), d=P.dayun.find(v=>v.gz[1]===z&&v.y1>=REAL_Y);
+  if(y) out.push(`${y} ${yearGZ(y)}年`);
+  if(d) out.push(`${d.y0} 年起的${d.gz}大运`);
+  return out;
+}
+/* 出生的时辰：按真太阳时是几点到几点，折回钟表时间又是几点到几点 */
+function shichen(){
+  const hi=Z.indexOf(NATAL[3].z), off=P.dlonSec+P.eotSec, h0=(hi*2+23)%24, h1=(hi*2+1)%24;
+  return {z:Z[hi],h0,h1,c0:hmOf(h0*3600-off),c1:hmOf(h1*3600-off)};
+}
+/* 交运落在什么时候：起运那天过了立春，就能说「逢某年」；没过立春只说公历年份的尾数 */
+function jiaoyun(){
+  const [Y,M,D]=P.yun.start, lc=DATA.jie[Y]?DATA.jie[Y][0].split('/').map(Number):[2,4];
+  const before=M<lc[0]||(M===lc[0]&&D<lc[1]), ygz=yearGZ(before?Y-1:Y);
+  return {Y,M,D,before,ygz,when:before?`尾数是 ${Y%10} 的年份的 ${M} 月${xun(D)}`:`${ygz[0]}年的 ${M} 月${xun(D)}`};
+}
+/* 大运为什么这样排。大运按钟表时间取；出生在节气交接前后时，钟表时间排出的年柱、月柱可能和页面上按真太阳时排的不一样。 */
+function yunWhy(n){
+  const fwd=P.yun.forward, d=P.dayun, rest=d.slice(1,n).map(x=>x.gz).join('、'), sex=P.gender?'男':'女', dir=fwd?'顺':'倒', nx=fwd?'后':'前';
+  const pc=P.pillarsClock||P.pillars;
+  if(pc[0]===P.pillars[0]&&pc[1]===P.pillars[1]) return `这张盘是${yy(pc[0][0])}年出生的${sex}性，${dir}着排：月柱${pc[1]}的${nx}一个是${d[0].gz}，再往${nx}是${rest}`;
+  return `出生时间离节气交接很近，大运是按钟表时间排的。按钟表时间，年柱是${pc[0]}，月柱是${pc[1]}，和上面按真太阳时排出的不一样。${yy(pc[0][0])}年出生的${sex}性${dir}着排：${pc[1]}的${nx}一个是${d[0].gz}，再往${nx}是${rest}`;
+}
+function stemWhy(g){
+  const el=EL[gEl(g)], de=EL[gEl(DM)], r=rel(g);
+  const how=[`和${DMN}同属${de}`,`${de}生${el}，是「我生」的一方`,`${de}克${el}，是「我克」的一方`,`${el}克${de}，是「克我」的一方`,`${el}生${de}，是「生我」的一方`][r];
+  const pol=g===DM?'和日主是同一个字':isYin(g)===isYin(DM)?`${g}和${DM}同为${yy(DM)}`:`${g}为${yy(g)}、${DM}为${yy(DM)}，阴阳不同`;
+  return `${how}；${pol}，所以是${god(g)}。`;
+}
+function stemParts(g){
+  const gd=god(g);
+  return [['五行阴阳',`${yy(g)}${EL[gEl(g)]}。`],['十神',stemWhy(g)],['对日主',effx(rel(g))],['传统读法',`${gd}。${GODX[gd]}`]];
+}
+
+/* ---------- 顶部信息 ---------- */
+function metaRows(){return memo('meta',()=>{
+  const c=P.clock, t=P.tst, off=P.dlonSec+P.eotSec, sc=shichen(), lu=P.lunar, yu=P.yun, jy=jiaoyun();
+  const [yp,mp,dp,hp]=P.pillars, yz=yp[1], mz=mp[1];
+  const mn=s=>Math.round(Math.abs(s)/60);
+  const ltxt=`${lu.year}年${lu.leap?'闰':''}${lu.month.replace(/^闰/,'')}月${lu.day}`;
+  const animal=z=>ANIMALS[Z.indexOf(z)];
+  const pj=P.prevJie, nj=P.nextJie, close=Math.min(pj.min,nj.min)<1440, nearJ=pj.min<nj.min?pj:nj;
+  const xd=xunkong(dp[0],dp[1]), xy=xunkong(yp[0],yp[1]);
+  const fallD=NATAL.filter((p,i)=>i!==2&&xd.includes(p.z)).map(p=>`${p.k}支${p.z}`), fallY=NATAL.filter((p,i)=>i!==0&&xy.includes(p.z)).map(p=>`${p.k}支${p.z}`);
+  const ty=G[(G.indexOf(mp[0])+1)%10]+Z[(Z.indexOf(mz)+3)%12];
+  const about=[yu.y?`${yu.y} 年`:'',yu.m?`${yu.m} 个月`:''].filter(Boolean).join(' ');
+  const dl=P.lon-120, cz=P.pillarsClock?P.pillarsClock[3][1]:sc.z;
+  const rows=[
+    {k:'公历',dd:`${c[0]} 年 ${c[1]} 月 ${c[2]} 日 ${hm(c)}（北京时间）`,t:'公历出生时间',p:[
+      ['是什么',P.source?`${esc(P.source)}上记录的钟表时间。`:'出生时的钟表时间，按北京时间记。'],
+      ['怎么用','排盘就是把它换成四组干支：年柱以立春为界，月柱以节气为界，日柱按六十甲子一天一个往下排，时柱两小时一个时辰。']]},
+    {k:'真太阳时',dd:`${t[2]!==c[2]?`${t[1]} 月 ${t[2]} 日 `:''}${hms(t)}，`+(mn(off)?`比北京时间${slow(off)}约 ${mn(off)} 分钟`:'和北京时间相差不到一分钟'),t:'真太阳时',p:[
+      ['是什么','按太阳实际位置算出来的当地时间。定时辰用它，不用钟表时间。'],
+      ['怎么来的',`${esc(P.place)}在东经 ${num(P.lon)} 度，`+(dl?`比北京时间的基准经线（东经 120 度）偏${dl<0?'西':'东'} ${num(Math.abs(dl))} 度，每度差 4 分钟，${slow(P.dlonSec)}${P.dlonSec%60?'约 ':' '}${mn(P.dlonSec)} 分钟。`:'正好在北京时间的基准经线上，不用做经度修正。')+`${c[1]} 月${xun(c[2])}，地球公转造成的偏差（均时差）是${slow(P.eotSec)}约 ${mn(P.eotSec)} 分钟。两项合计${slow(off)}约 ${mn(off)} 分钟。`],
+      ['这张盘',`${hm(c)} 换算后是 ${hmNear(t)}，在${sc.z}时（${sc.h0} 点到${sc.h1<sc.h0?'次日 ':' '}${sc.h1} 点）。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}。`+(cz!==sc.z?`钟表上的 ${hm(c)} 本来落在${cz}时，换算之后进了${sc.z}时，时柱跟着变了。`:'')]]},
+    {k:'农历',dd:`${ltxt}，${sc.z}时`,t:'农历日期',p:[
+      ['是什么',`${ltxt}。`],
+      ['注意','农历日期不参与排盘，只作对照。月柱看节气，不看农历月份；年柱看立春，不看正月初一。'+(lu.year===yp?'':(gz60(yp[0],yp[1])+1)%60===gz60(lu.year[0],lu.year[1])?`这一天过了正月初一，还没到立春，所以农历年已经是${lu.year}，年柱还是${yp}。`:`这一天过了立春，还没到正月初一，所以年柱已经是${yp}，农历年还是${lu.year}。`)]]},
+    {k:'出生地',dd:esc(P.place),t:'出生地',p:[['怎么用','只用它的经度来换算真太阳时。']]},
+    {k:'生肖 · 星座',dd:`${animal(yz)} · ${P.xingzuo}座`,t:'生肖和星座',p:[
+      ['生肖',`就是年支。${yz}对应${animal(yz)}。`+(lu.year!==yp?`年支以立春为界。按正月初一换年的算法，生肖是${animal(lu.year[1])}。两种算法都有人用。`:'')],
+      ['星座',`${P.xingzuo}座是西方占星里的太阳星座，和八字是两套互不相干的体系，排盘软件习惯一并列出。`]]},
+    {k:'节气',dd:`${pj.name}后 ${rough(pj.min)}，${nj.name}前 ${rough(nj.min)}`,t:'出生节气',p:[
+      ['是什么','二十四节气里，立春、惊蛰、清明等十二个节是八字月份的分界。'],
+      ['这张盘',`${pj.name}（${pj.at[1]} 月 ${pj.at[2]} 日）到${nj.name}（${nj.at[1]} 月 ${nj.at[2]} 日）之间是${mz}月。出生在${pj.name}之后 ${span(pj.min)}、${nj.name}之前 ${span(nj.min)}`+(close?`。离${nearJ.name}不到一天，${nearJ.name==='立春'?'年柱和月柱':'月柱'}要看交接的具体时刻（${nearJ.at[1]} 月 ${nearJ.at[2]} 日 ${hm(nearJ.at)}）。这里拿真太阳时和节气的时刻比较；也有直接拿钟表时间比较的，两种比法在这种时候可能排出不同的月柱。`:`，离两头都超过一天，月柱${mp}没有疑问。`)],
+      P.pillarsClock&&(P.pillarsClock[0]!==yp||P.pillarsClock[1]!==mp)?['注意',`直接拿钟表时间排，年柱和月柱是${P.pillarsClock[0]}、${P.pillarsClock[1]}；拿真太阳时排是${yp}、${mp}。这一页用后一种，两种取法都有人用。`]:null]},
+    {k:'空亡',dd:`日柱查：${xd} · 年柱查：${xy}`,t:'空亡',p:[
+      ['是什么','十个天干配十二个地支，每配完一轮（一旬）会剩下两个地支，这两个叫空亡。'],
+      ['怎么来的',`日柱${dp}在甲${Z[xunHead(dp[0],dp[1])]}旬，剩下${xd[0]}、${xd[1]}。年柱${yp}在甲${Z[xunHead(yp[0],yp[1])]}旬，剩下${xy[0]}、${xy[1]}。`],
+      ['这张盘',(fallD.length?`${fallD.join('、')}落在日柱的空亡里`:'没有地支落在日柱的空亡里')+'，'+(fallY.length?`${fallY.join('、')}落在年柱的空亡里`:'没有地支落在年柱的空亡里')+'。传统上以日柱查出的为主，落空的地支读作力量打折扣。']]},
+    {k:'胎元 · 命宫',dd:`${P.taiyuan}（${DATA.nayin[P.taiyuan]}） · ${P.minggong}（${DATA.nayin[P.minggong]}）`,t:'胎元和命宫',p:[
+      ['胎元','推算出来的受孕月份。'+(ty===P.taiyuan?`月干往后一位，月支往后三位：${mp}变成${ty}。`:'')],
+      ['命宫','由月支和时支推出来的一个干支，借自更早的星命术。'],
+      ['怎么用','两者在子平法里都只是辅助参考，初学可以先放一放。括号里是它们的纳音。']]},
+    {k:'身宫',dd:`${P.shengong}（${DATA.nayin[P.shengong]}）`,t:'身宫',p:[
+      ['是什么','和命宫是一对，同样由月支和时支推出。'],
+      ['怎么用','子平法里很少用到，初学可以先放一放。']]},
+    {k:'起运',dd:`出生后${about?'约 '+about:'不到一个月'}，${jy.Y} 年 ${jy.M} 月${xun(jy.D)}`,t:'起运时间',p:[
+      ['是什么','第一步大运从什么时候开始。'],
+      ['怎么来的',`${yy((P.pillarsClock||P.pillars)[0][0])}年出生的${P.gender?'男':'女'}性，大运${yu.forward?'顺':'逆'}排，从出生时刻往${yu.forward?'后':'回'}数到${yu.forward?'下':'上'}一个节（${yu.jie}），相隔 ${span(yu.gapMin)}。按三天折合一年，${about?'约等于 '+about:'折下来不到一个月'}。`],
+      ['这张盘',`${c[0]} 年 ${c[1]} 月出生，${jy.Y} 年 ${jy.M} 月${xun(jy.D)}起运，第一步是${P.dayun[0].gz}。`],
+      ['注意','折算有粗有细：有的只按整天和时辰算，有的按分钟算，起运的日子会差几天。这里按分钟算，出生时刻用钟表时间。']]},
+    {k:'交运',dd:jy.before?`每逢尾数是 ${jy.Y%10} 的年份，${jy.M} 月${xun(jy.D)}换大运`:`每逢${jy.ygz[0]}年的 ${jy.M} 月${xun(jy.D)}换大运`,t:'交运',p:[
+      ['是什么','每十年换一步大运，换的那个时间点叫交运。'],
+      ['这张盘',(jy.before?`${jy.Y} 年 ${jy.M} 月还没过立春，算${jy.ygz}年。之后每逢公历尾数是 ${jy.Y%10} 的年份换运`:`${jy.Y} 年是${jy.ygz}年。之后每逢公历尾数是 ${jy.Y%10} 的年份（都是${jy.ygz[0]}年）换运`)+`：${jy.Y+10}、${jy.Y+20}、${jy.Y+30}。换运在 ${jy.M} 月${xun(jy.D)}，日子由出生时刻推出，和立春不是同一天。`]]}
+  ];
+  return addRows(rows,note('meta'));
+});}
+/* notes 里可以补几行：{k: 行名, after: 插在哪一行后面, dd: 显示的值, t: 解释的标题, p: 解释的段落} */
+function addRows(rows,extra){
+  (extra||[]).forEach(r=>{const i=rows.findIndex(x=>x.k===r.after);rows.splice(i<0?rows.length:i+1,0,r);});
+  return rows;
+}
+
+/* ---------- 日主一栏 ---------- */
+function kvRows(){return memo('kv',()=>{
+  const de=gEl(DM), se=(de+4)%5, mz=NATAL[1].z, r=roots(), s=seals(), tg=touGan();
+  const noRoot=NATAL.filter(p=>!r.some(x=>x.k===p.k)).map(p=>`${p.k}支${p.z}`);
+  const rows=[
+    {k:'日主',dd:`<b class="${gCls(DM)}">${DMN}</b>，${yy(DM)}${EL[de]}，生于${mz}月（${SEASON[mz]}）`,t:'日主',p:[
+      ['是什么','日柱的天干，代表这张盘的主人，是全盘的原点。'],
+      ['这张盘',`${DM}是${yy(DM)}${EL[de]}。`]]},
+    {k:'根',dd:r.length?r.map(x=>`${x.k}支${x.z}中有${gN(x.h)}`).join('，')+(r.length===1?`，是地支里唯一的${EL[de]}`:''):`地支里没有${EL[de]}，日主没有根`,t:'根',p:[
+      ['是什么','天干在地支里找到同一五行的藏干，叫通根，也叫有根。有根的天干站得稳，没有根的叫虚浮。'],
+      ['这张盘',r.length?`${DMN}的根在${r.map(x=>`${x.k}支${x.z}，${x.z}里藏着${gN(x.h)}`).join('；')}。`+(noRoot.length?`${noRoot.join('、')}里都没有${EL[de]}。`:''):`四个地支里都没有${EL[de]}，${DMN}没有根。`]]},
+    {k:'印',dd:s.length?s.map(x=>x.stem?`${x.k}干${gN(x.g)}透出`:`${x.k}支${x.z}中藏${gN(x.h)}`).join('，'):`盘里没有${EL[se]}，日主没有印`,t:'印',p:[
+      ['是什么',`生日主的五行。${EL[se]}生${EL[de]}，所以${EL[se]}是${DMN}的印：${[G[se*2],G[se*2+1]].map(g=>`${yy(g)}${EL[se]}${g}是${god(g)}`).join('，')}。`],
+      ['这张盘',s.length?s.map(x=>x.stem?`${x.k}干${gN(x.g)}是${god(x.g)}，露在天干上`:`${x.k}支${x.z}里藏的${gN(x.h)}是${god(x.h)}`).join('。')+'。':`盘里没有${EL[se]}，也就没有印。`]]},
+    {k:'月令透干',dd:tg,t:'月令透干',p:[
+      ['是什么','月支里藏的天干出现在某一柱的天干上，叫透干。藏着的力量露了出来，分量最重。'],
+      ['这张盘',tg+'。格局法从月令透出的字来定格局。']]}
+  ];
+  return addRows(rows,note('kv'));
+});}
+
+/* ---------- 细盘的行名和列名 ---------- */
+function rowX(name){
+  const N=NATAL, K=p=>p.k;
+  if(name==='主星') return {t:'主星',p:[['是什么',`每一柱的天干相对于日主${DMN}的十神。`],['这张盘',N.filter(p=>!p.day).map(p=>`${K(p)}干${p.g}是${god(p.g)}`).join('，')+'。日干就是日主自己。'],['怎么读','天干露在外面，传统上说它主看得见的一面；藏在地支里的十神主内里。点任意一个天干，可以看它的十神是怎么推出来的。']]};
+  if(name==='天干') return {t:'天干',p:[['是什么','甲乙丙丁戊己庚辛壬癸，共十个。两个一组配五行：甲乙木、丙丁火、戊己土、庚辛金、壬癸水。每组前一个为阳，后一个为阴。'],['颜色','绿是木，红是火，棕是土，黄是金，蓝是水。']]};
+  if(name==='地支') return {t:'地支',p:[['是什么','子丑寅卯辰巳午未申酉戌亥，共十二个，对应十二个月、十二个时辰，也就是十二生肖。'],['怎么读','地支本身不直接定十神，要看它里面藏的天干。地支之间的合、冲、刑、害见下面的干支关系。']]};
+  if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
+  if(name==='星运'){
+    const good=N.filter(p=>['长生','临官','帝旺'].includes(stage(DM,p.z))).map(p=>`${K(p)}支${p.z}`);
+    return {t:'星运',p:[['是什么',`日主${DMN}走到每一柱的地支时，处在十二长生的哪个阶段。十二长生把一个五行的兴衰比作人的一生：长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。`],['这张盘',N.map(p=>`${K(p)}支${p.z}是${stage(DM,p.z)}`).join('，')+`。按长生、临官、帝旺算得力来看，${DMN}${good.length?'在'+good.join('、')+'上得力':'在四个地支上都不算得力'}。`],['注意','阴干的十二长生是不是倒着走，各派有分歧。这里按通行的阳干顺行、阴干逆行。']]};
+  }
+  if(name==='自坐') return {t:'自坐',p:[['是什么','每一柱自己的天干，坐在自己地支上的十二长生状态。看的是这个天干脚下稳不稳。'],['这张盘',N.map(p=>`${K(p)}柱${p.g}坐${p.z}是${stage(p.g,p.z)}`).join('，')+'。'],['注意','这一行受阴干逆行的争议影响最大。比如乙坐亥按表是死，可是亥水生木，亥里还藏着甲木，乙木其实有依靠。只作参考。']]};
+  if(name==='空亡'){
+    const xd=xunkong(N[2].g,N[2].z), xy=xunkong(N[0].g,N[0].z);
+    const fd=N.filter((p,i)=>i!==2&&xd.includes(p.z)).map(p=>`${K(p)}支${p.z}`), fy=N.filter((p,i)=>i!==0&&xy.includes(p.z)).map(p=>`${K(p)}支${p.z}`);
+    return {t:'空亡',p:[['是什么','十个天干配十二个地支，每配完一轮（一旬）会剩下两个地支，这两个叫空亡，也叫旬空。'],['这一行','每一柱各自所在的那一旬剩下的两个地支。'],['怎么用',`通常只用日柱那一格：${xd[0]}、${xd[1]}。${fd.length?fd.join('、')+'落在里面'+(fd.length===1?`，叫${fd[0][0]}支空亡`:''):'另外三柱的地支都不在里面'}。有的也参考年柱那一格：${xy[0]}、${xy[1]}，${fy.length?fy.join('、')+'落在里面':'另外三柱的地支都不在里面'}。落空的地支，传统上读作力量打折扣。`]]};
+  }
+  if(name==='纳音'){
+    const ny=p=>DATA.nayin[p.g+p.z];
+    return {t:'纳音',p:[['是什么','六十甲子每两个一组，配一个带意象的五行名，比如山头火、大驿土，共三十种。它来自古代音律，属于比子平法更早的算命体系。'],['这张盘',N.map(p=>`${K(p)}柱${ny(p)}`).join('，')+`。常说的什么命，指的是年柱纳音：${ny(N[0])}命。`],['怎么用','子平法基本不用纳音做判断，它主要留在合婚、起名一类的民俗里。']]};
+  }
+  if(name==='神煞'){
+    const mixed=SHENSHA.map((row,i)=>({i,ji:row.filter(o=>SS[o.n].k==='吉').map(o=>o.n),xi:row.filter(o=>SS[o.n].k==='凶').map(o=>o.n)})).filter(x=>x.ji.length&&x.xi.length).sort((a,b)=>Math.min(b.ji.length,b.xi.length)-Math.min(a.ji.length,a.xi.length)||(b.ji.length+b.xi.length)-(a.ji.length+a.xi.length))[0];
+    const total=SHENSHA.reduce((n,row)=>n+row.length,0);
+    return {t:'神煞',p:[
+      ['是什么','按固定口诀从干支里查出来的标签。名字好听的叫神，难听的叫煞。它们是早期算命术留下的，子平法兴起以后退到了次要位置。'],
+      ['怎么读','每个口诀只看一两个字，所以每个标签都很常见，单独拿出来下判断没有意义。点具体的名字，可以看它的口诀和有多常见。'],
+      ['这张盘',`四柱一共查出 ${total} 个标签。`+(mixed?`${'年月日时'[mixed.i]}柱同时带着${mixed.ji.join('、')}这${cn(mixed.ji.length)}个旧说算吉的，和${mixed.xi.join('、')}这${cn(mixed.xi.length)}个旧说算凶的。吉凶互相打架，是因为每个口诀各查各的。`:'')],
+      ['范围',`这一页只按 ${SS_NAMES.length} 条常见的口诀来查：${SS_NAMES.join('、')}。别的书和软件里还有很多别的神煞，这里没列出来不等于盘里没有。`],
+      ['统计','有多常见的数字，是用同样的口诀把 1924 到 2043 年的每一天、每个时辰都排了一遍数出来的，共 52 万多张盘。']]};
+  }
+  return null;
+}
+function colX(k){
+  const i='年月日时'.indexOf(k);
+  if(i>=0){
+    const p=NATAL[i], [yp,mp,dp,hp]=P.pillars, h=HID[p.z][0];
+    const basic=`${gN(p.g)}是${god(p.g)}，${zN(p.z)}的本气${h}是${god(h)}。`;
+    if(k==='年') return {t:`年柱 · ${yp}`,p:[['是什么','出生那一年的干支。以立春为界，不看正月初一。'],['宫位','四柱被比作一个家的四个位置。年柱对应祖上和家世，也对应人生最早的一段。这是分类的习惯，各书的分法不完全一样。'],['这张盘',basic]]};
+    if(k==='月'){
+      const ys=G.indexOf(yp[0]), mi=(Z.indexOf(p.z)+10)%12, ok=G[((ys%5)*2+2+mi)%10]+p.z===mp;
+      return {t:`月柱 · ${mp}`,p:[['是什么','出生那个月的干支，以节气为界。'+(ok?`月干由年干推出：${yp[0]}年的正月从${G[((ys%5)*2+2)%10]}寅起，`+(mi?`排到${MONTHS[mi]}是${mp}。`:`正月就是${mp}。`):'')],['为什么重要','月支叫月令，代表出生的季节，是衡量全盘每个字强弱的基准。'],['宫位','对应父母、兄弟，也对应青年时期。'],['这张盘',basic+touGan()+'。']]};
+    }
+    if(k==='日'){
+      const rt=roots().filter(x=>x.k==='日');
+      return {t:`日柱 · ${dp}`,p:[['是什么','出生那天的干支。六十甲子一天一个，连续循环，和年、月无关。'],['宫位','日干是日主，代表自己。日支紧挨着日主，叫配偶宫。'],['这张盘',`${DMN}坐在${zN(p.z)}上。${p.z}的本气${gN(h)}是${god(h)}。`+(rt.length?`${DMN}在这里有根。`:`${p.z}里没有${EL[gEl(DM)]}，${DMN}在自己坐的这一支上没有根。`)]]};
+    }
+    const sc=shichen(), hi=Z.indexOf(p.z), late=P.tst[3]===23, base=late?G[(G.indexOf(DM)+1)%10]:DM, bi=G.indexOf(base);
+    const ok=G[((bi%5)*2+hi)%10]+p.z===hp;
+    return {t:`时柱 · ${hp}`,p:[
+      ['是什么','出生时辰的干支，两小时一个时辰。'+(!ok?'':late?`时干由日干推出。晚上 11 点以后出生，这里按第二天的日干${base}来推：${base}日的子时是${hp}。`:`时干由日干推出：${DM}日的子时从${G[(bi%5)*2]}子起，`+(hi?`排到${p.z}时是${hp}。`:`子时就是${hp}。`))],
+      ['宫位','对应子女，也对应晚年。'],
+      ['这张盘',basic],
+      ['注意',`时柱取决于出生时间准不准。${P.source?esc(P.source)+'记的是':'钟表时间是'} ${hm(P.clock)}，换算成真太阳时是 ${hmNear(P.tst)}，在${p.z}时。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}，出了这个范围时柱就会变。`+(hi===0?'子时跨着零点。这里以零点换日：晚上 11 点到零点出生的，日柱算当天，时干按第二天的日干来推。也有人主张晚上 11 点就换日。':'')]]};
+  }
+  const fwd=P.yun.forward, d=DATA.people[sel.p].dayun[sel.dy];
+  if(k==='大运') return {t:`大运 · ${d.gz}（${d.y0}–${d.y1}）`,p:[
+    ['是什么',`十年一步的大环境。它从月柱推出来：阳年出生的男性和阴年出生的女性顺着排，阴年出生的男性和阳年出生的女性倒着排。${yunWhy(4)}。`],
+    ['怎么读',`把它当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。`],
+    ['这一步',`${d.gz[0]}是${god(d.gz[0])}，${d.gz[1]}的本气${HID[d.gz[1]][0]}是${godZ(d.gz[1])}。`],
+    ['注意','大运的天干和地支，有的流派说各管五年，有的说十年合看、以地支为重。']]};
+  if(k==='流年'){const gz=yearGZ(sel.y);return {t:`流年 · ${sel.y} ${gz}`,p:[
+    ['是什么','那一年本身的干支，以立春为界，所有人都一样。'],
+    ['怎么读','和大运一样，当成临时加进来的一柱。传统上说大运是十年的背景，流年是当年的主题。'],
+    ['这一年',`${gz[0]}是${god(gz[0])}，${gz[1]}的本气${HID[gz[1]][0]}是${godZ(gz[1])}。`]]};}
+  return null;
+}
+
+/* ---------- 各版块的解读框 ---------- */
+const box=(title,body)=>`<p class="rd-h">${title}</p>${body}`;
+const lis=a=>a.filter(Boolean).map(x=>`<li>${x}</li>`).join('');
+function readPan(){
+  const mg=NATAL[1].g, c=catCounts(), max=Math.max(...c), top=CAT.filter((_,i)=>c[i]===max);
+  const help=whereGod(g=>rel(g)===4), same=whereGod(g=>rel(g)===0), de=gEl(DM);
+  return box('解读 · 这张表怎么读',`<ol class="cols">${lis([
+    `先找日柱的天干<b class="${gCls(DM)}">${DM}</b>。它叫日主，代表这张盘的主人。其余七个字，都要先换算成它是${DMN}的什么。`,
+    `换算的结果叫十神，就是主星一行和藏干旁边的小字。例如月干${gN(mg)}：${stemWhy(mg)}`,
+    `数一数十神，按五类来分：${CAT.map((x,i)=>`${x[0]} ${c[i]} 处`).join('，')}。`+(top.length===1?`最多的是${top[0][0]}，传统上读作${top[0][2]}。`:`最多的是${top.map(x=>x[0]).join('、')}，各 ${max} 处。`)+'个数多只说明这一类的字多，不等于它的力量一定大。',
+    `再看谁在帮日主。生${DMN}的${EL[(de+4)%5]}`+(help.length?`有 ${help.length} 处：${help.join('、')}。`:'一处也没有。')+`和它同类的${EL[de]}`+(same.length?`有 ${same.length} 处：${same.join('、')}。`:'，除了日主自己一处也没有。')+`消耗它的字，也就是它所生、所克和克它的，有 ${c[1]+c[2]+c[3]} 处。数个数是最粗的办法，强弱还要看月令和根，各派的算法也不一样。`,
+    '星运、自坐、空亡、纳音、神煞是附加的标注，越往下越次要。点行名可以看每一行是什么，点格子可以看这一格是怎么来的。'])}</ol>`);
+}
+function readYun(){
+  return box('解读 · 现在选中的四层',
+    `<p>大运从月柱推出来，十年一步。${yunWhy(3)}。流年、流月、流日是那一年、那个月、那一天本身的干支，所有人都一样。读法相同：把选中的干支当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。</p>`+
+    '<dl class="layers" id="layers"></dl>'+
+    `<p>生身、帮身是给${DMN}加力，泄身、耗身、克身是减力。加力不等于好事，减力也不等于坏事，这里只是在记力量的账。</p>`+
+    '<p>传统上说大运是十年的背景，流年是当年的主题，流月和流日一层比一层细，分量也一层比一层轻。大运的天干和地支，有的流派说各管五年，有的说十年合看、以地支为重。</p>');
+}
+function noteYun(){
+  const [Y,M]=P.yun.start;
+  return `流年以立春为界，流月以节气为界，日期是每个月开始的那一天。换到别的年份时，流月保持原来选中的位置。流日按公历日期排，以零点为界；也有人主张晚上 11 点就换日。${Y} 年 ${M} 月之前尚未起运。岁数为虚岁，${P.clock[0]} 年算 1 岁。`;
+}
+/* 原局两柱隔得多远：w 形如「年支–日支」 */
+function gapText(w){
+  const ks=w.split('–'); if(ks.length!==2) return `在${ks.join('、')}之间。`;
+  const gap=Math.abs('年月日时'.indexOf(ks[0][0])-'年月日时'.indexOf(ks[1][0]));
+  return `在${ks[0]}和${ks[1]}之间，`+['','两柱相邻，力量是足的。','中间隔着一柱，力量打了折扣。','隔了两柱，力量很小。'][gap];
+}
+function readRel(){
+  const base=relations(NATAL), n=base.length;
+  if(!n) return box('解读 · 原局的关系','<p>原局四柱之间，没有查到五合、相冲、相克，也没有合、会、刑、害、破。没有关系不算好也不算坏，只说明这八个字之间各管各的。</p>');
+  const zr=base.filter(r=>r.grp==='z'), li=[];
+  const cnt={}; zr.forEach(r=>new Set(r.where.flatMap(w=>w.split('–'))).forEach(k=>{cnt[k]=(cnt[k]||0)+1;}));
+  const ks=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  if(ks.length&&cnt[ks[0]]>=3&&(ks.length<2||cnt[ks[1]]<cnt[ks[0]])){
+    const p=NATAL.find(x=>x.k===ks[0][0]), rt=roots(), mine=rt.filter(x=>x.k===p.k);
+    li.push(`<b>${ks[0]}${p.z}牵涉最多。</b>${zr.length} 条地支关系里有 ${cnt[ks[0]]} 条和它有关。`+(mine.length?`${p.z}里的${gN(mine[0].h)}又是日主${DMN}在地支里${rt.length===1?'唯一的根':'的一处根'}。`:''));
+  }
+  base.filter(r=>r.grp==='g').forEach(r=>{
+    const [a,b]=r.c.split(''), gd=g=>g===DM&&r.where[0].includes('日干')?'日主':god(g);
+    const ke=(gEl(a)+2)%5===gEl(b)?[a,b]:[b,a];
+    li.push(`<b>${r.c}${r.t==='五合'?'相合':r.t}。</b>`+(r.t==='五合'?`${gd(a)}和${gd(b)}合在一起，旧说${r.n}。`:`${gN(ke[0])}克${gN(ke[1])}，也就是${gd(ke[0])}克${gd(ke[1])}。`)+r.where.map(gapText).join(''));
+  });
+  const seen=new Set();
+  zr.forEach(r=>{
+    if(seen.has(r.c)) return; seen.add(r.c);
+    const grp=zr.filter(x=>x.c===r.c), where=r.where.map(gapText).join('');
+    if(grp.length>1){li.push(`<b>${r.c}，一对字有${cn(grp.length)}种关系。</b>同时是${grp.map(x=>x.t).join('、')}。${where}`);return;}
+    let s=`<b>${r.c}${r.t}。</b>`;
+    if(r.t==='拱合'||r.t==='拱会'){const x=r.n[1], b=bringers(x);s+=`${r.n}。两头在、中间空，只算有这个趋势。等大运或流年把${x}带来，局才凑齐`+(b.length?`，比如 ${b.join('、')}。`:'。');}
+    else if(r.t==='六合') s+=`旧说${r.n}。`;
+    else if(r.t==='半合') s+=`${r.n}的一半，带着中间的旺支。`;
+    else if(r.t==='三合'||r.t==='三会') s+=`${r.n}，三个字凑齐了。`;
+    else if(r.n) s+=`${r.n}。`;
+    li.push(s+where);
+  });
+  return box(`解读 · 原局的${cn(n)}条关系`,`<ul class="cols">${lis(li)}</ul>`);
+}
+function readRel2(){
+  return box('解读 · 大运和流年带来的关系',
+    '<p>点任意一条，可以看它的来历和涉及的十神。读的时候先按力量排个序：一般的说法是三会、三合成了局的力量最大，相冲其次，再往下是六合、相刑，相害和相破最小。相邻的强，隔得远的弱。各派的排法略有不同。</p>'+
+    '<p>宫位（年柱祖辈、月柱父母、日支配偶、时柱子女）只是分类的习惯。同一年同一个月出生的人，年柱和月柱完全一样，流年对这两柱的冲、刑、害，对他们每个人都相同。所以这一页只说明干支之间的结构，不把它翻成具体的人和事。</p>');
+}
+function readWx(){
+  const {cnt,face,n}=wxCounts(), de=gEl(DM), me=zEl(NATAL[1].z);
+  const lst=a=>[0,1,2,3,4].sort((x,y)=>a[y]-a[x]||x-y).map(i=>`${EL[i]} ${a[i]}`).join('、');
+  const max=Math.max(...cnt), tops=[0,1,2,3,4].filter(i=>cnt[i]===max), help=cnt[de]+cnt[(de+4)%5];
+  return box('解读',`<ul>${lis([
+    `两种数法。只数盘面八个字，${lst(face)}。把地支里藏的天干也算上，一共 ${n} 个，${lst(cnt)}。`,
+    (tops.length===1?`${EL[tops[0]]}最多`+(tops[0]===me?'，又正当令。':`，当令的是${EL[me]}。`):`${tops.map(i=>EL[i]).join('、')}一样多，当令的是${EL[me]}。`)+`${DMN}自己属${EL[de]}，处在${wxState(de)}的状态。帮它的${EL[(de+4)%5]}和${EL[de]}合起来 ${help} 个，消耗它的${[1,2,3].map(k=>EL[(de+k)%5]).join('、')}合起来 ${n-help} 个。`,
+    '数个数是最粗的办法。同一个字在不在月令、有没有透到天干，分量差得很多。点左边的字看每一行分别在哪里。'])}</ul>`);
+}
+function noteWx(){return `右侧是${NATAL[1].z}月的月令状态：当令者旺，令所生者相，生令者休，克令者囚，令所克者死。括号里是只数盘面八个字的个数。`;}
+function readTk(){
+  const de=gEl(DM), mz=NATAL[1].z, st=wxState(de), r=roots(), s=seals();
+  return box('解读',`<ul>${lis([
+    `${DM}是${yy(DM)}${EL[de]}。生在${mz}月，${EL[zEl(mz)]}当令，${EL[de]}处在${st}的状态：${STATEX[st]}`,
+    `根和印是日主的两种支持。根是地支里藏着的同类，印是生它的五行。这张盘${r.length?`有 ${r.length} 处根`:'没有根'}，${s.length?`有 ${s.length} 处印`:'没有印'}。`,
+    `${touGan()}。格局法从月令透出的字来定格局。`,
+    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。各派的权重不一样，这一页只列出依据，不下结论。'])}</ul>`);
+}
+function readGods(){
+  const stems=natalStems(), c={}; GODS.forEach(g=>{c[g]=0;});
+  stems.concat(natalHidden()).forEach(g=>{c[god(g)]++;});
+  const have=GODS.filter(g=>c[g]), miss=GODS.filter(g=>!c[g]), grp={};
+  have.forEach(g=>{(grp[c[g]]=grp[c[g]]||[]).push(g);});
+  const byN=Object.keys(grp).map(Number).sort((a,b)=>b-a).map(k=>grp[k].length>1?`${grp[k].join('、')}各 ${k} 个`:`${grp[k][0]} ${k} 个`).join('，');
+  return box('解读',`<ul class="cols">${lis([
+    '十神是五种五行关系（同我、我生、我克、克我、生我）各按阴阳是否相同分成两个，一共十个。它们是八字里通用的词汇，后面所有的判断都用它们来说。',
+    `这张盘上十个里出现了${cn(have.length)}个`+(miss.length?`，缺${miss.join('、')}`:'')+`。露在天干上的是${[...new Set(stems)].map(g=>god(g)+g).join('、')}，其余都藏在地支里。`,
+    `按个数，${byN}。点表里的名字看每个十神的传统读法。`])}</ul>`);
+}
+function footItems(){
+  return [
+    `时辰按真太阳时取：${P.source?esc(P.source)+'上的':''}钟表时间是 ${hm(P.clock)}，换算后落在${NATAL[3].z}时。`,
+    `年柱以立春为界，月柱以节气为界；大运${P.yun.forward?'顺':'逆'}排，在${jiaoyun().when}交接。`,
+    '神煞按常见口诀查出，各家取法不一，只是标签，不单独作判断；这里只列原局四柱的。',
+    '八字是一套传统的符号推演体系，没有可靠证据表明它能预测人生。'];
+}
+/* 解读框：notes.read 里有手写的就用手写的，没有就用上面按规则生成的 */
+const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods};
+function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slot]():h;}
+
+/* ---------- 点开的解释 ---------- */
+function layerGZ(top){return top===1?P.dayun[sel.dy].gz:top===2?yearGZ(sel.y):top===3?monthGZ(sel.y,sel.m):dayGZ(sel.d);}
+/* 原局的一条关系，结合这张盘能补充什么 */
+function natalRelNote(t,c,n,grp){
+  const out=[];
+  if(grp==='z'){
+    const same=relations(NATAL).filter(r=>r.grp==='z'&&r.c===c);
+    if(same.length>1) out.push(`${c}这一对同时是${same.map(r=>r.t).join('、')}。`);
+  }
+  if(t==='拱合'||t==='拱会'){const x=n[1], b=bringers(x);out.push(`等${x}来了才凑齐。`+(b.length?`${b.join('、')}会带来${x}。`:''));}
+  return out.join('');
+}
+function xRel(t,c,n,where,top,grp){
+  const isG=grp==='g', ws=where.split('、'), chars=c.split('');
+  const p=[['是什么',RT[t==='相冲'?(isG?'相冲g':'相冲z'):t]]];
+  if(top===0){
+    const idx=ws[0].split('–').map(w=>'年月日时'.indexOf(w[0]));
+    const gap=idx.length===2?Math.abs(idx[0]-idx[1]):0;
+    p.push(['这一条',`在原局的${ws[0].replace(/–/g,'和')}之间。`+['','两柱紧挨着。','中间隔了一柱，作用打了折扣。','隔了两柱，作用很小。'][gap]]);
+  }else{
+    const gz=layerGZ(top), inc=isG?gz[0]:gz[1];
+    const others=chars.filter(ch=>ch!==inc);
+    const partners=ws.map(w=>/[干支]$/.test(w)?'原局'+w:w);
+    p.push(['这一条',chars.length===3
+      ?`${LAYER[top]}的${inc}，加上${partners.join('、')}，凑齐了${c}。`
+      :`${LAYER[top]}的${inc}，对上${partners.join('、')}的${others[0]||inc}。`]);
+  }
+  let d='';
+  if(isG){
+    const ex=gEl(chars[0]), ey=gEl(chars[1]);
+    const ke=(ex+2)%5===ey?[chars[0],chars[1]]:(ey+2)%5===ex?[chars[1],chars[0]]:null;
+    if(t==='五合') d=`${c}相合，旧说${n}。`+(ke?`论五行本来是${ke[0]}克${ke[1]}。`:'');
+    else if(ke) d=`${EL[gEl(ke[0])]}克${EL[gEl(ke[1])]}，${ke[0]}克${ke[1]}。`;
+  }else{
+    if(t==='六合') d=`${c}相合，旧说${n}。`+(c==='巳申'?'这一对同时还是相刑、相破。':c==='寅亥'?'这一对同时还是相破。':'');
+    else if(t==='三合'||t==='三会') d=`${c}，${n}。`;
+    else if(t==='半合') d=`${c}是${n}的一半，带着中间的旺支。`;
+    else if(t==='拱合'||t==='拱会') d=`${c}，${n}。`;
+    else if(t==='暗合') d=AN[c]||'';
+    else if(t==='相冲'){const ea=zEl(chars[0]), eb=zEl(chars[1]); d=ea===eb?'两个都属土，旧说这种冲会把库里藏的天干冲出来。':`${EL[ea]}和${EL[eb]}相克。`;}
+    else if(t==='相刑') d='寅巳申'.includes(chars[0])&&'寅巳申'.includes(chars[1])?'属于寅巳申一组，旧称无恩之刑。':'丑戌未'.includes(chars[0])?'属于丑戌未一组，旧称恃势之刑。':'子卯一组，旧称无礼之刑。';
+    else if(t==='三刑') d=c==='寅巳申'?'寅巳申三支凑齐，旧称无恩之刑。':'丑戌未三支凑齐，旧称恃势之刑。';
+    else if(t==='自刑') d=`${chars[0]}重复出现。`;
+    else if(t==='相害'){
+      const [x,y]=chars, px=zHe(x);
+      if(Z_CHONG[y+px]) d=`${x}的六合对象是${px}，${y}冲${px}，等于拆了${x}的伙伴。`;
+    }
+  }
+  if(d) p.push(['细节',d]);
+  const gods=[...new Set(chars)].map(ch=>isG?`${ch}是${ch===DM&&where.includes('日干')?'日主':god(ch)}`:`${ch}的本气${HID[ch][0]}是${godZ(ch)}`).join('，');
+  p.push(['涉及的十神',gods+'。']);
+  if(top===0){
+    const g=natalRelNote(t,c,n,grp), mine=note('rel',t+c);
+    if(mine) p.push(['你的盘',mine]); else if(g) p.push(['这张盘',g]);
+  }
+  return {t:`${t} · ${c}${n?'（'+n+'）':''}`,p};
+}
+/* 原局的某个天干：地支里有没有根，是不是月令透出来的 */
+function stemPosNote(c){
+  const e=gEl(c.g), rt=[];
+  NATAL.forEach(p=>HID[p.z].split('').forEach(h=>{if(gEl(h)===e) rt.push(`${p.k}支${p.z}里的${h}`);}));
+  return (rt.length?`地支里和它同属${EL[e]}的藏干有${rt.join('、')}，算有根。`:`地支里没有${EL[e]}，它没有根，是虚浮的。`)+(HID[NATAL[1].z].includes(c.g)?`它是月令${NATAL[1].z}里藏的字透出来的。`:'');
+}
+/* 原局的某个地支：和另外三支有什么关系，里面有没有日主的根 */
+function branchPosNote(c){
+  const me=c.k+'支', out=[];
+  relations(NATAL).filter(r=>r.grp==='z').forEach(r=>r.where.forEach(w=>{const ks=w.split('–');if(ks.includes(me)) out.push(`和${ks.filter(x=>x!==me).join('、')}${r.t}`);}));
+  const rt=roots().filter(x=>x.k===c.k);
+  return (c.k==='月'?'月支又叫月令，是衡量全盘强弱的基准。':'')+(out.length?`它${out.join('，')}。`:'它和另外三个地支之间没有合冲刑害。')+(rt.length?`它里面的${rt.map(x=>gN(x.h)).join('、')}是日主${DMN}的根。`:'');
+}
+function X0(key){
+  const a=key.split('|'), k=a[0];
+  if(k==='meta'||k==='kv'){const r=(k==='meta'?metaRows():kvRows()).find(x=>x.k===a[1]);return r?{t:r.t,p:r.p}:null;}
+  if(k==='row') return rowX(a[1]);
+  if(k==='col') return colX(a[1]);
+  if(k==='tg'){
+    const gd=a[1]; if(!GODX[gd]) return null;
+    const w=whereGod(g=>god(g)===gd), s=stemOfGod(gd), y=nextYearWith(v=>yearGZ(v)[0]===s);
+    return {t:gd,p:[['是什么',godDesc(gd)],['传统读法',GODX[gd]],['这张盘',w.length?w.join('、')+'。':'原局里没有。它只会随着大运、流年进来'+(y?`，比如 ${y} ${yearGZ(y)}年的天干${s}`:'')+'。']]};
+  }
+  if(k==='wx'){
+    const i=+a[1], w=whereGod(g=>gEl(g)===i), st=wxState(i);
+    if(i===gEl(DM)) w.unshift(`日干${DM}（日主自己）`);
+    return {t:`${EL[i]} · ${w.length} 个`,p:[['在哪里',w.length?w.join('、')+'。':'盘里没有这一行。'],['对日主',EL[i]+wxRole(i)],['月令状态',`${st}。${STATEX[st]}`]]};
+  }
+  if(k==='ss'){
+    const s=SS[a[1]], i=+a[2], hit=(SHENSHA[i]||[]).find(o=>o.n===a[1]); if(!s||!hit) return null;
+    const hc=howCommon(a[1]);
+    return {t:`${a[1]} · ${'年月日时'[i]}柱`,p:[['是什么',s.w],['口诀',typeof s.q==='function'?s.q():s.q],['这张盘',hit.why],hc?['有多常见',hc]:null,s.c?['注意',s.c]:null]};
+  }
+  if(k==='rel') return xRel(a[1],a[2],a[3],a[4],+a[5],a[6]);
+  const c=cols().find(x=>x.k===a[1]); if(!c) return null;
+  const posG=c.dyn?c.k+'天干':c.k+'干', posZ=c.dyn?c.k+'地支':c.k+'支';
+  if(k==='g'){
+    if(c.g!==a[2]) return null;
+    if(c.day){
+      const r=roots(), s=seals(), de=gEl(DM);
+      return {t:`日干 · ${c.g}`,p:[['是什么',`${yy(DM)}${EL[de]}。日柱的天干叫日主，代表这张盘的主人，其余的字都以它为原点来定名。`],['这张盘',(r.length?`${DMN}在地支里有 ${r.length} 处根：${r.map(x=>`${x.k}支${x.z}里的${x.h}`).join('、')}。`:`${DMN}在地支里没有根。`)+(s.length?`生它的${EL[(de+4)%5]}有 ${s.length} 处。`:`盘里没有生它的${EL[(de+4)%5]}。`)+`生在${NATAL[1].z}月，${EL[de]}处在${wxState(de)}的状态。`]]};
+    }
+    const p=stemParts(c.g); if(!c.dyn) p.push(['这张盘',stemPosNote(c)]);
+    return {t:`${posG} · ${c.g}`,p};
+  }
+  if(k==='z'){
+    if(c.z!==a[2]) return null;
+    const h=HID[c.z];
+    const p=[['五行',`属${EL[zEl(c.z)]}。`],['藏干',`${h.split('').join('、')}。排在第一个的是本气。`],['十神',`地支的十神看本气${h[0]}。${stemWhy(h[0])}`],['星运',`${DMN}走到${c.z}，十二长生是${stage(DM,c.z)}。`]];
+    if(!c.dyn) p.push(['这张盘',branchPosNote(c)]);
+    return {t:`${posZ} · ${c.z}`,p};
+  }
+  if(k==='h'){
+    const idx=HID[c.z].indexOf(a[2]); if(idx<0) return null;
+    return {t:`${posZ}${c.z}里的${a[2]}`,p:[['位置',`${c.z}里藏的${idx===0?'本气，是主要成分':'次要成分'}。`]].concat(stemParts(a[2]),[['注意','藏在地支里的天干，力量小于露在天干上的；次要成分又小于本气。']])};
+  }
+  if(k==='st'){
+    const s=stage(DM,c.z), yin=isYin(DM), st=CS_START[DM], yang=G[G.indexOf(DM)-1];
+    const seq=STAGES.map((n,i)=>Z[((yin?st-i:st+i)%12+12)%12]+n).join('，');
+    return {t:`星运 · ${posZ}${c.z}：${s}`,p:[
+      ['意思',`日主${DMN}走到${c.z}，处在十二长生的${s}。${STG[s]}`],
+      ['顺序',`长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。${DMN}是${yy(DM)}干，${yin?'倒':'顺'}着走：${seq}。`],
+      ['注意',(yin?`阴干是不是倒着走，各派有分歧。另一派认为${DMN}跟着${gN(yang)}走，那样它在${c.z}是${stage(yang,c.z)}。`:'阳干顺着走没有争议，有争议的是阴干是不是倒着走。')+('戊己'.includes(DM)?'土没有自己的十二长生。通行的做法是让它跟着火走，也有让它跟着水走的。':'')]]};
+  }
+  if(k==='zz'){
+    const s=stage(c.g,c.z), yin=isYin(c.g), yang=G[G.indexOf(c.g)-1];
+    const p=[['意思',`${c.g}坐在自己的地支${c.z}上，十二长生是${s}。${STG[s]}`],['看什么','看这个天干脚下稳不稳。坐在长生、临官、帝旺上算有力，坐在死、墓、绝上算无力。']];
+    if(yin) p.push(['注意',`${c.g}是阴干，这里按阴干倒着走来算。另一派认为它跟着同五行的阳干${yang}走，那样它在${c.z}是${stage(yang,c.z)}。`+(c.g+c.z==='乙亥'?'亥水生木，亥里还藏着甲木，乙木其实有依靠，这正是两派争论时常举的例子。':'')]);
+    if('戊己'.includes(c.g)) p.push(['土的算法','土没有自己的十二长生。通行的做法是让它跟着火走，也有让它跟着水走的。']);
+    return {t:`自坐 · ${c.g}${c.z}：${s}`,p};
+  }
+  if(k==='xk'){
+    const head=xunHead(c.g,c.z), xk=xunkong(c.g,c.z);
+    const p=[['怎么来的',`十个天干配十二个地支，配完一轮会剩下两个地支。${c.g}${c.z}在甲${Z[head]}旬，从甲${Z[head]}排到癸${Z[(head+9)%12]}，剩下${xk[0]}和${xk[1]}。`],['怎么用','通常以日柱所在的旬为准，看其余三柱的地支有没有落在里面；有的也参考年柱。落空的地支，传统上读作力量打折扣。']];
+    if(c.k==='日'||c.k==='年'){
+      const fall=NATAL.filter(x=>x.k!==c.k&&xk.includes(x.z)).map(x=>`${x.k}支${x.z}`);
+      p.push(['这张盘',`${c.k}柱查出${xk[0]}、${xk[1]}，`+(fall.length?`${fall.join('、')}落空。`:'另外三柱的地支都没有落空。')]);
+    }
+    return {t:`空亡 · ${c.g}${c.z}：${xk}`,p};
+  }
+  if(k==='ny'){
+    const i=gz60(c.g,c.z), j=i^1, other=G[j%10]+Z[j%12], ny=DATA.nayin[c.g+c.z];
+    return {t:`纳音 · ${c.g}${c.z}：${ny}`,p:[['是什么','六十甲子每两个一组，配一个带意象的五行名，共三十种。它来自古代音律，属于比子平法更早的算命体系。'],['这一格',`${c.g}${c.z}和${other}是一组，同属${ny}，五行算${ny[ny.length-1]}。`],['怎么用','子平法基本不用纳音做判断，它主要留在合婚、起名一类的民俗里。常说的什么命，指的是年柱纳音。']]};
+  }
+  return null;
+}
+/* 把 notes.x 里手写的段落并进来：标题相同的顶替原段落，「你的盘」顶替「这张盘」，其余的加在后面。
+   每条是 [标题, 文字]，也可以写成 [标题, 文字, 要顶替的段落标题]。 */
+function X(key){
+  const r=X0(key), ns=note('x',key);
+  if(!r) return null;
+  const p=r.p.filter(Boolean).slice();
+  (ns||[]).forEach(([lab,txt,rep])=>{
+    const want=rep||(lab==='你的盘'?'这张盘':lab);
+    let i=p.findIndex(q=>q[0]===want); if(i<0) i=p.findIndex(q=>q[0]===lab);
+    if(i>=0) p[i]=[lab,txt]; else p.push([lab,txt]);
+  });
+  return {t:r.t,p};
+}
+
+/* 状态、渲染和事件。 */
+const $=id=>document.getElementById(id);
+const now=new Date();
+const md=(y,s)=>{const [m,d]=s.split('/').map(Number);return new Date(y,m-1,d);};
+const TODAY=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+/* 今天所在的干支年：过了立春才算新的一年 */
+const REAL_Y=(()=>{const y=now.getFullYear(), lc=DATA.jie[y]?md(y,DATA.jie[y][0]):new Date(y,1,4);return now<lc?y-1:y;})();
+/* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
+let NOW_DY=-1, NOW_M=-1;
+/* 选中的人、大运、流年、流月、流日，以及打开的解释 */
+const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null};
+
+function jieUTC(y,m){const [mm,dd]=DATA.jie[y][m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
+function monthDays(y,m){
+  const start=jieUTC(y,m), end=m<11?jieUTC(y,m+1):(DATA.jie[y+1]?jieUTC(y+1,0):Date.UTC(y+1,1,4)), out=[];
+  for(let t=start;t<end;t+=DAY) out.push(t);
+  return out;
+}
+const mdText=t=>{const d=new Date(t);return (d.getUTCMonth()+1)+'/'+d.getUTCDate();};
+function currentMonth(y){
+  const j=DATA.jie[y]; let idx=-1;
+  for(let i=0;i<12;i++){ if(now>=md(i===11?y+1:y,j[i])) idx=i; }
+  return idx;
+}
+function fixDay(){const days=monthDays(sel.y,sel.m);if(!days.includes(sel.d)) sel.d=days.includes(TODAY)?TODAY:days[0];}
+function cols(){
+  const ln=yearGZ(sel.y), dy=P.dayun[sel.dy].gz;
+  return [{k:'流年',g:ln[0],z:ln[1],dyn:true},{k:'大运',g:dy[0],z:dy[1],dyn:true}].concat(NATAL);
+}
+
+/* ---------- 换人 ---------- */
+function usePerson(i){
+  sel.p=i; P=DATA.people[i]; MEMO={};
+  DM=P.pillars[2][0]; DMN=gN(DM);
+  NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));
+  SHENSHA=shenshaOf(P.pillars,DATA.nayin);
+  Y_MIN=P.dayun[0].y0; Y_MAX=P.dayun[P.dayun.length-1].y1;
+  const inRange=REAL_Y>=Y_MIN&&REAL_Y<=Y_MAX;
+  NOW_DY=inRange?P.dayun.findIndex(d=>REAL_Y>=d.y0&&REAL_Y<=d.y1):-1;
+  NOW_M=inRange?currentMonth(REAL_Y):-1;
+  sel.dy=inRange?NOW_DY:(REAL_Y<Y_MIN?0:P.dayun.length-1);
+  sel.y=inRange?REAL_Y:(REAL_Y<Y_MIN?Y_MIN:Y_MAX);
+  sel.m=NOW_M<0?0:NOW_M; sel.d=TODAY; sel.x=null;
+  $('sheet').hidden=true;document.body.classList.remove('has-sheet');
+  try{localStorage.setItem('bz-person',P.id);}catch(e){}
+  renderPerson();
+}
+
+/* ---------- 解释面板 ---------- */
+function markOn(){document.querySelectorAll('[data-x]').forEach(n=>n.classList.toggle('on',n.dataset.x===sel.x));}
+function closeSheet(){sel.x=null;$('sheet').hidden=true;document.body.classList.remove('has-sheet');markOn();}
+function openSheet(key,el){
+  const r=X(key); if(!r){closeSheet();return;}
+  sel.x=key;
+  $('sheet-t').textContent=r.t;
+  $('sheet-b').innerHTML=r.p.filter(Boolean).map(([l,t])=>`<p><span class="lb">${l}</span>${t}</p>`).join('');
+  $('sheet').hidden=false;document.body.classList.add('has-sheet');markOn();
+  if(el&&el.getBoundingClientRect){
+    const over=el.getBoundingClientRect().bottom-(window.innerHeight-$('sheet').offsetHeight-28);
+    if(over>0) window.scrollBy({top:over,behavior:window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+  }
+}
+function refreshSheet(){
+  if(!sel.x) return;
+  const el=[...document.querySelectorAll('[data-x]')].find(n=>n.dataset.x===sel.x);
+  if(el) openSheet(sel.x,null); else closeSheet();
+}
+function setRead(on){
+  document.documentElement.dataset.read=on?'on':'off';
+  $('rd').setAttribute('aria-pressed',String(on));
+  try{localStorage.setItem('bz-read',on?'1':'0');}catch(e){}
+}
+
+/* ---------- 渲染 ---------- */
+const xb=(cls,key,html)=>`<button type="button" class="${cls}" data-x="${esc(key)}">${html}</button>`;
+function gzSpan(gz){return `<span class="${gCls(gz[0])}">${gz[0]}</span><span class="${zCls(gz[1])}">${gz[1]}</span>`;}
+function relChips(list){
+  if(!list.length) return '<span class="none">没有</span>';
+  return list.map(r=>{const w=(r.top?'对':'')+r.where.join('、');
+    const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
+    return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
+}
+/* 只跟人有关、不随大运流年变的部分 */
+function renderPerson(){
+  const pe=$('people');
+  pe.hidden=DATA.people.length<2;
+  pe.innerHTML=DATA.people.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('');
+  $('eyebrow').textContent=P.gender?'乾造 · 男命':'坤造 · 女命';
+  $('title').setAttribute('aria-label',P.pillars.join(' '));
+  $('title').innerHTML=NATAL.map(p=>`<span>${gzSpan(p.g+p.z)}</span>`).join('');
+  $('meta').innerHTML=metaRows().map(r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`).join('');
+  ['pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  $('note-yun').textContent=noteYun();
+  $('note-wx').textContent=noteWx();
+  $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
+  const kv=kvRows();
+  $('h-tk').textContent=kv.some(r=>r.k==='调候参考')?'日主与调候':'日主';
+  $('kv').innerHTML=kv.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('');
+  $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
+  $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
+  renderBars();renderGods();renderDynamic();
+}
+function renderPan(){
+  const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===1?' last':''}${c.day?' day':''}`;
+  const row=(label,fn)=>`<tr><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
+  $('pan').innerHTML=
+    row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
+    row('天干',c=>xb('glyph '+gCls(c.g),`g|${c.k}|${c.g}`,c.g))+
+    row('地支',c=>xb('glyph '+zCls(c.z),`z|${c.k}|${c.z}`,c.z))+
+    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''))+
+    row('星运',c=>xb('x sm','st|'+c.k,stage(DM,c.z)))+
+    row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
+    row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
+    row('纳音',c=>xb('x sm','ny|'+c.k,DATA.nayin[c.g+c.z]))+
+    row('神煞',(c,i)=>`<span class="ss">${c.dyn||!SHENSHA[i-2].length?'—':SHENSHA[i-2].map(s=>xb('x',`ss|${s.n}|${i-2}`,s.n)).join('')}</span>`);
+  const dy=P.dayun[sel.dy];
+  $('hd-ln').textContent=sel.y+' 年';
+  $('hd-dy').textContent=dy.y0+'–'+dy.y1;
+}
+function renderDayun(){
+  $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])} · ${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span></button>`).join('');
+}
+function renderLiunian(){
+  const d=P.dayun[sel.dy]; let h='';
+  for(let y=d.y0;y<=d.y1;y++){const gz=yearGZ(y);
+    h+=`<button class="pk${y===REAL_Y?' now':''}" aria-pressed="${y===sel.y}" data-y="${y}"><span class="yr">${y}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span><span class="ag">${y-P.clock[0]+1} 岁</span></button>`;}
+  $('liunian').innerHTML=h;
+  $('h-ln').textContent=`流年（${d.gz}运，${d.y0}–${d.y1}）`;
+}
+function renderLiuyue(){
+  const y=sel.y, j=DATA.jie[y], cur=y===REAL_Y?NOW_M:-1; let h='';
+  for(let m=0;m<12;m++){const gz=monthGZ(y,m);
+    h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span></button>`;}
+  $('liuyue').innerHTML=h;
+  $('h-ly').textContent=`流月（${y} ${yearGZ(y)}年）`;
+}
+function renderLiuri(){
+  const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
+  days.forEach(t=>{const gz=dayGZ(t);
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)} 周${W[new Date(t).getUTCDay()]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span></button>`;});
+  $('liuri').innerHTML=h;
+  $('h-lr').textContent=`流日（${monthGZ(sel.y,sel.m)}月，${mdText(days[0])}–${mdText(days[days.length-1])}）`;
+}
+function renderYunRead(){
+  const d=P.dayun[sel.dy];
+  const rows=[
+    ['大运',d.gz,`${d.y0}–${d.y1} 年 · ${d.a0}–${d.a1} 岁`],
+    ['流年',yearGZ(sel.y),`${sel.y} 年 · ${sel.y-P.clock[0]+1} 岁`],
+    ['流月',monthGZ(sel.y,sel.m),`${JIE[sel.m]} ${DATA.jie[sel.y][sel.m]} 起`],
+    ['流日',dayGZ(sel.d),`${new Date(sel.d).getUTCFullYear()} 年 ${mdText(sel.d)}`]];
+  const say=gz=>{
+    const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h);
+    return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`);
+  };
+  $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
+}
+function renderRelations(){
+  const d=P.dayun[sel.dy], ln=yearGZ(sel.y), ly=monthGZ(sel.y,sel.m), lr=dayGZ(sel.d);
+  const DY={k:'大运',g:d.gz[0],z:d.gz[1],layer:1}, LN={k:'流年',g:ln[0],z:ln[1],layer:2}, LY={k:'流月',g:ly[0],z:ly[1],layer:3}, LR={k:'流日',g:lr[0],z:lr[1],layer:4};
+  const stemsFirst=(a,b)=>(a.grp==='g'?0:1)-(b.grp==='g'?0:1);
+  const brought=(set,top)=>relations(set).filter(r=>r.top===top).sort(stemsFirst);
+  const base=relations(NATAL);
+  $('rel-ng').innerHTML=relChips(base.filter(r=>r.grp==='g'));
+  $('rel-nz').innerHTML=relChips(base.filter(r=>r.grp==='z'));
+  $('h-rdy').textContent=`大运 ${d.gz} 带来的`;
+  $('rel-dy').innerHTML=relChips(brought(NATAL.concat(DY),1));
+  $('h-rln').textContent=`流年 ${sel.y} ${ln} 带来的`;
+  $('rel-ln').innerHTML=relChips(brought(NATAL.concat(DY,LN),2));
+  $('h-rly').textContent=`流月 ${ly}（${JIE[sel.m]} ${DATA.jie[sel.y][sel.m]} 起）带来的`;
+  $('rel-ly').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY),3));
+  $('h-rlr').textContent=`流日 ${lr}（${mdText(sel.d)}）带来的`;
+  $('rel-lr').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY,LR),4));
+}
+function renderBars(){
+  const {cnt,face}=wxCounts(), max=Math.max(...cnt);
+  $('bars').innerHTML=cnt.map((n,i)=>`${xb('x el '+ELC[i],'wx|'+i,EL[i])}<span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个（${face[i]}）</span><span class="st">${wxState(i)}</span>`).join('');
+}
+const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
+function renderGods(){
+  const present=new Set(natalStems().concat(natalHidden())), de=gEl(DM), yin=isYin(DM)?1:0;
+  const cell=g=>`<td class="${present.has(g)?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）</td>`;
+  $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
+    return `<tr><td>${r[1]}</td><td class="${ELC[e]}">${EL[e]}</td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
+}
+function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.id==='sheet-x'){closeSheet();return;}
+  if(b.dataset.x){
+    if(sel.x===b.dataset.x&&!$('sheet').hidden) closeSheet(); else openSheet(b.dataset.x,b);
+    return;
+  }
+  if(b.dataset.p!==undefined){
+    if(Number(b.dataset.p)!==sel.p) usePerson(Number(b.dataset.p));
+  }else if(b.dataset.dy!==undefined){
+    sel.dy=Number(b.dataset.dy); const d=P.dayun[sel.dy];
+    sel.y=(REAL_Y>=d.y0&&REAL_Y<=d.y1)?REAL_Y:d.y0;
+    if(sel.y===REAL_Y&&NOW_M>=0) sel.m=NOW_M;
+    renderDynamic();
+  }else if(b.dataset.y!==undefined){
+    sel.y=Number(b.dataset.y);
+    if(sel.y===REAL_Y&&NOW_M>=0) sel.m=NOW_M;
+    renderDynamic();
+  }else if(b.dataset.m!==undefined){
+    sel.m=Number(b.dataset.m);
+    fixDay();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();
+  }else if(b.dataset.d!==undefined){
+    sel.d=Number(b.dataset.d);
+    renderLiuri();renderRelations();renderYunRead();refreshSheet();
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel.x) closeSheet();});
+
+let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
+setRead(readOn);
+let startAt=0; try{const i=DATA.people.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
+usePerson(startAt);
+
+</script>
+</body>
+</html>

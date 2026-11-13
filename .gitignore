@@ -1,0 +1,10 @@
+# 个人数据：出生信息、个人页面、手写解读、备份。永远不入库。
+private/
+
+node_modules/
+__pycache__/
+*.pyc
+shots/
+.venv/
+.DS_Store
+tmp/
