@@ -4,11 +4,12 @@
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
   python3 tools/build.py --private   private/data/people.json → private/index.html
 
-模板 src/page.tpl.html 里有七个占位符，每个必须恰好出现一次：
+模板 src/page.tpl.html 里有八个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
   /*TABLES*/   换成 data/tables.json：节的时刻表和农历表，页面内排盘要用
   /*ENGINE*/   换成 src/engine.js
   /*CHART*/    换成 src/chart.js
+  /*CLASSICS*/ 换成 src/classics.js：从典籍里摘出来的引文
   /*TEXT*/     换成 src/text.js
   /*UI*/       换成 src/ui.js
   {{TITLE}}    换成数据里的 title，做 HTML 转义
@@ -25,7 +26,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*CHART*/': 'chart.js', '/*TEXT*/': 'text.js', '/*UI*/': 'ui.js'}
+SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*CHART*/': 'chart.js', '/*CLASSICS*/': 'classics.js', '/*TEXT*/': 'text.js', '/*UI*/': 'ui.js'}
 
 
 def render(tpl, fill):

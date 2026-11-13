@@ -82,7 +82,7 @@ function xingzuoOf(m,d){
 }
 
 /* ---------- 出生信息 ---------- */
-/* 出生信息是 {id, name, gender: '男'或'女', birth: 'YYYY-MM-DD HH:MM', place, lon, dst, source, notes}，
+/* 出生信息是 {id, name, gender: '男'或'女', birth: 'YYYY-MM-DD HH:MM', place, lon, dst, shichen, source, notes}，
    和 people/*.json 的格式相同。birth 是北京时间的钟表时间。 */
 function parseBirth(text){
   const m=/^\s*(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/.exec(String(text||''));
@@ -90,21 +90,32 @@ function parseBirth(text){
   const a=m.slice(1).map(x=>x===undefined?0:Number(x)), b=fromSec(toSec(...a));
   return a.every((v,i)=>v===b[i])?a:null;            // 2 月 30 日、25 点这类不存在的时刻会对不上
 }
+/* 只记到时辰的，birth 只写日期 'YYYY-MM-DD'，另有 shichen（十二地支之一）。
+   这时取这个时辰的中点直接当作真太阳时，不做经度和均时差的换算，也不需要 lon；子时取零点。 */
+function parseDay(text){
+  const m=/^\s*(\d{4})-(\d{1,2})-(\d{1,2})\s*$/.exec(String(text||''));
+  if(!m) return null;
+  const a=m.slice(1).map(Number), b=fromSec(toSec(...a));
+  return a.every((v,i)=>v===b[i])?a:null;
+}
 /* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。 */
 function checkInfo(info){
-  const a=parseBirth(info&&info.birth);
-  if(!a) return '出生日期和时间没有填全，或者不是一个存在的时刻。';
+  const sh=info&&info.shichen;
+  if(sh&&!(typeof sh==='string'&&sh.length===1&&Z.includes(sh))) return '时辰要选十二个时辰里的一个。';
+  const a=sh?parseDay(info.birth):parseBirth(info&&info.birth);
+  if(!a) return sh?'出生日期没有填，或者不是一个存在的日子。':'出生日期和时间没有填全，或者不是一个存在的时刻。';
   if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX) return `只支持 ${BIRTH_MIN} 到 ${BIRTH_MAX} 年出生。`;
   if(info.gender!=='男'&&info.gender!=='女') return '性别要填男或女。';
-  if(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180) return '经度要填一个数，东经为正。';
+  if(!sh&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
   return '';
 }
 /* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同。 */
 function chartOf(info){
   const bad=checkInfo(info); if(bad) throw new Error(bad);
-  const c=toSec(...parseBirth(info.birth))-(info.dst?3600:0), clock=fromSec(c);
-  const dlonSec=roundHalfUp((info.lon-120)*240);
-  const eotSec=roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
+  const sh=info.shichen||'';
+  const c=sh?toSec(...parseDay(info.birth),2*Z.indexOf(sh)):toSec(...parseBirth(info.birth))-(info.dst?3600:0), clock=fromSec(c);
+  const dlonSec=sh?0:roundHalfUp((info.lon-120)*240);
+  const eotSec=sh?0:roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
   const ts=c+dlonSec+eotSec, tst=fromSec(ts);
   const A=pillarsAt(tst), B=pillarsAt(clock);            // 四柱按真太阳时；另按钟表时间排一遍
   const [yp,mp,dp,hp]=A.p, yg=G.indexOf(yp[0]);
@@ -123,9 +134,12 @@ function chartOf(info){
   const mi=gz60(B.p[1][0],B.p[1][1]), dayun=[];
   for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
   const p={id:info.id,name:info.name,gender:man?1:0,clock};
-  if(info.dst) p.dst=true;
+  if(sh) p.shichen=sh;
+  if(info.dst&&!sh) p.dst=true;
   if(info.source) p.source=info.source;
-  Object.assign(p,{place:info.place||'',lon:info.lon,dlonSec,eotSec,tst,
+  p.place=info.place||'';
+  if(!sh) p.lon=info.lon;
+  Object.assign(p,{dlonSec,eotSec,tst,
     lunar:lunarOf(tst[0],tst[1],tst[2]),xingzuo:xingzuoOf(tst[1],tst[2]),
     pillars:A.p,pillarsClock:B.p,
     prevJie:Object.assign(jieAt(A.i),{min:Math.floor((ts-JIE_T[A.i])/60)}),
@@ -141,7 +155,9 @@ function chartOf(info){
 /* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
 function infoFrom(p){
   const c=p.clock, pad=n=>String(n).padStart(2,'0');
-  const info={id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${c[0]}-${pad(c[1])}-${pad(c[2])} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
+  const day=`${c[0]}-${pad(c[1])}-${pad(c[2])}`;
+  const info=p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
+    :{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${day} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
   if(p.source) info.source=p.source;
   if(p.notes) info.notes=p.notes;
   return info;

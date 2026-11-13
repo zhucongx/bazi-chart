@@ -114,6 +114,8 @@ console.log('神煞口诀');
 ok('羊刃都落在日干的帝旺位', ev("G.split('').every((g,i)=>stage(g,SS_YANGREN[i])==='帝旺')"));
 eq('由天德合反推出的天德，和歌诀对得上（正丁二申，三壬四辛，五亥六甲，七癸八寅，九丙十乙，子巳丑庚）', ev("'寅卯辰巳午未申酉戌亥子丑'.split('').map(tianDe).join('')"), '丁申壬辛亥甲癸寅丙乙巳庚');
 eq('由月德合反推出的月德：申子辰壬，亥卯未甲，寅午戌丙，巳酉丑庚', ev("['子','卯','午','酉'].map(yueDe).join('')"), '壬甲丙庚');
+ok('十个天干都引了《滴天髓》的原文', ev("G.split('').every(g=>DTS[g]&&DTS[g][0].length===9&&DTS[g][0].startsWith(g)&&dts(g).includes(DTS[g][0]))"));
+ok('每个神煞都登记了出处；没找到出处的只有国印贵人和披麻', ev("SS_NAMES.every(n=>SSD[n])&&SS_NAMES.filter(n=>!SSD[n].d).join()==='国印贵人,披麻'"));
 ok('每个神煞都有说明和口诀', ev("SS_NAMES.every(n=>SS[n]&&SS[n].w&&SS[n].q&&'吉凶中'.includes(SS[n].k))"));
 ok('每个神煞都有出现频率', ev("SS_NAMES.every(n=>typeof DATA.freq[n]==='number')"));
 if (!ssCheck) ok('有 data/shensha_check.json', false);
@@ -133,6 +135,66 @@ else {
   eq('每个神煞落在每一柱上的次数相同', got.counts, ssCheck.counts);
 }
 
+// ---------- 1a. 典籍引文，以及口诀和原文的对照 ----------
+console.log('典籍引文');
+{
+  const qc = readJSON(path.join(ROOT, 'data', 'quotes_check.json'), null);
+  const list = JSON.parse(ev('JSON.stringify(quoteList())'));
+  let hash = 2166136261;
+  for (const ch of JSON.stringify(list.map(x => x.join('\u0001')).sort())) { hash ^= ch.codePointAt(0); hash = Math.imul(hash, 16777619) >>> 0; }
+  ok(`页面里的 ${list.length} 句引文，就是 tools/check_quotes.js 对着原文逐字核对过的那一批（改了引文要重新运行它）`, !!qc && qc.total === list.length && qc.hash === hash, qc ? { 核对过的: [qc.total, qc.hash], 页面里的: [list.length, hash] } : '没有 data/quotes_check.json');
+  eq('调候表十个日干、十二个月共 120 格都有，点到的天干都出现在引的原文里', ev("G.split('').flatMap(g=>Z.split('').filter(z=>{const e=TH[g]&&TH[g][z];return !e||!e[0]||!e[0].split('').every(s=>G.includes(s)&&e[1].includes(s));}).map(z=>g+z))"), []);
+  // 下面拿引文本身当口诀来解，和页面里实际用的表对照
+  const G = ev('G'), Z = ev('Z'), Q = k => ev(`Q[${JSON.stringify(k)}][1]`);
+  const AN = { 鼠: '子', 牛: '丑', 虎: '寅', 兔: '卯', 龙: '辰', 蛇: '巳', 马: '午', 羊: '未', 猴: '申', 鸡: '酉', 犬: '戌', 猪: '亥' };
+  const MON = { 正: '寅', 二: '卯', 三: '辰', 四: '巳', 五: '午', 六: '未', 七: '申', 八: '酉', 九: '戌', 十: '亥', 十一: '子', 十二: '丑' };
+  const WEI = { 坤: '申', 乾: '亥', 艮: '寅', 巽: '巳' };
+  // 歌诀：几个天干后面跟着几个生肖或地支，就是这几个天干见这几支
+  const decode = text => { const out = {}; let cur = [], fresh = true;
+    for (const ch of text) {
+      if (G.includes(ch)) { if (!fresh) { cur = []; fresh = true; } cur.push(ch); }
+      else if (AN[ch] || Z.includes(ch)) { cur.forEach(g => { out[g] = (out[g] || '') + (AN[ch] || ch); }); fresh = false; }
+    }
+    return out; };
+  const tianyi = JSON.parse(ev('JSON.stringify(SS_TIANYI)'));
+  eq('天乙贵人：《三命通会》的结论（甲戊庚牛羊，六辛逢马虎）和页面的口诀相同', decode(Q('sm_tianyi')), { 甲: tianyi.甲, 戊: tianyi.戊, 庚: tianyi.庚, 辛: tianyi.辛 });
+  const ty2 = decode(Q('sf_tianyi'));
+  eq('天乙贵人：《神峰通考》的歌诀和页面的口诀只差庚一干（它让庚见午寅）', [G.split('').filter(g => ty2[g] !== tianyi[g]), ty2.庚], [['庚'], '午寅']);
+  eq('流霞：《神峰通考》的歌诀和页面的口诀逐干相同', G.split('').map(g => decode(Q('sf_liuxia'))[g]).join(''), ev('SS_LIUXIA'));
+  const fx = JSON.parse(ev('JSON.stringify(SS_FUXING)')), fx2 = decode(Q('sf_fuxing'));
+  eq('福星贵人：《神峰通考》的歌诀和页面的口诀只差乙、癸（歌诀只有丑，页面是丑或卯）', [G.split('').filter(g => fx2[g] !== fx[g]), fx2.乙, fx2.癸, fx.乙], [['乙', '癸'], '丑', '丑', '丑卯']);
+  const td = {}; Q('xj_tiande').replace(/(十一|十二|[正二三四五六七八九十])月(.)/g, (m, a, b) => { td[MON[a]] = WEI[b] || b; });
+  eq('天德：《协纪辨方书》引的十二个月（坤乾艮巽换成申亥寅巳）和页面的表相同', '寅卯辰巳午未申酉戌亥子丑'.split('').map(z => td[z]).join(''), ev("'寅卯辰巳午未申酉戌亥子丑'.split('').map(tianDe).join('')"));
+  const yd = {}; Q('xj_yuede').split('，').forEach(s => { const m = s.match(/^(.+)月在(.)$/); if (m) m[1].match(/十一|十二|[正二三四五六七八九十]/g).forEach(a => { yd[MON[a]] = m[2]; }); });
+  eq('月德：《协纪辨方书》引的十二个月和页面的表相同', Z.split('').map(z => yd[z]).join(''), ev("Z.split('').map(yueDe).join('')"));
+  const he = []; Q('sm_yuedehe').replace(/(正|二|三|四)月(.)与(.)合/g, (m, a, b, c) => { he.push([MON[a], b, c]); });
+  eq('月德合：《三命通会》举的四个月，月德和月德合都和页面的表相同', he, he.map(([z]) => [z, ev(`yueDe('${z}')`), ev(`SS_YUEDEHE[ssGrp('${z}')]`)]));
+  const th = []; Q('sm_tiandehe').replace(/(正|二|三|四)月(.)与(.)合/g, (m, a, b, c) => { th.push([MON[a], WEI[b] || b, WEI[c] || c]); });
+  eq('天德合：《三命通会》举的四个月，天德和天德合都和页面的表相同', th, th.map(([z]) => [z, ev(`tianDe('${z}')`), ev(`SS_TIANDEHE['${z}']`)]));
+  const sf = []; Q('xj_sifei').replace(/(春|夏|秋|冬)(..)(..)/g, (m, a, b, c) => { sf.push([b, c]); });
+  eq('四废日：《协纪辨方书》引的八个日子和页面的表相同', sf, JSON.parse(ev('JSON.stringify(SS_SIFEI.map(r=>r.slice(1)))')));
+  const gl = Q('sm_guluan').match(new RegExp(`[${G}][${Z}]`, 'g')), mine = JSON.parse(ev('JSON.stringify(SS_GULUAN)'));
+  eq('孤鸾煞：页面的六个日子都在《三命通会》列的八个里，没算的是丙午、戊午', [mine.filter(x => !gl.includes(x)), gl.filter(x => !mine.includes(x))], [[], ['丙午', '戊午']]);
+  const dx = {}; Q('sm_dexiu').split('；').forEach(s => { const [k, rest] = s.split('月，'); dx[k.replace('己酉丑', '巳酉丑')] = [...new Set(rest.split('').filter(c => G.includes(c)))].sort().join(''); });
+  eq('德秀贵人：《三命通会》四组月份的德和秀并起来，和页面的表相同', ev("SS_GRP.map((s,i)=>[s,[...new Set(SS_DEXIU[i].split(''))].sort().join('')])"), ev('SS_GRP').map(s => [s, dx[s]]));
+  const ym = []; Q('sf_yima').replace(/(...)生见(.)字/g, (m, a, b) => { ym.push([a, b]); });
+  eq('驿马：《神峰通考》的四句和页面的表相同', ym, ym.map(([s]) => [s, ev(`SS_YIMA[ssGrp('${s[0]}')]`)]));
+  const at = st => `G.split('').map(g=>Z.split('').find(z=>stage(g,z)==='${st}'))`;
+  eq('金舆：十个天干都是禄（临官）往前数两位，合《三命通会》的「禄前二辰」', ev(`${at('临官')}.map(z=>Z[(Z.indexOf(z)+2)%12]).join('')`), ev('SS_JINYU'));
+  eq('羊刃：五个阳干都是禄往前数一位，合《三命通会》的「禄前一辰」', ev(`${at('临官')}.map(z=>Z[(Z.indexOf(z)+1)%12]).filter((z,i)=>i%2===0).join('')`), ev("SS_YANGREN.split('').filter((z,i)=>i%2===0).join('')"));
+  const ju = st => ev(`['壬','甲','丙','庚'].map(g=>Z.split('').find(z=>stage(g,z)==='${st}')).join('')`);   // 四个三合局依次属水、木、火、金
+  eq('劫煞在三合局五行的绝位，亡神在临官位，华盖在墓位，合《三命通会》的说法', [ju('绝'), ju('临官'), ju('墓')], [ev('SS_JIESHA'), ev('SS_WANGSHEN'), ev('SS_HUAGAI')]);
+  // 格局和调候：十个日干 × 十二个月支，每一种都能走出结果
+  const badGe = ev(`(function(){const bad=[],keep=[P,DM,DMN,NATAL,MEMO];
+    G.split('').forEach(g=>Z.split('').forEach(z=>{DM=g;DMN=gN(g);MEMO={};NATAL=[{k:'年',g:'甲',z:'子'},{k:'月',g:'丙',z:z},{k:'日',g:g,z:'子',day:true},{k:'时',g:'庚',z:'午'}];
+      try{const a=gejuRow(),b=tiaohouRow();[a,b].forEach(r=>{if(!r.dd||!r.p||r.p.some(x=>!x||!x[1]||/undefined|NaN|null/.test(x[1]))||/undefined|NaN|null/.test(r.dd)) bad.push(g+z+r.k);});}catch(e){bad.push(g+z+String(e.message));}}));
+    [P,DM,DMN,NATAL,MEMO]=keep;return bad;})()`);
+  eq('格局参考和调候参考：十个日干生在十二个月，120 种情形都能生成', badGe, []);
+  eq('格局的分类：甲生寅月建禄，甲生卯月阳刃，乙生寅月月劫，戊生午月阳刃，丙生亥月按本气归七杀格', ev(`(function(){const keep=[P,DM,DMN,NATAL,MEMO];
+    const one=(g,z)=>{DM=g;DMN=gN(g);NATAL=[{k:'年',g:'癸',z:'丑'},{k:'月',g:'癸',z:z},{k:'日',g:g,z:'丑',day:true},{k:'时',g:'癸',z:'丑'}];const r=geju();return r.kind+(r.list?'·'+gejuNames(r).join():'');};
+    const out=[one('甲','寅'),one('甲','卯'),one('乙','寅'),one('戊','午'),one('丙','亥')];[P,DM,DMN,NATAL,MEMO]=keep;return out;})()`), ['建禄', '阳刃', '月劫', '阳刃', '不透·七杀格']);
+}
+
 // ---------- 1b. 页面内排盘，对照 lunar_python ----------
 console.log('页面内排盘');
 {
@@ -142,15 +204,17 @@ console.log('页面内排盘');
     const FIELDS = ['gender', 'clock', 'lon', 'dlonSec', 'eotSec', 'tst', 'lunar', 'xingzuo', 'pillars', 'pillarsClock', 'prevJie', 'nextJie', 'taiyuan', 'minggong', 'shengong', 'taixi', 'yun', 'dayun'];
     const canon = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.keys(x).sort().reduce((o, key) => { o[key] = x[key]; return o; }, {}) : x);
     const diff = [];
-    oracle.people.forEach(p => {
+    const inRange = oracle.people.filter(p => p.clock[0] >= ev('BIRTH_MIN') && p.clock[0] <= ev('BIRTH_MAX'));   // 页面内排盘只支持这个范围
+    inRange.forEach(p => {
       const got = JSON.parse(ev(`JSON.stringify(chartOf(infoFrom(${JSON.stringify(p)})))`));
-      FIELDS.forEach(f => { if (canon(got[f]) !== canon(p[f])) diff.push([p.id, f, got[f], p[f]]); });
+      FIELDS.concat('shichen').forEach(f => { if (canon(got[f]) !== canon(p[f])) diff.push([p.id, f, got[f], p[f]]); });
     });
-    eq(`${oracle.people.length} 个人由出生信息在页面里重新排盘，${FIELDS.length} 项结果和 lunar_python 逐项相同`, diff.slice(0, 5), []);
+    if (!inRange.length) console.log('  跳过  页面自带的人都出生在 1900 年以前，页面内排盘不支持，这一项由 tools/fuzz.py 覆盖');
+    else eq(`${inRange.length} 个人由出生信息在页面里重新排盘，${FIELDS.length} 项结果和 lunar_python 逐项相同` + (inRange.length < oracle.people.length ? `（另有 ${oracle.people.length - inRange.length} 个出生在 1900 年以前，不在页面内排盘的范围里）` : ''), diff.slice(0, 5), []);
     const years = Object.keys(oracle.jie), wrong = years.filter(y => JSON.stringify(ev(`jieMD(${y})`)) !== JSON.stringify(oracle.jie[y]));
     eq(`${years[0]} 到 ${years[years.length - 1]} 年每年十二个节的日期，页面推出来的和 lunar_python 相同`, wrong.slice(0, 5), []);
   }
-  eq('不存在的日期、范围之外的年份会被拒绝', ev(`[checkInfo({birth:'2001-02-30 10:00',gender:'男',lon:120}),checkInfo({birth:'1899-12-31 10:00',gender:'男',lon:120}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:'x'}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:120})].map(s=>s?'拒绝':'接受')`), ['拒绝', '拒绝', '拒绝', '接受']);
+  eq('不存在的日期、范围之外的年份、不认识的时辰会被拒绝', ev(`[checkInfo({birth:'2001-02-30 10:00',gender:'男',lon:120}),checkInfo({birth:'1899-12-31 10:00',gender:'男',lon:120}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:'x'}),checkInfo({birth:'2000-01-01',shichen:'甲',gender:'男'}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:120}),checkInfo({birth:'2000-01-01',shichen:'午',gender:'女'})].map(s=>s?'拒绝':'接受')`), ['拒绝', '拒绝', '拒绝', '拒绝', '接受', '接受']);
 }
 
 // ---------- 2. 每个人的细盘 ----------
@@ -275,7 +339,7 @@ console.log('添加、编辑、删除、导入');
   ok('日期和时间没填时不保存，并给出提示', ev('PEOPLE.length') === n0 && !$('pform').hidden && !$('pf-msg').hidden && txt($('pf-msg')).length > 0, txt($('pf-msg')));
   fill({ name: '测试甲', gender: '男', date: '2000-01-01', time: '12:00', place: '北京市', lon: '116.4' });
   submit();
-  ok('填好保存后多出一个人并选中，四柱和 lunar_python 排出的示例甲相同', ev('PEOPLE.length') === n0 + 1 && txt($('title')) === '己卯丙子戊午戊午' && ev('P.local') === true && $('pform').hidden, [ev('PEOPLE.length'), txt($('title'))]);
+  ok('填好保存后多出一个人并选中，四柱和 lunar_python 排出的相同', ev('PEOPLE.length') === n0 + 1 && txt($('title')) === '己卯丙子戊午戊午' && ev('P.local') === true && $('pform').hidden, [ev('PEOPLE.length'), txt($('title'))]);
   ok('出生信息存进了浏览器', stored().length === 1 && stored()[0].birth === '2000-01-01 12:00' && stored()[0].lon === 116.4, stored());
   const before = checked;
   checkAll('新添加的人');
@@ -286,12 +350,26 @@ console.log('添加、编辑、删除、导入');
   submit();
   ok('改了时间保存，人数不变，时柱跟着变', ev('PEOPLE.length') === n0 + 1 && ev('P.name') === '测试乙' && txt($('title')) !== '己卯丙子戊午戊午' && stored().length === 1, txt($('title')));
   const msg = ev(`importText(${JSON.stringify(JSON.stringify([{ name: '导入的人', gender: '女', birth: '1993-10-10 09:30', place: '成都市', lon: 104.07, notes: { x: { 'g|年|癸': [['你的盘', '<b>手写的话</b><script>window.hacked=1</' + 'script><img src="x" onerror="window.hacked=2">']] } } }]))})`);
-  ok('导入一个带手写解读的人，四柱和 lunar_python 排出的示例乙相同', ev('PEOPLE.length') === n0 + 2 && txt($('title')) === '癸酉壬戌甲子戊辰' && /导入了 1 个人/.test(msg), [msg, txt($('title'))]);
+  ok('导入一个带手写解读的人，四柱和 lunar_python 排出的相同', ev('PEOPLE.length') === n0 + 2 && txt($('title')) === '癸酉壬戌甲子戊辰' && /导入了 1 个人/.test(msg), [msg, txt($('title'))]);
   const note = ev(`X('g|年|癸')`).p.find(p => p[0] === '你的盘');
   ok('手写解读显示出来了，夹带的脚本被去掉', !!note && note[1].includes('<b>手写的话</b>') && !/script|onerror|<img/i.test(note[1]) && ev('window.hacked') === undefined, note);
-  const again = ev(`importText(${JSON.stringify(JSON.stringify({ people: [ev('JSON.parse(JSON.stringify(DATA.people[0]))')] }))})`);
-  ok('导入 gen_data.py 生成的 people.json 也可以，四柱和页面自带的那个人相同', ev('PEOPLE.length') === n0 + 3 && txt($('title')) === ev('DATA.people[0].pillars.join("")') && ev('P.id') !== ev('DATA.people[0].id'), [again, txt($('title'))]);
+  // 导入 gen_data.py 生成的那种数据：一个排好的人。这里用上面那个虚构的出生时间，由页面自己排好再导回去。
+  const ready = ev(`JSON.stringify({people:[chartOf({id:'x1',name:'排好的人',gender:'女',birth:'1993-10-10',shichen:'辰',place:'成都市'})]})`);
+  const again = ev(`importText(${JSON.stringify(ready)})`);
+  ok('导入排好的人（people.json 的格式）也可以；只知道时辰的，辰时排出来和上面 8 点多出生的四柱相同', ev('PEOPLE.length') === n0 + 3 && txt($('title')) === '癸酉壬戌甲子戊辰' && ev('P.shichen') === '辰' && byX('meta|时辰') && !byX('meta|真太阳时'), [again, txt($('title'))]);
+  const kept = checked;
+  checkAll('只知道时辰的人');
+  ok(`只知道时辰的人，${checked - kept} 条解释都有内容`, checked > kept && !bad.length, bad.slice(0, 3));
   ok('文件不是 JSON、日期不对时，导入会说明原因', /不是 JSON/.test(ev(`importText('abc')`)) && /没有导入任何人/.test(ev(`importText('[{"name":"坏的","gender":"男","birth":"2001-02-30 10:00","lon":120}]')`)) && ev('PEOPLE.length') === n0 + 3);
+  click($('pp-add'));
+  fill({ name: '表单选时辰', gender: '女', date: '1993-10-10', time: '', shichen: '辰' });
+  submit();
+  ok('在表单里只选时辰也能保存，四柱相同，存下来的出生信息里没有时间和经度', ev('PEOPLE.length') === n0 + 4 && txt($('title')) === '癸酉壬戌甲子戊辰' && stored().some(x => x.name === '表单选时辰' && x.shichen === '辰' && x.birth === '1993-10-10' && x.lon === undefined), stored().map(x => x.name));
+  click($('pp-edit'));
+  ok('再点编辑，表单里还是选着时辰', $('pf-shichen').value === '辰' && $('pf-date').value === '1993-10-10' && $('pf-time').value === '');
+  click($('pf-del'));
+  click($('pf-del'));
+  ev(`usePerson(PEOPLE.length-1)`);
   click($('pp-edit'));
   click($('pf-del'));
   ok('删除要点两次，第一次只是询问', ev('PEOPLE.length') === n0 + 3 && /确认/.test(txt($('pf-del'))));
