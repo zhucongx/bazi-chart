@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """把模板、脚本和数据合成一个自包含的页面。只用标准库。
 
-  python3 tools/build.py             data/people.json → dist/index.html
-  python3 tools/build.py --private   private/data/people.json → private/dist/index.html
+  python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
+  python3 tools/build.py --private   private/data/people.json → private/index.html
 
-模板 src/page.tpl.html 里有五个占位符，每个必须恰好出现一次：
-  /*DATA*/     换成数据文件的内容（一段 JSON）
-  /*ENGINE*/   换成 src/engine.js 的内容
-  /*TEXT*/     换成 src/text.js 的内容
-  /*UI*/       换成 src/ui.js 的内容
+模板 src/page.tpl.html 里有七个占位符，每个必须恰好出现一次：
+  /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
+  /*TABLES*/   换成 data/tables.json：节的时刻表和农历表，页面内排盘要用
+  /*ENGINE*/   换成 src/engine.js
+  /*CHART*/    换成 src/chart.js
+  /*TEXT*/     换成 src/text.js
+  /*UI*/       换成 src/ui.js
   {{TITLE}}    换成数据里的 title，做 HTML 转义
+
+people.json 里的 jie（每年十二个节的日期）不放进页面：页面从 tables.json 的时刻表自己推。
+它留在 people.json 里，是给检查脚本对照用的。
 
 生成的 index.html 是单个文件，也是发布出去的那一页。不要手改它，改 src/ 里的文件再构建。
 """
@@ -20,7 +25,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*TEXT*/': 'text.js', '/*UI*/': 'ui.js'}
+SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*CHART*/': 'chart.js', '/*TEXT*/': 'text.js', '/*UI*/': 'ui.js'}
 
 
 def render(tpl, fill):
@@ -46,6 +51,36 @@ def json_for_script(text):
     return text.replace('</', '<\\/').replace('<!--', '\\u003c!--')
 
 
+def make_page(data):
+    """由人物数据（people.json 的内容）拼出整个页面的 HTML。"""
+    rel = lambda p: str(p.relative_to(ROOT))
+    title = data.get('title') if isinstance(data, dict) else None
+    if not isinstance(title, str) or not title:
+        raise SystemExit('人物数据里没有 title。重新运行 tools/gen_data.py。')
+    tables_file = ROOT / 'data' / 'tables.json'
+    if not tables_file.exists():
+        raise SystemExit('找不到 data/tables.json。先运行 .venv/bin/python tools/gen_tables.py。')
+    tpl_file = ROOT / 'src' / 'page.tpl.html'
+    sources = {mark: ROOT / 'src' / name for mark, name in SCRIPTS.items()}
+    missing = [rel(p) for p in [tpl_file, *sources.values()] if not p.exists()]
+    if missing:
+        raise SystemExit('找不到页面的源文件：' + '、'.join(missing))
+
+    shipped = {k: v for k, v in data.items() if k != 'jie'}
+    fill = {
+        '/*DATA*/': json_for_script(json.dumps(shipped, ensure_ascii=False, separators=(',', ':'))),
+        '/*TABLES*/': json_for_script(tables_file.read_text(encoding='utf-8').strip()),
+        '{{TITLE}}': html.escape(title),
+    }
+    for mark, path in sources.items():
+        text = path.read_text(encoding='utf-8')
+        for bad in ('</script', '<!--'):
+            if bad in text.lower():
+                raise SystemExit(f'{rel(path)} 里出现了 {bad}，放进页面的 <script> 以后会让浏览器解析出错。把它拆开写，比如 "<" + "{bad[1:]}"。')
+        fill[mark] = text
+    return render(tpl_file.read_text(encoding='utf-8'), fill)
+
+
 def main():
     unknown = [a for a in sys.argv[1:] if a != '--private']
     if unknown:
@@ -57,35 +92,15 @@ def main():
     data_file = base / 'data' / 'people.json'
     if not data_file.exists():
         raise SystemExit(f'找不到 {rel(data_file)}。先运行 .venv/bin/python tools/gen_data.py' + (' --private' if private else '') + '。')
-    sources = {mark: ROOT / 'src' / name for mark, name in SCRIPTS.items()}
-    tpl_file = ROOT / 'src' / 'page.tpl.html'
-    missing = [rel(p) for p in [tpl_file, *sources.values()] if not p.exists()]
-    if missing:
-        raise SystemExit('找不到页面的源文件：' + '、'.join(missing))
-
-    data_text = data_file.read_text(encoding='utf-8').strip()
     try:
-        data = json.loads(data_text)
+        data = json.loads(data_file.read_text(encoding='utf-8'))
     except ValueError as e:
         raise SystemExit(f'{rel(data_file)} 不是合法的 JSON：{e}')
-    title = data.get('title') if isinstance(data, dict) else None
-    if not isinstance(title, str) or not title:
-        raise SystemExit(f'{rel(data_file)} 里没有 title。重新运行 tools/gen_data.py。')
 
-    fill = {'/*DATA*/': json_for_script(data_text)}
-    for mark, path in sources.items():
-        text = path.read_text(encoding='utf-8')
-        for bad in ('</script', '<!--'):
-            if bad in text.lower():
-                raise SystemExit(f'{rel(path)} 里出现了 {bad}，放进页面的 <script> 以后会让浏览器解析出错。把它拆开写，比如 "<" + "{bad[1:]}"。')
-        fill[mark] = text
-    fill['{{TITLE}}'] = html.escape(title)
-
-    out = render(tpl_file.read_text(encoding='utf-8'), fill)
-    dist = base / 'dist'
-    dist.mkdir(parents=True, exist_ok=True)
-    (dist / 'index.html').write_text(out, encoding='utf-8', newline='\n')
-    print(f'已生成 {rel(dist / "index.html")}，{len(out.encode("utf-8"))} 字节')
+    out = make_page(data)
+    target = base / 'index.html'
+    target.write_text(out, encoding='utf-8', newline='\n')
+    print(f'已生成 {rel(target)}，{len(out.encode("utf-8"))} 字节')
 
 
 if __name__ == '__main__':

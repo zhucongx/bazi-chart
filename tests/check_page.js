@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // 页面检查。
 //
-//   node tests/check_page.js            检查公开的示例页面 dist/index.html，约 40 秒
-//   node tests/check_page.js --private  检查个人页面 private/dist/index.html
+//   node tests/check_page.js            检查公开的示例页面 index.html，约 15 秒
+//   node tests/check_page.js --private  检查个人页面 private/index.html
 //   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），几秒钟
-//   加 --base <目录>                    检查 <目录>/dist/index.html，预期和事实也从这个目录里找（tools/fuzz.py 在用）
+//   加 --base <目录>                    检查 <目录>/index.html，预期和事实也从这个目录里找（tools/fuzz.py 在用）
 //   加 --quiet                          只打印失败的项目和最后的结论
 //
 // 检查四件事：
 //   1. 计算部分（src/engine.js）：干支换算、十五种干支关系、神煞口诀。和具体的人无关。
 //   2. 每个人的细盘，对照 lunar_python 独立算出的预期（data/expected.json，由 tools/gen_data.py 生成）。
 //   3. 人工核对过的事实：tests/facts.json；个人的在 private/tests/facts.json。
-//   4. 解释面板的行为，以及所有状态下每一条解释都有内容。
+//   4. 解释面板的行为，在页面上添加、编辑、删除、导入人物，以及所有状态下每一条解释都有内容。
 //
 // 需要先 npm install（只用到 jsdom）。有任何一项失败，退出码为 1。
 const fs = require('fs');
@@ -27,7 +27,7 @@ if (process.argv.includes('--quiet')) {   // 只打印失败的项目和最后�
 }
 const baseArg = process.argv.indexOf('--base');
 const BASE = baseArg > 0 ? path.resolve(process.argv[baseArg + 1]) : priv ? path.join(ROOT, 'private') : ROOT;
-const FILE = path.join(BASE, 'dist', 'index.html');
+const FILE = path.join(BASE, 'index.html');
 const readJSON = (f, fallback) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback;
 if (!fs.existsSync(FILE)) { console.log(`找不到 ${path.relative(ROOT, FILE)}，先运行 python3 tools/build.py${priv ? ' --private' : ''}`); process.exit(1); }
 const expected = readJSON(path.join(BASE, 'data', 'expected.json'), {});
@@ -37,7 +37,7 @@ const ssCheck = readJSON(path.join(ROOT, 'data', 'shensha_check.json'), null);
 const errors = [];
 const vc = new VirtualConsole();
 vc.on('jsdomError', e => errors.push(e.message));
-const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', virtualConsole: vc, pretendToBeVisual: true });
+const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', virtualConsole: vc, pretendToBeVisual: true, url: 'https://bazi.test/' });   // 给一个网址，localStorage 才能用
 const w = dom.window, d = w.document;
 const $ = id => d.getElementById(id);
 const txt = el => el.textContent.replace(/\s+/g, ' ').trim();
@@ -60,7 +60,7 @@ console.log(`检查 ${path.relative(ROOT, FILE)}`);
 eq('脚本没有报错', errors, []);
 const people = ev('DATA.people.map(p=>p.id)');
 ok('至少有一个人', people.length > 0);
-const pick = i => { if (people.length > 1 && ev('sel.p') !== i) click(d.querySelector(`#people [data-p="${i}"]`)); };
+const pick = i => { if (ev('sel.p') !== i) click(d.querySelector(`#people [data-p="${i}"]`)); };
 const rels = id => [...$(id).querySelectorAll('[data-x]')].map(b => b.dataset.x.split('|').slice(1, 3).join(''));
 function tableRows() {
   const rows = {};
@@ -133,6 +133,26 @@ else {
   eq('每个神煞落在每一柱上的次数相同', got.counts, ssCheck.counts);
 }
 
+// ---------- 1b. 页面内排盘，对照 lunar_python ----------
+console.log('页面内排盘');
+{
+  const oracle = readJSON(path.join(BASE, 'data', 'people.json'), null);
+  if (!oracle) ok('有 data/people.json 可以对照', false);
+  else {
+    const FIELDS = ['gender', 'clock', 'lon', 'dlonSec', 'eotSec', 'tst', 'lunar', 'xingzuo', 'pillars', 'pillarsClock', 'prevJie', 'nextJie', 'taiyuan', 'minggong', 'shengong', 'taixi', 'yun', 'dayun'];
+    const canon = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.keys(x).sort().reduce((o, key) => { o[key] = x[key]; return o; }, {}) : x);
+    const diff = [];
+    oracle.people.forEach(p => {
+      const got = JSON.parse(ev(`JSON.stringify(chartOf(infoFrom(${JSON.stringify(p)})))`));
+      FIELDS.forEach(f => { if (canon(got[f]) !== canon(p[f])) diff.push([p.id, f, got[f], p[f]]); });
+    });
+    eq(`${oracle.people.length} 个人由出生信息在页面里重新排盘，${FIELDS.length} 项结果和 lunar_python 逐项相同`, diff.slice(0, 5), []);
+    const years = Object.keys(oracle.jie), wrong = years.filter(y => JSON.stringify(ev(`jieMD(${y})`)) !== JSON.stringify(oracle.jie[y]));
+    eq(`${years[0]} 到 ${years[years.length - 1]} 年每年十二个节的日期，页面推出来的和 lunar_python 相同`, wrong.slice(0, 5), []);
+  }
+  eq('不存在的日期、范围之外的年份会被拒绝', ev(`[checkInfo({birth:'2001-02-30 10:00',gender:'男',lon:120}),checkInfo({birth:'1899-12-31 10:00',gender:'男',lon:120}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:'x'}),checkInfo({birth:'2000-01-01 10:00',gender:'男',lon:120})].map(s=>s?'拒绝':'接受')`), ['拒绝', '拒绝', '拒绝', '接受']);
+}
+
 // ---------- 2. 每个人的细盘 ----------
 people.forEach((id, pi) => {
   pick(pi);
@@ -184,6 +204,27 @@ Object.keys(facts).forEach(id => {
   });
 });
 
+// 检查当前页面上每一个可点的解释。后面几节都要用。
+const bad = [];
+let checked = 0;
+const kinds = new Set();
+function checkAll(tag) {
+  d.querySelectorAll('[data-x]').forEach(n => {
+    const key = n.dataset.x;
+    const r = ev(`X(${JSON.stringify(key)})`);
+    checked++;
+    if (!r || !r.t || !r.p) { bad.push([tag, key, '没有解释']); return; }
+    const parts = r.p.filter(Boolean);
+    if (!parts.length) bad.push([tag, key, '解释是空的']);
+    const all = r.t + ' ' + parts.map(p => p[0] + ' ' + strip(p[1])).join(' ');
+    if (BAD.test(all)) bad.push([tag, key, all.slice(0, 120)]);
+    parts.forEach(p => { if (!p[0] || !strip(p[1]).trim()) bad.push([tag, key, '有空段落 ' + p[0]]); });
+    if (key.startsWith('rel|')) kinds.add(key.split('|')[1]);
+  });
+  const lay = txt($('layers'));
+  if (BAD.test(lay) || $('layers').children.length !== 4) bad.push([tag, 'layers', lay.slice(0, 80)]);
+}
+
 // ---------- 4. 解释面板 ----------
 console.log('解释面板');
 pick(0);
@@ -211,35 +252,56 @@ pick(0);
   ok('按 Esc 收起', $('sheet').hidden);
   if (people.length > 1) {
     const chips = () => [...d.querySelectorAll('#people [data-p]')];
-    ok('多个人时显示切换按钮', !$('people').hidden && chips().length === people.length);
+    ok('每个人一个切换按钮', chips().length === people.length);
     click(byX('row|神煞'));
     click(chips()[1]);
     ok('换人后标题、选中状态跟着变，面板收起', $('sheet').hidden && chips()[1].getAttribute('aria-pressed') === 'true' && chips()[0].getAttribute('aria-pressed') === 'false' && (!expected[people[1]] || txt($('title')) === expected[people[1]].pillars.join('')));
     click(chips()[0]);
     ok('换回来', chips()[0].getAttribute('aria-pressed') === 'true' && (!expected[people[0]] || txt($('title')) === expected[people[0]].pillars.join('')));
-  } else ok('只有一个人时不显示切换按钮', $('people').hidden);
+  } else ok('只有一个人时只有一个切换按钮', d.querySelectorAll('#people [data-p]').length === 1);
+}
+
+// ---------- 4b. 在页面上添加、编辑、删除、导入 ----------
+console.log('添加、编辑、删除、导入');
+{
+  const n0 = ev('PEOPLE.length');
+  const fill = v => Object.keys(v).forEach(k => { $('pf-' + k).value = v[k]; });
+  const submit = () => $('pform').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+  const stored = () => JSON.parse(w.localStorage.getItem('bz-people') || '[]');
+  ok('一开始表单是收起的', $('pform').hidden && !!$('pp-add'));
+  click($('pp-add'));
+  ok('点「添加」打开表单', !$('pform').hidden);
+  submit();
+  ok('日期和时间没填时不保存，并给出提示', ev('PEOPLE.length') === n0 && !$('pform').hidden && !$('pf-msg').hidden && txt($('pf-msg')).length > 0, txt($('pf-msg')));
+  fill({ name: '测试甲', gender: '男', date: '2000-01-01', time: '12:00', place: '北京市', lon: '116.4' });
+  submit();
+  ok('填好保存后多出一个人并选中，四柱和 lunar_python 排出的示例甲相同', ev('PEOPLE.length') === n0 + 1 && txt($('title')) === '己卯丙子戊午戊午' && ev('P.local') === true && $('pform').hidden, [ev('PEOPLE.length'), txt($('title'))]);
+  ok('出生信息存进了浏览器', stored().length === 1 && stored()[0].birth === '2000-01-01 12:00' && stored()[0].lon === 116.4, stored());
+  const before = checked;
+  checkAll('新添加的人');
+  ok(`新添加的人，${checked - before} 条解释都有内容`, checked > before && !bad.length, bad.slice(0, 3));
+  click($('pp-edit'));
+  ok('点「编辑这一位」，表单里是原来填的内容', !$('pform').hidden && $('pf-name').value === '测试甲' && $('pf-date').value === '2000-01-01' && $('pf-time').value === '12:00' && $('pf-lon').value === '116.4');
+  fill({ time: '23:30', name: '测试乙' });
+  submit();
+  ok('改了时间保存，人数不变，时柱跟着变', ev('PEOPLE.length') === n0 + 1 && ev('P.name') === '测试乙' && txt($('title')) !== '己卯丙子戊午戊午' && stored().length === 1, txt($('title')));
+  const msg = ev(`importText(${JSON.stringify(JSON.stringify([{ name: '导入的人', gender: '女', birth: '1993-10-10 09:30', place: '成都市', lon: 104.07, notes: { x: { 'g|年|癸': [['你的盘', '<b>手写的话</b><script>window.hacked=1</' + 'script><img src="x" onerror="window.hacked=2">']] } } }]))})`);
+  ok('导入一个带手写解读的人，四柱和 lunar_python 排出的示例乙相同', ev('PEOPLE.length') === n0 + 2 && txt($('title')) === '癸酉壬戌甲子戊辰' && /导入了 1 个人/.test(msg), [msg, txt($('title'))]);
+  const note = ev(`X('g|年|癸')`).p.find(p => p[0] === '你的盘');
+  ok('手写解读显示出来了，夹带的脚本被去掉', !!note && note[1].includes('<b>手写的话</b>') && !/script|onerror|<img/i.test(note[1]) && ev('window.hacked') === undefined, note);
+  const again = ev(`importText(${JSON.stringify(JSON.stringify({ people: [ev('JSON.parse(JSON.stringify(DATA.people[0]))')] }))})`);
+  ok('导入 gen_data.py 生成的 people.json 也可以，四柱和页面自带的那个人相同', ev('PEOPLE.length') === n0 + 3 && txt($('title')) === ev('DATA.people[0].pillars.join("")') && ev('P.id') !== ev('DATA.people[0].id'), [again, txt($('title'))]);
+  ok('文件不是 JSON、日期不对时，导入会说明原因', /不是 JSON/.test(ev(`importText('abc')`)) && /没有导入任何人/.test(ev(`importText('[{"name":"坏的","gender":"男","birth":"2001-02-30 10:00","lon":120}]')`)) && ev('PEOPLE.length') === n0 + 3);
+  click($('pp-edit'));
+  click($('pf-del'));
+  ok('删除要点两次，第一次只是询问', ev('PEOPLE.length') === n0 + 3 && /确认/.test(txt($('pf-del'))));
+  click($('pf-del'));
+  ok('第二次点才删除', ev('PEOPLE.length') === n0 + 2 && $('pform').hidden && stored().length === 2);
+  ev('LOCAL=[];writeLocal();rebuildPeople();usePerson(0)');
+  ok('清掉之后回到页面自带的人', ev('PEOPLE.length') === n0 && stored().length === 0 && !$('pp-edit'));
 }
 
 // ---------- 5. 每一个可点的解释都有内容 ----------
-const bad = [];
-let checked = 0;
-const kinds = new Set();
-function checkAll(tag) {
-  d.querySelectorAll('[data-x]').forEach(n => {
-    const key = n.dataset.x;
-    const r = ev(`X(${JSON.stringify(key)})`);
-    checked++;
-    if (!r || !r.t || !r.p) { bad.push([tag, key, '没有解释']); return; }
-    const parts = r.p.filter(Boolean);
-    if (!parts.length) bad.push([tag, key, '解释是空的']);
-    const all = r.t + ' ' + parts.map(p => p[0] + ' ' + strip(p[1])).join(' ');
-    if (BAD.test(all)) bad.push([tag, key, all.slice(0, 120)]);
-    parts.forEach(p => { if (!p[0] || !strip(p[1]).trim()) bad.push([tag, key, '有空段落 ' + p[0]]); });
-    if (key.startsWith('rel|')) kinds.add(key.split('|')[1]);
-  });
-  const lay = txt($('layers'));
-  if (BAD.test(lay) || $('layers').children.length !== 4) bad.push([tag, 'layers', lay.slice(0, 80)]);
-}
 console.log('解释内容');
 people.forEach((id, pi) => {
   pick(pi);

@@ -6,12 +6,13 @@
 
 做三件事：
 1. 用 tools/gen_data.py 的排盘，给每个人生成数据和预期事实；
-2. 把所有人拼进一个页面，放在 tmp/dist/index.html；
+2. 把所有人拼进一个页面，放在 tmp/index.html；
 3. 运行 node tests/check_page.js --base tmp --quick --quiet：
-   逐个人拿页面的细盘对照 lunar_python 另算的结果，并检查每一条解释都有内容。
+   每个人由出生信息在页面里重新排一遍，和 lunar_python 排出来的逐项对照；
+   再逐个人拿页面的细盘对照 lunar_python 另算的结果，并检查每一条解释都有内容。
 
 专挑的边界：出生在立春、清明交接前后几分钟到一个半小时；晚上 11 点前后和零点前后；
-闰日、元旦、年末；经度很偏的地方；夏令时；起运很早和很晚的年份。
+闰日、元旦、年末；经度很偏的地方；夏令时；1900 年初和 2100 年末，也就是页面支持的两头。
 生成的东西都在 tmp/ 里，不入库。需要 lunar_python 和 node。
 """
 import contextlib
@@ -63,12 +64,13 @@ def make_people(n, seed):
         add(datetime.datetime(2001, 1, 1, *hm), 104.0, '女')
     # 闰日、很早、很晚、经度很偏、夏令时
     add(datetime.datetime(2000, 2, 29, 6, 6), 75.0, '男')
-    add(datetime.datetime(1930, 1, 1, 0, 1), 135.0, '女')
+    add(datetime.datetime(1900, 1, 1, 0, 1), 135.0, '女')
+    add(datetime.datetime(2100, 12, 31, 23, 59), 75.0, '女')
     add(datetime.datetime(2025, 12, 31, 23, 59), 121.5, '男')
     add(datetime.datetime(1988, 7, 1, 10, 0), 113.3, '女', dst=True)
     # 随机
-    start = datetime.datetime(1930, 1, 1)
-    days = (datetime.datetime(2026, 1, 1) - start).days
+    start = datetime.datetime(1900, 1, 1)
+    days = (datetime.datetime(2101, 1, 1) - start).days
     for _ in range(n):
         add(start + datetime.timedelta(days=rnd.randrange(days), minutes=rnd.randrange(1440)), round(rnd.uniform(75, 135), 2), rnd.choice('男女'))
     return out
@@ -102,20 +104,15 @@ def main():
     }
     text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
     (TMP / 'data').mkdir(parents=True, exist_ok=True)
-    (TMP / 'dist').mkdir(parents=True, exist_ok=True)
     (TMP / 'data' / 'people.json').write_text(text + '\n', encoding='utf-8', newline='\n')
     (TMP / 'data' / 'expected.json').write_text(gen_data.dump_expected(expected), encoding='utf-8', newline='\n')
 
-    fill = {'/*DATA*/': build.json_for_script(text)}
-    for mark, name in build.SCRIPTS.items():
-        fill[mark] = (ROOT / 'src' / name).read_text(encoding='utf-8')
-    fill['{{TITLE}}'] = data['title']
-    page = build.render((ROOT / 'src' / 'page.tpl.html').read_text(encoding='utf-8'), fill)
-    (TMP / 'dist' / 'index.html').write_text(page, encoding='utf-8', newline='\n')
+    page = build.make_page(data)
+    (TMP / 'index.html').write_text(page, encoding='utf-8', newline='\n')
 
     print(f'{len(people)} 个虚构的人（随机种子 {seed}），出生在 {min(p["clock"][0] for p in people)} 到 {max(p["clock"][0] for p in people)} 年。')
     print(f'其中 {near} 个按真太阳时和按钟表时间排出的年柱或月柱不同，{other_hour} 个日柱或时柱不同。')
-    print(f'页面 tmp/dist/index.html，{len(page.encode("utf-8"))} 字节。开始检查：')
+    print(f'页面 tmp/index.html，{len(page.encode("utf-8"))} 字节。开始检查：')
     r = subprocess.run(['node', str(ROOT / 'tests' / 'check_page.js'), '--base', str(TMP), '--quick', '--quiet'], cwd=ROOT)
     sys.exit(r.returncode)
 

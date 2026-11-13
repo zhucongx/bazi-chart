@@ -58,6 +58,24 @@ h1 span{white-space:nowrap}
 .pp{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 14px;cursor:pointer}
 .pp:hover{border-color:var(--ink3)}
 .pp[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.pp.add{border-style:dashed}
+.hint{margin:0;font-size:12px;color:var(--ink3)}
+.hint[hidden]{display:none}
+.pform{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px;align-items:end}
+.pform[hidden]{display:none}
+.pform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink2);min-width:0}
+.pform input:not([type=checkbox]),.pform select{font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;min-width:0;height:36px}
+.pform input:focus-visible,.pform select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pform .wide{grid-column:1/-1}
+.pform .check{flex-direction:row;align-items:baseline;gap:8px}
+.pform .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pform .gap{flex:1}
+.pform .btn{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 14px;cursor:pointer}
+.pform .btn:hover{border-color:var(--ink3)}
+.pform .btn.main{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.pform .btn.warn{color:var(--warn)}
+.pform .msg{margin:0;font-size:13px;color:var(--warn)}
+.pform .msg[hidden]{display:none}
 
 section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px}
 h2{margin:0;font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -193,7 +211,28 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
     <p class="eyebrow" id="eyebrow"></p>
     <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
   </div>
-  <div class="people" id="people" role="group" aria-label="选择命盘" hidden></div>
+  <div class="people" id="people" role="group" aria-label="选择命盘"></div>
+  <p class="hint" id="pp-hint" hidden></p>
+  <form class="pform" id="pform" autocomplete="off" hidden>
+    <label>称呼<input type="text" id="pf-name" maxlength="20" placeholder="比如：我"></label>
+    <label>性别<select id="pf-gender"><option value="男">男</option><option value="女">女</option></select></label>
+    <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
+    <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
+    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="比如：北京市"></label>
+    <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
+    <p class="wide hint">经度用来把钟表时间换算成真太阳时，可以在地图软件里查到出生城市的经度；填 120 等于不做经度修正。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <p class="wide msg" id="pf-msg" hidden></p>
+    <div class="wide row">
+      <button type="submit" class="btn main" id="pf-save">保存</button>
+      <button type="button" class="btn" id="pf-cancel">取消</button>
+      <button type="button" class="btn warn" id="pf-del" hidden>删除这一位</button>
+      <span class="gap"></span>
+      <button type="button" class="btn" id="pf-import">导入文件</button>
+      <button type="button" class="btn" id="pf-export">导出</button>
+      <input type="file" id="pf-file" accept=".json,application/json" hidden>
+    </div>
+  </form>
   <h1 id="title"></h1>
   <div class="read">
     <p class="rd-h">解读 · 怎么看这一页</p>
@@ -201,6 +240,7 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
       <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
       <li>带虚线的字都可以点，盘上的干支和每一条合冲刑害也可以点。解释出现在屏幕底部，再点一次收起。</li>
       <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
+      <li>点上面的「＋ 添加」，填上出生时间，可以排一张新的盘。填的内容只保存在这个浏览器里。</li>
     </ul>
   </div>
   <dl class="meta" id="meta"></dl>
@@ -298,7 +338,9 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
 
 <script>
 const DATA=/*DATA*/;
+const TABLES=/*TABLES*/;
 /*ENGINE*/
+/*CHART*/
 /*TEXT*/
 /*UI*/
 </script>
