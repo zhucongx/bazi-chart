@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 页面检查。
 //
-//   node tests/check_page.js            检查公开的示例页面 index.html，约 15 秒
+//   node tests/check_page.js            检查公开的示例页面 index.html，约半分钟
 //   node tests/check_page.js --private  检查个人页面 private/index.html
 //   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），几秒钟
 //   加 --base <目录>                    检查 <目录>/index.html，预期和事实也从这个目录里找（tools/fuzz.py 在用）
@@ -46,6 +46,7 @@ const ev = code => w.eval(code);
 const strip = s => String(s).replace(/<[^>]+>/g, '');
 const byX = key => [...d.querySelectorAll('[data-x]')].find(n => n.dataset.x === key);
 const BAD = /undefined|NaN|null|\[object/;
+const DYN = 4;        // 细盘前四列是选中的流日、流月、流年、大运，后四列才是原局
 
 let failed = 0;
 function ok(name, cond, detail) {
@@ -115,7 +116,7 @@ ok('羊刃都落在日干的帝旺位', ev("G.split('').every((g,i)=>stage(g,SS_
 eq('由天德合反推出的天德，和歌诀对得上（正丁二申，三壬四辛，五亥六甲，七癸八寅，九丙十乙，子巳丑庚）', ev("'寅卯辰巳午未申酉戌亥子丑'.split('').map(tianDe).join('')"), '丁申壬辛亥甲癸寅丙乙巳庚');
 eq('由月德合反推出的月德：申子辰壬，亥卯未甲，寅午戌丙，巳酉丑庚', ev("['子','卯','午','酉'].map(yueDe).join('')"), '壬甲丙庚');
 ok('十个天干都引了《滴天髓》的原文', ev("G.split('').every(g=>DTS[g]&&DTS[g][0].length===9&&DTS[g][0].startsWith(g)&&dts(g).includes(DTS[g][0]))"));
-ok('每个神煞都登记了出处；没找到出处的只有国印贵人和披麻', ev("SS_NAMES.every(n=>SSD[n])&&SS_NAMES.filter(n=>!SSD[n].d).join()==='国印贵人,披麻'"));
+ok('一共 55 个神煞，每个都登记了出处；在典籍里没找到、只有现代出处的是天医、披麻、十灵日、六秀日、童子煞', ev("SS_NAMES.length===55&&SS_NAMES.every(n=>SSD[n]&&SSD[n].d)&&SS_NAMES.filter(n=>SSD[n].m).join()==='天医,披麻,十灵日,六秀日,童子煞'"));
 ok('每个神煞都有说明和口诀', ev("SS_NAMES.every(n=>SS[n]&&SS[n].w&&SS[n].q&&'吉凶中'.includes(SS[n].k))"));
 ok('每个神煞都有出现频率', ev("SS_NAMES.every(n=>typeof DATA.freq[n]==='number')"));
 if (!ssCheck) ok('有 data/shensha_check.json', false);
@@ -123,16 +124,22 @@ else if (quick) console.log('  跳过  和 Python 那份口诀的全量对照（
 else {
   const got = JSON.parse(ev(`(function(){
     let hash=7,total=0;const counts={};SS_NAMES.forEach(n=>{counts[n]=[0,0,0,0];});
+    let xh=7,xt=0;const xc={};SS_NAMES.forEach(n=>{xc[n]=0;});
+    const mix=(h,m)=>{h=(Math.imul(h,31)+m[0])>>>0;return (Math.imul(h,31)+m[1])>>>0;};
     for(let yi=0;yi<60;yi++){const yg=yi%10,yp=G[yg]+Z[yi%12];
       for(let m=0;m<12;m++){const mp=G[((yg%5)*2+2+m)%10]+Z[(m+2)%12];
         for(let di=0;di<60;di++){const dg=di%10,dp=G[dg]+Z[di%12];
-          for(let h=0;h<12;h++){const r=shenshaOf([yp,mp,dp,G[((dg%5)*2+h)%10]+Z[h]],DATA.nayin);
-            for(let i=0;i<4;i++){hash=(Math.imul(hash,31)+shenshaMask(r[i]))>>>0;r[i].forEach(o=>{counts[o.n][i]++;});}
-            total++;}}}}
-    return JSON.stringify({names:SS_NAMES,total,hash,counts});})()`));
+          for(let h=0;h<12;h++){const r=shenshaOf([yp,mp,dp,G[((dg%5)*2+h)%10]+Z[h]],DATA.nayin,(yi+di+h)%2===0);
+            for(let i=0;i<4;i++){hash=mix(hash,shenshaMask(r[i]));r[i].forEach(o=>{counts[o.n][i]++;});}
+            total++;}
+          const p=[yp,mp,dp,G[((dg%5)*2)%10]+'子'];
+          for(let xi=0;xi<60;xi++){const r=shenshaFor(p,DATA.nayin,(yi+di+xi)%2===0,G[xi%10]+Z[xi%12],'流年');
+            xh=mix(xh,shenshaMask(r));r.forEach(o=>{xc[o.n]++;});xt++;}}}}
+    return JSON.stringify({names:SS_NAMES,total,hash,counts,extra:{total:xt,hash:xh,counts:xc}});})()`));
   eq('神煞的名单和顺序一致', got.names, ssCheck.names);
-  eq(`${got.total} 种四柱组合逐柱对照，结果和 Python 那份完全相同`, [got.total, got.hash], [ssCheck.total, ssCheck.hash]);
+  eq(`原局四柱：${got.total} 种组合逐柱对照，结果和 Python 那份完全相同`, [got.total, got.hash], [ssCheck.total, ssCheck.hash]);
   eq('每个神煞落在每一柱上的次数相同', got.counts, ssCheck.counts);
+  eq(`外来的一柱（大运、流年、流月、流日）：${got.extra.total} 种组合逐一对照，结果和 Python 那份完全相同`, [got.extra.total, got.extra.hash, got.extra.counts], [ssCheck.extra.total, ssCheck.extra.hash, ssCheck.extra.counts]);
 }
 
 // ---------- 1a. 典籍引文，以及口诀和原文的对照 ----------
@@ -172,9 +179,9 @@ console.log('典籍引文');
   const th = []; Q('sm_tiandehe').replace(/(正|二|三|四)月(.)与(.)合/g, (m, a, b, c) => { th.push([MON[a], WEI[b] || b, WEI[c] || c]); });
   eq('天德合：《三命通会》举的四个月，天德和天德合都和页面的表相同', th, th.map(([z]) => [z, ev(`tianDe('${z}')`), ev(`SS_TIANDEHE['${z}']`)]));
   const sf = []; Q('xj_sifei').replace(/(春|夏|秋|冬)(..)(..)/g, (m, a, b, c) => { sf.push([b, c]); });
-  eq('四废日：《协纪辨方书》引的八个日子和页面的表相同', sf, JSON.parse(ev('JSON.stringify(SS_SIFEI.map(r=>r.slice(1)))')));
+  eq('四废日：《协纪辨方书》引的八个日子和页面的表相同', sf, JSON.parse(ev('JSON.stringify(SS_SIFEI)')));
   const gl = Q('sm_guluan').match(new RegExp(`[${G}][${Z}]`, 'g')), mine = JSON.parse(ev('JSON.stringify(SS_GULUAN)'));
-  eq('孤鸾煞：页面的六个日子都在《三命通会》列的八个里，没算的是丙午、戊午', [mine.filter(x => !gl.includes(x)), gl.filter(x => !mine.includes(x))], [[], ['丙午', '戊午']]);
+  sameSet('孤鸾煞：页面的八个日子就是《三命通会》列的八个', mine, gl);
   const dx = {}; Q('sm_dexiu').split('；').forEach(s => { const [k, rest] = s.split('月，'); dx[k.replace('己酉丑', '巳酉丑')] = [...new Set(rest.split('').filter(c => G.includes(c)))].sort().join(''); });
   eq('德秀贵人：《三命通会》四组月份的德和秀并起来，和页面的表相同', ev("SS_GRP.map((s,i)=>[s,[...new Set(SS_DEXIU[i].split(''))].sort().join('')])"), ev('SS_GRP').map(s => [s, dx[s]]));
   const ym = []; Q('sf_yima').replace(/(...)生见(.)字/g, (m, a, b) => { ym.push([a, b]); });
@@ -184,6 +191,61 @@ console.log('典籍引文');
   eq('羊刃：五个阳干都是禄往前数一位，合《三命通会》的「禄前一辰」', ev(`${at('临官')}.map(z=>Z[(Z.indexOf(z)+1)%12]).filter((z,i)=>i%2===0).join('')`), ev("SS_YANGREN.split('').filter((z,i)=>i%2===0).join('')"));
   const ju = st => ev(`['壬','甲','丙','庚'].map(g=>Z.split('').find(z=>stage(g,z)==='${st}')).join('')`);   // 四个三合局依次属水、木、火、金
   eq('劫煞在三合局五行的绝位，亡神在临官位，华盖在墓位，合《三命通会》的说法', [ju('绝'), ju('临官'), ju('墓')], [ev('SS_JIESHA'), ev('SS_WANGSHEN'), ev('SS_HUAGAI')]);
+  // ---- 后来补的神煞 ----
+  const set = s => [...new Set(s.split(''))].sort().join('');
+  // 成对读的歌诀：几个天干后面跟着同样个数的地支时，一个对一个
+  const decodePair = text => { const out = {}; let gs = [], zs = [];
+    const flush = () => { gs.forEach((g, i) => { out[g] = (out[g] || '') + (zs.length === gs.length ? zs[i] : zs.join('')); }); gs = []; zs = []; };
+    for (const ch of text) {
+      if (G.includes(ch)) { if (zs.length) flush(); gs.push(ch); }
+      else if (AN[ch] || Z.includes(ch)) zs.push(AN[ch] || ch);
+    }
+    flush(); return out; };
+  const pairs = k => Q(k).match(new RegExp(`[${G}][${Z}]`, 'g'));
+  const lu = ev('SS_LU'), luOf = g => lu[G.indexOf(g)];
+  const tj = decode(Q('wz_taiji')), taiji = JSON.parse(ev('JSON.stringify(SS_TAIJI)'));
+  eq('太极贵人：通行的歌诀里八个天干和页面的表相同，戊己是「临四季」', ['甲', '乙', '丙', '丁', '庚', '辛', '壬', '癸'].filter(g => set(tj[g]) !== set(taiji[g])).concat(Q('wz_taiji').includes('戊己两干临四季') && set(taiji.戊) === set('辰戌丑未') && taiji.己 === taiji.戊 ? [] : ['戊己']), []);
+  const wc = decodePair(Q('wz_wenchang')), wc2 = decodePair(Q('xx_wenchang').replace('丁巳鸡', '丁己鸡'));
+  eq('文昌贵人：通行的歌诀和页面的表逐干相同；《星学大成》的歌诀只差辛（它是戌）', [G.split('').map(g => wc[g]).join(''), G.split('').filter(g => wc2[g] !== wc[g]), wc2.辛], [ev('SS_WENCHANG'), ['辛'], '戌']);
+  eq('禄神：通行的口诀和页面的表逐干相同，也就是十二长生的临官', [G.split('').map(g => decode(Q('wz_lu'))[g]).join(''), ev(`${at('临官')}.join('')`)], [lu, lu]);
+  eq('国印贵人：十个天干都是从禄数起的第九位，合《星学大成》的「禄前九位」', G.split('').map(g => Z[(Z.indexOf(luOf(g)) + 8) % 12]).join(''), ev('SS_GUOYIN'));
+  eq('天厨贵人：十个天干都是食神的禄，合《三命通会》的「食神逢禄号天厨」', G.split('').map((g, i) => luOf(G[(i + 2) % 10])).join(''), ev('SS_TIANCHU'));
+  eq('将星在三合局五行的帝旺位，桃花在沐浴位；灾煞是将星的对冲，也是劫煞的下一位', [ju('帝旺'), ju('沐浴'), ev('SS_JIANGXING').split('').map(z => Z[(Z.indexOf(z) + 6) % 12]).join(''), ev('SS_JIESHA').split('').map(z => Z[(Z.indexOf(z) + 1) % 12]).join('')], [ev('SS_JIANGXING'), ev('SS_TAOHUA'), ev('SS_ZAISHA'), ev('SS_ZAISHA')]);
+  eq('孤辰是年支那一方往前出头的一位，寡宿是往后退出的一位，合《三命通会》举的亥子丑见寅、见戌', [ev('SS_FANG').map(f => Z[(Z.indexOf(f[2]) + 1) % 12]).join(''), ev('SS_FANG').map(f => Z[(Z.indexOf(f[0]) + 11) % 12]).join(''), Q('sm_gugua').includes('见寅为孤') && Q('sm_gugua').includes('见戌为寡')], [ev('SS_GUCHEN'), ev('SS_GUASU'), true]);
+  eq('红鸾：子年在卯，往回数；天喜在对面', [Z.split('').map(z => ev(`hongLuan('${z}')`)).join(''), Q('sf_hongluan').startsWith('卯起红鸾逆数通')], ['卯寅丑子亥戌酉申未午巳辰', true]);
+  const ty = {}; Q('wz_tianyi').replace(/(十一|十二|[正二三四五六七八九十])月生见(.)/g, (m, a, b) => { ty[MON[a]] = b; });
+  eq('天医：通行的口诀十二个月都是月支往回数一位', Z.split('').filter(z => ty[z] !== Z[(Z.indexOf(z) + 11) % 12]), []);
+  const xr = {}, xr2 = {}; Q('wz_xueren').replace(/(.)月(.)。/g, (m, a, b) => { xr[a] = b; }); Q('xj_xueji').replace(/(十一|十二|[正二三四五六七八九十])月(.)/g, (m, a, b) => { xr2[MON[a]] = b; });
+  eq('血刃：通行的表和页面相同，也和《协纪辨方书》里的续世（血忌）逐月相同', [xr, xr2], [JSON.parse(ev('JSON.stringify(SS_XUEREN)')), JSON.parse(ev('JSON.stringify(SS_XUEREN)'))]);
+  const shie = JSON.parse(ev('JSON.stringify(SS_SHIE)'));
+  sameSet('十恶大败：《协纪辨方书》列的十天和页面的表相同', pairs('xj_shie'), shie);
+  sameSet('十恶大败：这十天正好是日干的禄落在本旬空亡里的全部日子', ev("Array.from({length:60},(x,i)=>G[i%10]+Z[i%12]).filter(d=>xunkong(d[0],d[1]).includes(SS_LU[G.indexOf(d[0])]))"), shie);
+  sameSet('阴差阳错：《三命通会》列的十二天和页面的表相同', pairs('sm_chacuo'), JSON.parse(ev('JSON.stringify(SS_CHACUO)')));
+  sameSet('魁罡：《渊海子平》列的四天和页面的表相同', pairs('yh_kuigang'), JSON.parse(ev('JSON.stringify(SS_KUIGANG)')));
+  sameSet('金神：《渊海子平》列的三个干支和页面的表相同', pairs('yh_jinshen'), JSON.parse(ev('JSON.stringify(SS_JINSHEN)')));
+  const hy = {}; Q('wz_hongyan').replace(/(.)日(.)。/g, (m, a, b) => { hy[a] = b; });
+  eq('红艳煞：问真的表和页面逐干相同', G.split('').map(g => hy[g]).join(''), ev('SS_HONGYAN'));
+  eq('天赦日：《协纪辨方书》的四个日子和页面的表相同', Q('xj_tianshe').match(/[春夏秋冬](..)/g).map(s => s.slice(1)), JSON.parse(ev('JSON.stringify(SS_TIANSHE)')));
+  const tz = []; Q('sm_tianzhuan').replace(/[春夏秋冬](..)、(..)/g, (m, a, b) => { tz.push([a, b]); });
+  eq('天转、地转：《三命通会》每季的两个日子，前一个是天转，后一个是地转', [tz.map(x => x[0]), tz.map(x => x[1])], [JSON.parse(ev('JSON.stringify(SS_TIANZHUAN)')), JSON.parse(ev('JSON.stringify(SS_DIZHUAN)'))]);
+  sameSet('八专：《三命通会》列的八天和页面的表相同', pairs('sm_bazhuan'), JSON.parse(ev('JSON.stringify(SS_BAZHUAN)')));
+  const jc = JSON.parse(ev('JSON.stringify(SS_JIUCHOU)')), jc3 = pairs('sm_jiuchou');
+  eq('九丑：页面照问真的九天；和《三命通会》的十天相比，多一个丁酉，少乙酉、乙卯', [[...pairs('wz_jiuchou')].sort(), jc.filter(x => !jc3.includes(x)), jc3.filter(x => !jc.includes(x)).sort()], [[...jc].sort(), ['丁酉'], ['乙卯', '乙酉']]);
+  sameSet('十灵日：问真列的十天和页面的表相同', pairs('wz_shiling'), JSON.parse(ev('JSON.stringify(SS_SHILING)')));
+  sameSet('六秀日：问真列的六天和页面的表相同', pairs('wz_liuxiu'), JSON.parse(ev('JSON.stringify(SS_LIUXIU)')));
+  const gj = []; Q('wz_goujiao').replace(/(.)见(.)。/g, (m, a, b) => { gj.push(a + b); });
+  eq('勾绞煞：问真的十二对都是年支往下数三位', gj.filter(x => Z[(Z.indexOf(x[0]) + 3) % 12] !== x[1]).concat(gj.length === 12 ? [] : ['不是十二对']), []);
+  const xt = {}; Q('wz_xuetang').replace(/(.)命见(.)/g, (m, a, b) => { xt[a] = b; });
+  const xtang = JSON.parse(ev('JSON.stringify(SS_XUETANG)'));
+  eq('学堂：问真的五行和页面的表相同；词馆是它往后第三位（临官在长生后面第三位）', [xt, Object.fromEntries(Object.keys(xtang).map(e => [e, Z[(Z.indexOf(xtang[e]) + 3) % 12]]))], [xtang, JSON.parse(ev('JSON.stringify(SS_CIGUAN)'))]);
+  eq('披麻：问真的表是年支往回数三位', Q('wz_pima').replace('披麻：', '').split(' ').join(''), Z.split('').map(z => Z[(Z.indexOf(z) + 9) % 12]).join(''));
+  // 要几柱配合的几条，用虚构的盘各试一例
+  const has = (p, male, n) => JSON.parse(ev(`JSON.stringify(shenshaOf(${JSON.stringify(p)},DATA.nayin,${male}).map(r=>r.some(o=>o.n==='${n}')))`));
+  eq('三奇贵人：年月日的天干依次是乙丙丁，落在这三柱上；颠倒了顺序不算', [has(['乙丑', '丙戌', '丁巳', '戊申'], true, '三奇贵人'), has(['丁丑', '丙午', '乙巳', '戊寅'], true, '三奇贵人')], [[true, true, true, false], [false, false, false, false]]);
+  eq('拱禄：丁巳日丁未时，落在日柱和时柱上', has(['甲子', '丙寅', '丁巳', '丁未'], true, '拱禄'), [false, false, true, true]);
+  eq('元辰：子年出生，男命见未、女命见巳', [has(['甲子', '丙寅', '丁未', '乙巳'], true, '元辰'), has(['甲子', '丙寅', '丁未', '乙巳'], false, '元辰')], [[false, false, true, false], [false, false, false, true]]);
+  eq('童子煞：春天生的日支见寅；年柱纳音属金的时支见午', [has(['甲子', '丙寅', '戊寅', '戊午'], true, '童子煞'), ev("DATA.nayin['甲子']")], [[false, false, true, true], '海中金']);
+  eq('大运、流年等外来的一柱：只看原局自己的那十六个不会出现，其余三十九个都出现过', ssCheck ? [ev('SS_NAMES').filter(n => !ssCheck.extra.counts[n]).length, ev('SS_NAMES').filter(n => ssCheck.extra.counts[n]).length] : [], [16, 39]);
   // 格局和调候：十个日干 × 十二个月支，每一种都能走出结果
   const badGe = ev(`(function(){const bad=[],keep=[P,DM,DMN,NATAL,MEMO];
     G.split('').forEach(g=>Z.split('').forEach(z=>{DM=g;DMN=gN(g);MEMO={};NATAL=[{k:'年',g:'甲',z:'子'},{k:'月',g:'丙',z:z},{k:'日',g:g,z:'子',day:true},{k:'时',g:'庚',z:'午'}];
@@ -223,7 +285,7 @@ people.forEach((id, pi) => {
   const E = expected[id];
   console.log(`细盘 · ${ev('P.name')}`);
   if (!E) { ok('data/expected.json 里有这个人的预期', false); return; }
-  const rows = tableRows(), natal = label => rows[label].slice(2).map(txt);
+  const rows = tableRows(), natal = label => rows[label].slice(DYN).map(txt);
   eq('标题是四柱', txt($('title')), E.pillars.join(''));
   eq('主星', natal('主星'), E.zhuxing);
   eq('天干', natal('天干'), E.pillars.map(p => p[0]));
@@ -235,7 +297,7 @@ people.forEach((id, pi) => {
   eq('纳音', natal('纳音'), E.nayin);
   eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), E.dayun);
   eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), E.wuxing.all.map((n, i) => `${n} 个（${E.wuxing.face[i]}）`));
-  eq('神煞', rows['神煞'].slice(2).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
+  eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
   eq('解读方框有 8 个', d.querySelectorAll('.read').length, 8);
   const fixed = ['meta', 'kv', 'foot', 'note-yun', 'note-wx', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
@@ -249,10 +311,10 @@ Object.keys(facts).forEach(id => {
   console.log(`人工核对过的事实 · ${ev('P.name')}`);
   if (F.title) eq('标题', txt($('title')), F.title);
   const rows = tableRows();
-  Object.keys(F.rows || {}).forEach(label => eq(label, rows[label].slice(2).map(txt), F.rows[label]));
+  Object.keys(F.rows || {}).forEach(label => eq(label, rows[label].slice(DYN).map(txt), F.rows[label]));
   if (F.dayun) eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), F.dayun);
   if (F.bars) eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), F.bars);
-  if (F.shensha) eq('神煞', rows['神煞'].slice(2).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), F.shensha.map(a => [...a].sort()));
+  if (F.shensha) eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), F.shensha.map(a => [...a].sort()));
   Object.keys(F.meta || {}).forEach(k => {
     const dt = [...$('meta').querySelectorAll('dt')].find(x => txt(x) === k);
     ok(`顶部信息 · ${k}`, !!dt && txt(dt.nextElementSibling).includes(F.meta[k]), dt ? txt(dt.nextElementSibling) : '没有这一行');
@@ -262,7 +324,7 @@ Object.keys(facts).forEach(id => {
     click($('dayun').querySelector(`[data-dy="${s.dy}"]`));
     if (s.y) click($('liunian').querySelector(`[data-y="${s.y}"]`));
     const at = `第 ${s.dy + 1} 步大运` + (s.y ? ` ${s.y} 年` : '');
-    if (s.cols) { const r = tableRows(); eq(`${at}：流年、大运两列`, [0, 1].map(i => txt(r['天干'][i]) + txt(r['地支'][i])), s.cols); }
+    if (s.cols) { const r = tableRows(); eq(`${at}：流年、大运两列`, [DYN - 2, DYN - 1].map(i => txt(r['天干'][i]) + txt(r['地支'][i])), s.cols); }
     Object.keys(s.eq || {}).forEach(k => sameSet(`${at}：${k}`, rels(k), s.eq[k]));
     Object.keys(s.has || {}).forEach(k => ok(`${at}：${k} 里有 ${s.has[k].join('、')}`, s.has[k].every(x => rels(k).includes(x)), rels(k)));
   });

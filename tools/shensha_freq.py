@@ -2,26 +2,32 @@
 """用 tools/shensha.py 的口诀生成两份对照数据。
 
 1. data/shensha_check.json（全空间对照）
-   把 60 个年柱 × 12 个月 × 60 个日柱 × 12 个时辰，共 518400 张盘都排一遍，
-   记下每个神煞落在每一柱上的次数，再算一个校验值。页面里的口诀照同样的顺序算一遍，
-   次数和校验值都相同，就说明两份口诀逐位一致。
+   分两部分。页面里的口诀照同样的顺序各算一遍，次数和校验值都相同，就说明两份口诀逐位一致。
 
+   原局四柱：60 个年柱 × 12 个月 × 60 个日柱 × 12 个时辰，共 518400 张盘。
    枚举顺序（校验值和顺序有关，不能改）：
      for yi in 0..59   年柱是六十甲子的第 yi 个，甲子是 0
      for m  in 0..11   m=0 是寅月。月支 = 地支[(m+2)%12]，月干序号 = ((年干序号 % 5) * 2 + 2 + m) % 10
      for di in 0..59   日柱是六十甲子的第 di 个
      for h  in 0..11   时支 = 地支[h]，时干序号 = ((日干序号 % 5) * 2 + h) % 10
+   元辰和男女有关：这张盘算男命还是女命，由 (yi + di + h) 是偶数还是奇数定，偶数算男命。
    每张盘按年、月、日、时的顺序各算一个掩码：这一柱带的神煞，各占 NAMES 里下标对应的那一位。
-   校验值 hash 的初值是 7，每个掩码做一次 hash = (hash * 31 + 掩码) & 0xFFFFFFFF。
+   神煞超过 32 个，所以掩码拆成两个 32 位的数：前 32 个一个，其余一个。
+   校验值 hash 的初值是 7，每一柱依次做 hash = (hash * 31 + 前一个数) & 0xFFFFFFFF，再对后一个数做一次。
+
+   外来的一柱（大运、流年、流月、流日）：它的神煞只和原局的年柱、月支、日柱有关，
+   所以枚举 60 个年柱 × 12 个月 × 60 个日柱 × 60 个外来的干支，共 2592000 种。时柱固定取子时。
+     for yi, for m, for di 同上；for xi in 0..59   外来的一柱是六十甲子的第 xi 个。(yi + di + xi) 是偶数算男命
+   校验值的算法相同，初值也是 7。
 
 2. data/shensha_freq.json（出现频率）
    把 1924-02-05 到 2044-02-03 的每一天、每个时辰都排一遍，共 525948 张盘，
-   统计每个神煞出现在百分之多少的盘里。页面上显示的频率来自这个文件。
+   统计每个神煞出现在百分之多少的盘里（只算原局四柱；男命、女命各算一遍，各占一半）。页面上显示的频率来自这个文件。
    重算的结果必须和已有的文件完全相同，不同就报错，不覆盖。
 
 用法（需要 lunar_python，用虚拟环境里的 Python 跑）：
-  .venv/bin/python tools/shensha_freq.py                两步都做，约半分钟
-  .venv/bin/python tools/shensha_freq.py --check-only   只做第 1 步，几秒钟
+  .venv/bin/python tools/shensha_freq.py                两步都做，约两分钟
+  .venv/bin/python tools/shensha_freq.py --check-only   只做第 1 步，约一分钟
 
 口诀改了以后两步都要重跑，页面里的口诀也要同步改。
 """
@@ -33,7 +39,7 @@ from pathlib import Path
 from lunar_python import Solar
 from lunar_python.util import LunarUtil
 
-from shensha import G, Z, NAMES, shensha
+from shensha import G, Z, NAMES, shensha, shensha_extra
 
 ROOT = Path(__file__).resolve().parent.parent
 CHECK_FILE = ROOT / 'data' / 'shensha_check.json'
@@ -49,9 +55,23 @@ def nayin_elements():
     return table
 
 
+BIT = {n: i for i, n in enumerate(NAMES)}
+
+
+def masks(names):
+    """一柱的神煞压成两个 32 位的数：前 32 个一个，其余一个。"""
+    lo = hi = 0
+    for n in names:
+        k = BIT[n]
+        if k < 32:
+            lo |= 1 << k
+        else:
+            hi |= 1 << (k - 32)
+    return lo, hi
+
+
 def full_space(nayin_el):
-    """全空间对照。返回 {'names', 'total', 'hash', 'counts'}。"""
-    bit = {n: i for i, n in enumerate(NAMES)}
+    """全空间对照。返回 {'names', 'total', 'hash', 'counts', 'extra'}。"""
     counts = {n: [0, 0, 0, 0] for n in NAMES}
     h = 7
     total = 0
@@ -63,37 +83,66 @@ def full_space(nayin_el):
                 dp = JIA_ZI[di]
                 for hh in range(12):
                     hp = G[((di % 10) % 5 * 2 + hh) % 10] + Z[hh]           # 五鼠遁：由日干推时干
-                    for k, names in enumerate(shensha([yp, mp, dp, hp], nayin_el)):
-                        mask = 0
+                    for k, names in enumerate(shensha([yp, mp, dp, hp], nayin_el, (yi + di + hh) % 2 == 0)):
                         for n in names:
-                            mask |= 1 << bit[n]
                             counts[n][k] += 1
-                        h = (h * 31 + mask) & 0xFFFFFFFF
+                        lo, hi = masks(names)
+                        h = (h * 31 + lo) & 0xFFFFFFFF
+                        h = (h * 31 + hi) & 0xFFFFFFFF
                     total += 1
-    return {'names': NAMES, 'total': total, 'hash': h, 'counts': counts}
+    # 外来的一柱
+    xcounts = dict.fromkeys(NAMES, 0)
+    xh = 7
+    xtotal = 0
+    for yi in range(60):
+        yp = JIA_ZI[yi]
+        for m in range(12):
+            mp = G[((yi % 10) % 5 * 2 + 2 + m) % 10] + Z[(m + 2) % 12]
+            for di in range(60):
+                dp = JIA_ZI[di]
+                p = [yp, mp, dp, G[((di % 10) % 5 * 2) % 10] + '子']
+                for xi in range(60):
+                    names = shensha_extra(p, nayin_el, JIA_ZI[xi], (yi + di + xi) % 2 == 0)
+                    for n in names:
+                        xcounts[n] += 1
+                    lo, hi = masks(names)
+                    xh = (xh * 31 + lo) & 0xFFFFFFFF
+                    xh = (xh * 31 + hi) & 0xFFFFFFFF
+                    xtotal += 1
+    return {'names': NAMES, 'total': total, 'hash': h, 'counts': counts,
+            'extra': {'total': xtotal, 'hash': xh, 'counts': xcounts}}
 
 
 def dump_check(res):
     """写成每个神煞占一行的 JSON，方便人看，也方便比较改动。"""
     one = lambda v: json.dumps(v, ensure_ascii=False)
     rows = ',\n'.join(f'  {one(n)}: {one(res["counts"][n])}' for n in res['names'])
+    x = res['extra']
+    xrows = ',\n'.join(f'   {one(n)}: {x["counts"][n]}' for n in res['names'])
     return (f'{{\n "names": {one(res["names"])},\n "total": {res["total"]},\n "hash": {res["hash"]},\n'
-            f' "counts": {{\n{rows}\n }}\n}}\n')
+            f' "counts": {{\n{rows}\n }},\n'
+            f' "extra": {{\n  "total": {x["total"]},\n  "hash": {x["hash"]},\n  "counts": {{\n{xrows}\n  }}\n }}\n}}\n')
 
 
 def do_check(nayin_el):
     res = full_space(nayin_el)
     assert res['total'] == 60 * 12 * 60 * 12 == 518400, res['total']
+    assert res['extra']['total'] == 60 * 12 * 60 * 60 == 2592000, res['extra']['total']
     never = [n for n in NAMES if not sum(res['counts'][n])]
     if never:
         raise SystemExit(f'这些神煞在全部 {res["total"]} 张盘里一次都没出现，口诀或名单有问题：{never}')
+    only_self = {'天赦日', '三奇贵人', '四废日', '阴差阳错', '魁罡', '孤鸾煞', '十恶大败', '金神', '天转', '地转',
+                 '十灵日', '六秀日', '八专', '九丑', '童子煞', '拱禄'}      # 只看原局自己的，外来的一柱不会有
+    wrong = [n for n in NAMES if (res['extra']['counts'][n] == 0) != (n in only_self)]
+    if wrong:
+        raise SystemExit(f'外来的一柱上，这些神煞该有的没有、不该有的有了：{wrong}')
     text = dump_check(res)
     assert json.loads(text) == res
     old = CHECK_FILE.read_text(encoding='utf-8') if CHECK_FILE.exists() else None
     CHECK_FILE.parent.mkdir(exist_ok=True)
     CHECK_FILE.write_text(text, encoding='utf-8', newline='\n')
     state = '新建' if old is None else '和原来的文件相同' if old == text else '和原来的文件不同，已更新；页面里的口诀要同步核对'
-    print(f'全空间对照：{res["total"]} 张盘，校验值 {res["hash"]}。已写入 data/shensha_check.json（{state}）')
+    print(f'全空间对照：原局 {res["total"]} 张盘，校验值 {res["hash"]}；外来的一柱 {res["extra"]["total"]} 种组合，校验值 {res["extra"]["hash"]}。已写入 data/shensha_check.json（{state}）')
 
 
 def frequency(nayin_el):
@@ -108,9 +157,9 @@ def frequency(nayin_el):
         y, m, dd = ec.getYear(), ec.getMonth(), ec.getDay()
         for h in range(12):
             hg = G[(G.index(dd[0]) % 5 * 2 + h) % 10]      # 五鼠遁：由日干推时干
-            have = set().union(*shensha([y, m, dd, hg + Z[h]], nayin_el))
-            for n in have:
-                cnt[n] += 1
+            for male in (True, False):                      # 男命、女命各算一遍，各占一半
+                for n in set().union(*shensha([y, m, dd, hg + Z[h]], nayin_el, male)):
+                    cnt[n] += 0.5
             total += 1
         d += datetime.timedelta(days=1)
     return {n: round(cnt[n] / total * 100, 1) for n in names}, total

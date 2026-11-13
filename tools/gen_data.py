@@ -380,7 +380,7 @@ def chart(name, src, notes, nayin_el):
         'nayin': [ec.getYearNaYin(), ec.getMonthNaYin(), ec.getDayNaYin(), ec.getTimeNaYin()],
         'dayun': [d['gz'] for d in dayun],
         'wuxing': {'all': [every.count(w) for w in WU_XING], 'face': [face.count(w) for w in WU_XING]},
-        'shensha': [sorted(s) for s in shensha(pillars, nayin_el)],
+        'shensha': [sorted(s) for s in shensha(pillars, nayin_el, gender == 1)],
     }
     return person, expected
 

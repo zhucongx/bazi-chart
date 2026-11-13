@@ -40,9 +40,11 @@ function currentMonth(y){
   return idx;
 }
 function fixDay(){const days=monthDays(sel.y,sel.m);if(!days.includes(sel.d)) sel.d=days.includes(TODAY)?TODAY:days[0];}
+/* 细盘的八列：前四列是选中的流日、流月、流年、大运，后四列是原局 */
+const DYN=4;
 function cols(){
-  const ln=yearGZ(sel.y), dy=P.dayun[sel.dy].gz;
-  return [{k:'流年',g:ln[0],z:ln[1],dyn:true},{k:'大运',g:dy[0],z:dy[1],dyn:true}].concat(NATAL);
+  const lr=dayGZ(sel.d), ly=monthGZ(sel.y,sel.m), ln=yearGZ(sel.y), dy=P.dayun[sel.dy].gz;
+  return [['流日',lr],['流月',ly],['流年',ln],['大运',dy]].map(([k,gz])=>({k,g:gz[0],z:gz[1],dyn:true})).concat(NATAL);
 }
 
 /* ---------- 换人 ---------- */
@@ -50,7 +52,7 @@ function usePerson(i){
   sel.p=i; P=PEOPLE[i]; MEMO={};
   DM=P.pillars[2][0]; DMN=gN(DM);
   NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));
-  SHENSHA=shenshaOf(P.pillars,DATA.nayin);
+  SHENSHA=shenshaOf(P.pillars,DATA.nayin,!!P.gender);
   Y_MIN=P.dayun[0].y0; Y_MAX=P.dayun[P.dayun.length-1].y1;
   const inRange=REAL_Y>=Y_MIN&&REAL_Y<=Y_MAX;
   NOW_DY=inRange?P.dayun.findIndex(d=>REAL_Y>=d.y0&&REAL_Y<=d.y1):-1;
@@ -139,7 +141,7 @@ function renderPerson(){
   renderBars();renderGods();renderDynamic();
 }
 function renderPan(){
-  const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===1?' last':''}${c.day?' day':''}`;
+  const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
   const row=(label,fn)=>`<tr><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
     row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
@@ -150,34 +152,38 @@ function renderPan(){
     row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
     row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
     row('纳音',c=>xb('x sm','ny|'+c.k,DATA.nayin[c.g+c.z]))+
-    row('神煞',(c,i)=>`<span class="ss">${c.dyn||!SHENSHA[i-2].length?'—':SHENSHA[i-2].map(s=>xb('x',`ss|${s.n}|${i-2}`,s.n)).join('')}</span>`);
+    row('神煞',(c,i)=>{       // 前四列拿自己的干支去对原局查；四个字的名字在手机上折成两行
+      const list=c.dyn?shenshaFor(P.pillars,DATA.nayin,!!P.gender,c.g+c.z,c.k):SHENSHA[i-DYN];
+      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'—'}</span>`;});
   const dy=P.dayun[sel.dy];
+  $('hd-lr').textContent=mdText(sel.d);
+  $('hd-ly').textContent=jieMD(sel.y)[sel.m]+' 起';
   $('hd-ln').textContent=sel.y+' 年';
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
 function renderDayun(){
-  $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])} · ${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span></button>`).join('');
+  $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])}·${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span></button>`).join('');
 }
 function renderLiunian(){
   const d=P.dayun[sel.dy]; let h='';
   for(let y=d.y0;y<=d.y1;y++){const gz=yearGZ(y);
-    h+=`<button class="pk${y===REAL_Y?' now':''}" aria-pressed="${y===sel.y}" data-y="${y}"><span class="yr">${y}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span><span class="ag">${y-P.clock[0]+1} 岁</span></button>`;}
+    h+=`<button class="pk${y===REAL_Y?' now':''}" aria-pressed="${y===sel.y}" data-y="${y}"><span class="yr">${y}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">${y-P.clock[0]+1} 岁</span></button>`;}
   $('liunian').innerHTML=h;
-  $('h-ln').textContent=`流年（${d.gz}运，${d.y0}–${d.y1}）`;
+  $('h-ln').innerHTML=`流年<small>${d.gz}运</small>`;
 }
 function renderLiuyue(){
   const y=sel.y, j=jieMD(y), cur=y===REAL_Y?NOW_M:-1; let h='';
   for(let m=0;m<12;m++){const gz=monthGZ(y,m);
-    h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span></button>`;}
+    h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span></button>`;}
   $('liuyue').innerHTML=h;
-  $('h-ly').textContent=`流月（${y} ${yearGZ(y)}年）`;
+  $('h-ly').innerHTML=`流月<small>${y} ${yearGZ(y)}年</small>`;
 }
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)} 周${W[new Date(t).getUTCDay()]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span></button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)} 周${W[new Date(t).getUTCDay()]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span></button>`;});
   $('liuri').innerHTML=h;
-  $('h-lr').textContent=`流日（${monthGZ(sel.y,sel.m)}月，${mdText(days[0])}–${mdText(days[days.length-1])}）`;
+  $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
 function renderYunRead(){
   const d=P.dayun[sel.dy];
@@ -220,7 +226,16 @@ function renderGods(){
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
     return `<tr><td>${r[1]}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
 }
-function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();}
+/* 横条里选中的那一格不在看得见的范围里时，把它挪到中间 */
+function reveal(){
+  ['dayun','liunian','liuyue','liuri'].forEach(id=>{
+    const box=$(id), b=box.querySelector('[aria-pressed="true"]');
+    if(!b||!box.clientWidth) return;
+    const l=b.offsetLeft, r=l+b.offsetWidth;
+    if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollLeft=l-(box.clientWidth-b.offsetWidth)/2;
+  });
+}
+function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();reveal();refreshSheet();}
 
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
@@ -343,10 +358,10 @@ document.addEventListener('click',e=>{
     renderDynamic();
   }else if(b.dataset.m!==undefined){
     sel.m=Number(b.dataset.m);
-    fixDay();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();
+    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderYunRead();reveal();refreshSheet();
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
-    renderLiuri();renderRelations();renderYunRead();refreshSheet();
+    renderPan();renderLiuri();renderRelations();renderYunRead();refreshSheet();
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel.x) closeSheet();});

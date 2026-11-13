@@ -17,7 +17,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # 只需一
 
 .venv/bin/python tools/gen_data.py             # 重新排盘：people/*.json → data/people.json、data/expected.json
 python3 tools/build.py                         # 构建公开的页面：src/ + data/ → index.html（仓库根目录）
-node tests/check_page.js                       # 检查示例页面，约 15 秒；加 --quick 只要几秒
+node tests/check_page.js                       # 检查示例页面，约半分钟；加 --quick 只要几秒
 .venv/bin/python tools/shot.py                 # 截图到 shots/
 
 # 个人页面：同样的四条命令，各加 --private，读写的都是 private/ 里的对应文件，页面是 private/index.html
@@ -28,7 +28,7 @@ node tests/check_page.js --private
 
 python3 tools/check_private.py                 # 检查个人数据有没有漏到 private/ 之外
 .venv/bin/python tools/fuzz.py                 # 随机生成几百个虚构的出生时间，逐个排盘、对照、检查解释，约 10 秒
-.venv/bin/python tools/shensha_freq.py         # 重算神煞频率和对照文件，约 1 分钟；加 --check-only 只生成对照文件
+.venv/bin/python tools/shensha_freq.py         # 重算神煞频率和对照文件，约 1 分钟；加 --check-only 只生成对照文件。要先删掉 data/shensha_freq.json 才会写新的频率
 .venv/bin/python tools/gen_tables.py           # 重新导出节气时刻表和农历表 data/tables.json，约半分钟；一般不用重跑
 node tools/check_quotes.js                     # 把典籍的出处抓下来，核对 src/classics.js 里每一句引文，约半分钟，要联网；改了引文之后必须跑
 ```
@@ -66,7 +66,8 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 
 ## 页面结构
 
-- 从上到下：顶部的人物切换和「＋ 添加」（点开是填出生信息的表单），顶部信息，四柱细盘（前两列是选中的流年和大运），大运、流年、流月、流日四行选择器，干支关系（原局一组，四层各自带来的各一组），五行，日主，十神对照。
+- 从上到下：顶部的人物切换和「＋ 添加」（点开是填出生信息的表单），顶部信息，大运、流年、流月、流日四行选择器（每行一条横向的带子，放不下就横向滚动），四柱细盘（八列：前四列是选中的流日、流月、流年、大运，后四列是原局），干支关系（原局一组，四层各自带来的各一组），五行，日主，十神对照。先选后看：选择器在细盘上面。
+- 细盘的列由 `cols()` 给出，`DYN` 是前面外来的列数（4）。手机上八列每列不到 40 像素，样式里专门收紧过，改细盘时要在手机宽度下看一眼有没有横向溢出。
 - 页面自带的人在 `DATA.people` 里，是构建时由 lunar_python 排好的：出生信息、真太阳时、四柱、大运、可选的 `notes`。字段说明在 `tools/gen_data.py` 的开头。
 - 使用者在页面上添加或导入的人，只把出生信息存在 localStorage 的 `bz-people` 里，每次打开由 `chart.js` 的 `chartOf(出生信息)` 现排，得到和 `DATA.people` 里同样字段的对象。两者合在一起是 `PEOPLE`。读写 localStorage 都包在 try/catch 里，存不了时页面照常能用并给出提示。
 - `chartOf` 的结果必须和 `tools/gen_data.py` 逐项相同。改其中一个，另一个要一起改，再跑 `tools/fuzz.py`。节气和农历来自 `TABLES`（`data/tables.json`）。
@@ -77,7 +78,7 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 - 每个版块有一个 `.read` 解读框，内容由 `text.js` 里的 `readPan()` 等函数生成，`notes.read` 里有手写的就用手写的。右上角的开关通过 `<html data-read="off">` 隐藏它们，状态存在 localStorage 的 `bz-read` 里，读写都包在 try/catch 里。
 - 可点的元素都带 `data-x="类型|参数…"`。`X(key)` 返回 `{t: 标题, p: [[小标题, 文字], …]}`，由 `openSheet` 显示在 `#sheet` 里。`#sheet` 是一张贴在所点的字旁边的小卡片，位置由 `placeSheet` 算：默认在字的下方，下面放不下时翻到上方；点空白处、按 Esc、再点一次同一个字都会收起。新增可点元素时沿用这套机制，并在 `text.js` 的 `X0()` 里补上对应的分支。
 - 干支关系由 `relations(cols)` 计算。每一柱的 `layer` 表示来源：原局 0，大运 1，流年 2，流月 3，流日 4。每一层只列它新带来的关系。
-- 神煞由 `shenshaOf(pillars, nayin)` 计算，同时给出每个神煞落在这一柱的原因。改口诀时 `tools/shensha.py` 要一起改，再重跑 `tools/shensha_freq.py`。
+- 神煞一共 55 个，名单和查法照排盘软件问真八字的《神煞大全》。原局四柱由 `shenshaOf(pillars, nayin, male)` 计算，细盘前四列由 `shenshaFor(pillars, nayin, male, 干支, 列名)` 计算（拿那一柱去对原局的年柱、月支、日柱查），都同时给出每个神煞落在这一柱的原因。`male` 只有元辰用到。改口诀时 `tools/shensha.py` 要一起改，再重跑 `tools/shensha_freq.py` 和两遍 `tools/gen_data.py`；每个神煞的说明在 `text.js` 的 `SS`，出处和异文在 `SSD`，并记进 `docs/取法约定.md` 的表里。
 - 状态都在 `sel` 对象里（选中的人、大运、年、月、日，打开的解释，以及点的是第几个同名的字）。选择变了就重新渲染对应的部分，最后调用 `refreshSheet()`。
 - 颜色和字体都走 `:root` 里的变量。页面跟随查看者的浅色或深色主题，所以新增颜色要在三个地方都定义：`:root`、`@media (prefers-color-scheme: dark)` 里的 `:root:not([data-theme="light"])`、`:root[data-theme="dark"]`。
 - 引用典籍：只引读到了原文的句子，在那一条解释里就地写明书名，标题用「典籍」；别的书不一样的取法用「异文」。引文一律放在 `src/classics.js` 里登记出处，`text.js` 用 `q('名字')` 取，不要把引文直接写在 `text.js` 里。所据的本子、版本号、哪一天核对的，记在 `docs/取法约定.md` 的「引用的典籍」一节。原文各本常有异文，引的时候照所据的本子，不凭记忆改字。
