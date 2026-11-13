@@ -2,7 +2,7 @@
 """给构建好的页面截图，用来在发布前看一眼。
 
   .venv/bin/python tools/shot.py             截 index.html，存到 shots/
-  .venv/bin/python tools/shot.py --private   截 private/index.html，存到 private/shots/
+  .venv/bin/python tools/shot.py --private   截 private/build/index.html，存到 private/build/shots/
 
 截六张：桌面整页、桌面打开一条解释、手机顶部、手机打开一条解释、手机上的添加表单、深色。
 页面上不止一个人时，再切到第二个人截一张桌面整页。
@@ -40,7 +40,7 @@ def main():
     if unknown:
         raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
     private = '--private' in sys.argv
-    base = ROOT / 'private' if private else ROOT
+    base = ROOT / 'private' / 'build' if private else ROOT
     src = base / 'index.html'
     out = base / 'shots'
     if not src.exists():

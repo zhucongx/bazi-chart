@@ -16,7 +16,7 @@
 - 出生地的全称；长度不小于 2、而且不是「我」的姓名；
 - private/ 下 .md 文件里出现的 claude.ai 页面链接。
 
-出生信息取自 private/people/*.json；有 private/data/people.json 的话也从它取。
+出生信息取自 private/people/*.json；有 private/build/data/people.json（排好的数据）的话也从它取。
 不扫描的目录：private/、node_modules/、.venv/、.git/、shots/、tmp/、__pycache__/。二进制文件跳过。
 tmp/ 里是 tools/fuzz.py 随机生成的虚构人物，不入库。随机的日期偶尔会和真实的日期撞上，所以不扫描。
 输出里只写类别，不把内容本身打印出来。
@@ -79,7 +79,7 @@ def collect():
 
     # 出生信息文件
     for f in sorted((PRIVATE / 'people').glob('*.json')):
-        if f.name.endswith('.notes.json'):
+        if f.name.endswith(('.notes.json', '.facts.json')):
             continue
         p = json.loads(f.read_text(encoding='utf-8'))
         add_person(p)
@@ -88,9 +88,12 @@ def collect():
             if m:
                 add_date(label, [int(v) for v in m.groups()])
         add_pillars(p.get('expect'))
+        m = re.match(r'\s*\d{4}-\d{1,2}-\d{1,2}\s+(\d{1,2}):(\d{2}):(\d{2})', str(p.get('expectTst', '')))
+        if m and (int(m.group(2)) or int(m.group(3))):      # 整点太常见，不找
+            add('真太阳时', rf'(?<!\d){int(m.group(1)):02d}\s*[:：]\s*{m.group(2)}\s*[:：]\s*{m.group(3)}(?!\d)')
 
     # 排好的数据
-    data_file = PRIVATE / 'data' / 'people.json'
+    data_file = PRIVATE / 'build' / 'data' / 'people.json'
     if data_file.exists():
         for p in json.loads(data_file.read_text(encoding='utf-8')).get('people', []):
             add_person(p)

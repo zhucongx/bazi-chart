@@ -3,7 +3,7 @@
 
 用法（需要 lunar_python，用虚拟环境里的 Python 跑）：
   .venv/bin/python tools/gen_data.py             读 people/*.json，写 data/people.json 和 data/expected.json
-  .venv/bin/python tools/gen_data.py --private   读 private/people/*.json，写 private/data/ 下的同名文件
+  .venv/bin/python tools/gen_data.py --private   读 private/people/*.json，写 private/build/data/ 下的同名文件
 
 people.json 是页面的数据。expected.json 是用 lunar_python 自己的方法另算的一份事实，
 检查脚本拿它对照页面，所以它不能从页面的算法推出来。
@@ -18,10 +18,12 @@ people.json 是页面的数据。expected.json 是用 lunar_python 自己的方�
     "dst": true                           出生时间是夏令时，先减一小时
     "expectLunar": "甲午年三月十八"        由公历换算出来的农历必须等于它，否则报错退出（史料多记农历，用它防止换算错）
     "source": "出生证"                    出生时间的来源
+    "memo": "……"                         给自己看的备注，不进页面
     "expect": ["年柱","月柱","日柱","时柱"]  排出来的四柱必须等于它，否则报错退出
     "expectYunStart": "YYYY-MM-DD"        起运日期必须等于它，否则报错退出
     "expectTst": "YYYY-MM-DD HH:MM:SS"    真太阳时必须等于它，否则报错退出
   同一个目录下如果有 <id>.notes.json，它的内容原样放进这个人的 notes 字段。
+  同一个目录下的 <id>.facts.json 是人工核对过的事实，给检查脚本用，这里不读。三种文件的格式见 docs/数据格式.md。
   人物按 order 排序，order 相同的按 id 排序。
 
 people.json 的字段（写成紧凑的一行 JSON）：
@@ -107,7 +109,7 @@ CHANG_SHENG_AT = dict(zip('甲丙戊庚壬乙丁己辛癸', '亥寅寅巳申午�
 J2000 = datetime.datetime(2000, 1, 1, 12)
 
 REQUIRED = ['id', 'name', 'gender', 'birth', 'place', 'order']       # 另外，没写 shichen 的必须有 lon
-OPTIONAL = ['lon', 'shichen', 'dst', 'source', 'expect', 'expectYunStart', 'expectTst', 'expectLunar']
+OPTIONAL = ['lon', 'shichen', 'dst', 'source', 'expect', 'expectYunStart', 'expectTst', 'expectLunar', 'memo']   # memo 是给自己看的备注，不进页面
 
 
 # ---- 真太阳时 ------------------------------------------------------------------
@@ -218,7 +220,7 @@ def parse_time(text, what):
 
 
 def load_people(src_dir):
-    files = sorted(p for p in src_dir.glob('*.json') if not p.name.endswith('.notes.json'))
+    files = sorted(p for p in src_dir.glob('*.json') if not p.name.endswith(('.notes.json', '.facts.json')))
     if not files:
         raise SystemExit(f'{src_dir.relative_to(ROOT)}/ 里没有出生信息文件。格式见 tools/gen_data.py 开头的说明。')
     people = []
@@ -397,7 +399,9 @@ def main():
     unknown = [a for a in sys.argv[1:] if a != '--private']
     if unknown:
         raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
-    base = ROOT / 'private' if '--private' in sys.argv else ROOT
+    private = '--private' in sys.argv
+    src_dir = ROOT / 'private' / 'people' if private else ROOT / 'people'
+    out = ROOT / 'private' / 'build' / 'data' if private else ROOT / 'data'      # 个人的生成物都放在 private/build/ 里，随时可以删
     freq_file = ROOT / 'data' / 'shensha_freq.json'
     if not freq_file.exists():
         raise SystemExit('找不到 data/shensha_freq.json。先运行 .venv/bin/python tools/shensha_freq.py。')
@@ -407,7 +411,7 @@ def main():
     nayin_el = {gz: v[-1] for gz, v in nayin.items()}
 
     people, expected = [], {}
-    for name, src, notes in load_people(base / 'people'):
+    for name, src, notes in load_people(src_dir):
         person, facts = chart(name, src, notes, nayin_el)
         people.append(person)
         expected[person['id']] = facts
@@ -424,7 +428,6 @@ def main():
         'freq': json.loads(freq_file.read_text(encoding='utf-8')),
         'people': people,
     }
-    out = base / 'data'
     out.mkdir(parents=True, exist_ok=True)
     text = json.dumps(data, ensure_ascii=False, separators=(',', ':')) + '\n'
     (out / 'people.json').write_text(text, encoding='utf-8', newline='\n')

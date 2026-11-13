@@ -2,15 +2,15 @@
 // 页面检查。
 //
 //   node tests/check_page.js            检查公开的示例页面 index.html，约半分钟
-//   node tests/check_page.js --private  检查个人页面 private/index.html
+//   node tests/check_page.js --private  检查个人页面 private/build/index.html
 //   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），几秒钟
-//   加 --base <目录>                    检查 <目录>/index.html，预期和事实也从这个目录里找（tools/fuzz.py 在用）
+//   加 --base <目录>                    检查 <目录>/index.html，预期也从这个目录里找（tools/fuzz.py 在用）
 //   加 --quiet                          只打印失败的项目和最后的结论
 //
 // 检查四件事：
 //   1. 计算部分（src/engine.js）：干支换算、十五种干支关系、神煞口诀。和具体的人无关。
 //   2. 每个人的细盘，对照 lunar_python 独立算出的预期（data/expected.json，由 tools/gen_data.py 生成）。
-//   3. 人工核对过的事实：tests/facts.json；个人的在 private/tests/facts.json。
+//   3. 人工核对过的事实：people/<id>.facts.json；个人的在 private/people/ 里。
 //   4. 解释面板的行为，在页面上添加、编辑、删除、导入人物，以及所有状态下每一条解释都有内容。
 //
 // 需要先 npm install（只用到 jsdom）。有任何一项失败，退出码为 1。
@@ -26,12 +26,15 @@ if (process.argv.includes('--quiet')) {   // 只打印失败的项目和最后�
   console.log = s => { if (/失败|全部通过|^检查 /.test(String(s))) say(s); };
 }
 const baseArg = process.argv.indexOf('--base');
-const BASE = baseArg > 0 ? path.resolve(process.argv[baseArg + 1]) : priv ? path.join(ROOT, 'private') : ROOT;
+// BASE 是页面和生成的数据所在的目录，PEOPLE 是出生信息和人工核对过的事实所在的目录
+const BASE = baseArg > 0 ? path.resolve(process.argv[baseArg + 1]) : priv ? path.join(ROOT, 'private', 'build') : ROOT;
+const PEOPLE = baseArg > 0 ? path.join(BASE, 'people') : priv ? path.join(ROOT, 'private', 'people') : path.join(ROOT, 'people');
 const FILE = path.join(BASE, 'index.html');
 const readJSON = (f, fallback) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback;
 if (!fs.existsSync(FILE)) { console.log(`找不到 ${path.relative(ROOT, FILE)}，先运行 python3 tools/build.py${priv ? ' --private' : ''}`); process.exit(1); }
 const expected = readJSON(path.join(BASE, 'data', 'expected.json'), {});
-const facts = readJSON(path.join(BASE, 'tests', 'facts.json'), {});
+const facts = {};        // {人物的 id: 人工核对过的事实}，每个人一个文件：<id>.facts.json
+if (fs.existsSync(PEOPLE)) fs.readdirSync(PEOPLE).filter(f => f.endsWith('.facts.json')).forEach(f => { facts[f.slice(0, -'.facts.json'.length)] = readJSON(path.join(PEOPLE, f), {}); });
 const ssCheck = readJSON(path.join(ROOT, 'data', 'shensha_check.json'), null);
 
 const errors = [];
