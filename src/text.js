@@ -155,7 +155,7 @@ function shichen(){
 }
 /* 交运落在什么时候：起运那天过了立春，就能说「逢某年」；没过立春只说公历年份的尾数 */
 function jiaoyun(){
-  const [Y,M,D]=P.yun.start, lc=DATA.jie[Y]?DATA.jie[Y][0].split('/').map(Number):[2,4];
+  const [Y,M,D]=P.yun.start, lc=jieMD(Y)?jieMD(Y)[0].split('/').map(Number):[2,4];
   const before=M<lc[0]||(M===lc[0]&&D<lc[1]), ygz=yearGZ(before?Y-1:Y);
   return {Y,M,D,before,ygz,when:before?`尾数是 ${Y%10} 的年份的 ${M} 月${xun(D)}`:`${ygz[0]}年的 ${M} 月${xun(D)}`};
 }
@@ -313,7 +313,7 @@ function colX(k){
       ['这张盘',basic],
       ['注意',`时柱取决于出生时间准不准。${P.source?esc(P.source)+'记的是':'钟表时间是'} ${hm(P.clock)}，换算成真太阳时是 ${hmNear(P.tst)}，在${p.z}时。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}，出了这个范围时柱就会变。`+(hi===0?'子时跨着零点。这里以零点换日：晚上 11 点到零点出生的，日柱算当天，时干按第二天的日干来推。也有人主张晚上 11 点就换日。':'')]]};
   }
-  const fwd=P.yun.forward, d=DATA.people[sel.p].dayun[sel.dy];
+  const d=P.dayun[sel.dy];
   if(k==='大运') return {t:`大运 · ${d.gz}（${d.y0}–${d.y1}）`,p:[
     ['是什么',`十年一步的大环境。它从月柱推出来：阳年出生的男性和阴年出生的女性顺着排，阴年出生的男性和阳年出生的女性倒着排。${yunWhy(4)}。`],
     ['怎么读',`把它当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。`],

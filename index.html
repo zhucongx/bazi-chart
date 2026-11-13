@@ -58,6 +58,24 @@ h1 span{white-space:nowrap}
 .pp{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 14px;cursor:pointer}
 .pp:hover{border-color:var(--ink3)}
 .pp[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.pp.add{border-style:dashed}
+.hint{margin:0;font-size:12px;color:var(--ink3)}
+.hint[hidden]{display:none}
+.pform{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px;align-items:end}
+.pform[hidden]{display:none}
+.pform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink2);min-width:0}
+.pform input:not([type=checkbox]),.pform select{font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;min-width:0;height:36px}
+.pform input:focus-visible,.pform select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pform .wide{grid-column:1/-1}
+.pform .check{flex-direction:row;align-items:baseline;gap:8px}
+.pform .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pform .gap{flex:1}
+.pform .btn{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 14px;cursor:pointer}
+.pform .btn:hover{border-color:var(--ink3)}
+.pform .btn.main{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.pform .btn.warn{color:var(--warn)}
+.pform .msg{margin:0;font-size:13px;color:var(--warn)}
+.pform .msg[hidden]{display:none}
 
 section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px}
 h2{margin:0;font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -193,7 +211,28 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
     <p class="eyebrow" id="eyebrow"></p>
     <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
   </div>
-  <div class="people" id="people" role="group" aria-label="选择命盘" hidden></div>
+  <div class="people" id="people" role="group" aria-label="选择命盘"></div>
+  <p class="hint" id="pp-hint" hidden></p>
+  <form class="pform" id="pform" autocomplete="off" hidden>
+    <label>称呼<input type="text" id="pf-name" maxlength="20" placeholder="比如：我"></label>
+    <label>性别<select id="pf-gender"><option value="男">男</option><option value="女">女</option></select></label>
+    <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
+    <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
+    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="比如：北京市"></label>
+    <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
+    <p class="wide hint">经度用来把钟表时间换算成真太阳时，可以在地图软件里查到出生城市的经度；填 120 等于不做经度修正。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <p class="wide msg" id="pf-msg" hidden></p>
+    <div class="wide row">
+      <button type="submit" class="btn main" id="pf-save">保存</button>
+      <button type="button" class="btn" id="pf-cancel">取消</button>
+      <button type="button" class="btn warn" id="pf-del" hidden>删除这一位</button>
+      <span class="gap"></span>
+      <button type="button" class="btn" id="pf-import">导入文件</button>
+      <button type="button" class="btn" id="pf-export">导出</button>
+      <input type="file" id="pf-file" accept=".json,application/json" hidden>
+    </div>
+  </form>
   <h1 id="title"></h1>
   <div class="read">
     <p class="rd-h">解读 · 怎么看这一页</p>
@@ -201,6 +240,7 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
       <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
       <li>带虚线的字都可以点，盘上的干支和每一条合冲刑害也可以点。解释出现在屏幕底部，再点一次收起。</li>
       <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
+      <li>点上面的「＋ 添加」，填上出生时间，可以排一张新的盘。填的内容只保存在这个浏览器里。</li>
     </ul>
   </div>
   <dl class="meta" id="meta"></dl>
@@ -297,7 +337,8 @@ body.has-sheet main{padding-bottom:min(58vh,480px)}
 </aside>
 
 <script>
-const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"jie":{"2003":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/9","11/8","12/7","1/6"],"2004":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2005":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2006":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2007":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/9","11/8","12/7","1/6"],"2008":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2009":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2010":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2011":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2012":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2013":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2014":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2015":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2016":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2017":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2018":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/5"],"2019":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2020":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2021":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2022":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2023":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/8","12/7","1/6"],"2024":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2025":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2026":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2027":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/7","12/7","1/6"],"2028":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2029":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2030":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2031":["2/4","3/6","4/5","5/6","6/6","7/7","8/8","9/8","10/8","11/7","12/7","1/6"],"2032":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2033":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2034":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2035":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2036":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2037":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2038":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2039":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2040":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2041":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2042":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2043":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2044":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2045":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2046":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2047":["2/4","3/6","4/5","5/5","6/6","7/7","8/7","9/8","10/8","11/7","12/7","1/6"],"2048":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2049":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2050":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2051":["2/4","3/5","4/5","5/5","6/6","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2052":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2053":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2054":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2055":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2056":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2057":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2058":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2059":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2060":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/6","12/6","1/5"],"2061":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2062":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2063":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2064":["2/4","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/6","12/6","1/5"],"2065":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2066":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2067":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2068":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2069":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/6","1/5"],"2070":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2071":["2/4","3/5","4/5","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2072":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2073":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2074":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2075":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2076":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2077":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2078":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2079":["2/4","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2080":["2/4","3/5","4/4","5/4","6/5","7/6","8/6","9/7","10/7","11/6","12/6","1/5"],"2081":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2082":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2083":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2084":["2/4","3/4","4/4","5/4","6/5","7/6","8/6","9/6","10/7","11/6","12/6","1/4"],"2085":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/7","11/7","12/6","1/5"],"2086":["2/3","3/5","4/4","5/5","6/5","7/6","8/7","9/7","10/8","11/7","12/7","1/5"],"2087":["2/3","3/5","4/4","5/5","6/5","7/7","8/7","9/7","10/8","11/7","12/7","1/5"],"2088":["2/4","3/4","4/4","5/4","6/4","7/6","8/6","9/6","10/7","11/6","12/6","1/4"]},"freq":{"丧门":23.0,"亡神":38.5,"劫煞":38.5,"华盖":38.6,"四废日":3.3,"国印贵人":47.2,"天乙贵人":67.6,"天德合":30.5,"孤鸾煞":10.0,"德秀贵人":88.0,"披麻":23.0,"月德合":34.6,"流霞":25.6,"福星贵人":69.2,"空亡":64.7,"羊刃":30.7,"词馆":23.0,"金舆":47.3,"飞刃":30.6,"驿马":36.5},"people":[{"id":"example-a","name":"示例甲","gender":1,"clock":[2000,1,1,12,0,0],"place":"北京市","lon":116.4,"dlonSec":-864,"eotSec":-189,"tst":[2000,1,1,11,42,27],"lunar":{"year":"己卯","month":"冬","day":"廿五","leap":false},"xingzuo":"摩羯","pillars":["己卯","丙子","戊午","戊午"],"pillarsClock":["己卯","丙子","戊午","戊午"],"prevJie":{"name":"大雪","at":[1999,12,7,21,47,27],"min":35395},"nextJie":{"name":"小寒","at":[2000,1,6,9,0,42],"min":7038},"taiyuan":"丁卯","minggong":"乙亥","shengong":"辛未","taixi":"癸未","yun":{"forward":false,"y":8,"m":2,"d":11,"h":2,"start":[2008,3,12],"jie":"大雪","gapMin":35413},"dayun":[{"gz":"乙亥","y0":2008,"y1":2017,"a0":9,"a1":18},{"gz":"甲戌","y0":2018,"y1":2027,"a0":19,"a1":28},{"gz":"癸酉","y0":2028,"y1":2037,"a0":29,"a1":38},{"gz":"壬申","y0":2038,"y1":2047,"a0":39,"a1":48},{"gz":"辛未","y0":2048,"y1":2057,"a0":49,"a1":58},{"gz":"庚午","y0":2058,"y1":2067,"a0":59,"a1":68},{"gz":"己巳","y0":2068,"y1":2077,"a0":69,"a1":78},{"gz":"戊辰","y0":2078,"y1":2087,"a0":79,"a1":88}]},{"id":"example-b","name":"示例乙","gender":0,"clock":[1993,10,10,9,30,0],"place":"成都市","lon":104.07,"dlonSec":-3823,"eotSec":774,"tst":[1993,10,10,8,39,11],"lunar":{"year":"癸酉","month":"八","day":"廿五","leap":false},"xingzuo":"天秤","pillars":["癸酉","壬戌","甲子","戊辰"],"pillarsClock":["癸酉","壬戌","甲子","己巳"],"prevJie":{"name":"寒露","at":[1993,10,8,14,40,2],"min":2519},"nextJie":{"name":"立冬","at":[1993,11,7,17,45,33],"min":40866},"taiyuan":"癸丑","minggong":"乙卯","shengong":"乙卯","taixi":"己丑","yun":{"forward":true,"y":9,"m":5,"d":11,"h":6,"start":[2003,3,21],"jie":"立冬","gapMin":40815},"dayun":[{"gz":"癸亥","y0":2003,"y1":2012,"a0":11,"a1":20},{"gz":"甲子","y0":2013,"y1":2022,"a0":21,"a1":30},{"gz":"乙丑","y0":2023,"y1":2032,"a0":31,"a1":40},{"gz":"丙寅","y0":2033,"y1":2042,"a0":41,"a1":50},{"gz":"丁卯","y0":2043,"y1":2052,"a0":51,"a1":60},{"gz":"戊辰","y0":2053,"y1":2062,"a0":61,"a1":70},{"gz":"己巳","y0":2063,"y1":2072,"a0":71,"a1":80},{"gz":"庚午","y0":2073,"y1":2082,"a0":81,"a1":90}]}]};
+const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"freq":{"丧门":23.0,"亡神":38.5,"劫煞":38.5,"华盖":38.6,"四废日":3.3,"国印贵人":47.2,"天乙贵人":67.6,"天德合":30.5,"孤鸾煞":10.0,"德秀贵人":88.0,"披麻":23.0,"月德合":34.6,"流霞":25.6,"福星贵人":69.2,"空亡":64.7,"羊刃":30.7,"词馆":23.0,"金舆":47.3,"飞刃":30.6,"驿马":36.5},"people":[{"id":"example-a","name":"示例甲","gender":1,"clock":[2000,1,1,12,0,0],"place":"北京市","lon":116.4,"dlonSec":-864,"eotSec":-189,"tst":[2000,1,1,11,42,27],"lunar":{"year":"己卯","month":"冬","day":"廿五","leap":false},"xingzuo":"摩羯","pillars":["己卯","丙子","戊午","戊午"],"pillarsClock":["己卯","丙子","戊午","戊午"],"prevJie":{"name":"大雪","at":[1999,12,7,21,47,27],"min":35395},"nextJie":{"name":"小寒","at":[2000,1,6,9,0,42],"min":7038},"taiyuan":"丁卯","minggong":"乙亥","shengong":"辛未","taixi":"癸未","yun":{"forward":false,"y":8,"m":2,"d":11,"h":2,"start":[2008,3,12],"jie":"大雪","gapMin":35413},"dayun":[{"gz":"乙亥","y0":2008,"y1":2017,"a0":9,"a1":18},{"gz":"甲戌","y0":2018,"y1":2027,"a0":19,"a1":28},{"gz":"癸酉","y0":2028,"y1":2037,"a0":29,"a1":38},{"gz":"壬申","y0":2038,"y1":2047,"a0":39,"a1":48},{"gz":"辛未","y0":2048,"y1":2057,"a0":49,"a1":58},{"gz":"庚午","y0":2058,"y1":2067,"a0":59,"a1":68},{"gz":"己巳","y0":2068,"y1":2077,"a0":69,"a1":78},{"gz":"戊辰","y0":2078,"y1":2087,"a0":79,"a1":88}]},{"id":"example-b","name":"示例乙","gender":0,"clock":[1993,10,10,9,30,0],"place":"成都市","lon":104.07,"dlonSec":-3823,"eotSec":774,"tst":[1993,10,10,8,39,11],"lunar":{"year":"癸酉","month":"八","day":"廿五","leap":false},"xingzuo":"天秤","pillars":["癸酉","壬戌","甲子","戊辰"],"pillarsClock":["癸酉","壬戌","甲子","己巳"],"prevJie":{"name":"寒露","at":[1993,10,8,14,40,2],"min":2519},"nextJie":{"name":"立冬","at":[1993,11,7,17,45,33],"min":40866},"taiyuan":"癸丑","minggong":"乙卯","shengong":"乙卯","taixi":"己丑","yun":{"forward":true,"y":9,"m":5,"d":11,"h":6,"start":[2003,3,21],"jie":"立冬","gapMin":40815},"dayun":[{"gz":"癸亥","y0":2003,"y1":2012,"a0":11,"a1":20},{"gz":"甲子","y0":2013,"y1":2022,"a0":21,"a1":30},{"gz":"乙丑","y0":2023,"y1":2032,"a0":31,"a1":40},{"gz":"丙寅","y0":2033,"y1":2042,"a0":41,"a1":50},{"gz":"丁卯","y0":2043,"y1":2052,"a0":51,"a1":60},{"gz":"戊辰","y0":2053,"y1":2062,"a0":61,"a1":70},{"gz":"己巳","y0":2063,"y1":2072,"a0":71,"a1":80},{"gz":"庚午","y0":2073,"y1":2082,"a0":81,"a1":90}]}]};
+const TABLES={"jieFrom":1899,"jieBase":-2239957984,"jie":"00003oxf4jge5i836bvm6rxd6pku65i159m84ayj3iqw340c368m3ovx4jgp5i9j6by76s1d6poq65ks59nj4axn3io633x9366t3ox14jl45iff6c236s176plk65hl59n14b013irk33zk36713oua4jf65i7m6btn6rtk6ph965hl59r94b7o3j03345u368m3orb4jad5i4h6bux6ryh6pmq65lj59sb4b633ixw3447367t3or84jao5i4v6bw06s0j6poa65kv59pc4b2c3iva344a36aj3ouz4jdg5i4o6br56rte6piy65ip59pq4b3m3iwd345s36df3oz04jha5i7d6bsp6rta6phu65ie59r54b6p3iyv344o368c3osg4jbi5i3c6bqx6rt26pio65ks59ug4b9b3izx344536663op94j905i2y6bt76rxl6plu65jy59qz4b5a3ixc344036863osg4jd25i7p6bx66rzd6plj65hj59nl4b373ixm346k36bp3otw4j9d5hzd6bn06rqi6phi65j259rj4b763j0i347z36bo3osy4j865hya6bny6ruf6pn665pf59w44b6s3ivm341736623or44jas5i3c6bsq6ry16pos65ot59v34b6k3iv333zp363w3op84ja55i3c6bpx6rrs6piv65lp59vg4ba23j07344e366p3opk4j8q5i2d6brt6rus6pkn65mr59x94bdq3j4s346n364m3oje4j0b5huh6bnn6rve6pnw65qc59zn4bem3j53347u366b3okb4izg5hrw6bl66rvu6pqa65rg59y44bao3j16346u369h3oqs4j765hyc6bns6ruf6pnu65q259xz4bba3j1h347036ai3orq4j5t5htn6bfy6rkm6pg565o25a1f4bhn3j7d349n36973oou4j435hu46bj06rp66pjv65qo5a2v4bgy3j55346c365f3omc4j545hzb6bqh6rwe6pne65oi59xo4bcy3j3m3470366w3omx4j4k5hy06bn86rr96pir65l259ux4bbi3j4j34ai36bt3or14j5n5hwq6bnp6rum6pnj65pz59yi4bcz3j3q346y366h3oll4j0x5hsr6blg6rvt6pru65vs5a3p4bey3j1p3430362n3oj44j075hsw6bl46rvt6psq65ws5a4f4bf23j10341r361v3ojt4j315hxo6bpj6rww6prn65w85a5l4bi33j4s344o362n3oh14iwc5hor6bgt6rpb6plo65u35a8c4bor3jcx34ba36513of24irq5hjm6be56rra6pqg65y25a9g4bn13jac349h364n3og44iu55hmy6bhg6rui6ptf65yf5a6u4bjf3j7m349936763ok24ixg5hn76bc36rk36pj365st5a5s4bkp3j9l34bk36ab3onq4j015ho16bd36rle6pji65to5a8i4bok3jc1349m364f3oh44ivw5hn96bey6rp16pmu65vb5a9c4bp03jc0349c36353oen4ito5hmp6bfn6rq86pn965t45a4m4bk23j96349m365w3oi84ix55hqs6bkm6rua6pq165uk5a434bih3j8734aa367y3oj74iu75hjt6bcd6rns6pmp65vi5a834bmu3jb234b0366m3oh54isb5hhh6bal6rp96prs661s5aco4bn33j6v344b360f3oee4iuq5hoa6bia6rve6pw4663p5ad24bnp3j7b343v35z13ocr4itm5hnd6bf16rnv6pn165y35acj4br93jd1349g362e3oco4iq55hiu6bds6rqk6pq8660f5afg4bvj3jhf34b5360b3o7l4ik15he26bcc6rtu6pwj665m5ahn4bvi3jh634cg362g3o8q4ij05hau6b7m6rpb6pts66495af94brb3jd534bf365q3of84iq35hg76baa6rp46pso664k5ahc4btr3jej34bw366g3ofy4ipi5hd06b456rhf6plk66115ajb4bzp3jks34er364q3oc24img5hbn6b406rih6png662e5aix4bxq3ji734c136243oaj4inw5hhl6bda6rr96psp662h5afb4btw3jgb34co36483ocd4iob5hg16b9d6rky6pl565wg5abo4bsg3jh434fs368m3ofx4ioi5hcx6b6p6rm66ppb66125afm4bum3jge34bl362p3oan4ilo5hcp6b8f6rqc6pwf668c5ake4bvt3jed348235yz3o7t4ikf5hct6b866rnx6psp665u5ait4bug3jd5347735yt3o8r4img5hfq6bbr6rqm6ptl666p5alh4byk3jhe34a735zf3o5s4igd5h8e6b576rmh6pr6665g5anc4c443jol34fu36143o3e4iba5h2d6b056rkv6ptz66985anp4c113jku34dr36193o5c4ie85h6b6b556rpw6pyj66cl5aoj4bz93jhz34c5362f3o8x4iia5h7i6b0y6rgq6pnh664w5amu4c1k3jle34f636503ob34ij25h6c6az36rfx6pnu665z5apr4c643joj34dn35yw3o3l4ieb5h6q6b3r6rmr6puy66aw5ara4c5p3jo134dv35yq3o284ici5h616b4d6rmc6prp665w5all4c0p3jlo34f736303o764ifu5h796b596roe6pui66885amz4c0r3jl734fc36433o7h4idt5h2p6azp6rkq6pu966ar5ar74c593jo634fv362g3o5d4ic35h0s6awx6rid6pv066ee5atu4c4f3jk1349z35x63o2x4idr5h6c6b4p6rph6pzt66he5aw54c6a3jkv349g35vq3o1p4ids5h6l6b2k6rjn6pqw669h5atk4c9f3jrj34ge36003o1l4i995h026axn6rie6psb66as5aux4ccd3jux34hn35y63nx14i3u5gwu6ayt6rnz6q0z66iq5ay04cat3jsh34hk360b3nzs4i595gvt6avu6rjc6puq66dh5au44c6o3jol34g6362x3o5k4ibh5gzd6avm6rhg6pte66de5aw54c9p3jqc34g0361s3o3x4i9w5gxx6atb6rea6pr966d55ayi4cew3jw634iy36063nzs4i605gvx6ass6rdp6pqk66cr5awh4cb03js534fu35y13nym4i6k5gzi6b066rmw6pxa66f15avn4c8u3jqa34fl35zg3o0u4i8h5gzk6axi6riq6psb66a75asr4c8g3jry34il362r3o2l4i6t5gur6as26rfu6ptz66eb5awr4caz3jrc34eb35wj3nwv4i3g5guw6avv6rmg6q3566oo5b4m4ce33jqh34bk35tb3nuf4i2m5gv86aw16rk66pxc66j15b1r4cde3jqv34cd35u53nvc4i3h5gvi6avf6rjj6px366j05b3r4chz3jwl34h835wa3nt14hxu5gpg6aqz6rhr6py466l65b6n4cmv3k3334mt35yu3nsb4hu75gk56am26reb6px566m05b5b4ci83jxx34k135zi3nvq4hyl5gnx6apd6ri16q0j66of5b734ci73jvy34i735zy3nz84i3z5grs6ao16rbr6pry66h35b4f4ckh3k0c34lz36293o024i395gq06all6r8g6pp766fw5b4u4cmj3k2034kk35x93ntk4hyj5gq16ard6rhq6pyg66ms5b7t4clx3k0d34jt35wz3nt14hyd5gqy6atg6rj06pvm66g95b0b4cfn3jx234kb360l3nxk4i175gqx6ar46rhd6pwt66i45b174cfl3jwm34k8360t3nwi4hy75gmu6anu6rgi6pzy66om5b824ckl3jyn34j135xo3ntu4hwn5glg6am36rej6pyo66pe5b914cj83jug34db35sh3nr74hxh5gp16aqs6rjh6q2n66rx5bbx4cm93jw734d235qi3noy4hwq5gpl6aqc6rgf6pxh66ml5b9w4cpk3k3g34kt35vg3noq4hrb5gi56akb6rcm6pw366n15baw4crg3k5j34lg35ts3nkl4hlj5gd36ajn6ri56q5m66wu5bgl4crc3k2w34k635uv3nnj4how5gf36aja6rfd6q0966qs5bcb4cop3k1934kf35y23nsz4hua5ghd6ag66r906pvf66op5bd24crp3k4d34lt35xa3nq64hqq5geu6afg6r8y6pwg66rw5bhx4cxh3k9s34ol35wh3nnr4hor5geb6agc6r9u6pv466ou5bdm4csj3k5m34m735vm3nnr4hpo5ggk6ak36rf86pzx66q85bcl4cql3k3y34lv35x23nqb4hsf5gi86aju6rdd6pxw66od5bb34cqj3k5s34p6360p3nsm4hri5geh6afb6r9i6pwc66px5bdy4cs73k4534k035ty3nmp4ho25gdx6ai16rg86q5w67025blq4cvb3k3434go35q33nk94hom5ghd6alx6rhd6q2p66uo5bht4cuf3k4f34is35rt3nky4ho95gfy6aj56rdg6pzj66sv5bhx4cx43k9234nh35tv3nhz4hgu5g7p6aec6rdr6q3p66yt5bnq4d2e3ke034ra35vu3nif4hfj5g4n6aav6rbs6q3766yh5bla4cx63k8034nf35vi3nl44hji5g7o6abc6ray6q3366yz5bmf4cxr3k6y34lq35v93nnf4hnu5gbg6abx6r776pxf66v25bm24d133kc134pp35wz3nn44hlw5g916a9s6r4d6pt766rk5bl44d273kcp34nt35s13ngk4hgp5g7c6acq6rbw6q2f66yk5boj4d2e3kby34no35s43ngd4hgt5g996ag66rei6q1w66u75bhz4cwr3k9c34oq35w33nkw4hj75g896ace6r9u6pzb66u75bie4cwk3k9334p435wj3njo4hff5g2k6a7w6r9g6q3k672e5bry4d3s3kby34nl35sq3ngz4hf45g3l6a8g6r9s6q3v672e5brc4d283k8s34j935om3neo4hfs5g6m6ab66rah6q3l671y5bs64d4k3kbk34l235os3ndj4heg5g5r6ab26r9d6q0s66zg5bs34d8c3kim34sx35ug3nev4haw5fzw6a6a6r6z6pz866xy5br04d813kih34se35t73ncf4h7c5fw26a476r9s6q72676o5bw44d7q3kfg34q735th3nf34hbm5g0s6a7p6ra16q4e672s5bsi4d523kdn34pu35vn3njq4hgo5g3j6a5x6r456pxm66yi5brq4d6z3kgf34rf35uh3nfo4hbc5fym6a3c6r4w6q0u673l5by54dda3kl134sr35sj3ncp4h9r5fzt6a6m6r8t6q39672a5btf4d7o3kgk34qe35s43nd64ham5g1a6a8d6ra36q4467245bru4d563kee34pq35t73nf34hbo5g076a6m6r8u6q3j67315btv4d7g3kgq34s635vl3ngt4hbo5fyb6a3n6r6k6q2n673q5bwd4d9q3kfm34n335ob3n9p4h6u5fw86a3e6r8v6q8w67bp5c2m4dck3kfi34ko35kp3n6l4h655fze6a936rc26q7j678f5c024dcf3khz34ok35oa3n8u4h6d5fxg6a5j6r7n6q25673m5by74de83kmj34tm35qj3n5m4gy55fmv69x46r5o6q6j67am5c4y4djq3kqm34wb35s63n6t4gyq5fmu69wn6r5w6q8c67bq5c2r4dep3kkw34sr35s93na24h385fqc69x16r296q3d678s5c2d4dev3kkb34rk35s53nc24h665frp69w76qzf6pz0675y5c3g4djf3kq934w935ua3nc44h5o5frw69wp6qzo6pxm672x5c1d4djc3kq334ue35pw3n634h0m5fq569yc6r436q4767865c2e4dh53knu34tm35qa3n6m4h175fsi6a3o6r966q65676z5byl4dcl3kl134u235u43nc24h5b5fsy6a106r616q3l675m5bye4dce3kke34ta35si3n8q4h075fm569uc6r3n6q7r67ei5c8r4dkf3knh34r835ny3n584gzl5foo69y66r796qbh67hf5c9c4dj53kkp34ne35k43n2s4gzl5fr46a0v6r6v6q7q67dz5c8u4dl43knr34pz35l53n1y4gwz5fmq69ws6r4i6q6167d05can4dqk3kvr34xz35qf3n2q4gtr5fi769t76r3m6q7467dg5c9w4dpl3kul34wu35p43n0s4gr15ff569qh6r2l6q9y67ix5cdc4doy3ks434vc35q13n3u4guq5fij69td6r2x6q6z67ff5cbc4do53krm34ve35ry3n8a4h0f5fmd69sz6qz56q16679k5c8g4dp33kup34xu35qz3n3i4gtz5fg869o26qwu6q2n67dm5cdi4du53kyj34z535pr3n0w4grw5fhb69sw6r346q7w67f95ca24do13ksz34w935pt3n2w4guh5fjq69v56r406q6167c35c724dky3kql34vh35r13n554gva5fgj69pf6qzv6q5067dh5cac4dow3ktu34xk35s73n5l4gvf5fh069pm6r0f6q7867gh5cd64dqg3krz34s735l13mz04gri5fgd69qs6r1i6q9j67l15ch84ds73krw34qm35ib3mw64gpu5fhb69uw6r576q9567ij5cfz4dt53kup34u735ln3myk4gr45fh169t66r3r6q7b67f05cdc4du03kyv34ze35nt3mv74gin5f6769j96qyq6q9r67lz5cjv4dy93l17350h35oq3mw54gj05f6f69kk6r1d6qdn67pu5ckj4dur3kvh34vz35o33mzu4gpa5fc069n06qzi6q8467kq5cj24dvi3kvz34v535n33mzy4gps5faf69ii6qtt6q3667i15ckh4e0z3l32350s35p63myw4go75fb969lf6qx36q5p67iy5cki4e163l2v34zc35lw3mtw4gje5f9269mo6qzw6q8n67l55cjx4dy43l0634yj35mp3muz4gjn5f9369og6r2w6qa467k65chg4dvf3kyp34zq35qv3n134gpc5fbs69nh6r166q9g67jp5ch24dvh3kyv34zd35oq3mwo4gj95f4n69g26qvu6q9z67qc5cpr4e243l1734xa35kq3mte4ghz5f6269k26r0w6qed67ti5cr64e1i3kyw34u035hs3msb4gjr5fa069nx6r216qav67o25coc4e2e3l1z34x835jf3mri4gg05f3e69g46qvk6q7567ma5cos4e6e3l93355635pa3msz4gdh5f0169el6qwn6qaw67ql5cqp4e563l5y352535na3mrz4gcu5ez869du6qw96qb667sf5cs34e3r3l2k34z335mj3mtv4gg35f1s69el6quu6q7t67og5cq64e4a3l3t350535o53mx74gl85f6v69gw6quf6q5x67lj5cny4e4x3l6v352j35mk3mra4gde5f0069c86qrf6q5i67oi5cs84e8m3l99353935lw3mpe4gav5ez069fg6qyh6qce67rr5cqy4e3z3l3r34zj35la3mrl4gez5f3m69jc6r156qcj67pe5co14e1g3l2234z335m73mt54geo5ez569ba6qt36q8r67qg5cry4e6g3l6h351v35mx3mry4gcq5ey869c06qvd6qd267wo5cxv4e9c3l4q34wb35fr3mm04ga55ezb69f96qyd6qek67y15czr4eb63l6a34wp35eo3mjt4g805ey469ey6qxj6qbs67tu5cxe4eck3lam352735jk3mmw4g925exv69ed6qy26qd367tq5cvy4ecr3le4357c35mg3ml14g2a5eoc695e6qs36qc867y05d194efo3leo357a35nj3mmx4g3d5enp694k6qte6qfa680o5d214ed83l9h352a35m33mqk4gb95ewp69ae6qu26qbm67vo5cyw4ecy3lad352n35lu3mqm4gay5eu7694s6qln6q3n67r55cym4egp3lgj358335o03mp24g825ete697j6qqu6q8f67uf5d094eg53ldv354e35jx3ml94g635euh69bo6qwn6qcu67va5cxu4eca3lar353035k13mlq4g5q5ete69ab6qv26qbm67tf5cv44e9o3l9d353n35n23mq84g9t5evk69au6qvu6qe267x45cy24eb43l9n352k35jn3mkw4g3o5ep869586qs26qdl681u5d5x4ehn3lbn34zw35eu3mgc4g0p5eo669616qv06qhe68485d794ei43lav34xy35cm3mfc4g2l5et969bw6qyf6qh4681k5d564ej73leo352a35f63meo4fxj5ekj69216qp96qaj67yn5d594emd3ll035a135lc3mgl4fuz5efp68yp6qq86qf1684s5da84en93li6356c35j03mgg4fws5ei7690l6qrs6qgc685g5dab4emd3lg6354135i03mhf4fz05ek568zn6qml6q9h67zc5d6t4emi3liq357835la3ml24g315env692l6qo86q9v67ze5d6z4eny3llr359o35jx3mfs4fw85ei668zk6qnp6qaa68105d9q4eqe3lmz359t35jp3meo4fu85egc68zn6qr46qf9682r5d794elh3lhw356w35k43mi54fzm5emk695h6qv96qhf683a5d5y4ej93lg1356735l13mk14fzm5eid68xs6qmc6qal681l5d8l4ene3ljl358935lb3miq4fxu5egu68x36qo16qf0687s5df54eqy3lhw352735dg3mcj4fwd5ekw69406quc6qiz68995dfb4eri3lj0352g35c33m9o4ft95eiu692g6qqo6qd468315db24erd3lmz358n35hx3md14ft25eg5690h6qs16qgh68605dci4esa3lp735bi35is3man4fnn5e8u68tr6qoq6qhd68a35dhe4ev13loz35a835iq3mbk4fo55e7p68qu6qmc6qhe68ap5dh14esz3lkx355w35gv3mdw4fu95efw68xx6qoz6qg1688n5dfz4etj3lmk357335h63mdw4ft85ecl68sj6qhg6q77682m5dfe4exm3lt635d435jm3mbp4fos5e8o68qu6qjm6qbn68695dhf4ex83lqe359a35fp3m8k4fo15ec268xu6qrv6qiv68995dfd4etg3lnp358p35h13mag4for5eb868vb6qmv6qd3684p5dbv4eqt3lmp359w35ke3mex4frz5eb668tt6qnk6qgc689v5dh84eue3lnp358235fr3m9c4fng5e8968rx6qnc6qil68em5dnz4f0g3lq5356e35bu3m4s4fju5e6g68r76qmv6qiq68e65dn24ezu3lps355x35bc3m4r4fld5eah68xb6qrt6qka68dy5dmj4f0v3lt535ak35fb3m6b4fig5e3768oe6qjy6qe168a45dlx4f3f3lyi35h935ko3m824fgh5dyc68iq6qhg6qgm68fc5dq74f3e3lu835bt35h43m7s4fjq5e4c68pe6qmu6qkl68hp5dqn4f2p3lsl359j35fs3m8j4fm45e6v68pb6qhb6qb0688m5dlc4f1r3luq35cp35im3may4fo05e7g68pg6qir6qcr689x5dms4f403lxl35e435g33m4x4fhj5e3w68pq6qm76qhq68e75dpl4f5f3lxj35dc35f83m334feg5e0u68o76qmg6qj068dw5dm04ezp3ls535ai35fw3m6l4fiw5e5068sg6qqh6qm868h55doc4f043lr6359c35fn3m7a4fib5e0t68l26qiv6qgq68f85dqw4f573lvv35br35f23m4c4fez5dxv68hn6qge6qi168jr5dwg4f8p3lvf357n35903lyz4fd55e1g68ph6qo46qn468ml5dxk4f9t3lx7358z35913lxk4fav5dzb68ne6qk26qfd68dn5dri4f8s3m1335g035gd3m2b4fb35duu68hk6qi16qho68gr5dtg4fa53m3335i235gk3m014f755dqr68eq6qhw6qlq68ne5dz94fcn3m1x35ft35fz3m154f8i5dr068d16qe66qhk68k05dwg4f9m3lyd35ck35f33m3z4feb5dxn68im6qgy6qh068j05dwz4fbk3m0p35dw35f63m3n4fdl5dvx68fh6qcu6qbx68e95dvm4fen3m6m35jn35hl3m1j4f9d5ds668d16qc76qdv68gq5dwd4fcq3m2w35fp35ed3lzd4f8x5dvi68l26qme6qms68m35dwm4f9q3lzh35dq35en3m1f4fb65dwe68ju6qiv6qh368g45dsi4f7l3lz335f635hl3m4w4fda5duy68fn6qgc6qiy68kt5dxq4fbo3m0k35ct35bj3lxk4f7o5dt968he6qk46qow68sp5e5o4fhj3m2n35ba35813ltd4f475drg68h76qjl6qmb68oz5e2p4ffw3m2835bi358c3lti4f4a5drv68iu6qm96qo668pi5e324fhp3m5s35g135cb3lv54f1s5dlv68be6qg86ql968os5e414fks3mb635mi35hc3lwl4ezi5dga683x6q9h6qix68r95e754fk13m6d35go35dj3lw94f2a5dle68af6qfo6qn268tv5e8u4fkx3m5y35f135ch3lxl4f665dpo68bf6qbh6qe168j85e1o4fjn3m9435jo35g23lzc4f6d5do5688h6q8x6qdd68jc5e1x4fku3mbc35kr35dp3ltp4f025dla68b96qfh6qlc68qo5e6b4flt3ma235jd35de3lth4eyz5djm68aq6qg46qkk68ne5e194ffj3m4a35g635dv3lx34f3h5dml68bn6qh36qms68qc5e3s4fgp3m3v35f035d83lx84f335dkn687t6qcu6ql368s15e864fml3m8y35hb35bw3ltc4ez75dht68556q9h6qjb68tz5ebv4foc3m7g35cw355y3lo34ewr5dju68c16qic6qpp68xa5ee14fqv3ma435er356f3lne4evv5dje68b46qga6ql168po5e7h4fpc3me435m535dy3lrt4ev85ddr68366qad6qk868s25e9b4fq73mf735n535do3lpp4erj5da8682f6qd26qql691f5eht4ftw3mdk35jn35bu3lqh4etv5dc9682v6qbl6qm568v95ecy4fqo3maz35hg35b73lso4eyk5dh468556qau6qkd68u15ed54fsw3me935k035bs3lr64evj5de768346q996qj768tn5ee64fw83mjk35p335e03lph4erq5dah680t6q806qio68ts5edk4ft53mf535lb35bv3lot4es05dc168556qfd6qq468yc5eel4fru3mcn35j635bh3lqm4ev65deu68586qcw6qmi68u05eb04fqb3md535lb35em3ltr4ewl5dcv68056q6w6qjk68vm5ees4ftu3mes35j6358q3lm54eq15d9v681x6qc76qqk694e5enx4g073mgn35hj355c3lim4eo15da1683o6qdy6qoq68ya5eht4fx53mgn35jb357d3ljx4eod5d9g681z6qbs6qnt68xo5egs4fxg3mjf35nt35bu3llp4elg5d3c67w36q886qnv690y5ekj4g0m3mmt35rq35f63lni4elf5d0q67rm6q3g6qk9690n5em24fze3mhr35la35al3lmm4enx5d5267w36q7s6qno69255en34g0y3mi935jv358m3lmc4eqv5daa67zk6q6t6qiw68vb5ehj4fzx3mlv35pf35d03lo34epy5d7m67wg6q396qfy68u25eh44g063mmx35pj35ac3li94eis5d2r67xm6qao6qps693c5enl4g293mlf35ne359i3lio4ejr5d3r67z66qdi6qri69105eih4fwk3mgm35kv359y3llm4en85d5e67xf6q9q6qpw692h5ekj4fxr3mgq35ka359j3ll14el85d2767u76q7l6qqh697e5esh4g613mmy35mw35883lhn4eid5d0e67ss6q5l6qo3696q5eu24g753mlt35jc35323lcn4efl5d1067wc6qaq6qs869845eug4g923mp135mj35543ld74efc5d1767wg6q9u6qpy693u5epn4g7h3msm35tz35d93lil4efh5cvv67op6q2o6qlu693i5eqm4g7k3ms735t235bu3lgf4ecd5cs767mn6q4n6qrl69bo5eys4gc03mr535ph359c3lgw4efu5cx267qa6q5r6qpc695y5eso4g823mp935oi359b3liq4eji5d0x67ri6q276qjt691u5eqd4g7y3mr935r735aw3lhk4efg5cw967p26q2h6ql469485etz4gc83mvo35up35by3lg44ed95cum67os6q3w6qmn69445err4g7o3mpx35pl358n3ler4eda5cvw67r56q7l6qrj697i5es44g633mni35ni35813lfx4efo5cya67s76q726qqm69735ery4g6d3moh35p435a13lhv4egd5cwg67oc6q2c6qmt696u5ev74gad3mqe35mr353k3l9j4e8u5crs67no6q676qtv69ff5f474ghb3mt935lz350e3l5g4e655cse67r76qaa6qv769c15eyu4ge83mtw35p735493l874e6s5cr067o16q5d6qqw699x5exj4ge43mwh35u8359o3lad4e2x5ci767f26q0l6qrd69ez5f4k4gjs3n0135wl35bd3lc44e525cj567ds6pyi6qpw69el5f4r4gij3mw535rf357k3lbp4e825cnw67hb6pz06qoo69cn5f3e4gj13mx935rh356q3lbk4e9w5crk67kl6pzo6qlz698l5f094giw3n0t35x135bo3le84ea85cqb67jb6py96qje695g5eya4gih3n1935wk358v3l8t4e3f5ckw67hz6q2j6qro69dq5f3k4gjm3mz835u6357w3l964e4p5cnc67m06q7h6qvb69dq5ezl4gdx3mue35ry35903ld44e9e5cpv67kr6q2q6qqk69c65f084gem3mu935ra35853lbd4e5p5ckc67ey6pzl6qrj69hb5f8r4gni3n0935sl35573l734e3i5cl767h56q1b6qsn69i05f944gn93mz235px35163l2q4e0h5cl067jk6q3n6qsy69gc5f704gn13n1035sv353p3l3l4dzf5cip67hc6q2t6qse69f55f5f4gmr3n3v35z035b03l9b4e135cfl67bt6pxy6qpu69es5f6c4gn83n2u35wa357d3l5d4dx55cby678o6pwy6qt569lc5fd74gr53n2935t4354i3l4r4dze5cgj67e76q0s6qtg69iw5f9n4gol3n1h35t5354w3l6c4e2b5cjg67ez6pxn6qn769d25f6i4go93n3i35w7","lunarFrom":1899,"lunar":"34fkl2dt5e3tp3m2yu1x27nt63l9hn2nkpn1w8ra3ctwq2hyl51nh3m34evm2ao853qwpx2t6x71z82z3fmi52kqjv1q7vt3799l2ghaq3wjo22ytr924vgt3laae2qcae1tfp13cu6s2hz8p1qbo234gb62algm3o2ej2t6xj1z7p23fo7u2njys1t809378092dms33tpqr2ys6j225i33ih7x2qctm1w9xx3cv502hykp1nhqr34fit2808d3o2eu2t6zx221ey3fn3m2ks6d1tave3a2bu2dqqd3qwlz2ys7q24yph3ih912qd3m1w7fp3cvqd2hxl61ks5z31me32atei3o2ga2t755221qq3ihci2krol1qmob378ln2dsq33qv1p2vz3h24yuh3lay12qefm1waat3cvfp2jsr13wity31kty27qut3o2qd2t7s92236a3ihzm2nl7q1qdzq34fh32dsra3tobe2vzdh24urt3l9op2qd1v1tfl73a0q32f5971ngpm31ld6281g53qwtg2w0951z98z3fo2d2kqi51qkdp34fjp2dz8q3tosy2ytut252dm3lave2qe8l1w8q63a0ra2f5bp1ngs234es227smd3o2sl2t64r1z6hj3cvcb2kqje1qe3a378tl2ec7m3tpw22ytd1251sb3ih572njjf1tisb3a0tp2f5gq1nhw234g422auxx3o3z92t6xh1z8313fmwm2hxh11qene379hl2gnte3tqj62ytra24ymu3ih5j2njkm1tcr93a15h2hxs91ksk331llf2808b3o2ej2qdsr1z87u3fn1m2krqd1qmve378sq2dtw53tpqt2vz1p225kd3ih852qcve1tdph3a2ed2hyyy1nogl31ms62811q3o2fq2t7051z8aa3fnbm2ksdh1te8a34eq32axzr3qvfv2vz2z225li3ihd62qd761w9453a1xh2f5aj1knff31l7v27xwb"};
 /* 干支换算、干支关系、神煞口诀。
    这个文件只做计算：不碰页面，也不含任何一个人的数据。构建时原样拼进页面。 */
 const G='甲乙丙丁戊己庚辛壬癸', Z='子丑寅卯辰巳午未申酉戌亥', EL='木火土金水';
@@ -474,6 +515,155 @@ function shenshaOf(p,nayin){
 /* 把一柱的神煞压成一个数，每个神煞占一位。只用于和 Python 那份实现对照。 */
 function shenshaMask(row){return row.reduce((m,o)=>m|(1<<SS_NAMES.indexOf(o.n)),0);}
 
+/* 页面内排盘：由出生信息算出一个人的全部数据。
+   算法照搬 tools/gen_data.py 用到的 lunar_python，结果必须逐项相同：检查脚本拿页面自带的每个人、
+   以及 tools/fuzz.py 随机生成的出生时间来对照。
+   节的时刻和农历来自 TABLES（tools/gen_tables.py 从 lunar_python 导出），所以只支持 1900 到 2100 年出生。
+   这里的时刻都是「把北京时间当作 UTC」得到的秒数，可以直接做加减，不受浏览器所在时区影响。 */
+const BIRTH_MIN=1900, BIRTH_MAX=2100;
+const toSec=(y,m,d,h,mi,s)=>Date.UTC(y,m-1,d,h||0,mi||0,s||0)/1000;
+const fromSec=t=>{const d=new Date(t*1000);return [d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes(),d.getUTCSeconds()];};
+const JZ=i=>G[i%10]+Z[i%12];                       // 六十甲子的第 i 个，甲子是 0
+
+/* ---------- 两张表的解码（编码见 tools/gen_tables.py 开头） ---------- */
+/* 节的时刻：JIE_T[(年 − TABLES.jieFrom) × 12 + k]，k 从 0 到 11 依次是立春……大雪，和次年一月的小寒 */
+const JIE_T=(()=>{const s=TABLES.jie,out=[];let t=TABLES.jieBase;for(let i=0;i<s.length;i+=4){t+=2400000+parseInt(s.slice(i,i+4),36);out.push(t);}return out;})();
+/* 农历年：正月初一的时刻、闰几月（没有是 0）、各月的天数（闰月排在它本月后面） */
+const LUNAR_Y=(()=>{const s=TABLES.lunar,out={};
+  for(let i=0;i<s.length;i+=5){const v=parseInt(s.slice(i,i+5),36),y=TABLES.lunarFrom+i/5,leap=(v>>13)&15,lens=[];
+    for(let j=0;j<(leap?13:12);j++) lens.push(v>>j&1?30:29);
+    out[y]={t0:toSec(y,1,1)+(v>>17)*86400,leap,lens};}
+  return out;})();
+/* y 年十二个月各自开始的那个节的公历日期，从立春到次年一月的小寒，写成「月/日」 */
+const JIE_MD={};
+function jieMD(y){
+  if(JIE_MD[y]) return JIE_MD[y];
+  const i=(y-TABLES.jieFrom)*12; if(i<0||i+11>=JIE_T.length) return undefined;
+  const out=[];for(let k=0;k<12;k++){const d=new Date(JIE_T[i+k]*1000);out.push((d.getUTCMonth()+1)+'/'+d.getUTCDate());}
+  return JIE_MD[y]=out;
+}
+/* 不晚于时刻 t 的最后一个节，返回它在 JIE_T 里的下标 */
+function lastJie(t){let lo=0,hi=JIE_T.length-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(JIE_T[mid]<=t) lo=mid;else hi=mid-1;}return lo;}
+
+/* ---------- 公历日期的加减，照 lunar_python 的 Solar ---------- */
+const leapY=y=>(y%4===0&&y%100!==0)||y%400===0;
+const mdays=(y,m)=>m===2?(leapY(y)?29:28):[31,28,31,30,31,30,31,31,30,31,30,31][m-1];
+function addYears(a,n){const y=a[0]+n;return [y,a[1],a[1]===2&&a[2]>28&&!leapY(y)?28:a[2],a[3],a[4],a[5]];}
+function addMonths(a,n){const k=a[0]*12+a[1]-1+n,y=Math.floor(k/12),m=k%12+1;return [y,m,Math.min(a[2],mdays(y,m)),a[3],a[4],a[5]];}
+function addDays(a,n){const t=fromSec(toSec(a[0],a[1],a[2])+n*86400);return [t[0],t[1],t[2],a[3],a[4],a[5]];}
+function addHours(a,n){const h=a[3]+n,b=addDays(a,Math.floor(h/24));return [b[0],b[1],b[2],h%24,a[4],a[5]];}
+
+/* ---------- 真太阳时 ---------- */
+/* 均时差，单位秒。Meeus《Astronomical Algorithms》第 28 章的式 (28.3)，写法和 tools/gen_data.py 逐项对应 */
+function equationOfTime(jd){
+  const rad=x=>x*(Math.PI/180);
+  const t=(jd-2451545.0)/36525;
+  const l0=rad(280.46646+36000.76983*t+0.0003032*t*t);
+  const m=rad(357.52911+35999.05029*t-0.0001537*t*t);
+  const e=0.016708634-0.000042037*t-0.0000001267*t*t;
+  const eps=rad(23+26/60+(21.448-46.8150*t-0.00059*t*t+0.001813*t**3)/3600);
+  const y=Math.tan(eps/2)**2;
+  const r=y*Math.sin(2*l0)-2*e*Math.sin(m)+4*e*y*Math.sin(m)*Math.cos(2*l0)-0.5*y*y*Math.sin(4*l0)-1.25*e*e*Math.sin(2*m);
+  return r*(180/Math.PI)*240;
+}
+const roundHalfUp=x=>{const v=Math.sign(x)*Math.floor(Math.abs(x)+0.5);return v===0?0:v;};   // 负数按绝对值算，−2.5 得 −3
+
+/* ---------- 四柱 ---------- */
+function dayIndex(y,m,d){return ((54+Math.round((Date.UTC(y,m-1,d)-Date.UTC(2000,0,1))/DAY))%60+60)%60;}
+/* a 是 [年,月,日,时,分,秒]。年以立春的时刻为界，月以节的时刻为界，日以零点为界；
+   晚上 11 点以后日柱算当天，时干按第二天的日干推。返回四柱，和它所在的那个节的下标。 */
+function pillarsAt(a){
+  const i=lastJie(toSec(...a)), gy=TABLES.jieFrom+Math.floor(i/12), di=dayIndex(a[0],a[1],a[2]);
+  const tz=Math.floor((a[3]+1)/2)%12, dg=(di%10+(a[3]===23?1:0))%10;
+  return {i,p:[yearGZ(gy),monthGZ(gy,i%12),JZ(di),G[(dg%5*2+tz)%10]+Z[tz]]};
+}
+
+/* ---------- 农历、星座 ---------- */
+const L_MONTH=' 正二三四五六七八九十冬腊', L_NUM=' 一二三四五六七八九十';
+const lunarDay=n=>n<=10?'初'+L_NUM[n]:n<20?'十'+L_NUM[n-10]:n===20?'二十':n<30?'廿'+L_NUM[n-20]:'三十';
+function lunarOf(y,m,d){
+  const t=toSec(y,m,d); let ly=y; if(t<LUNAR_Y[ly].t0) ly--;
+  const L=LUNAR_Y[ly]; let rest=Math.round((t-L.t0)/86400);
+  for(let j=0;j<L.lens.length;j++){
+    if(rest<L.lens[j]){
+      const leap=L.leap>0&&j===L.leap, mon=!L.leap||j<L.leap?j+1:j;
+      return {year:JZ(((ly-4)%60+60)%60),month:(leap?'闰':'')+L_MONTH[mon],day:lunarDay(rest+1),leap};
+    }
+    rest-=L.lens[j];
+  }
+  return null;
+}
+function xingzuoOf(m,d){
+  const y=m*100+d, X=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+  return X[y>=321&&y<=419?0:y>=420&&y<=520?1:y>=521&&y<=621?2:y>=622&&y<=722?3:y>=723&&y<=822?4:y>=823&&y<=922?5:y>=923&&y<=1023?6:y>=1024&&y<=1122?7:y>=1123&&y<=1221?8:y>=1222||y<=119?9:y<=218?10:11];
+}
+
+/* ---------- 出生信息 ---------- */
+/* 出生信息是 {id, name, gender: '男'或'女', birth: 'YYYY-MM-DD HH:MM', place, lon, dst, source, notes}，
+   和 people/*.json 的格式相同。birth 是北京时间的钟表时间。 */
+function parseBirth(text){
+  const m=/^\s*(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/.exec(String(text||''));
+  if(!m) return null;
+  const a=m.slice(1).map(x=>x===undefined?0:Number(x)), b=fromSec(toSec(...a));
+  return a.every((v,i)=>v===b[i])?a:null;            // 2 月 30 日、25 点这类不存在的时刻会对不上
+}
+/* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。 */
+function checkInfo(info){
+  const a=parseBirth(info&&info.birth);
+  if(!a) return '出生日期和时间没有填全，或者不是一个存在的时刻。';
+  if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX) return `只支持 ${BIRTH_MIN} 到 ${BIRTH_MAX} 年出生。`;
+  if(info.gender!=='男'&&info.gender!=='女') return '性别要填男或女。';
+  if(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180) return '经度要填一个数，东经为正。';
+  return '';
+}
+/* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同。 */
+function chartOf(info){
+  const bad=checkInfo(info); if(bad) throw new Error(bad);
+  const c=toSec(...parseBirth(info.birth))-(info.dst?3600:0), clock=fromSec(c);
+  const dlonSec=roundHalfUp((info.lon-120)*240);
+  const eotSec=roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
+  const ts=c+dlonSec+eotSec, tst=fromSec(ts);
+  const A=pillarsAt(tst), B=pillarsAt(clock);            // 四柱按真太阳时；另按钟表时间排一遍
+  const [yp,mp,dp,hp]=A.p, yg=G.indexOf(yp[0]);
+  const jieAt=i=>({name:JIE[i%12],at:fromSec(JIE_T[i])});
+  // 胎元、命宫、身宫、胎息。月支和时支都换成「寅是 1、丑是 12」的序号来算
+  const mzi=(Z.indexOf(mp[1])+10)%12+1, tzi=(Z.indexOf(hp[1])+10)%12+1;
+  const pick=off=>{let g=(yg+1)*2+off;while(g>10) g-=10;return G[g-1]+Z[(off+1)%12];};
+  const ming=mzi+tzi>=14?26-mzi-tzi:14-mzi-tzi, shen=mzi+Z.indexOf(hp[1])+1;
+  // 大运按钟表时间：阳年男、阴年女顺排，数到下一个节；阴年男、阳年女逆排，数到上一个节
+  const man=info.gender==='男', forward=(G.indexOf(B.p[0][0])%2===0)===man, yj=forward?B.i+1:B.i;
+  const gapMin=forward?Math.floor(JIE_T[yj]/60)-Math.floor(c/60):Math.floor(c/60)-Math.floor(JIE_T[yj]/60);
+  let rest=gapMin; const y=Math.floor(rest/4320); rest-=y*4320;
+  const m=Math.floor(rest/360); rest-=m*360;
+  const d=Math.floor(rest/12); rest-=d*12;
+  const h=rest*2, start=addHours(addDays(addMonths(addYears(clock,y),m),d),h);
+  const mi=gz60(B.p[1][0],B.p[1][1]), dayun=[];
+  for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
+  const p={id:info.id,name:info.name,gender:man?1:0,clock};
+  if(info.dst) p.dst=true;
+  if(info.source) p.source=info.source;
+  Object.assign(p,{place:info.place||'',lon:info.lon,dlonSec,eotSec,tst,
+    lunar:lunarOf(tst[0],tst[1],tst[2]),xingzuo:xingzuoOf(tst[1],tst[2]),
+    pillars:A.p,pillarsClock:B.p,
+    prevJie:Object.assign(jieAt(A.i),{min:Math.floor((ts-JIE_T[A.i])/60)}),
+    nextJie:Object.assign(jieAt(A.i+1),{min:Math.floor((JIE_T[A.i+1]-ts)/60)}),
+    taiyuan:G[(G.indexOf(mp[0])+1)%10]+Z[(Z.indexOf(mp[1])+3)%12],
+    minggong:pick(ming),shengong:pick(shen>12?shen-12:shen),
+    taixi:gHe(dp[0])+Z[(13-Z.indexOf(dp[1]))%12],
+    yun:{forward,y,m,d,h,start:start.slice(0,3),jie:JIE[yj%12],gapMin},
+    dayun});
+  if(info.notes) p.notes=info.notes;
+  return p;
+}
+/* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
+function infoFrom(p){
+  const c=p.clock, pad=n=>String(n).padStart(2,'0');
+  const info={id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${c[0]}-${pad(c[1])}-${pad(c[2])} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
+  if(p.source) info.source=p.source;
+  if(p.notes) info.notes=p.notes;
+  return info;
+}
+
 /* 解释文字。
    针对某一张盘的句子，都由这里的函数按干支现算出来，换一个人就换一套。
    手写的解读只来自人物数据里的 notes：公开的示例没有 notes，个人的放在 private/ 里。
@@ -631,7 +821,7 @@ function shichen(){
 }
 /* 交运落在什么时候：起运那天过了立春，就能说「逢某年」；没过立春只说公历年份的尾数 */
 function jiaoyun(){
-  const [Y,M,D]=P.yun.start, lc=DATA.jie[Y]?DATA.jie[Y][0].split('/').map(Number):[2,4];
+  const [Y,M,D]=P.yun.start, lc=jieMD(Y)?jieMD(Y)[0].split('/').map(Number):[2,4];
   const before=M<lc[0]||(M===lc[0]&&D<lc[1]), ygz=yearGZ(before?Y-1:Y);
   return {Y,M,D,before,ygz,when:before?`尾数是 ${Y%10} 的年份的 ${M} 月${xun(D)}`:`${ygz[0]}年的 ${M} 月${xun(D)}`};
 }
@@ -789,7 +979,7 @@ function colX(k){
       ['这张盘',basic],
       ['注意',`时柱取决于出生时间准不准。${P.source?esc(P.source)+'记的是':'钟表时间是'} ${hm(P.clock)}，换算成真太阳时是 ${hmNear(P.tst)}，在${p.z}时。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}，出了这个范围时柱就会变。`+(hi===0?'子时跨着零点。这里以零点换日：晚上 11 点到零点出生的，日柱算当天，时干按第二天的日干来推。也有人主张晚上 11 点就换日。':'')]]};
   }
-  const fwd=P.yun.forward, d=DATA.people[sel.p].dayun[sel.dy];
+  const d=P.dayun[sel.dy];
   if(k==='大运') return {t:`大运 · ${d.gz}（${d.y0}–${d.y1}）`,p:[
     ['是什么',`十年一步的大环境。它从月柱推出来：阳年出生的男性和阴年出生的女性顺着排，阴年出生的男性和阳年出生的女性倒着排。${yunWhy(4)}。`],
     ['怎么读',`把它当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。`],
@@ -1070,21 +1260,38 @@ const now=new Date();
 const md=(y,s)=>{const [m,d]=s.split('/').map(Number);return new Date(y,m-1,d);};
 const TODAY=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
 /* 今天所在的干支年：过了立春才算新的一年 */
-const REAL_Y=(()=>{const y=now.getFullYear(), lc=DATA.jie[y]?md(y,DATA.jie[y][0]):new Date(y,1,4);return now<lc?y-1:y;})();
+const REAL_Y=(()=>{const y=now.getFullYear(), lc=jieMD(y)?md(y,jieMD(y)[0]):new Date(y,1,4);return now<lc?y-1:y;})();
 /* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
 let NOW_DY=-1, NOW_M=-1;
 /* 选中的人、大运、流年、流月、流日，以及打开的解释 */
 const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null};
 
-function jieUTC(y,m){const [mm,dd]=DATA.jie[y][m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
+/* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
+const PEOPLE=DATA.people.slice();
+let LOCAL=[];                      // 保存在浏览器里的出生信息，格式见 chart.js
+let STORE_OK=true;                 // 这个环境能不能用 localStorage
+function readLocal(){
+  try{const v=JSON.parse(localStorage.getItem('bz-people')||'[]');LOCAL=Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!checkInfo(x)):[];}
+  catch(e){LOCAL=[];STORE_OK=false;}
+}
+function writeLocal(){
+  try{localStorage.setItem('bz-people',JSON.stringify(LOCAL));STORE_OK=true;}catch(e){STORE_OK=false;}
+  return STORE_OK;
+}
+function rebuildPeople(){
+  PEOPLE.length=DATA.people.length;
+  LOCAL.forEach(info=>{try{const p=chartOf(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+}
+
+function jieUTC(y,m){const [mm,dd]=jieMD(y)[m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
 function monthDays(y,m){
-  const start=jieUTC(y,m), end=m<11?jieUTC(y,m+1):(DATA.jie[y+1]?jieUTC(y+1,0):Date.UTC(y+1,1,4)), out=[];
+  const start=jieUTC(y,m), end=m<11?jieUTC(y,m+1):(jieMD(y+1)?jieUTC(y+1,0):Date.UTC(y+1,1,4)), out=[];
   for(let t=start;t<end;t+=DAY) out.push(t);
   return out;
 }
 const mdText=t=>{const d=new Date(t);return (d.getUTCMonth()+1)+'/'+d.getUTCDate();};
 function currentMonth(y){
-  const j=DATA.jie[y]; let idx=-1;
+  const j=jieMD(y); let idx=-1;
   for(let i=0;i<12;i++){ if(now>=md(i===11?y+1:y,j[i])) idx=i; }
   return idx;
 }
@@ -1096,7 +1303,7 @@ function cols(){
 
 /* ---------- 换人 ---------- */
 function usePerson(i){
-  sel.p=i; P=DATA.people[i]; MEMO={};
+  sel.p=i; P=PEOPLE[i]; MEMO={};
   DM=P.pillars[2][0]; DMN=gN(DM);
   NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));
   SHENSHA=shenshaOf(P.pillars,DATA.nayin);
@@ -1148,9 +1355,9 @@ function relChips(list){
 }
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
-  const pe=$('people');
-  pe.hidden=DATA.people.length<2;
-  pe.innerHTML=DATA.people.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('');
+  $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
+    +'<button type="button" class="pp add" id="pp-add">＋ 添加</button>'
+    +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'');
   $('eyebrow').textContent=P.gender?'乾造 · 男命':'坤造 · 女命';
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   $('title').innerHTML=NATAL.map(p=>`<span>${gzSpan(p.g+p.z)}</span>`).join('');
@@ -1194,7 +1401,7 @@ function renderLiunian(){
   $('h-ln').textContent=`流年（${d.gz}运，${d.y0}–${d.y1}）`;
 }
 function renderLiuyue(){
-  const y=sel.y, j=DATA.jie[y], cur=y===REAL_Y?NOW_M:-1; let h='';
+  const y=sel.y, j=jieMD(y), cur=y===REAL_Y?NOW_M:-1; let h='';
   for(let m=0;m<12;m++){const gz=monthGZ(y,m);
     h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])} · ${godZ(gz[1])}</span></button>`;}
   $('liuyue').innerHTML=h;
@@ -1212,7 +1419,7 @@ function renderYunRead(){
   const rows=[
     ['大运',d.gz,`${d.y0}–${d.y1} 年 · ${d.a0}–${d.a1} 岁`],
     ['流年',yearGZ(sel.y),`${sel.y} 年 · ${sel.y-P.clock[0]+1} 岁`],
-    ['流月',monthGZ(sel.y,sel.m),`${JIE[sel.m]} ${DATA.jie[sel.y][sel.m]} 起`],
+    ['流月',monthGZ(sel.y,sel.m),`${JIE[sel.m]} ${jieMD(sel.y)[sel.m]} 起`],
     ['流日',dayGZ(sel.d),`${new Date(sel.d).getUTCFullYear()} 年 ${mdText(sel.d)}`]];
   const say=gz=>{
     const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h);
@@ -1232,7 +1439,7 @@ function renderRelations(){
   $('rel-dy').innerHTML=relChips(brought(NATAL.concat(DY),1));
   $('h-rln').textContent=`流年 ${sel.y} ${ln} 带来的`;
   $('rel-ln').innerHTML=relChips(brought(NATAL.concat(DY,LN),2));
-  $('h-rly').textContent=`流月 ${ly}（${JIE[sel.m]} ${DATA.jie[sel.y][sel.m]} 起）带来的`;
+  $('h-rly').textContent=`流月 ${ly}（${JIE[sel.m]} ${jieMD(sel.y)[sel.m]} 起）带来的`;
   $('rel-ly').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY),3));
   $('h-rlr').textContent=`流日 ${lr}（${mdText(sel.d)}）带来的`;
   $('rel-lr').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY,LR),4));
@@ -1250,11 +1457,105 @@ function renderGods(){
 }
 function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();refreshSheet();}
 
+/* ---------- 添加、编辑、导入、导出 ---------- */
+let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
+const F=id=>$('pf-'+id);
+function say(s){$('pp-hint').textContent=s||'';$('pp-hint').hidden=!s;}
+function formMsg(s){F('msg').textContent=s||'';F('msg').hidden=!s;}
+const NO_STORE='这个环境不能保存数据，关掉页面以后刚才添加的人会消失。可以先点「导出」把他们存成文件。';
+function openForm(info){
+  editing=info?info.id:null;
+  const b=info&&parseBirth(info.birth), p2=n=>String(n).padStart(2,'0');
+  F('name').value=info?info.name:'';
+  F('gender').value=info?info.gender:'男';
+  F('date').value=b?`${b[0]}-${p2(b[1])}-${p2(b[2])}`:'';
+  F('time').value=b?`${p2(b[3])}:${p2(b[4])}`:'';
+  F('place').value=info&&info.place||'';
+  F('lon').value=info?info.lon:120;
+  F('dst').checked=!!(info&&info.dst);
+  F('del').hidden=!info;F('del').textContent='删除这一位';F('del').dataset.sure='';
+  formMsg('');say('');
+  $('pform').hidden=false;
+}
+function closeForm(){$('pform').hidden=true;editing=null;}
+function newId(){let id;do{id='u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);}while(PEOPLE.some(p=>p.id===id)||LOCAL.some(x=>x.id===id));return id;}
+function saveForm(){
+  const old=LOCAL.find(x=>x.id===editing);
+  const info=Object.assign({},old,{id:old?old.id:newId(),name:F('name').value.trim().slice(0,20)||'未命名',gender:F('gender').value,
+    birth:`${F('date').value} ${F('time').value}`,place:F('place').value.trim().slice(0,30),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
+  if(F('dst').checked) info.dst=true; else delete info.dst;
+  const bad=checkInfo(info);
+  if(bad){formMsg(bad);return;}
+  if(old) LOCAL[LOCAL.indexOf(old)]=info; else LOCAL.push(info);
+  writeLocal();rebuildPeople();closeForm();
+  usePerson(PEOPLE.findIndex(p=>p.id===info.id));
+  say(STORE_OK?'':NO_STORE);
+}
+function deleteEditing(){
+  const b=F('del');
+  if(!b.dataset.sure){b.dataset.sure='1';b.textContent='再点一次，确认删除';return;}
+  LOCAL=LOCAL.filter(x=>x.id!==editing);
+  writeLocal();rebuildPeople();closeForm();
+  usePerson(Math.min(sel.p,PEOPLE.length-1));
+}
+/* 手写解读是 HTML。导入的文件不一定可信，所以只留排版用的标签，属性只留 class 和 id，脚本一类的整个去掉。 */
+function cleanHTML(s){
+  const t=document.createElement('template');t.innerHTML=String(s);
+  t.content.querySelectorAll('*').forEach(n=>{
+    if(/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META)$/.test(n.tagName)){n.remove();return;}
+    if(!/^(P|UL|OL|LI|B|I|EM|STRONG|SMALL|SPAN|BR|DL|DT|DD|DIV)$/.test(n.tagName)){n.replaceWith(document.createTextNode(n.textContent));return;}
+    [...n.attributes].forEach(a=>{if(a.name!=='class'&&a.name!=='id') n.removeAttribute(a.name);});
+  });
+  return t.innerHTML;
+}
+function cleanNotes(v){return typeof v==='string'?cleanHTML(v):Array.isArray(v)?v.map(cleanNotes):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,cleanNotes(x)])):v;}
+/* 导入一段 JSON：可以是一个人或几个人的出生信息（people/*.json 的格式），也可以是 gen_data.py 生成的 people.json。
+   返回一句结果说明。 */
+function importText(text){
+  let v;
+  try{v=JSON.parse(text);}catch(e){return '导入失败：这个文件不是 JSON。';}
+  const list=Array.isArray(v)?v:v&&Array.isArray(v.people)?v.people:[v], errs=[];
+  let n=0,last=null;
+  list.forEach(x=>{
+    if(!x||typeof x!=='object'){errs.push('有一项不是人物数据');return;}
+    const src=Array.isArray(x.clock)?infoFrom(x):x;      // 排好的人，取回出生信息；本来就是出生信息的照用
+    const info={id:typeof src.id==='string'&&src.id?src.id:newId(),name:String(src.name||'未命名').slice(0,20),gender:src.gender,
+      birth:src.birth,place:String(src.place||'').slice(0,30),lon:typeof src.lon==='number'?src.lon:Number(src.lon)};
+    if(src.dst===true) info.dst=true;
+    if(typeof src.source==='string'&&src.source) info.source=src.source.slice(0,20);
+    if(src.notes&&typeof src.notes==='object') info.notes=cleanNotes(src.notes);
+    const bad=checkInfo(info);
+    if(bad){errs.push(`${info.name}：${bad}`);return;}
+    if(DATA.people.some(p=>p.id===info.id)) info.id=newId();      // 和页面自带的人重名的，另起一个编号
+    const i=LOCAL.findIndex(o=>o.id===info.id);
+    if(i>=0) LOCAL[i]=info; else LOCAL.push(info);                // 以前导入过的，这次顶替掉
+    n++;last=info.id;
+  });
+  if(n){writeLocal();rebuildPeople();closeForm();usePerson(PEOPLE.findIndex(p=>p.id===last));}
+  return (n?`导入了 ${n} 个人。`:'没有导入任何人。')+(errs.length?'没导入的：'+errs.join('；'):'')+(n&&!STORE_OK?NO_STORE:'');
+}
+function exportLocal(){
+  if(!LOCAL.length){formMsg('浏览器里还没有保存的人，没有可以导出的。');return;}
+  try{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(LOCAL,null,1)],{type:'application/json'}));
+    a.download='bazi-people.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    formMsg('已经生成 bazi-people.json。如果浏览器没有开始下载，说明这个环境不允许下载文件。');
+  }catch(e){formMsg('这个环境不能下载文件。');}
+}
+
 /* ---------- 事件 ---------- */
 document.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
   if(b.id==='sheet-x'){closeSheet();return;}
+  if(b.id==='pp-add'){openForm(null);return;}
+  if(b.id==='pp-edit'){openForm(LOCAL.find(x=>x.id===P.id));return;}
+  if(b.id==='pf-cancel'){closeForm();return;}
+  if(b.id==='pf-del'){deleteEditing();return;}
+  if(b.id==='pf-import'){F('file').click();return;}
+  if(b.id==='pf-export'){exportLocal();return;}
   if(b.dataset.x){
     if(sel.x===b.dataset.x&&!$('sheet').hidden) closeSheet(); else openSheet(b.dataset.x,b);
     return;
@@ -1282,7 +1583,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel.x) closeSheet()
 
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
-let startAt=0; try{const i=DATA.people.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
+$('pform').addEventListener('submit',e=>{e.preventDefault();saveForm();});
+F('file').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{say(importText(String(r.result)));e.target.value='';};
+  r.readAsText(f);
+});
+readLocal();rebuildPeople();
+let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 usePerson(startAt);
 
 </script>

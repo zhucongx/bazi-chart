@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """给构建好的页面截图，用来在发布前看一眼。
 
-  .venv/bin/python tools/shot.py             截 dist/index.html，存到 shots/
-  .venv/bin/python tools/shot.py --private   截 private/dist/index.html，存到 private/shots/
+  .venv/bin/python tools/shot.py             截 index.html，存到 shots/
+  .venv/bin/python tools/shot.py --private   截 private/index.html，存到 private/shots/
 
-截五张：桌面整页、桌面打开一条解释、手机顶部、手机打开一条解释、深色。
+截六张：桌面整页、桌面打开一条解释、手机顶部、手机打开一条解释、手机上的添加表单、深色。
 页面上不止一个人时，再切到第二个人截一张桌面整页。
 同时报告页面有没有横向溢出、有没有脚本报错。
 
@@ -19,7 +19,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
-NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'dark.png', 'desktop_p2.png']
+NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png']
 
 
 def launch(p):
@@ -41,7 +41,7 @@ def main():
         raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
     private = '--private' in sys.argv
     base = ROOT / 'private' if private else ROOT
-    src = base / 'dist' / 'index.html'
+    src = base / 'index.html'
     out = base / 'shots'
     if not src.exists():
         raise SystemExit(f'找不到 {src.relative_to(ROOT)}。先运行 python3 tools/build.py' + (' --private' if private else '') + '。')
@@ -80,7 +80,7 @@ def main():
         pg = page(1100, 900, 'light')
         overflow(pg, '桌面')
         pg.screenshot(path=str(out / 'desktop.png'), full_page=True)
-        people = pg.locator('#people button').count()
+        people = pg.locator('#people [data-p]').count()
         if click_first(pg, '#rel-nz [data-x]', '桌面打开一条解释'):
             pg.wait_for_timeout(500)
             pg.screenshot(path=str(out / 'desktop_sheet.png'))
@@ -94,6 +94,13 @@ def main():
             pg.screenshot(path=str(out / 'mobile_sheet.png'))
         pg.close()
 
+        pg = page(390, 800, 'light')
+        if click_first(pg, '#pp-add', '手机打开添加表单'):
+            pg.wait_for_timeout(400)
+            overflow(pg, '手机，添加表单')
+            pg.screenshot(path=str(out / 'mobile_form.png'))
+        pg.close()
+
         pg = page(1100, 900, 'dark')
         pg.evaluate("() => { const el = document.getElementById('h-pan'); if (el) el.scrollIntoView(); }")
         if click_first(pg, '[data-x^="ss|"]', '深色打开一条解释'):
@@ -103,7 +110,7 @@ def main():
 
         if people > 1:
             pg = page(1100, 900, 'light')
-            if click_first(pg, '#people button >> nth=1', '切到第二个人'):
+            if click_first(pg, '#people [data-p] >> nth=1', '切到第二个人'):
                 pg.wait_for_timeout(500)
                 overflow(pg, '桌面，第二个人')
                 pg.screenshot(path=str(out / 'desktop_p2.png'), full_page=True)
