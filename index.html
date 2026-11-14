@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
 <style>
 :root{
-  /* 版面：一栏排下来的白色卡片。六列的细盘是中心，下面四行选择器控制它的前两列。
-     每个版块带一个淡色的解读框。带虚线的字点开，解释就出现在这个字旁边。
+  /* 版面：一栏排下来的白色卡片。八列的细盘是中心，上面四行选择器控制它的前四列。
+     每个版块带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
      五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。 */
   --paper:#f2f4f8; --card:#ffffff; --wash:#f4f6fb; --ink:#131a2a; --ink2:#48546a; --ink3:#657084; --line:#dfe4ec;
-  --accent:#1d3f94; --accent-soft:#e7edf9; --warn:#96392b; --warn-soft:#f8ebe7; --seal:#b23a2c; --seal-ink:#ffffff;
+  --accent:#1d3f94; --accent-soft:#e7edf9; --warn:#96392b; --warn-soft:#f8ebe7; --seal:#b23a2c; --seal-ink:#ffffff; --tint:rgba(29,63,148,.07); --tint-ring:rgba(29,63,148,.3);
   --wood:#2c7a57; --fire:#bd3b2d; --earth:#8a5c30; --metal:#8f6f10; --water:#2360ad;
   --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6efe6; --metal-s:#f8f2de; --water-s:#eaf1fb;
   --shadow:0 1px 2px rgba(19,26,42,.04),0 6px 20px rgba(19,26,42,.05);
@@ -25,7 +25,7 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
-    --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff;
+    --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
     --wood:#63c394; --fire:#f0877a; --earth:#d5a36a; --metal:#e2c461; --water:#79adf3;
     --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#29211a; --metal-s:#282412; --water-s:#152337;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
@@ -35,7 +35,7 @@
 }
 :root[data-theme="dark"]{
   --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
-  --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff;
+  --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
   --wood:#63c394; --fire:#f0877a; --earth:#d5a36a; --metal:#e2c461; --water:#79adf3;
   --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#29211a; --metal-s:#282412; --water-s:#152337;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
@@ -46,7 +46,20 @@
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.7 var(--body)}
 main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-direction:column;gap:22px}
-.x{font:inherit;color:inherit;background:none;border:0;border-radius:4px;padding:0;margin:0;cursor:pointer;text-align:inherit;text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+/* 能点开解释的元素都带 data-x，全页只有一套样子。
+   平时：细盘里的格子、藏干、神煞不加标记，整格都能点；行名、列名这类夹在文字里的可点词带虚线下划线。
+   悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
+   「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
+.x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
+th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+.x.on,.hs.on{background-color:var(--accent-soft);text-decoration:none}
+.x.on,.hs.on,.glyph.on,.rel.on{box-shadow:0 0 0 1.5px var(--accent)}
+@media (hover:hover){
+  .x:hover,.hs:hover{background-color:var(--tint)}
+  .x.on:hover,.hs.on:hover{background-color:var(--accent-soft)}
+  .glyph:hover,.rel:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
+  .glyph.on:hover,.rel.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
+}
 .wood{color:var(--wood)} .fire{color:var(--fire)} .earth{color:var(--earth)} .metal{color:var(--metal)} .water{color:var(--water)}
 .defs{position:absolute;width:0;height:0;overflow:hidden}
 .ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -62,7 +75,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
 .switch[aria-pressed="true"] .knob::after{left:14px}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
-.meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:0 32px}
+.meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 32px}
 .meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:7px 0}
 .meta dt{flex:0 0 5.2em;font-size:13px;color:var(--ink3)}
 .meta dd{margin:0;font-variant-numeric:tabular-nums}
@@ -70,7 +83,7 @@ h1 span{white-space:nowrap}
 .people[hidden]{display:none}
 .pp{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 15px;cursor:pointer}
 .pp:hover{border-color:var(--ink3)}
-.pp[aria-pressed="true"]{color:var(--accent);font-weight:600;border-color:var(--accent);background:var(--accent-soft)}
+.pp[aria-pressed="true"]{color:var(--accent);font-weight:600;border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .pp.add{border-style:dashed;background:none}
 .hint{margin:0;font-size:12px;color:var(--ink3)}
 .hint[hidden]{display:none}
@@ -91,7 +104,7 @@ h1 span{white-space:nowrap}
 .pform .msg[hidden]{display:none}
 
 section{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 20px 22px;display:flex;flex-direction:column;gap:14px}
-h2{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h2{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;scroll-margin-top:20px}
 h2 small{font-family:var(--body);font-size:12.5px;font-weight:400;letter-spacing:0;color:var(--ink3)}
 h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
 p{margin:0}
@@ -105,6 +118,11 @@ p{margin:0}
 .read li:last-child{margin-bottom:0}
 .read>p:not(.rd-h){max-width:46em}
 .read b{font-weight:600}
+.read a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.guide{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.guide>p:not(.rd-h){max-width:none}
+.guide .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px 40px}
+.guide .g2>div{display:flex;flex-direction:column;gap:6px;min-width:0}
 :root[data-read="off"] .read{display:none}
 .layers{margin:0;display:flex;flex-direction:column;gap:8px}
 .layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
@@ -115,28 +133,37 @@ p{margin:0}
 
 .tablewrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
 table{border-collapse:collapse;width:100%}
-.pan{min-width:600px;text-align:center;font-variant-numeric:tabular-nums}
-.pan th,.pan td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
-.pan thead th{font-size:13px;font-weight:600;vertical-align:bottom}
+/* 细盘：八列等宽。行名和每一格的第一行字从同一条线起头（都是 --lh 高的一行，上面留同样的空），
+   所以藏干、神煞这种一格好几条的两行也是顶端对齐；只有干支大字两行上下居中。格子里的按钮占满整格，整格都能点。 */
+.pan{--lh:22px;min-width:640px;table-layout:fixed;text-align:center;font-variant-numeric:tabular-nums}
+.pan th,.pan td{border-bottom:1px solid var(--line);vertical-align:top;line-height:var(--lh)}
+.pan thead th{padding:8px 4px;font-size:13px;font-weight:600}
+.pan thead th:first-child{width:52px}
 .pan thead .x{font-weight:600}
 .pan thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
-.pan tbody th{width:52px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.pan thead .nb{white-space:nowrap}
+.pan tbody th{padding:8px 0 8px 6px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.pan td{padding:3px 2px}
+.pan td>.x,.pan .ss .x{display:block;width:100%;margin:0}
+.pan td>.x{padding:5px 2px}
+.pan .big th,.pan .big td{vertical-align:middle}
+.pan .big td{padding:8px 2px}
+.pan .multi td{padding:6px 2px}
 .pan .dyn{background:var(--wash)}
 .pan .dyn.last{border-right:1px solid var(--line)}
 .pan .day{box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
 .pan tr:last-child th,.pan tr:last-child td{border-bottom:0}
 .pan .sm{font-size:13px;color:var(--ink2)}
-.pan .ss{display:block;font-size:12px;color:var(--ink2);line-height:1.75}
-.pan .ss .x{display:block;margin:0 auto}
+.pan .ss{display:block;padding:2px 0;font-size:12px;color:var(--ink2)}
+.pan .ss .x{padding:0 2px}
+.pan .ss .no{color:var(--ink3)}
 /* 干支大字：一块淡色的底，右上角是五行的小图标，地支的右下角是生肖 */
-.glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;border:1px solid transparent;border-radius:12px;padding:0;cursor:pointer}
+.glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;border:0;border-radius:12px;padding:0;cursor:pointer}
 .glyph.wood{background:var(--wood-s)} .glyph.fire{background:var(--fire-s)} .glyph.earth{background:var(--earth-s)} .glyph.metal{background:var(--metal-s)} .glyph.water{background:var(--water-s)}
 .glyph .ic{position:absolute;top:5px;right:5px;width:13px;height:13px;opacity:.8}
 .glyph[data-z]::after{content:attr(data-z);position:absolute;right:6px;bottom:5px;font:500 10px/1 var(--body);opacity:.75}
-.hs{display:block;margin:0 auto;font:inherit;font-size:13px;background:none;border:1px solid transparent;border-radius:6px;padding:1px 6px;cursor:pointer;white-space:nowrap}
+.hs{display:block;width:100%;margin:0;font:inherit;font-size:13px;background:none;border:0;border-radius:6px;padding:2px 4px;cursor:pointer;white-space:nowrap}
 .hs small{font-size:12px;color:var(--ink2);margin-left:5px}
-.hs:hover{border-color:var(--line)}
-.glyph:hover,.glyph.on,.hs.on{border-color:currentColor}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* 四行选择器：每行一条横着排的带子，放不下就横向滚动 */
@@ -162,14 +189,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rel.bad{background:var(--warn-soft);color:var(--warn)}
 .rel b{font-family:var(--display);font-weight:700;font-size:15px}
 .rel small{font-size:12px}
-.rel:hover,.rel.on{box-shadow:inset 0 0 0 1.5px currentColor}
 .none{font-size:13px;color:var(--ink3)}
 .relblock{display:flex;flex-direction:column;gap:8px}
-.relgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 28px;border-top:1px solid var(--line);padding-top:14px}
+.relgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px 28px;border-top:1px solid var(--line);padding-top:14px}
 .relgrid>div{display:flex;flex-direction:column;gap:8px;align-content:start}
 .relgrid .rels{align-items:flex-start}
 
-.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px}
 .two>section{min-width:0}
 .bars{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px 12px;align-items:center;font-variant-numeric:tabular-nums}
 .bars .el{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:18px}
@@ -178,18 +204,20 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bars .fill{display:block;height:100%;border-radius:5px;background:currentColor}
 .bars .n{font-size:13px;color:var(--ink2);white-space:nowrap}
 .bars .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;margin:0}
-.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
+/* 日主一栏：前一组是盘面上的事实，后一组是各家照各自的书走出来的几行，中间一个小标题。两组共用同一套列宽；行名和内容按第一行的基线对齐 */
+.kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
+.kv{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-columns:subgrid;gap:8px 14px;align-items:baseline;font-size:14px;margin:0}
+.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap;scroll-margin-top:72px}
 .kv dd{margin:0;min-width:0}
+.kv-h{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--line);padding-top:13px}
+.kv-h small{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods{font-size:14px;text-align:left}
-.gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line)}
+.gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods tr:last-child td{border-bottom:0}
 .gods .have{font-weight:600}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .gods .eli .ic{width:14px;height:14px}
-.x:hover{color:var(--accent);text-decoration-color:var(--accent)}
-.x.on{color:var(--accent);text-decoration:underline solid var(--accent)}
 footer{font-size:13px;color:var(--ink2)}
 footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
 
@@ -221,24 +249,40 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   section{padding:15px 11px 17px}
   .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
   .read{padding:11px 13px 13px}
-  /* 八列挤在手机上：每列不到 40 像素。干支的色块缩小，生肖不显示，四个字的神煞折成两行 */
-  .pan{min-width:0;table-layout:fixed}
-  .pan th,.pan td{padding:5px 0}
-  .pan thead th{font-size:11px}
+  /* 八列挤在手机上：每列不到 40 像素。干支的色块缩小，生肖不显示，四个字的神煞折成两行，表头里放不下的小字（.wide）不显示 */
+  .wide{display:none}
+  th .x{padding:1px 2px;margin:-1px -2px}
+  .pan{--lh:18px;min-width:0}
+  .pan thead th{padding:5px 0;font-size:11px}
+  .pan thead th:first-child{width:28px}
   .pan thead small{font-size:10px;line-height:1.3}
-  .pan tbody th{width:26px;font-size:10.5px}
+  .pan tbody th{padding:5px 0;font-size:10.5px}
+  .pan td{padding:2px 0}
+  .pan td>.x{padding:3px 0}
+  .pan .big td{padding:5px 0}
+  .pan .multi td{padding:4px 0}
   .pan .sm{font-size:11px}
-  .pan .ss{font-size:10.5px;line-height:1.6}
-  .pan .ss .w4{max-width:2.1em;white-space:normal;line-height:1.25;margin-bottom:3px}
-  .glyph{width:36px;height:38px;font-size:20px;border-radius:8px}
+  .pan .ss{padding:1px 0;font-size:10.5px}
+  .pan .ss .x{padding:2px 0;line-height:14px}      /* 取整数：浏览器把行距的零头舍掉，1.3 倍会让第一行比行名高一个像素 */
+  .pan .ss .w4{padding:2px calc(50% - 1.05em)}
+  .pan .ss .no{display:block}
+  .glyph{width:100%;max-width:36px;height:38px;font-size:20px;border-radius:8px}
   .glyph .ic{top:2px;right:2px;width:8px;height:8px}
   .glyph[data-z]::after{display:none}
   .hs{font-size:10.5px;padding:1px 0}
   .hs small{font-size:10px;margin-left:1px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
 }
+@media (max-width:379px){
+  .pan .sm{font-size:10.5px}          /* 每列不到 36 像素：三个字的纳音之间留一点空 */
+}
+@media (max-width:345px){
+  /* 最窄的手机：每列不到 30 像素，三个字的纳音和神煞要再小一点才放得下 */
+  .pan .sm,.hs,.pan .ss{font-size:9.5px}
+  .hs small{font-size:9px}
+}
 @media (prefers-reduced-motion:no-preference){
-  .pk,.pp,.glyph,.hs,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,left .12s}
+  .pk,.pp,.x,.glyph,.hs,.rel,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,box-shadow .12s,left .12s}
   .sheet:not([hidden]){animation:pop .14s ease-out}
   @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 }
@@ -287,13 +331,39 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="rd-h">解读 · 怎么看这一页</p>
     <ul class="cols">
       <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
-      <li>带虚线的字都可以点，盘上的干支和每一条合冲刑害也可以点。解释就出现在所点的字旁边，再点一次或者点一下空白处收起。</li>
+      <li>细盘里的每一格、带虚线的字、每一条合冲刑害都可以点。点开的那一处会套上一圈蓝框，解释出现在它旁边；再点一次或者点一下空白处收起。</li>
       <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
       <li>点上面的「＋ 添加」，填上出生时间，可以排一张新的盘。填的内容只保存在这个浏览器里。</li>
     </ul>
   </div>
   <dl class="meta" id="meta"></dl>
 </header>
+
+<div class="read guide">
+  <p class="rd-h">解读 · 读盘的顺序</p>
+  <p>先在<a href="#h-pan">四柱细盘</a>里认字：八个字各是日主的什么十神，地支里藏着什么。往下从哪里入手，各家不一样。</p>
+  <div class="g2">
+    <div>
+      <p><b>各家的入口。</b>页面把每一家做成<a href="#h-tk">日主</a>一栏里的一行，各照各的书走一遍，不合成一个结论。</p>
+      <ul>
+        <li>《千里命稿》从强弱入手，见<a href="#kv-qr">强弱参考</a>。</li>
+        <li>《子平真诠》从月令入手，定格局，见<a href="#kv-gj">格局参考</a>。</li>
+        <li>《穷通宝鉴》从出生的季节入手，看调候，见<a href="#kv-th">调候参考</a>。</li>
+        <li>《神峰通考》从盘里的病和药入手。这一步要通盘权衡，页面没有单列一行，只在「格局参考」的解释里引了它的话。</li>
+        <li>几行各自落在哪些字上、重合不重合，见<a href="#kv-dz">三行对照</a>。</li>
+      </ul>
+    </div>
+    <div>
+      <p><b>《千里命稿》的八步。</b>这本书把评断排成八步。这只是其中一家的顺序，别家有别的顺序。页面做到哪一步：</p>
+      <ul>
+        <li>第一步看强弱、第二步定格局：就是「强弱参考」和「格局参考」两行。</li>
+        <li>第三步取用神：用神是一张盘里拿来作主的字。各家取法不同，页面只列依据，不取定。</li>
+        <li>第五步查岁运：<a href="#h-yun">大运和流年</a>、<a href="#h-rel">干支关系</a>里列出每一层带来的十神和合冲，不判断好坏。</li>
+        <li>第四步论喜忌要先取定用神；第六步推六亲、第七步评性情、第八步断事业是对具体的人下判断。这四步页面都不做。十神怎么配六亲是书里的分类办法，见<a href="#h-gods">十神对照</a>。</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
 <section aria-labelledby="h-yun">
   <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
@@ -317,7 +387,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
           <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
           <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
           <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
-          <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small>自己 · 配偶</small></th>
+          <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small><span class="nb">自己</span><span class="wide"> · </span><wbr><span class="nb">配偶</span></small></th>
           <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
         </tr>
       </thead>
@@ -355,8 +425,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-wx"></div>
   </section>
   <section aria-labelledby="h-tk">
-    <h2 id="h-tk">日主 <small>根和印、格局、调候</small></h2>
-    <dl class="kv" id="kv"></dl>
+    <h2 id="h-tk">日主 <small>根和印、强弱、格局、调候</small></h2>
+    <div class="kvs" id="kv"></div>
     <div class="read" id="rd-tk"></div>
   </section>
 </div>
@@ -849,9 +919,9 @@ const SOURCES={
   wz:{book:'问真八字《神煞大全》',note:'排盘软件问真八字的学习课堂里讲神煞的一本说明。现代的资料，不是典籍，只用来记下现在通行的查法',
       url:[7,9,11,14,15,17,25,37,38,41,46,47,48,50,51].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_0_${n}.html`)},
   qlmg:{book:'《千里命稿》',note:'韦千里著，问真八字学习课堂里的录文。这本书还在著作权保护期内，只引几个字的短语',
-        url:['https://www.iwzbz.com/artical/pcbook/v2/3_1_3_16.html']},
+        url:[4,8,16,21].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_3_${n}.html`)},
   zpzq:{book:'《子平真诠》',note:'中华典藏网的《子平真诠》，题沈孝瞻著，页面没有写所据的本子',
-        url:[53623,53628,53629,53630,53634,53635,53636,53641,53643,53663,53665].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
+        url:[53623,53626,53628,53629,53630,53634,53635,53636,53641,53643,53663,53665].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
 };
 
 /* 《滴天髓》论十干，各取开头两句，后面是这两句里头一句的白话大意。出处 dts。 */
@@ -1039,6 +1109,10 @@ const Q={
   zp_fu:['zpzq','偏财者，母之正夫也，正印为母，则偏才为父矣。'],
   zp_zi:['zpzq','官煞者，财所生也，财为妻妾，则官煞为子女矣。'],
   zp_sn:['zpzq','阳主聚，以进为进，故主顺；阴主散，以退为退，故主逆。'],
+  zp_deshi:['zpzq','书云，得时俱为旺论，失时便作衰看，虽是至理，亦死法也。'],
+  zp_gen:['zpzq','是故十干不论月令休囚，只要四柱有根，便能受财官食神而当伤官七煞。'],
+  zp_gen2:['zpzq','长生禄旺，根之重者也；墓库余气，根之轻者也。'],
+  zp_gan:['zpzq','干多不如根重，理固然也。'],
   // 《神峰通考》
   sf_bing:['sftk','何以为之病？原八字中原所害之神也'],
   sf_shi:['sftk','有病方为贵，无伤不是奇；格中如去病，财禄两相随。'],
@@ -1140,7 +1214,17 @@ const Q={
   ql_fu:['qlmg','男女命皆以生我之印为父'],
   ql_zi:['qlmg','皆以我生之伤官食神为子'],
   ql_gong1:['qlmg','年为祖父母'],
-  ql_gong2:['qlmg','年为父母']
+  ql_gong2:['qlmg','年为父母'],
+  // 《千里命稿》强弱篇、天干篇、评断篇：同样只引短语
+  ql_bz:['qlmg','以多寡、盛衰、失时、得令、为标准'],
+  ql_q1:['qlmg','月令旺相'], ql_q2:['qlmg','多帮扶'], ql_q3:['qlmg','支得气'],
+  ql_r1:['qlmg','月令衰弱'], ql_r2:['qlmg','多克泄'], ql_r3:['qlmg','支失气'],
+  ql_zq:['qlmg','既当令，又多帮扶'], ql_zr:['qlmg','既失令，又多克泄'],
+  ql_cq:['qlmg','既不当令，又少帮扶，但年日时支得气'], ql_cr:['qlmg','既不失令，又少克泄，但年日时支无气'],
+  ql_mq1:['qlmg','仅多帮扶而失令'], ql_mq2:['qlmg','仅得令而少帮扶'], ql_mr1:['qlmg','仅多克泄，而当令'], ql_mr2:['qlmg','仅失令而少克泄'],
+  ql_tu:['qlmg','囚于四立前各十八天'], ql_tu2:['qlmg','旺于四立前各十八天'],
+  ql_sheng:['qlmg','以上为气之盛'], ql_shuai:['qlmg','以上为气之衰'],
+  ql_babu:['qlmg','（一）看强弱。（二）定格局。（三）取用神。（四）论喜忌。（五）查岁运。（六）推六亲。（七）评性情。（八）断事业。']
 };
 
 /* 全部引文列成 [出处, 原文] 的清单。核对脚本和检查脚本都用它。 */
@@ -1494,6 +1578,83 @@ function geju(){
   return list.length?{kind:'透',mz,ben,list}:{kind:'不透',mz,ben,list:[{h:ben,where:[]}]};
 }
 const gejuNames=g=>[...new Set(g.list.map(x=>GE[god(x.h)]))];
+/* 强弱：照《千里命稿》「强弱篇」的三条依据数一遍。纯计算，书里举的八个例子拿它当测试。
+   dm 是日干，ps 是 [年柱, 月柱, 日柱, 时柱]，tu 为真表示生在四立前的十八天里（书里说这时土当令）。
+   三条依据各落成一条能数的规则，这是这一页定的：
+     月令：当令的五行按季节取，日主旺、相算得令，休、囚、死算失令；
+     帮扶：只看年、月、时三个天干，同类和生日主的占多数算多帮扶，否则算多克泄；
+     气：年、日、时三支上日主的十二长生，三支都在长生到帝旺算得气，三支都在衰到养算无气。 */
+function qrOf(dm,ps,tu){
+  const K='年月日时', mz=ps[1][1], de=gEl(dm);
+  const ling=tu?2:[0,1,3,4][ssSeason(mz)];                        // 春木、夏火、秋金、冬水；四立前十八天是土
+  const st=['旺','相','死','囚','休'][(de-ling+5)%5];
+  const gan=[0,1,3].map(i=>({k:K[i],g:ps[i][0],r:relOf(dm,ps[i][0])}));
+  const fu=gan.filter(x=>x.r===0||x.r===4).length;
+  const zhi=[0,2,3].map(i=>({k:K[i],z:ps[i][1],s:stage(dm,ps[i][1])}));
+  const sheng=zhi.filter(x=>STAGES.indexOf(x.s)<5).length;
+  const deLing=st==='旺'||st==='相', bang=fu>=2, qi=sheng===3?1:sheng===0?-1:0;
+  const tier=deLing?(bang?(qi<0?'次弱':'最强'):'中'):(bang?'中':(qi>0?'次强':'最弱'));
+  return {mz,ling,tu,st,deLing,gan,fu,bang,zhi,sheng,qi,tier};
+}
+/* 这张盘的强弱。辰未戌丑四个月，要看出生时离下一个节（立夏、立秋、立冬、立春）是不是在十八天以内 */
+function qrNow(){
+  const four='辰未戌丑'.includes(NATAL[1].z), nj=P.nextJie;
+  return Object.assign(qrOf(DM,NATAL.map(p=>p.g+p.z),four&&nj.min<=18*1440),{four,nj});
+}
+const qrName=r=>r.tier==='中'?'中强，也叫中弱':r.tier;
+const RELN=['和日主同类','是日主所生','是日主所克','克日主','生日主'];      // 下标是 relOf 的结果
+function qiangruoRow(){
+  const r=qrNow(), mz=r.mz, four=r.four, nj=r.nj, tu=r.tu, E=EL[gEl(DM)], L=EL[r.ling], S='春夏秋冬'[ssSeason(mz)];
+  const how={旺:`和当令的五行相同`,相:`是当令的${L}所生`,休:`生了当令的${L}`,囚:`克着当令的${L}`,死:`被当令的${L}所克`}[r.st];
+  const sum={
+    最强:`当令，天干又多帮扶。书里说${q('ql_zq')}是最强。`,
+    次弱:`当令，天干也多帮扶、少克泄，可是年、日、时三支都气衰。书里把这种情形归在身弱里，叫次弱：${q('ql_cr')}。`,
+    最弱:`失令，天干又多克泄。书里说${q('ql_zr')}是最弱。`,
+    次强:`失令，天干又多克泄、少帮扶，可是年、日、时三支都气盛。书里把这种情形归在身强里，叫次强：${q('ql_cq')}。`,
+    中:r.deLing?`当令，但天干多克泄。书里讲身强时把这种情形叫中强（${q('ql_mq2')}），讲身弱时又叫中弱（${q('ql_mr1')}），说的是同一种不上不下的情形。`
+      :`失令，但天干多帮扶。书里讲身强时把这种情形叫中强（${q('ql_mq1')}），讲身弱时又叫中弱（${q('ql_mr2')}），说的是同一种不上不下的情形。`
+  }[r.tier];
+  return {k:'强弱参考',dd:`照《千里命稿》的三条依据：${r.deLing?'当令':'失令'}，天干${r.bang?'多帮扶':'多克泄'}，三支${r.qi>0?'得气':r.qi<0?'无气':'有盛有衰'}。书里把这种情形叫${qrName(r)}`,t:'强弱参考',p:[
+    ['是什么',`强弱说的是日主在这张盘里得到的支持多，还是受到的消耗多。很多取法都从这一步开始。近代韦千里的《千里命稿》看强弱${q('ql_bz')}，把身强归结成三条：${q('ql_q1')}、${q('ql_q2')}、${q('ql_q3')}；身弱是反过来的三条：${q('ql_r1')}、${q('ql_r2')}、${q('ql_r3')}。`],
+    ['月令',`${DMN}生在${mz}月。书里按季节定月令：春天木当令，夏天火，秋天金，冬天水；立春、立夏、立秋、立冬之前的十八天是土当令。`
+      +(tu?`这张盘生在${nj.name}前 ${rough(nj.min)}，在这十八天里，土当令。`:four?`${mz}月在${S}天，出生时离${nj.name}还有 ${rough(nj.min)}，不在那十八天里，${L}当令。`:`${mz}月在${S}天，${L}当令。`)
+      +`${E}${how}，处在${r.st}的状态。旺和相算得令，休、囚、死算失令，所以这张盘${r.deLing?'得令，也叫当令':'失令'}。`],
+    ['帮扶和克泄',`看年、月、时三个天干：${r.gan.map(x=>`${x.k}干${x.g}${RELN[x.r]}`).join('，')}。和日主同类的、生日主的算帮扶，其余三种算克泄。帮扶 ${r.fu} 个，克泄 ${3-r.fu} 个，算${r.bang?'多帮扶':'多克泄'}。`],
+    ['地支的气',`看年、日、时三支上${DMN}的十二长生：${r.zhi.map(x=>`${x.k}支${x.z}是${x.s}`).join('，')}。书里把长生、沐浴、冠带、临官、帝旺叫气盛，其余七位叫气衰。`
+      +(r.qi>0?'三支都气盛，算得气。':r.qi<0?'三支都气衰，算无气。':`三支里 ${r.sheng} 支气盛、${3-r.sheng} 支气衰，有盛有衰。`)],
+    ['合起来',sum],
+    ['别家',`清代的《子平真诠》不赞成只凭月令定强弱：${q('zp_deshi')}它更看重地支里的根：${q('zp_gen')}又说${q('zp_gan')}照它的看法，天干上帮扶的字多，不如地支里有根。这张盘的根见上面「根」一行。`],
+    ['注意',`三条依据是书里的，怎么数是这一页定的：帮扶只数三个天干，地支的气要三支一致才算。照这样数，书里举的八个例子都归到书上说的那一档。书里自己并没有给出数法，它断盘时是通盘权衡的。所以这一行只是照一本书、一种数法走出来的参考。`
+      +(four?`另外，这一页的五行一栏把辰、未、戌、丑四个月都算土当令；这里照《千里命稿》，只把四立前的十八天算土当令。两处不同。`:'')]]};
+}
+/* 三行对照：强弱、格局、调候三行各照一本书走，这里只把它们落在哪些字上摆在一起，看重合不重合，不合成结论。
+   dzOf 是纯计算。dm 日干；gj 格局一行落的天干；th 调候一行点到的天干。
+   same：两行都有的天干。el：天干不同、五行相同的（五行的序号）。side：每个字对日主是不是帮扶（同类，或者生它）。 */
+function dzOf(dm,gj,th){
+  const same=gj.filter(g=>th.includes(g));
+  const el=[...new Set(gj.filter(g=>!same.includes(g)).map(gEl))].filter(e=>th.some(x=>gEl(x)===e&&!same.includes(x)));
+  const side=[...new Set(gj.concat(th))].map(g=>({g,r:relOf(dm,g),fu:[0,4].includes(relOf(dm,g))}));
+  return {same,el,side};
+}
+function duizhaoRow(){
+  const g=geju(), c=tiaohou(), r=qrNow(), fixed=!!g.list;       // fixed：格局一行落在月令的字上；否则归在建禄月劫或阳刃，要另取
+  const gj=[...new Set(fixed?g.list.map(x=>x.h):g.out.map(p=>p.g))], th=c.stems.map(x=>x.s), d=dzOf(DM,gj,th);
+  const gs=gj.map(x=>`${gN(x)}（${god(x)}）`).join('、'), ts=th.map(gN).join('、'), cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
+  const a=fixed?`格局一行落在${gs}上`:gj.length?`格局一行要在别处另取，天干上列出了${gs}`:'格局一行要在别处另取，天干上没有它要找的字';
+  const hit=!gj.length?'':d.same.length?`两行重合在${d.same.map(gN).join('、')}上`:d.el.length?`两行没有相同的天干，五行相同的有${d.el.map(e=>EL[e]).join('、')}`:'两行不重合';
+  const elSay=d.el.map(e=>`${EL[e]}：格局一行是${gj.filter(x=>gEl(x)===e).map(gN).join('、')}，调候一行是${th.filter(x=>gEl(x)===e&&!d.same.includes(x)).map(gN).join('、')}`).join('；');
+  const hitLong=!gj.length?'格局一行没有点到字，这两行无从对照。'
+    :d.same.length?`两行都有${d.same.map(gN).join('、')}。`+(d.el.length?`另外，五行相同而天干不同的有${elSay}。`:(gj.length>d.same.length||th.length>d.same.length)?'其余的字不相同。':'')
+    :d.el.length?`两行没有相同的天干。五行相同的有${elSay}。`:'两行没有相同的天干，也没有相同的五行。';
+  const fu=d.side.filter(x=>x.fu).map(x=>gN(x.g)), ke=d.side.filter(x=>!x.fu).map(x=>gN(x.g));
+  const sides=[fu.length?`${fu.join('、')}帮扶日主`:'',ke.length?`${ke.join('、')}克泄日主`:''].filter(Boolean).join('，');
+  return {k:'三行对照',dd:`${a}，调候一行点到${ts}`+(hit?`，${hit}`:'')+`。强弱一行归到${qrName(r)}；照它的分法，${sides}`,t:'三行对照',p:[
+    ['是什么','上面三行各照一本书走了一遍，入手的地方不同：《千里命稿》看强弱，《子平真诠》从月令定格局，《穷通宝鉴》按季节看调候。这一行把三行各自落在哪些字上摆在一起，只看重合不重合。'],
+    ['格局和调候',(fixed?`格局一行从月令${g.mz}出发，落在${gs}上。`:`格局一行归在${cls}一类时，用神要在别处另取，要找的是天干上的财、正官、七杀、食神和伤官。这张盘的天干上`+(gj.length?`有${gs}。`:'一个也没有。'))
+      +`调候一行照《穷通宝鉴》论${c.mon}的${DMN}，点到${ts}。`+hitLong],
+    ['和强弱一行',`强弱一行不点具体的字，只把这张盘归到${qrName(r)}。它把天干分成两边：和日主同类的、生日主的算帮扶，其余三种算克泄。上面两行点到的字里，`+d.side.map(x=>`${gN(x.g)}${RELN[x.r]}，在${x.fu?'帮扶':'克泄'}一边`).join('；')+'。'],
+    ['注意','这一行只陈述重合不重合，不说该听哪一家。几本书的取法不同，所以会落在不同的字上。页面不把三行合成一个结论，也不给各家打分。']]};
+}
 function tiaohouRow(){
   const c=tiaohou(), names=c.stems.map(x=>gN(x.s)).join('、');
   const at=x=>x.tou.length?`透在${x.tou.join('、')}`+(x.cang.length?`，又藏在${x.cang.join('、')}里`:''):x.cang.length?`藏在${x.cang.join('、')}里`:'盘里没有';
@@ -1630,8 +1791,10 @@ function kvRows(){return memo('kv',()=>{
     {k:'月令透干',dd:tg,t:'月令透干',p:[
       ['是什么','月支里藏的天干出现在某一柱的天干上，叫透干。藏着的力量露了出来，分量最重。'],
       ['这张盘',tg+'。格局法从月令透出的字来定格局，见下面「格局参考」一行。']]},
+    qiangruoRow(),
     gejuRow(),
-    tiaohouRow()
+    tiaohouRow(),
+    duizhaoRow()
   ];
   return addRows(rows,note('kv'));
 });}
@@ -1803,8 +1966,8 @@ function readTk(){
     `${DM}是${yy(DM)}${EL[de]}。生在${mz}月，${EL[zEl(mz)]}当令，${EL[de]}处在${st}的状态：${STATEX[st]}`,
     `根和印是日主的两种支持。根是地支里藏着的同类，印是生它的五行。这张盘${r.length?`有 ${r.length} 处根`:'没有根'}，${s.length?`有 ${s.length} 处印`:'没有印'}。`,
     `${touGan()}。格局法从月令透出的字来定格局。`,
-    '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。上面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。两本书的结论不一定一致，这一页不替它们裁决。',
-    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多，这一页只列出依据，不下结论。'])}</ul>`);
+    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面「强弱参考」一行，照《千里命稿》的三条依据数了一遍，它只是一本书、一种数法的结果。',
+    '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。上面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。几本书落在哪些字上，「三行对照」一行摆在了一起；它们不一定一致，这一页不替它们裁决。'])}</ul>`);
 }
 function readGods(){
   const stems=natalStems(), c={}; GODS.forEach(g=>{c[g]=0;});
@@ -2119,6 +2282,8 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
+/* 日主一栏里各家的那几行。读盘顺序里的链接按这些 id 跳过来 */
+const KV_ID={强弱参考:'kv-qr',格局参考:'kv-gj',调候参考:'kv-th',三行对照:'kv-dz'};
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
   $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
@@ -2132,31 +2297,32 @@ function renderPerson(){
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
-  const kv=kvRows();
-  $('kv').innerHTML=kv.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('');
+  const kv=kvRows(), cut=kv.findIndex(r=>KV_ID[r.k]);
+  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt${KV_ID[r.k]?` id="${KV_ID[r.k]}"`:''}>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
+  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h">各家的取法<small>各照一本书走一遍，不合成结论</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   renderBars();renderGods();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
-  const row=(label,fn)=>`<tr><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
+  const row=(label,fn,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
     row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
-    row('天干',c=>glyph('g',c))+
-    row('地支',c=>glyph('z',c))+
-    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''))+
+    row('天干',c=>glyph('g',c),'big')+
+    row('地支',c=>glyph('z',c),'big')+
+    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
     row('星运',c=>xb('x sm','st|'+c.k,stage(DM,c.z)))+
     row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
     row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
     row('纳音',c=>xb('x sm','ny|'+c.k,DATA.nayin[c.g+c.z]))+
     row('神煞',(c,i)=>{       // 前四列拿自己的干支去对原局查；四个字的名字在手机上折成两行
       const list=c.dyn?shenshaFor(P.pillars,DATA.nayin,!!P.gender,c.g+c.z,c.k):SHENSHA[i-DYN];
-      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'—'}</span>`;});
+      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'<span class="no">—</span>'}</span>`;},'multi');
   const dy=P.dayun[sel.dy];
   $('hd-lr').textContent=mdText(sel.d);
   $('hd-ly').textContent=jieMD(sel.y)[sel.m]+' 起';
-  $('hd-ln').textContent=sel.y+' 年';
+  $('hd-ln').innerHTML=sel.y+'<span class="wide"> 年</span>';
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
 function renderDayun(){

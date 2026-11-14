@@ -252,9 +252,28 @@ console.log('典籍引文');
   // 格局和调候：十个日干 × 十二个月支，每一种都能走出结果
   const badGe = ev(`(function(){const bad=[],keep=[P,DM,DMN,NATAL,MEMO];
     G.split('').forEach(g=>Z.split('').forEach(z=>{DM=g;DMN=gN(g);MEMO={};NATAL=[{k:'年',g:'甲',z:'子'},{k:'月',g:'丙',z:z},{k:'日',g:g,z:'子',day:true},{k:'时',g:'庚',z:'午'}];
-      try{const a=gejuRow(),b=tiaohouRow();[a,b].forEach(r=>{if(!r.dd||!r.p||r.p.some(x=>!x||!x[1]||/undefined|NaN|null/.test(x[1]))||/undefined|NaN|null/.test(r.dd)) bad.push(g+z+r.k);});}catch(e){bad.push(g+z+String(e.message));}}));
+      try{const a=gejuRow(),b=tiaohouRow(),c=qiangruoRow(),e=duizhaoRow();[a,b,c,e].forEach(r=>{if(!r.dd||!r.p||r.p.some(x=>!x||!x[1]||/undefined|NaN|null/.test(x[1]))||/undefined|NaN|null/.test(r.dd)) bad.push(g+z+r.k);});}catch(e){bad.push(g+z+String(e.message));}}));
     [P,DM,DMN,NATAL,MEMO]=keep;return bad;})()`);
-  eq('格局参考和调候参考：十个日干生在十二个月，120 种情形都能生成', badGe, []);
+  eq('强弱参考、格局参考、调候参考和三行对照：十个日干生在十二个月，120 种情形都能生成', badGe, []);
+  // 三行对照：重合不重合是纯计算。先用三种情形核对 dzOf，再在 120 种情形里拿另算的交集对照页面上写的话
+  eq('三行对照：两行有相同的天干、只有五行相同、完全不重合，三种情形都分得出来；每个字归帮扶还是克泄也对',
+    [ev("JSON.stringify(dzOf('戊',['甲'],['甲','丙','癸']))"), ev("JSON.stringify(dzOf('甲',['己'],['戊','丙']))"), ev("JSON.stringify(dzOf('丁',['己'],['甲','庚']))")].map(s => JSON.parse(s)).map(r => [r.same.join(''), r.el.join(''), r.side.map(x => x.g + (x.fu ? '扶' : '泄')).join('')]),
+    [['甲', '', '甲泄丙扶癸泄'], ['', '2', '己泄戊泄丙泄'], ['', '', '己泄甲扶庚泄']]);
+  const badDz = ev(`(function(){const bad=[],keep=[P,DM,DMN,NATAL,MEMO];
+    G.split('').forEach(g=>Z.split('').forEach(z=>{DM=g;DMN=gN(g);MEMO={};NATAL=[{k:'年',g:'甲',z:'子'},{k:'月',g:'丙',z:z},{k:'日',g:g,z:'子',day:true},{k:'时',g:'庚',z:'午'}];
+      const ge=geju(), gj=ge.list?ge.list.map(x=>x.h):ge.out.map(p=>p.g), th=tiaohou().stems.map(x=>x.s), dd=duizhaoRow().dd;
+      const same=gj.some(x=>th.includes(x)), el=gj.some(x=>!th.includes(x)&&th.some(y=>y!==x&&gEl(x)===gEl(y)&&!gj.includes(y)));
+      const say=dd.includes('两行重合在')?'same':dd.includes('五行相同的有')?'el':dd.includes('两行不重合')?'none':'empty';
+      const want=!gj.length?'empty':same?'same':el?'el':'none';
+      if(say!==want) bad.push(g+z+':'+say+'/'+want);}));
+    [P,DM,DMN,NATAL,MEMO]=keep;return bad;})()`);
+  eq('三行对照：120 种情形里，页面上写的「重合」「五行相同」「不重合」，和另算的交集一致', badDz, []);
+  // 强弱：《千里命稿》强弱篇自己举的八个例子，照这一页的数法归出来要和书上一致
+  const QR = [['甲寅', '丁卯', '甲子', '甲子', '最强'], ['甲寅', '癸酉', '乙亥', '丙子', '中'], ['甲寅', '丙子', '壬寅', '丙午', '中'], ['辛亥', '丁酉', '甲寅', '丁卯', '次强'],
+    ['戊申', '庚申', '甲午', '庚午', '最弱'], ['丙辰', '庚寅', '甲午', '庚午', '中'], ['甲寅', '丙子', '丁卯', '乙巳', '中'], ['辛巳', '辛丑', '壬寅', '癸卯', '次弱']];
+  eq('强弱：《千里命稿》举的八个例子，照这一页的数法都归到书上说的那一档（书里的中强和中弱是同一种情形，这里记作「中」）', QR.map(x => ev(`qrOf('${x[2][0]}',${JSON.stringify(x.slice(0, 4))},false).tier`)), QR.map(x => x[4]));
+  eq('强弱：月令的旺相休囚死，甲木和戊土各五种，和《千里命稿》天干篇列的相同', [['寅', false], ['子', false], ['午', false], ['辰', true], ['酉', false]].map(([z, tu]) => ev(`qrOf('甲',['甲子','甲${z}','甲子','甲子'],${tu}).st`)).concat([['辰', true], ['午', false], ['酉', false], ['子', false], ['寅', false]].map(([z, tu]) => ev(`qrOf('戊',['甲子','甲${z}','戊子','甲子'],${tu}).st`))), ['旺', '相', '休', '囚', '死', '旺', '相', '休', '囚', '死']);
+  eq('强弱：辰月出生，在立夏前十八天以内算土当令，以外算木当令', [ev("qrOf('戊',['甲子','戊辰','戊子','甲子'],true).deLing"), ev("qrOf('戊',['甲子','戊辰','戊子','甲子'],false).deLing")], [true, false]);
   eq('格局的分类：甲生寅月建禄，甲生卯月阳刃，乙生寅月月劫，戊生午月阳刃，丙生亥月按本气归七杀格', ev(`(function(){const keep=[P,DM,DMN,NATAL,MEMO];
     const one=(g,z)=>{DM=g;DMN=gN(g);NATAL=[{k:'年',g:'癸',z:'丑'},{k:'月',g:'癸',z:z},{k:'日',g:g,z:'丑',day:true},{k:'时',g:'癸',z:'丑'}];const r=geju();return r.kind+(r.list?'·'+gejuNames(r).join():'');};
     const out=[one('甲','寅'),one('甲','卯'),one('乙','寅'),one('戊','午'),one('丙','亥')];[P,DM,DMN,NATAL,MEMO]=keep;return out;})()`), ['建禄', '阳刃', '月劫', '阳刃', '不透·七杀格']);
@@ -301,7 +320,10 @@ people.forEach((id, pi) => {
   eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), E.dayun);
   eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), E.wuxing.all.map((n, i) => `${n} 个（${E.wuxing.face[i]}）`));
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
-  eq('解读方框有 8 个', d.querySelectorAll('.read').length, 8);
+  eq('解读方框有 9 个', d.querySelectorAll('.read').length, 9);
+  eq('读盘顺序里的链接都指向页面上有的地方', [...d.querySelectorAll('.guide a')].map(a => a.getAttribute('href')).filter(h => !/^#./.test(h) || !d.getElementById(h.slice(1))), []);
+  const groups = [...d.querySelectorAll('#kv .kv')], last = groups[groups.length - 1];
+  eq('日主一栏分两组，各家的四行（强弱、格局、调候、三行对照）在后一组，前面有小标题', [groups.length, ['kv-qr', 'kv-gj', 'kv-th', 'kv-dz'].map(id => !!d.getElementById(id) && d.getElementById(id).closest('.kv') === last), !!d.querySelector('#kv .kv-h')], [2, [true, true, true, true], true]);
   const fixed = ['meta', 'kv', 'foot', 'note-yun', 'note-wx', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });

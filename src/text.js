@@ -340,6 +340,83 @@ function geju(){
   return list.length?{kind:'透',mz,ben,list}:{kind:'不透',mz,ben,list:[{h:ben,where:[]}]};
 }
 const gejuNames=g=>[...new Set(g.list.map(x=>GE[god(x.h)]))];
+/* 强弱：照《千里命稿》「强弱篇」的三条依据数一遍。纯计算，书里举的八个例子拿它当测试。
+   dm 是日干，ps 是 [年柱, 月柱, 日柱, 时柱]，tu 为真表示生在四立前的十八天里（书里说这时土当令）。
+   三条依据各落成一条能数的规则，这是这一页定的：
+     月令：当令的五行按季节取，日主旺、相算得令，休、囚、死算失令；
+     帮扶：只看年、月、时三个天干，同类和生日主的占多数算多帮扶，否则算多克泄；
+     气：年、日、时三支上日主的十二长生，三支都在长生到帝旺算得气，三支都在衰到养算无气。 */
+function qrOf(dm,ps,tu){
+  const K='年月日时', mz=ps[1][1], de=gEl(dm);
+  const ling=tu?2:[0,1,3,4][ssSeason(mz)];                        // 春木、夏火、秋金、冬水；四立前十八天是土
+  const st=['旺','相','死','囚','休'][(de-ling+5)%5];
+  const gan=[0,1,3].map(i=>({k:K[i],g:ps[i][0],r:relOf(dm,ps[i][0])}));
+  const fu=gan.filter(x=>x.r===0||x.r===4).length;
+  const zhi=[0,2,3].map(i=>({k:K[i],z:ps[i][1],s:stage(dm,ps[i][1])}));
+  const sheng=zhi.filter(x=>STAGES.indexOf(x.s)<5).length;
+  const deLing=st==='旺'||st==='相', bang=fu>=2, qi=sheng===3?1:sheng===0?-1:0;
+  const tier=deLing?(bang?(qi<0?'次弱':'最强'):'中'):(bang?'中':(qi>0?'次强':'最弱'));
+  return {mz,ling,tu,st,deLing,gan,fu,bang,zhi,sheng,qi,tier};
+}
+/* 这张盘的强弱。辰未戌丑四个月，要看出生时离下一个节（立夏、立秋、立冬、立春）是不是在十八天以内 */
+function qrNow(){
+  const four='辰未戌丑'.includes(NATAL[1].z), nj=P.nextJie;
+  return Object.assign(qrOf(DM,NATAL.map(p=>p.g+p.z),four&&nj.min<=18*1440),{four,nj});
+}
+const qrName=r=>r.tier==='中'?'中强，也叫中弱':r.tier;
+const RELN=['和日主同类','是日主所生','是日主所克','克日主','生日主'];      // 下标是 relOf 的结果
+function qiangruoRow(){
+  const r=qrNow(), mz=r.mz, four=r.four, nj=r.nj, tu=r.tu, E=EL[gEl(DM)], L=EL[r.ling], S='春夏秋冬'[ssSeason(mz)];
+  const how={旺:`和当令的五行相同`,相:`是当令的${L}所生`,休:`生了当令的${L}`,囚:`克着当令的${L}`,死:`被当令的${L}所克`}[r.st];
+  const sum={
+    最强:`当令，天干又多帮扶。书里说${q('ql_zq')}是最强。`,
+    次弱:`当令，天干也多帮扶、少克泄，可是年、日、时三支都气衰。书里把这种情形归在身弱里，叫次弱：${q('ql_cr')}。`,
+    最弱:`失令，天干又多克泄。书里说${q('ql_zr')}是最弱。`,
+    次强:`失令，天干又多克泄、少帮扶，可是年、日、时三支都气盛。书里把这种情形归在身强里，叫次强：${q('ql_cq')}。`,
+    中:r.deLing?`当令，但天干多克泄。书里讲身强时把这种情形叫中强（${q('ql_mq2')}），讲身弱时又叫中弱（${q('ql_mr1')}），说的是同一种不上不下的情形。`
+      :`失令，但天干多帮扶。书里讲身强时把这种情形叫中强（${q('ql_mq1')}），讲身弱时又叫中弱（${q('ql_mr2')}），说的是同一种不上不下的情形。`
+  }[r.tier];
+  return {k:'强弱参考',dd:`照《千里命稿》的三条依据：${r.deLing?'当令':'失令'}，天干${r.bang?'多帮扶':'多克泄'}，三支${r.qi>0?'得气':r.qi<0?'无气':'有盛有衰'}。书里把这种情形叫${qrName(r)}`,t:'强弱参考',p:[
+    ['是什么',`强弱说的是日主在这张盘里得到的支持多，还是受到的消耗多。很多取法都从这一步开始。近代韦千里的《千里命稿》看强弱${q('ql_bz')}，把身强归结成三条：${q('ql_q1')}、${q('ql_q2')}、${q('ql_q3')}；身弱是反过来的三条：${q('ql_r1')}、${q('ql_r2')}、${q('ql_r3')}。`],
+    ['月令',`${DMN}生在${mz}月。书里按季节定月令：春天木当令，夏天火，秋天金，冬天水；立春、立夏、立秋、立冬之前的十八天是土当令。`
+      +(tu?`这张盘生在${nj.name}前 ${rough(nj.min)}，在这十八天里，土当令。`:four?`${mz}月在${S}天，出生时离${nj.name}还有 ${rough(nj.min)}，不在那十八天里，${L}当令。`:`${mz}月在${S}天，${L}当令。`)
+      +`${E}${how}，处在${r.st}的状态。旺和相算得令，休、囚、死算失令，所以这张盘${r.deLing?'得令，也叫当令':'失令'}。`],
+    ['帮扶和克泄',`看年、月、时三个天干：${r.gan.map(x=>`${x.k}干${x.g}${RELN[x.r]}`).join('，')}。和日主同类的、生日主的算帮扶，其余三种算克泄。帮扶 ${r.fu} 个，克泄 ${3-r.fu} 个，算${r.bang?'多帮扶':'多克泄'}。`],
+    ['地支的气',`看年、日、时三支上${DMN}的十二长生：${r.zhi.map(x=>`${x.k}支${x.z}是${x.s}`).join('，')}。书里把长生、沐浴、冠带、临官、帝旺叫气盛，其余七位叫气衰。`
+      +(r.qi>0?'三支都气盛，算得气。':r.qi<0?'三支都气衰，算无气。':`三支里 ${r.sheng} 支气盛、${3-r.sheng} 支气衰，有盛有衰。`)],
+    ['合起来',sum],
+    ['别家',`清代的《子平真诠》不赞成只凭月令定强弱：${q('zp_deshi')}它更看重地支里的根：${q('zp_gen')}又说${q('zp_gan')}照它的看法，天干上帮扶的字多，不如地支里有根。这张盘的根见上面「根」一行。`],
+    ['注意',`三条依据是书里的，怎么数是这一页定的：帮扶只数三个天干，地支的气要三支一致才算。照这样数，书里举的八个例子都归到书上说的那一档。书里自己并没有给出数法，它断盘时是通盘权衡的。所以这一行只是照一本书、一种数法走出来的参考。`
+      +(four?`另外，这一页的五行一栏把辰、未、戌、丑四个月都算土当令；这里照《千里命稿》，只把四立前的十八天算土当令。两处不同。`:'')]]};
+}
+/* 三行对照：强弱、格局、调候三行各照一本书走，这里只把它们落在哪些字上摆在一起，看重合不重合，不合成结论。
+   dzOf 是纯计算。dm 日干；gj 格局一行落的天干；th 调候一行点到的天干。
+   same：两行都有的天干。el：天干不同、五行相同的（五行的序号）。side：每个字对日主是不是帮扶（同类，或者生它）。 */
+function dzOf(dm,gj,th){
+  const same=gj.filter(g=>th.includes(g));
+  const el=[...new Set(gj.filter(g=>!same.includes(g)).map(gEl))].filter(e=>th.some(x=>gEl(x)===e&&!same.includes(x)));
+  const side=[...new Set(gj.concat(th))].map(g=>({g,r:relOf(dm,g),fu:[0,4].includes(relOf(dm,g))}));
+  return {same,el,side};
+}
+function duizhaoRow(){
+  const g=geju(), c=tiaohou(), r=qrNow(), fixed=!!g.list;       // fixed：格局一行落在月令的字上；否则归在建禄月劫或阳刃，要另取
+  const gj=[...new Set(fixed?g.list.map(x=>x.h):g.out.map(p=>p.g))], th=c.stems.map(x=>x.s), d=dzOf(DM,gj,th);
+  const gs=gj.map(x=>`${gN(x)}（${god(x)}）`).join('、'), ts=th.map(gN).join('、'), cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
+  const a=fixed?`格局一行落在${gs}上`:gj.length?`格局一行要在别处另取，天干上列出了${gs}`:'格局一行要在别处另取，天干上没有它要找的字';
+  const hit=!gj.length?'':d.same.length?`两行重合在${d.same.map(gN).join('、')}上`:d.el.length?`两行没有相同的天干，五行相同的有${d.el.map(e=>EL[e]).join('、')}`:'两行不重合';
+  const elSay=d.el.map(e=>`${EL[e]}：格局一行是${gj.filter(x=>gEl(x)===e).map(gN).join('、')}，调候一行是${th.filter(x=>gEl(x)===e&&!d.same.includes(x)).map(gN).join('、')}`).join('；');
+  const hitLong=!gj.length?'格局一行没有点到字，这两行无从对照。'
+    :d.same.length?`两行都有${d.same.map(gN).join('、')}。`+(d.el.length?`另外，五行相同而天干不同的有${elSay}。`:(gj.length>d.same.length||th.length>d.same.length)?'其余的字不相同。':'')
+    :d.el.length?`两行没有相同的天干。五行相同的有${elSay}。`:'两行没有相同的天干，也没有相同的五行。';
+  const fu=d.side.filter(x=>x.fu).map(x=>gN(x.g)), ke=d.side.filter(x=>!x.fu).map(x=>gN(x.g));
+  const sides=[fu.length?`${fu.join('、')}帮扶日主`:'',ke.length?`${ke.join('、')}克泄日主`:''].filter(Boolean).join('，');
+  return {k:'三行对照',dd:`${a}，调候一行点到${ts}`+(hit?`，${hit}`:'')+`。强弱一行归到${qrName(r)}；照它的分法，${sides}`,t:'三行对照',p:[
+    ['是什么','上面三行各照一本书走了一遍，入手的地方不同：《千里命稿》看强弱，《子平真诠》从月令定格局，《穷通宝鉴》按季节看调候。这一行把三行各自落在哪些字上摆在一起，只看重合不重合。'],
+    ['格局和调候',(fixed?`格局一行从月令${g.mz}出发，落在${gs}上。`:`格局一行归在${cls}一类时，用神要在别处另取，要找的是天干上的财、正官、七杀、食神和伤官。这张盘的天干上`+(gj.length?`有${gs}。`:'一个也没有。'))
+      +`调候一行照《穷通宝鉴》论${c.mon}的${DMN}，点到${ts}。`+hitLong],
+    ['和强弱一行',`强弱一行不点具体的字，只把这张盘归到${qrName(r)}。它把天干分成两边：和日主同类的、生日主的算帮扶，其余三种算克泄。上面两行点到的字里，`+d.side.map(x=>`${gN(x.g)}${RELN[x.r]}，在${x.fu?'帮扶':'克泄'}一边`).join('；')+'。'],
+    ['注意','这一行只陈述重合不重合，不说该听哪一家。几本书的取法不同，所以会落在不同的字上。页面不把三行合成一个结论，也不给各家打分。']]};
+}
 function tiaohouRow(){
   const c=tiaohou(), names=c.stems.map(x=>gN(x.s)).join('、');
   const at=x=>x.tou.length?`透在${x.tou.join('、')}`+(x.cang.length?`，又藏在${x.cang.join('、')}里`:''):x.cang.length?`藏在${x.cang.join('、')}里`:'盘里没有';
@@ -476,8 +553,10 @@ function kvRows(){return memo('kv',()=>{
     {k:'月令透干',dd:tg,t:'月令透干',p:[
       ['是什么','月支里藏的天干出现在某一柱的天干上，叫透干。藏着的力量露了出来，分量最重。'],
       ['这张盘',tg+'。格局法从月令透出的字来定格局，见下面「格局参考」一行。']]},
+    qiangruoRow(),
     gejuRow(),
-    tiaohouRow()
+    tiaohouRow(),
+    duizhaoRow()
   ];
   return addRows(rows,note('kv'));
 });}
@@ -649,8 +728,8 @@ function readTk(){
     `${DM}是${yy(DM)}${EL[de]}。生在${mz}月，${EL[zEl(mz)]}当令，${EL[de]}处在${st}的状态：${STATEX[st]}`,
     `根和印是日主的两种支持。根是地支里藏着的同类，印是生它的五行。这张盘${r.length?`有 ${r.length} 处根`:'没有根'}，${s.length?`有 ${s.length} 处印`:'没有印'}。`,
     `${touGan()}。格局法从月令透出的字来定格局。`,
-    '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。上面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。两本书的结论不一定一致，这一页不替它们裁决。',
-    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多，这一页只列出依据，不下结论。'])}</ul>`);
+    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面「强弱参考」一行，照《千里命稿》的三条依据数了一遍，它只是一本书、一种数法的结果。',
+    '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。上面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。几本书落在哪些字上，「三行对照」一行摆在了一起；它们不一定一致，这一页不替它们裁决。'])}</ul>`);
 }
 function readGods(){
   const stems=natalStems(), c={}; GODS.forEach(g=>{c[g]=0;});
