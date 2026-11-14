@@ -53,7 +53,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
-th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on,.gt-c.on{background-color:var(--accent-soft);text-decoration:none}
 .x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
@@ -112,6 +112,10 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pform .btn.warn{color:var(--warn)}
 .pform .msg{margin:0;font-size:13px;color:var(--warn)}
 .pform .msg[hidden]{display:none}
+.pform .dates{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.pform .dates .check{color:var(--ink)}
+.pform .dates small{margin-left:8px;font-size:12.5px;color:var(--ink3)}
+.pform [hidden]{display:none!important}      /* 两种填法换着显示，label 自己的 display 不能盖过 hidden */
 
 section{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 20px 22px;display:flex;flex-direction:column;gap:14px}
 h2{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;scroll-margin-top:20px}
@@ -126,6 +130,8 @@ p{margin:0}
 .tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
 .tab{display:inline-flex;align-items:center;gap:6px;margin:0 0 -1px;padding:0 1px 9px;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.5;letter-spacing:.03em;color:var(--ink3);background:none;border:0;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;cursor:pointer}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .ic{width:.9em;height:.9em;opacity:.75}
+.tab[aria-selected="true"] .ic{color:var(--accent);opacity:1}
 .panel,.pane{display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel[hidden]{display:none}
 .duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px 40px;align-items:start}      /* 五行一页：五行个数、含藏干数、五行能量三种数法并排，窄了就上下排 */
@@ -261,10 +267,20 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .stk i.gap{margin-left:4px}
 /* 用神一页最上面的强弱分析（renderQs）。.qg 是强弱计分的条：从 0 到这张盘的分数涂上印、比劫的颜色，25 分、30 分两道竖线穿过条，
    分数标在涂色的末端，下面是刻度和身弱、身强两段。.qt 是分数从哪里来的四块，.qx 是扶抑取的喜用和忌 */
-.qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 20px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-.qs-dm{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+/* 日主一页最上面的四项（quadItems）：2×2 的淡底小方块。上面一行小字是名目，点开看解释；中间是大字；下面一行小字是依据 */
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.qd{display:flex;flex-direction:column;gap:4px;min-width:0;padding:12px 15px 13px;border-radius:12px;background:var(--wash)}
+.qd-k{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink3)}
+.qd-k .ic{width:15px;height:15px;color:var(--accent)}
+.qd>b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1.4;color:var(--ink)}
+.qd>b .ln{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}      /* 旺衰参考：两种办法各一行，小字放不下就整体挪到下一行 */
+.qd>b em{font:400 12px/1.6 var(--body);color:var(--ink3);white-space:nowrap}
+.qd small{font-size:12.5px;line-height:1.5;color:var(--ink2)}
+.qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 22px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.qs-dm{display:flex;flex-direction:column;align-items:center;gap:6px}
 .qs-dm span,.qs-dm small{font-size:12px;color:var(--ink3)}
-.qs-dm b{font-family:var(--display);font-size:34px;line-height:1.15}
+.qs-dm b{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:14px;font-family:var(--display);font-size:34px;line-height:1}
+.qs-dm b.wood,.qx b span.wood{background:var(--wood-s)} .qs-dm b.fire,.qx b span.fire{background:var(--fire-s)} .qs-dm b.earth,.qx b span.earth{background:var(--earth-s)} .qs-dm b.metal,.qx b span.metal{background:var(--metal-s)} .qs-dm b.water,.qx b span.water{background:var(--water-s)}
 .qs-main{display:flex;flex-direction:column;gap:12px;min-width:0}
 .qs-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 .qs-t{font-size:24px;font-weight:700;color:var(--ink)}
@@ -282,20 +298,39 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qg-ax span:last-child{transform:translateX(-100%)}
 .qg-zone{display:grid;font-size:12px;color:var(--ink2);text-align:center}
 .qt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px}
-.qt{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums}
+.qt{display:flex;flex-direction:column;gap:3px;padding:10px 14px 11px;border-radius:10px;background:var(--wash);font-variant-numeric:tabular-nums}
 .qt span,.qt small{font-size:12px;color:var(--ink3)}
-.qt b{font-size:18px;color:var(--ink)}
+.qt b{font-size:20px;font-weight:650;line-height:1.3;color:var(--ink)}
 .qs-li{margin:0;padding-left:1.3em;font-size:13.5px;color:var(--ink2);columns:2 260px;column-gap:28px}
 .qs-li li{break-inside:avoid;margin-bottom:3px}
-.qx-row{display:flex;flex-wrap:wrap;gap:8px}
-.qx{display:flex;flex-direction:column;gap:2px;min-width:130px;padding:8px 14px;border:1px solid var(--line);border-radius:10px}
+.qx-row{display:flex;flex-wrap:wrap;gap:12px 36px;padding-top:14px;border-top:1px solid var(--line)}
+.qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
-.qx b{display:flex;gap:10px;font-size:20px}
-.qx b.no{font-size:16px;color:var(--ink2)}
+.qx b{display:flex;flex-wrap:wrap;gap:8px}
+.qx b span{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:38px;padding:0 12px 0 10px;border-radius:10px;font-family:var(--display);font-size:21px;font-weight:700;line-height:1}
+.qx b span .ic{width:16px;height:16px}
+/* 五行一页的生克图（renderWxMap）：五行排成一圈，相邻的相生是实线，隔一个的相克是虚线，箭头指向被生、被克的一方。
+   圈里的字和淡底是五行自己的颜色，圈下面是这一类十神的合称；日主所属的一行圈加粗。线都是墨色，颜色只留给五行 */
+.wxrow{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:center}
+.wxmap{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.wxmap svg{display:block;width:100%;max-width:320px;height:auto}
+.wxmap line{stroke:var(--ink3);stroke-width:1.3}
+.wxmap line.ke{stroke-dasharray:4 3}
+.wxmap marker path{fill:var(--ink3)}
+.wxmap .nd circle{stroke:currentColor;stroke-width:1.3}
+.wxmap .nd.wood circle{fill:var(--wood-s)} .wxmap .nd.fire circle{fill:var(--fire-s)} .wxmap .nd.earth circle{fill:var(--earth-s)} .wxmap .nd.metal circle{fill:var(--metal-s)} .wxmap .nd.water circle{fill:var(--water-s)}
+.wxmap .nd.me circle{stroke-width:3}
+.wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
+.wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
+.wxmap figcaption{max-width:320px;font-size:12.5px;line-height:1.6;color:var(--ink3);text-align:center}
+.qx b.no{font-size:16px;font-weight:600;color:var(--ink2)}
 @media (max-width:599px){      /* 手机上日主那一小块横过来放在上面，下面的四块排成两列 */
   .qs{grid-template-columns:minmax(0,1fr);padding:14px}
-  .qs-dm{flex-direction:row;align-items:baseline;gap:8px;justify-self:start;padding:6px 12px}
-  .qs-dm b{font-size:26px}
+  .qs-dm{flex-direction:row;gap:10px;justify-self:start}
+  .qs-dm b{width:48px;height:48px;border-radius:12px;font-size:26px}
+  .qd{padding:11px 12px 12px}
+  .qd>b{font-size:19px}
   .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .qx{min-width:0;flex:1 1 120px}
 }
@@ -478,8 +513,16 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gw .gz{font-size:26px}
   .sy thead small{font-size:12.5px}
   .stk{height:16px}
-  .qs{padding:18px 22px;gap:18px 24px}
-  .qs-dm b{font-size:40px}
+  .quad{gap:12px}
+  .qd{padding:14px 18px 15px}
+  .qd-k,.qd small{font-size:13px}
+  .qd>b{font-size:24px}
+  .qd>b em{font-size:12.5px}
+  .qs{padding:22px 26px;gap:18px 28px}
+  .qs-dm b{width:76px;height:76px;border-radius:16px;font-size:40px}
+  .qt b{font-size:22px}
+  .qx b span{height:42px;font-size:23px}
+  .wxrow{grid-template-columns:330px minmax(0,1fr);gap:24px 40px}
   .qs-t{font-size:26px}
   .tbars{gap:6px}
   .tb{flex-basis:48px}
@@ -567,7 +610,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
   .read{padding:11px 13px 13px}
   /* 八列挤在手机上：每列不到 40 像素。干支的色块缩小，生肖不显示，四个字的神煞折成两行，表头里放不下的小字（.wide）不显示 */
-  .wide{display:none}
+  th .wide{display:none}      /* 只管表头。表单里整行宽的那几项也叫 wide，手机上不能藏 */
   th .x{padding:1px 2px;margin:-1px -2px}
   .pan{--lh:18px;min-width:0}
   .pan thead th{padding:5px 0;font-size:11px}
@@ -630,6 +673,20 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <symbol id="i-earth" viewBox="0 0 24 24"><path d="M2.8 19.5h18.4"/><path d="M4.6 19.5l5.6-9.6 3.3 5.2 2-3.2 3.9 7.6"/></symbol>
   <symbol id="i-metal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><rect x="9.1" y="9.1" width="5.8" height="5.8" rx=".7"/></symbol>
   <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3c3.1 4 6.1 7.2 6.1 10.9a6.1 6.1 0 0 1-12.2 0C5.9 10.2 8.9 7 12 3z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.5 2.6"/></symbol>
+  <!-- 标签栏每一页的图标（i-t-名字），日主一页四个方块名目前的图标（i-q-…） -->
+  <symbol id="i-t-tk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.4"/></symbol>
+  <symbol id="i-t-wx" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2"/><circle cx="19.2" cy="9.8" r="2"/><circle cx="16.4" cy="18.2" r="2"/><circle cx="7.6" cy="18.2" r="2"/><circle cx="4.8" cy="9.8" r="2"/><path d="M13.7 5.8l3.8 2.8M18.6 11.7l-1.5 4.6M14.4 18.2H9.6M6.9 16.3l-1.5-4.6M6.5 8.6l3.8-2.8"/></symbol>
+  <symbol id="i-t-gods" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.2"/><path d="M12 7.8v8.4M7.8 12h8.4"/></symbol>
+  <symbol id="i-t-lq" viewBox="0 0 24 24"><circle cx="9" cy="8.6" r="2.9"/><path d="M3.6 19.4c.5-3.4 2.6-5.3 5.4-5.3s4.9 1.9 5.4 5.3"/><circle cx="16.6" cy="9.8" r="2.3"/><path d="M15.4 14.6c2.7-.3 4.5 1.4 5 4.4"/></symbol>
+  <symbol id="i-t-gw" viewBox="0 0 24 24"><path d="M3.8 9.2L12 4l8.2 5.2z"/><path d="M4.5 20h15M7 11.2v7M10.3 11.2v7M13.7 11.2v7M17 11.2v7"/></symbol>
+  <symbol id="i-t-ys" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1"/></symbol>
+  <symbol id="i-t-pan" viewBox="0 0 24 24"><rect x="3.6" y="5" width="16.8" height="14" rx="2.2"/><path d="M3.6 9.6h16.8M9.2 9.6V19M14.8 9.6V19"/></symbol>
+  <symbol id="i-t-rel" viewBox="0 0 24 24"><circle cx="6.4" cy="14.4" r="2.6"/><circle cx="17.6" cy="14.4" r="2.6"/><path d="M9 14.4h6"/><path d="M6.4 11.8c1.6-4.4 9.6-4.4 11.2 0" stroke-dasharray="2.2 2.2"/></symbol>
+  <symbol id="i-t-gt" viewBox="0 0 24 24"><path d="M12 12V5.6M12 8.2c-2.6-.2-4.1-1.6-4.3-4 2.5.1 4 1.4 4.3 4zM12 7c.3-2.2 1.7-3.4 4.1-3.6-.1 2.3-1.5 3.5-4.1 3.6z"/><path d="M4 12h16M12 12v7.6M12 14.4l-3.6 4.4M12 14.4l3.6 4.4"/></symbol>
+  <symbol id="i-t-sy" viewBox="0 0 24 24"><path d="M4 20.2h16"/><rect x="5.6" y="12.6" width="3.2" height="7.6" rx=".9"/><rect x="10.4" y="6.6" width="3.2" height="13.6" rx=".9"/><rect x="15.2" y="10" width="3.2" height="10.2" rx=".9"/></symbol>
+  <symbol id="i-q-yy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a4.2 4.2 0 0 1 0 8.4a4.2 4.2 0 0 0 0 8.4"/><circle cx="12" cy="7.8" r="1"/><circle cx="12" cy="16.2" r="1"/></symbol>
+  <symbol id="i-q-ga" viewBox="0 0 24 24"><path d="M4.4 16.4a7.6 7.6 0 0 1 15.2 0"/><path d="M12 16.4l3.4-4.6"/><circle cx="12" cy="16.4" r="1.3"/><path d="M6.2 12.6l1.1.6M12 8.8V10M17.8 12.6l-1.1.6"/></symbol>
+  <symbol id="i-q-ge" viewBox="0 0 24 24"><rect x="4.4" y="4.4" width="15.2" height="15.2" rx="1.8"/><rect x="8.6" y="8.6" width="6.8" height="6.8" rx="1"/></symbol>
 </svg>
 <main>
 
@@ -643,15 +700,20 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <form class="pform" id="pform" autocomplete="off" hidden>
     <label>称呼<input type="text" id="pf-name" maxlength="20" placeholder="比如：我"></label>
     <label>性别<select id="pf-gender"><option value="男">男</option><option value="女">女</option></select></label>
-    <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
-    <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
-    <label>只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
-    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="输入城市名，从列表里选" list="pf-cities"></label>
-    <datalist id="pf-cities"></datalist>
-    <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
-    <p class="wide hint" id="pf-lonhint" hidden></p>
-    <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
-    <p class="wide hint">出生地从列表里选城市，经度会自动填上；列表里没有的地方，可以在地图软件里查到经度自己填。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <label>怎么填<select id="pf-mode"><option value="time">按出生时间</option><option value="bazi">直接输入八字</option></select></label>
+    <label class="m-time">出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
+    <label class="m-time">出生时间（北京时间）<input type="time" id="pf-time"></label>
+    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
+    <label class="m-time">出生的省份<select id="pf-prov"></select></label>
+    <label class="m-time">城市<select id="pf-city"></select></label>
+    <label class="m-time" id="pf-place-l" hidden>地名<input type="text" id="pf-place" maxlength="30" placeholder="比如：纽约"></label>
+    <label class="m-time">出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <p class="wide hint m-time" id="pf-lonhint" hidden></p>
+    <label class="wide check m-time"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
+    <p class="wide hint m-time">出生地先选省份，再选城市，经度会自动填上；列表里没有的地方选「其他地方」，自己写地名，在地图软件里查到经度填上。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和出生地就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <label class="wide m-bazi" hidden>八字：年、月、日、时四柱<input type="text" id="pf-bazi" maxlength="24" placeholder="比如：甲子 丙寅 戊辰 庚申"></label>
+    <div class="wide m-bazi dates" id="pf-dates" hidden></div>
+    <p class="wide hint m-bazi" hidden>页面在 1900 到 2100 年里找出四柱都对得上的日子。排大运要用出生日期，同一副八字隔几十年会重复一次，选你要的那一个。时辰取中点来排，和「只知道时辰」一样，不用填出生地。填的内容只保存在这个浏览器里，不会上传。</p>
     <p class="wide msg" id="pf-msg" hidden></p>
     <div class="wide row">
       <button type="submit" class="btn main" id="pf-save">保存</button>
@@ -669,16 +731,17 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 <section id="card-natal" aria-label="原局">
   <div class="tabbar" role="tablist" aria-label="原局">
-    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true">日主</button>
-    <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1">五行</button>
-    <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1">十神</button>
-    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1">六亲</button>
-    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1">宫位</button>
-    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1">用神</button>
+    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-tk"/></svg>日主</button>
+    <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-wx"/></svg>五行</button>
+    <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
+    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-lq"/></svg>六亲</button>
+    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gw"/></svg>宫位</button>
+    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>用神</button>
   </div>
   <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk">
     <div class="pane">
       <p class="sub">日主是什么，八个字的阴阳，两项参考；下面是它在地支里的根、生它的印、月令透出的字</p>
+      <div class="quad" id="quad"></div>
       <div class="kvs" id="kv"></div>
     </div>
     <div class="read" id="rd-tk"></div>
@@ -701,7 +764,10 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <p class="note" id="note-nl"></p>
       </div>
     </div>
-    <div class="read" id="rd-wx"></div>
+    <div class="wxrow">
+      <figure class="wxmap" id="wxmap"></figure>
+      <div class="read" id="rd-wx"></div>
+    </div>
   </div>
   <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
     <p class="sub" id="h-gods-s"></p>
@@ -750,10 +816,10 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 <section id="card-pan" aria-label="排盘">
   <div class="tabbar" role="tablist" aria-label="排盘">
-    <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true">四柱细盘</button>
-    <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1">干支关系</button>
-    <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1">根和透</button>
-    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1">大运流年</button>
+    <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-pan"/></svg>四柱细盘</button>
+    <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-rel"/></svg>干支关系</button>
+    <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gt"/></svg>根和透</button>
+    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-sy"/></svg>大运流年</button>
   </div>
   <div class="panel" role="tabpanel" id="p-pan" aria-labelledby="h-pan">
     <p class="sub">后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</p>
@@ -808,6 +874,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="lg" id="sy-lg"></p>
     <div class="trend" id="trend"></div>
     <p class="note" id="note-syfig"></p>
+    <div class="read" id="rd-tr"></div>
     <div class="tablewrap">
       <table class="gods sy">
         <thead id="sy-h"></thead>
@@ -1261,6 +1328,40 @@ function chartOf(info){
     dayun});
   if(info.notes) p.notes=info.notes;
   return p;
+}
+/* ---------- 直接输入八字：反查出生日期 ---------- */
+/* 从一段字里取出八个干支字，看能不能成一副八字：每一柱阳干配阳支、阴干配阴支，月干由年干推出（年上起月），时干由日干推出（日上起时）。
+   返回 {msg, p}：p 是四柱，有问题时 p 是 null，msg 说明错在哪里；字还没写够时 msg 说还差几个字 */
+function baziCheck(text){
+  const t=String(text||'').replace(/[^甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥]/g,''), K='年月日时';
+  if(t.length<8) return {msg:t.length?`还差 ${8-t.length} 个字：年、月、日、时四柱一共八个字。`:'',p:null};
+  if(t.length>8) return {msg:'多了字：年、月、日、时四柱一共八个字。',p:null};
+  const ps=[0,2,4,6].map(i=>t.slice(i,i+2));
+  for(let i=0;i<4;i++){
+    const g=ps[i][0], z=ps[i][1];
+    if(!G.includes(g)||!Z.includes(z)) return {msg:`${K[i]}柱「${ps[i]}」要先写天干、再写地支。`,p:null};
+    if(G.indexOf(g)%2!==Z.indexOf(z)%2) return {msg:`${K[i]}柱「${ps[i]}」不成一柱：阳干只配阳支，阴干只配阴支。`,p:null};
+  }
+  const mi=(Z.indexOf(ps[1][1])+10)%12, mg=G[((G.indexOf(ps[0][0])%5)*2+2+mi)%10];
+  if(ps[1][0]!==mg) return {msg:`${ps[0][0]}年的${ps[1][1]}月是${mg}${ps[1][1]}，不是${ps[1]}：月干由年干推出。`,p:null};
+  const hz=Z.indexOf(ps[3][1]), hg=G[(G.indexOf(ps[2][0])%5*2+hz)%10];
+  if(ps[3][0]!==hg) return {msg:`${ps[2][0]}日的${ps[3][1]}时是${hg}${ps[3][1]}，不是${ps[3]}：时干由日干推出。`+(hz===0?'晚上 11 点以后出生、时干按第二天推的，请改用「按出生时间」填。':''),p:null};
+  return {msg:'',p:ps};
+}
+/* 四柱都对得上的日子，年份在 BIRTH_MIN 到 BIRTH_MAX 之间。先按年柱、月柱找出那个月的几天，再看日柱；
+   时辰取中点（子时取零点），和「只知道时辰」排盘的办法相同，每一个都拿 pillarsAt 再排一遍核对。返回 [{birth:'YYYY-MM-DD', shichen}]，按日期先后 */
+function datesOf(ps){
+  const out=[], hi=Z.indexOf(ps[3][1]), mi=(Z.indexOf(ps[1][1])+10)%12, pad=n=>String(n).padStart(2,'0');
+  for(let y=BIRTH_MIN-1;y<=BIRTH_MAX;y++){
+    if(yearGZ(y)!==ps[0]||monthGZ(y,mi)!==ps[1]) continue;
+    const i=(y-TABLES.jieFrom)*12+mi; if(i<0||i+1>=JIE_T.length) continue;
+    for(let t=Math.floor(JIE_T[i]/86400)*86400;t<=JIE_T[i+1];t+=86400){
+      const a=fromSec(t);
+      if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX||JZ(dayIndex(a[0],a[1],a[2]))!==ps[2]) continue;
+      if(pillarsAt([a[0],a[1],a[2],2*hi,0,0]).p.join()===ps.join()) out.push({birth:`${a[0]}-${pad(a[1])}-${pad(a[2])}`,shichen:Z[hi]});
+    }
+  }
+  return out;
 }
 /* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
 function infoFrom(p){
@@ -1943,12 +2044,11 @@ const GRP=['比劫','食伤','财才','官杀','印绶'];
    算法：天干每个 5 分。地支每个 8 分，按藏干分：藏一个字的 8 分，藏两个的 5、3 分，藏三个的 5、2、1 分。月支加倍。四柱一共 60 分。
    藏干的先后照页面自己的次序（HID）。文章的表里把巳的藏干排成庚、戊、丙，照表是戊 2 分、庚 1 分；文章自己算的例子却是庚 2 分、戊 1 分，
    和页面的次序一致，页面照例子。文章的例子（辛酉、癸巳、壬寅、辛亥：金 22、水 15、木 8、火 12、土 3）是检查脚本里的测试。 */
-const JXF='台湾吉祥坊的《大师教你论八字》';      // 五行能量、强弱计分的出处，页面上第一次提到时写全名
 const NL_Z=[[8],[5,3],[5,2,1]];
 const nlOf=z=>{const hs=HID[z].split('');return hs.map((h,j)=>[h,NL_Z[hs.length-1][j]]);};      // 一个地支里各藏干的分数，没有加倍
-function nlPillar(p,month){      // 一柱的各笔分数。p 是 {k,g,z}，外来的柱带 dyn。month 为真表示它是原局的月柱，地支加倍
+function nlPillar(p,month){      // 一柱的各笔分数。p 是 {k,g,z}，外来的柱带 dyn。month 为真表示它是原局的月柱，地支加倍。每一笔后面写上它是日主的什么十神
   const gn=p.dyn?p.k+'天干':p.k+'干', zn=p.dyn?p.k+'地支':p.k+'支';
-  return [{e:gEl(p.g),n:5,say:`${gn}${p.g} 5 分`}].concat(nlOf(p.z).map(([h,n])=>({e:gEl(h),n:month?n*2:n,say:`${zn}${p.z}里的${h} ${month?n*2:n} 分`+(month?'（月支加倍）':'')})));
+  return [{e:gEl(p.g),n:5,say:`${gn}${p.g} 5 分（${p.day?'日主':god(p.g)}）`}].concat(nlOf(p.z).map(([h,n])=>({e:gEl(h),n:month?n*2:n,say:`${zn}${p.z}里的${h} ${month?n*2:n} 分（${god(h)}${month?'，月支加倍':''}）`})));
 }
 const nlSum=items=>{const sum=[0,0,0,0,0];items.forEach(x=>{sum[x.e]+=x.n;});return sum;};
 function nlScore(ps){            // ps 是四柱 [{k,g,z}]，第二个是月柱。sum 是木、火、土、金、水各多少分，items 是每一笔
@@ -2136,23 +2236,23 @@ function qiangruoRow(){
 }
 function qsRow(){
   const r=qsOf(DM,NATAL), pt=qsParts(DM,NATAL), de=gEl(DM), se=(de+4)%5, E=EL[de], S=EL[se], q0=qrNow();
-  const verdict={强:'算身强',弱:'算身弱',间:'在 25 分和 30 分之间，书里没有说算强还是算弱'}[r.tier];
-  const mSay=(r.hui?`月支${r.mz}，书里按三会局把它算作${EL[r.mEl]}；`:`月支${r.mz}属${EL[r.mEl]}；`)+(r.mEl===de?`和日主同属${E}。`:r.mEl===se?`${S}生${E}，生日主。`:`既不和日主同类，也不生日主。`);
+  const verdict={强:'算身强',弱:'算身弱',间:'在 25 分和 30 分之间，这种算法没有说算强还是算弱'}[r.tier];
+  const mSay=(r.hui?`月支${r.mz}，这种算法按三会局把它算作${EL[r.mEl]}；`:`月支${r.mz}属${EL[r.mEl]}；`)+(r.mEl===de?`和日主同属${E}。`:r.mEl===se?`${S}生${E}，生日主。`:`既不和日主同类，也不生日主。`);
   const line=r.help>=30?`这张盘前一组 ${r.help} 分，在 30 分以上，算身强。`
-    :r.help>25?`这张盘前一组 ${r.help} 分，在 25 分和 30 分之间。这一段书里没有说怎么算。`
+    :r.help>25?`这张盘前一组 ${r.help} 分，在 25 分和 30 分之间。这一段这种算法没有说怎么算。`
     :r.help===25?`这张盘前一组正好 25 分。${r.mHelp?'月支帮着日主，照补的那一条算身强。':'月支不帮日主，算身弱。'}`
     :`这张盘前一组 ${r.help} 分，在 25 分以下，算身弱。`;
   const a=['最强','次强'].includes(q0.tier)?'强':['最弱','次弱'].includes(q0.tier)?'弱':'间';
   const cmp=a===r.tier?(a==='间'?'两种办法都没有把它归到强或者弱的一边。':`两种办法都把它归在身${a}一边。`)
     :(a==='间'||r.tier==='间')?'两种办法一个归到了一边，一个落在中间。':'两种办法归的方向相反。';
   return {k:'强弱计分',dd:`${GRP[0]}加${GRP[4]} ${r.help} 分，${verdict}`,t:'强弱计分',p:[
-    ['是什么',`看强弱的一种算法，出自${JXF}第二章第十五节。分数和「五行」一栏的五行能量是同一套：天干每个 5 分，地支每个 8 分、按藏干的主次分，月支加倍，一共 60 分。五行分成两组：和日主同类的${GRP[0]}、生日主的${GRP[4]}是一组，${GRP[1]}、${GRP[2]}、${GRP[3]}是另一组，看前一组有多少分。`],
+    ['是什么',`看强弱的一种算法。分数和「五行」一栏的五行能量是同一套：天干每个 5 分，地支每个 8 分、按藏干的主次分，月支加倍，一共 60 分。五行分成两组：和日主同类的${GRP[0]}、生日主的${GRP[4]}是一组，${GRP[1]}、${GRP[2]}、${GRP[3]}是另一组，看前一组有多少分。`],
     ['这张盘',`${DMN}属${E}。${E} ${r.sum[de]} 分，生它的${S} ${r.sum[se]} 分，前一组合计 ${r.help} 分；其余三行合计 ${r.rest} 分。`],
     ['拆开看',`前一组的 ${r.help} 分里，日主自己 5 分，月支 ${pt.yue} 分，另外三个地支 ${pt.zhi} 分，年、月、时三个天干 ${pt.gan} 分。`+(pt.items.length?`除了日主自己，各笔是：${pt.items.map(qsSay).join('；')}。`:`除了日主自己，八个字里再没有${E}和${S}。`)],
-    ['怎么划线',`书里说前一组在 30 分以上算身强，25 分以下算身弱。又补了一条：这一组只有 25 分，而月支的五行和日主相同或者生日主的，也算身强，理由是月令的分量重。${line}`],
+    ['怎么划线',`这种算法说前一组在 30 分以上算身强，25 分以下算身弱。又补了一条：这一组只有 25 分，而月支的五行和日主相同或者生日主的，也算身强，理由是月令的分量重。${line}`],
     ['月支',mSay+(r.hui?`这一页别处把${r.mz}算作土，《千里命稿》只把四立前的十八天算土当令，三处不一样。`:'')],
     ['和《千里命稿》',`「强弱参考」一行照《千里命稿》的三条依据，把这张盘归到${qrName(q0)}。那一行看月令、三个天干和三个地支上的十二长生，这一行看分数，看的东西不一样。${cmp}这里只说两种办法一致不一致，不说该听哪一个。`],
-    ['注意','分值和两条线都是这本书定的，没有典籍出处。书里自己也说这个办法不是每次都对，还要配合经验。它只算了个数、藏干的主次和月支，没有算合、冲、刑、害。这一行只是照一种算法走出来的参考；喜用照它的归类按扶抑取，见旁边的「喜用」。']]};
+    ['注意','分值和两条线都是现代人定的，没有典籍出处。原作者自己也说这个办法不是每次都对，还要配合经验。它只算了个数、藏干的主次和月支，没有算合、冲、刑、害。这一行只是照一种算法走出来的参考；喜用照它的归类按扶抑取，见旁边的「喜用」。']]};
 }
 /* 三行对照：强弱、格局、调候三行各照一本书走，这里只把它们落在哪些字上摆在一起，看重合不重合，不合成结论。
    dzOf 是纯计算。dm 日干；gj 格局一行落的天干；th 调候一行点到的天干。
@@ -2337,14 +2437,15 @@ function kvRows(){return memo('kv',()=>{
 /* 日主一栏最上面的四项，照排盘软件里常见的那张小卡片：日主属性、阴阳参考、旺衰参考、格局参考。
    前两项是盘面上的事实，就是「日主」「阴阳」两行。后两项是「用神」一栏里三行的一句话，写明照的是哪本书、哪种算法，点开是那一行的解释。 */
 function quadItems(){
-  const kv=kvRows(), dd=k=>(kv.find(r=>r.k===k)||{}).dd||'', q0=qrNow(), qs=qsOf(DM,NATAL), g=geju();
+  const q0=qrNow(), qs=qsOf(DM,NATAL), g=geju(), yz=yinYang(), de=gEl(DM), mz=NATAL[1].z;
   const cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
-  const ge=g.list?`归${gejuNames(g).join('和')}`:gEl(g.ben)!==gEl(DM)?`归${cls}一类还是归印格，书里没有定说`:`归${cls}一类，用神要在别处另取`;
+  // 每一项：k 名目，x 点开的解释，big 大字，sub 下面一行小字。旺衰参考两种办法各占一行，大字后面用小字写明是哪一种
   return [
-    {k:'日主属性',x:'kv|日主',dd:dd('日主')},
-    {k:'阴阳参考',x:'kv|阴阳',dd:dd('阴阳')},
-    {k:'旺衰参考',x:'kv|强弱参考',dd:`照《千里命稿》归${qrName(q0)}；照《大师教你论八字》的计分，${GRP[0]}加${GRP[4]} ${qs.help} 分，${({强:'算身强',弱:'算身弱',间:'落在强弱两条线之间'})[qs.tier]}。两种都在「用神」一栏`},
-    {k:'格局参考',x:'kv|格局参考',dd:`照《子平真诠》${ge}。详见「用神」一栏`}];
+    {k:'日主属性',x:'kv|日主',big:`<span class="${gCls(DM)}">${DMN}</span>`,sub:`${yy(DM)}${EL[de]}，生于${mz}月（${SEASON[mz]}）`},
+    {k:'阴阳参考',x:'kv|阴阳',big:`阳 ${yz.yang} · 阴 ${yz.yin}`,sub:yz.yang2!==yz.yang?`盘面八个字，地支照本气算；换一种分法是阳 ${yz.yang2} · 阴 ${yz.yin2}`:'盘面八个字，地支照本气算'},
+    {k:'旺衰参考',x:'kv|强弱参考',big:`<span class="ln">${q0.tier==='中'?'中强（中弱）':q0.tier}<em>《千里命稿》</em></span><span class="ln">${({强:'身强',弱:'身弱',间:'未定'})[qs.tier]}<em>强弱计分 ${qs.help} 分</em></span>`,sub:'两种办法并列，详见「用神」一栏'},
+    {k:'格局参考',x:'kv|格局参考',big:g.list?gejuNames(g).join('、'):`${cls}一类`,
+      sub:g.list?'照《子平真诠》':gEl(g.ben)!==gEl(DM)?'照《子平真诠》；也可能归印格，书里没有定说':'照《子平真诠》；用神要在别处另取'}];
 }
 /* 宫位一栏：按年、月、日、时四柱各列一栏，只列事实。每一柱：配谁；天干和藏干各是什么十神；「六亲」一栏里配在这一柱的亲属看哪个十神、
    那个十神在不在这一柱（日柱只看日支，因为配偶配的是日支）；它和另外三柱之间的合冲刑害（就是原局的那些关系，按柱分开）；十二长生；
@@ -2539,8 +2640,8 @@ function noteSy(){
 function noteSyFig(){
   const x=xiNow();
   return (x.xi?`柱子的高低是每一柱带来的 13 分里，喜用的${elNames(x.xi)}占几分，满分 13。喜用照扶抑取：这张盘照强弱计分算身${x.tier}，${x.tier==='弱'?'喜生它的和同它一类的':'喜它所生、它所克和克它的'}，依据见「用神」一栏。`
-      :`这张盘照强弱计分在 25 分和 30 分之间，书里没有说算强还是算弱，扶抑取不了喜用。柱子的高低先画每一柱带来的 13 分里${GRP[0]}加${GRP[4]}占几分，满分 13。`)
-    +'柱子里一段是一种五行。点柱子可以换到那一步大运、那一年、那个月、那一天。把原局的计分用到大运流年上，是这一页自己的延伸，书里只算原局。';
+      :`这张盘照强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。柱子的高低先画每一柱带来的 13 分里${GRP[0]}加${GRP[4]}占几分，满分 13。`)
+    +'柱子里一段是一种五行。点一根柱子，会换到那一步大运、那一年、那个月、那一天，并在旁边列出这一柱的分数是怎么来的。这套计分本来只算原局，用到大运流年上是这一页自己的延伸。';
 }
 function readGw(){
   return box('解读',`<ul class="cols">${lis([
@@ -2566,8 +2667,16 @@ function readTk(){
     '日主是强是弱、拿哪个字作主，各家的办法不一样，见「用神」一栏。'])}</ul>`);
 }
 function readYs(){
+  const r=qsOf(DM,NATAL), pt=qsParts(DM,NATAL), x=xiNow(), q0=qrNow(), top=pt.items.slice().sort((a,b)=>b.n-a.n)[0];
+  const parts=[['月支',pt.yue],['另外三个地支',pt.zhi],['三个天干',pt.gan]].filter(p=>p[1]).map(p=>`${p[0]} ${p[1]} 分`);
+  const gap=r.help<25?`离 25 分的线还差 ${25-r.help} 分`:r.help>=30?`比 30 分的线多 ${r.help-30} 分`:'落在 25 分和 30 分之间';
+  const mine=`这张盘的${GRP[0]}加${GRP[4]}一共 ${r.help} 分：日主自己 5 分`+(parts.length?`，${parts.join('，')}`:'，别处没有帮它的字')+'。'
+    +(top?`最大的一笔是${qsSay(top)}。`:'')
+    +`${gap}，照强弱计分${({强:'算身强',弱:'算身弱',间:'强弱未定'})[r.tier]}`+(x.xi?`；照扶抑，喜${elNames(x.xi)}，忌${elNames(x.ji)}。`:'，扶抑取不了喜用。')
+    +`「强弱参考」一行照《千里命稿》归${qrName(q0)}。`;
   return box('解读',`<ul class="cols">${lis([
-    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面的强弱分析照《大师教你论八字》的计分算了一遍，下面「强弱参考」一行照《千里命稿》的三条依据数了一遍。它们各是一种数法的结果，不一定一致。',
+    mine,
+    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面的强弱分析是按分数算的，下面「强弱参考」一行照《千里命稿》的三条依据数了一遍。它们各是一种数法的结果，不一定一致。',
     '喜用照扶抑一家取：身弱扶它，身强抑它，依据是《滴天髓》的注。日主弱到极点时，有的书改取从格，喜忌反过来；格局、调候两家也各有取法。「大运流年」一栏的柱子用的就是这里的喜用。',
     '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。下面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。几本书落在哪些字上，「三行对照」一行摆在了一起；它们不一定一致，这一页不替它们裁决。'])}</ul>`);
 }
@@ -2642,7 +2751,25 @@ function readGT(){
     '大运、流年的地支能给原局的天干带来根，它们的天干也可能正好是原局某个地支里藏的字。表的前四列和下面四行就是这两种情况，换一步大运、换一年，这些格子跟着变。'])}</ul>`);
 }
 /* 解读框：notes.read 里有手写的就用手写的，没有就用上面按规则生成的 */
-const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods,ys:readYs,lq:readLq,gt:readGT,gw:readGw};
+/* 大运流年一页柱子下面的解读：这张盘的柱子高低落在哪里（八步大运、选中这步大运的各年、选中这一年的十二个月），读法和分寸。
+   只陈述哪几柱高、哪几柱低；读法写成传统的说法并引原文，不说哪一年会怎样。跟着选中的大运和年份变，由 renderSy() 重画 */
+function readTr(){
+  const x=xiNow(), de=gEl(DM), what=x.xi?`喜用的${elNames(x.xi)}`:`帮日主的${elNames([(de+4)%5,de])}`, ord=ordCn;
+  const d=P.dayun[sel.dy], ys=[]; for(let y=d.y0;y<=d.y1;y++) ys.push(y);
+  const hiLo=(list,name)=>{const vs=list.map(o=>o.v), hi=Math.max(...vs), lo=Math.min(...vs), pick=v=>list.filter(o=>o.v===v).map(o=>o.n).join('、');
+    return hi===lo?`${name}都是 ${hi} 分，高低一样。`:`${name}里最高的是${pick(hi)}，${hi} 分；最低的是${pick(lo)}，${lo} 分。`;};
+  const dys=P.dayun.map(o=>({n:`${o.gz}运`,v:xiPillar(o.gz).score}));
+  const lns=ys.map(y=>({n:`${yearGZ(y)}年（${y}）`,v:xiPillar(yearGZ(y)).score}));
+  const lys=[...Array(12).keys()].map(m=>({n:`${monthGZ(sel.y,m)}月（${JIE[m]}起）`,v:xiPillar(monthGZ(sel.y,m)).score}));
+  const cur=dys[sel.dy], rank=1+dys.filter(o=>o.v>cur.v).length, tie=dys.filter(o=>o.v===cur.v).length>1;
+  return box('解读 · 柱子的高低',`<ul class="cols">${lis([
+    hiLo(dys,'八步大运')+`选中的${cur.n} ${cur.v} 分，在八步里排第${ord(rank)}${tie?'，有同分的':''}。`,
+    hiLo(lns,`${d.gz}运的${cn(ys.length)}年`)+`选中的 ${sel.y} 年 ${xiPillar(yearGZ(sel.y)).score} 分。`,
+    hiLo(lys,`${sel.y} 年的十二个月`),
+    `柱子越高，这一柱带来的 13 分里${what}越多。`+(x.xi?`照扶抑的说法，这张盘身${x.tier}，喜用的五行来得多，就是在${x.tier==='弱'?'扶':'抑'}它。《渊海子平》讲行运：${q(x.tier==='弱'?'yh_yun1':'yh_yun2')}。传统上把喜用分高的运读作顺，低的读作逆。`:'这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用，这里的高低只说帮日主的字多少，不分顺逆。'),
+    '点一根柱子，旁边会列出这一柱的 13 分是怎么分的、各是什么十神。扶抑只看是哪一类十神，正和偏不分；也没有算柱子和原局的合冲，没有分大运的天干、地支各管几年。这些只是这套体系内部的推演，没有证据表明它能预测人生，页面也不说哪一年会怎样；换成从格、格局、调候的取法，高低可能整个反过来。'])}</ul>`);
+}
+const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods,ys:readYs,lq:readLq,gt:readGT,gw:readGw,tr:readTr};
 function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slot]():h;}
 
 /* ---------- 点开的解释 ---------- */
@@ -2763,14 +2890,14 @@ function xNl(i){
     ['占多少',`四柱一共 ${s.total} 分，${EL[i]}占 ${pct(n,s.total)}。五行平均各 12 分，${EL[i]}${n>12?`比平均多 ${n-12} 分`:n<12?`比平均少 ${12-n} 分`:'正好是平均数'}。`],
     ['对日主',`${EL[i]}${wxRole(i)}这一类合称${GRP[r]}。`],
     ['算法','天干每个 5 分。地支每个 8 分：藏一个字的全给它，藏两个的 5 分、3 分，藏三个的 5 分、2 分、1 分。月支加倍，算 16 分。四柱一共 60 分。'],
-    ['出处','台湾吉祥坊易经开运中心的《大师教你论八字》第二章第十四节「五行分数算法」。这是现代的一种算法，分值没有典籍出处。排盘软件里的五行能量、五行分数各有各的算法，多数不公开，数字不会和这里相同。'],
-    ['没有算的','它只算了个数、天干和地支的比重、藏干的主次和月支。合、冲、刑、害怎么影响分数，月支以外各柱的位置怎么加权，书里没有，页面也没有自己加。分数多少不等于好坏；好坏要先定强弱、取喜用，见「用神」一栏。']]};
+    ['说明','这是现代的一种算法，分值没有典籍出处。排盘软件里的五行能量、五行分数各有各的算法，多数不公开，数字不会和这里相同。'],
+    ['没有算的','它只算了个数、天干和地支的比重、藏干的主次和月支。合、冲、刑、害怎么影响分数，月支以外各柱的位置怎么加权，这套算法里没有，页面也没有自己加。分数多少不等于好坏；好坏要先定强弱、取喜用，见「用神」一栏。']]};
 }
 /* 大运流年一栏的一行：原局、大运、流年、流月、流日、合计 */
 function xNly(k){
   const L=nlLayers(), r=k==='合计'?L.tot:L.rows.find(x=>x.k===k); if(!r) return null;
   const five=s=>[0,1,2,3,4].filter(e=>s[e]).map(e=>`${EL[e]} ${s[e]} 分`).join('、')||'没有', two=`${GRP[0]}加${GRP[4]}`, three=`${GRP[1]}、${GRP[2]}、${GRP[3]}`, x=xiNow();
-  const ext='把原局的计分用到大运、流年、流月、流日上，是这一页自己的延伸，书里只算原局。外来的一柱照样是天干 5 分，地支 8 分、按藏干分，不加倍。';
+  const ext='这套计分本来只算原局，用到大运、流年、流月、流日上是这一页自己的延伸。外来的一柱照样是天干 5 分，地支 8 分、按藏干分，不加倍。';
   if(k==='原局') return {t:`原局的五行能量 · ${r.total} 分`,p:[['是什么','出生时四柱的五行能量，就是「五行」一栏里的那一组分数。'],['五行',five(r.sum)+'。'],['两组',`${two} ${r.help} 分，${three} ${r.rest} 分。${two}占 ${r.acc}。`]]};
   if(k==='合计') return {t:'原局加上选中的四层',p:[['是什么',`原局的 60 分，加上选中的大运、流年、流月、流日各 13 分，一共 ${r.total} 分。这个总数对每张盘、每一年都一样，要看的是分给了谁。`],['五行',five(r.sum)+'。'],['两组',`${two} ${r.help} 分，${three} ${r.rest} 分。${two}占 ${r.acc}；只看原局是 ${L.rows[0].acc}。`],['说明',ext]]};
   const c=cols().find(x=>x.k===k), its=nlPillar(c,false), xp=xiPillar(c.g+c.z);
@@ -2782,6 +2909,24 @@ function xNly(k){
     ['十神',`天干${c.g}是${god(c.g)}，地支${c.z}的本气${HID[c.z][0]}是${godZ(c.z)}。`],
     ['说明',ext]]};
 }
+/* 大运流年一页的一根柱子：这一柱是什么时候、13 分怎么分、各是什么十神、喜用占几分。k 是大运、流年、流月、流日，id 是起始年、年、「年-月序」或日子的时刻 */
+function xTb(k,gz,id){
+  if(!['大运','流年','流月','流日'].includes(k)||!gz||!G.includes(gz[0])||!Z.includes(gz[1])) return null;
+  const x=xiNow(), its=nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false), v=xiPillar(gz), what=x.xi?`喜用（${elNames(x.xi)}）`:`帮日主（${elNames(v.want)}）`;
+  const when=k==='大运'?`${id} 年起的十年`:k==='流年'?`${id} 年`:k==='流月'?`${String(id).split('-')[0]} 年${JIE[+String(id).split('-')[1]]}起的一个月`:`${new Date(+id).getUTCFullYear()} 年 ${mdText(+id)}`;
+  const mine=its.filter(o=>v.want.includes(o.e)).map(o=>o.say.replace(/（.*）$/,'')).join('，');
+  // 这一柱在它那一排里排第几：那一排就是页面上和它排在一起的那些柱子
+  const d=P.dayun[sel.dy], row=k==='大运'?P.dayun.map(o=>o.gz):k==='流年'?Array.from({length:d.y1-d.y0+1},(_,j)=>yearGZ(d.y0+j))
+    :k==='流月'?[...Array(12).keys()].map(m=>monthGZ(sel.y,m)):monthDays(sel.y,sel.m).map(dayGZ);
+  const vs=row.map(g=>xiPillar(g).score), rank=1+vs.filter(s=>s>v.score).length, tie=vs.filter(s=>s===v.score).length>1;
+  const rowName=k==='大运'?'八步大运':k==='流年'?`${d.gz}运的${cn(row.length)}年`:k==='流月'?`${sel.y} 年的十二个月`:`这个月的${cn(row.length)}天`;
+  return {t:`${gz}${({大运:'运',流年:'年',流月:'月',流日:'日'})[k]} · ${x.xi?'喜用':GRP[0]+'加'+GRP[4]} ${v.score} 分`,p:[
+    ['是什么',`${k}，${when}。天干${gz[0]}是${god(gz[0])}，地支${gz[1]}的本气${HID[gz[1]][0]}是${godZ(gz[1])}。`],
+    ['怎么分',its.map(o=>o.say).join('，')+'。'],
+    [x.xi?'喜用':'帮日主',v.score?`属于${what}的是${mine}，一共 ${v.score} 分。`:`没有属于${what}的字，0 分。`],
+    ['在这一排',`${rowName}里排第${ordCn(rank)}${tie?'，有同分的':''}；这一排最高 ${Math.max(...vs)} 分，最低 ${Math.min(...vs)} 分。`]]};
+}
+const ordCn=n=>n===2?'二':cn(n);      // 第几：第二不说「第两」
 /* 用神一页的「喜用」：扶抑一家取的喜用，依据、这张盘的结果、行运、别家 */
 function xXi(){
   const x=xiNow(), de=gEl(DM), list=a=>a.map(e=>`${EL[e]}（${GRP[(e-de+5)%5]}）`).join('、');
@@ -2789,7 +2934,7 @@ function xXi(){
     ['是什么','喜用是对这张盘有益、拿来作主的五行，和它作对的叫忌。取喜用的办法有好几家，这里照扶抑一家：日主弱就扶它，日主强就抑它。'],
     ['依据',`《滴天髓》「衰旺」一节的注：${q('dts_fy1')}。「体用」一节的注说得更细：${q('dts_fy2a')}；${q('dts_fy2b')}。生日主的正印、偏印和同类的比肩、劫财帮它；它所生的食神和伤官、它所克的正财和偏财、克它的正官和七杀泄它、耗它、克它，正好是强弱计分分的两组。`],
     ['这张盘',x.xi?`照强弱计分，${GRP[0]}加${GRP[4]} ${x.help} 分，算身${x.tier}，所以喜用是${list(x.xi)}，忌是${list(x.ji)}。`
-      :`照强弱计分，${GRP[0]}加${GRP[4]} ${x.help} 分，在 25 分和 30 分之间。书里没有说这一段算强还是算弱，扶抑取不了，这里不定喜用。`],
+      :`照强弱计分，${GRP[0]}加${GRP[4]} ${x.help} 分，在 25 分和 30 分之间。这种算法没有说这一段算强还是算弱，扶抑取不了，这里不定喜用。`],
     ['行运',`《渊海子平》讲行运：${q('yh_yun1')}；${q('yh_yun2')}。「大运流年」一栏的柱子就是照这个意思，看每一柱带来的分数里喜用占几分。`],
     ['别家',`扶抑之外还有别的取法，结果常常不一样。日主弱到极点时，《滴天髓》说${q('dts_jz')}，「从象」一节说${q('dts_cong')}：不再扶它，顺着最强的一方走，叫从格，喜忌和扶抑正好相反。格局一家从月令取用神，调候一家看季节取字，见下面「格局参考」「调候参考」两行。`],
     ['注意','强弱用的是一种现代的计分，分值没有典籍出处，也没有算合、冲、刑、害。喜用只照扶抑一家的规则走到这一步。传统上说行喜用的运顺，行忌神的运逆；这是这套体系内部的推演，没有证据表明它能预测人生。']]};
@@ -2809,6 +2954,7 @@ function X0(key){
   if(k==='gt') return xGT(a[1],a[2]);
   if(k==='nly') return xNly(a[1]);
   if(k==='xi') return xXi();
+  if(k==='tb') return xTb(a[1],a[2],a[3]);
   if(k==='nlp') return xNlp(a[1]);
   if(k==='grp') return xGrp(+a[1]);
   if(k==='nl') return xNl(+a[1]);
@@ -3080,7 +3226,9 @@ function renderPerson(){
   // 「日主」那一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「用神」那一页的一句话
   const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k)), quad=quadItems(), inQuad=['日主','阴阳'];
   const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
-  $('kv').innerHTML=dl(quad)+dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
+  const QI=['t-tk','q-yy','q-ga','q-ge'];      // 四个方块名目前的图标：日主、阴阳（太极）、旺衰（表盘）、格局（框）
+  $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${QI[i]}"/></svg>${xb('x',r.x,r.k)}</span><b>${r.big}</b><small>${r.sub}</small></div>`).join('');
+  $('kv').innerHTML=dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
   $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut).filter(r=>r.k!=='强弱计分'));      // 强弱计分画成了这一页最上面的卡片（renderQs）
   $('h-gods-s').textContent=`以${DMN}为原点；个数连地支里藏的天干一起数，不算日主自己`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
@@ -3088,7 +3236,21 @@ function renderPerson(){
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderBars();renderGods();renderGw();renderQs();renderDynamic();
+  renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+}
+/* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
+   箭头指向被生、被克的一方。每个圈下面是这一类十神对日主的合称，日主所属的那一行圈加粗 */
+function renderWxMap(){
+  const de=gEl(DM), R=86, cx=150, cy=136, r=25, f=v=>v.toFixed(1);
+  const pos=[0,1,2,3,4].map(e=>{const a=(e-1)*72*Math.PI/180;return [cx+R*Math.sin(a),cy-R*Math.cos(a)];});
+  const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d;
+    return `<line class="${cls}" x1="${f(x1+ux*(r+3))}" y1="${f(y1+uy*(r+3))}" x2="${f(x2-ux*(r+6))}" y2="${f(y2-uy*(r+6))}" marker-end="url(#wxm-a)"/>`;};
+  const node=e=>{const [x,y]=pos[e], me=e===de;
+    return `<g class="nd ${ELC[e]}${me?' me':''}"><circle cx="${f(x)}" cy="${f(y)}" r="${r}"/><text class="ch" x="${f(x)}" y="${f(y+1)}">${EL[e]}</text><text class="gp" x="${f(x)}" y="${f(e===1?y-r-8:y+r+16)}">${me?`日主（${GRP[0]}）`:GRP[(e-de+5)%5]}</text></g>`;};
+  const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，');
+  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="img" aria-label="五行生克图：${say}"><defs><marker id="wxm-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker></defs>`
+    +[0,1,2,3,4].map(e=>seg(e,(e+1)%5,'sh')).join('')+[0,1,2,3,4].map(e=>seg(e,(e+2)%5,'ke')).join('')+[0,1,2,3,4].map(node).join('')
+    +`</svg><figcaption>实线是相生，虚线是相克，箭头指向被生、被克的一方。圈下面是这一类十神对${DMN}的合称。</figcaption>`;
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -3273,16 +3435,17 @@ function renderSy(){
   // 图例：算进柱子的几种五行
   $('sy-lg').innerHTML=(x.xi?`${xb('x','xi','喜用（扶抑）')}`:`不定喜用，柱子画${GRP[0]}加${GRP[4]}`)+want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span>';
   const d=P.dayun[sel.dy], ys=[]; for(let y=d.y0;y<=d.y1;y++) ys.push(y);
-  const bar=(gz,attr,on,top,label)=>{const v=xiPillar(gz);
+  const bar=(gz,attr,on,top,label,key)=>{const v=xiPillar(gz);
     const segs=want.filter(e=>v.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${v.sum[e]}"></i>`).join('');
-    return `<button type="button" class="tb" ${attr} aria-pressed="${on}" aria-label="${label}${gz}，${x.xi?'喜用':GRP[0]+'加'+GRP[4]} ${v.score} 分"><b class="v">${v.score}</b><span class="bar"><span class="fill" style="height:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><span class="gz">${gzSpan(gz)}</span><small>${top}</small></button>`;};
+    return `<button type="button" class="tb" ${attr} data-x="${key}" aria-pressed="${on}" aria-label="${label}${gz}，${x.xi?'喜用':GRP[0]+'加'+GRP[4]} ${v.score} 分"><b class="v">${v.score}</b><span class="bar"><span class="fill" style="height:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><span class="gz">${gzSpan(gz)}</span><small>${top}</small></button>`;};
   const rows=[
-    ['八步大运',P.dayun.map((v,i)=>bar(v.gz,`data-dy="${i}"`,i===sel.dy,String(v.y0),`${v.y0} 年起的大运`))],
-    [`${d.gz}运的${cn(ys.length)}年`,ys.map(y=>bar(yearGZ(y),`data-y="${y}"`,y===sel.y,String(y),`${y} 年`))],
-    [`${sel.y} ${yearGZ(sel.y)}年的十二个月`,[...Array(12).keys()].map(m=>bar(monthGZ(sel.y,m),`data-m="${m}"`,m===sel.m,JIE[m],`${JIE[m]}起的一个月`))],
-    [`${monthGZ(sel.y,sel.m)}月的每一天`,monthDays(sel.y,sel.m).map(t=>bar(dayGZ(t),`data-d="${t}"`,t===sel.d,String(new Date(t).getUTCDate()),mdText(t)+' '))]];
+    ['八步大运',P.dayun.map((v,i)=>bar(v.gz,`data-dy="${i}"`,i===sel.dy,String(v.y0),`${v.y0} 年起的大运`,`tb|大运|${v.gz}|${v.y0}`))],
+    [`${d.gz}运的${cn(ys.length)}年`,ys.map(y=>bar(yearGZ(y),`data-y="${y}"`,y===sel.y,String(y),`${y} 年`,`tb|流年|${yearGZ(y)}|${y}`))],
+    [`${sel.y} ${yearGZ(sel.y)}年的十二个月`,[...Array(12).keys()].map(m=>bar(monthGZ(sel.y,m),`data-m="${m}"`,m===sel.m,JIE[m],`${JIE[m]}起的一个月`,`tb|流月|${monthGZ(sel.y,m)}|${sel.y}-${m}`))],
+    [`${monthGZ(sel.y,sel.m)}月的每一天`,monthDays(sel.y,sel.m).map(t=>bar(dayGZ(t),`data-d="${t}"`,t===sel.d,String(new Date(t).getUTCDate()),mdText(t)+' ',`tb|流日|${dayGZ(t)}|${t}`))]];
   $('trend').innerHTML=rows.map(([h,bs],i)=>`<div class="tr-row"><h3>${h}</h3><div class="tbars${i===3?' many':''}" role="group" aria-label="${h}">${bs.join('')}</div></div>`).join('');
   $('note-syfig').textContent=noteSyFig();
+  $('rd-tr').innerHTML=readHTML('tr');      // 柱子下面的解读跟着选中的大运和年份变
 }
 /* 用神一页最上面的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
@@ -3294,13 +3457,11 @@ function renderQs(){
     +`<div class="qg-ax"><span style="left:0">0</span><span style="left:${pos(25)}">25</span><span style="left:${pos(30)}">30</span><span style="left:100%">${W}</span></div>`
     +`<div class="qg-zone" style="grid-template-columns:25fr 5fr ${W-30}fr"><span>身弱</span><span></span><span>身强</span></div></div>`;
   const tile=(k,v,sub)=>`<div class="qt"><span>${k}</span><b>${v} 分</b><small>${sub}</small></div>`;
-  const els=a=>a.map(e=>`<span class="${ELC[e]}">${EL[e]}</span>`).join('');
-  const rule=`按${JXF}的计分：${GRP[0]}加${GRP[4]}在 30 分以上算身强，25 分以下算身弱`
-    +(r.help===25?`；正好 25 分时看月支，${r.mHelp?'月支帮着日主，算身强':'月支不帮日主，算身弱'}`:r.tier==='间'?'；中间这一段书里没有说':'');
+  const els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
   $('qs').innerHTML=`<div class="qs-dm"><span>日主</span><b class="${gCls(DM)}">${DM}</b><small>${yy(DM)}${EL[de]}</small></div>`
     +`<div class="qs-main">`
     +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱未定'})[r.tier]}</b><span>${GRP[0]}加${GRP[4]} ${r.help} 分，满分 ${W} 分</span></div>`
-    +`<p class="sub">${rule}</p>${gauge}`
+    +gauge
     +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`)}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
     +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
     +`<div class="qx-row">`+(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>忌</span><b>${els(x.ji)}</b></div>`
@@ -3355,31 +3516,88 @@ function openForm(info){
   F('date').value=b?`${b[0]}-${p2(b[1])}-${p2(b[2])}`:'';
   F('time').value=b&&b.length>3?`${p2(b[3])}:${p2(b[4])}`:'';
   F('shichen').value=info&&info.shichen||'';
-  F('place').value=info&&info.place||'';
+  const pl=placeSel(info&&info.place);
+  F('prov').value=pl.p;fillCity(pl.p,pl.c);F('place').value=pl.t||'';
   F('lon').value=info&&typeof info.lon==='number'?info.lon:120;
   F('dst').checked=!!(info&&info.dst);
+  F('bazi').value='';F('dates').innerHTML='';baziFound=[];
   F('del').hidden=!info;F('del').textContent='删除这一位';F('del').dataset.sure='';
-  formMsg('');say('');
-  $('pf-lonhint').hidden=true;
+  say('');
+  $('pf-lonhint').textContent='';
+  setMode('time');
   $('pform').hidden=false;
 }
 function closeForm(){$('pform').hidden=true;editing=null;}
-/* 城市经度表 CITIES 是 [名字, 省份, 经度] 的列表（data/cities.json）。出生地填的是表里的城市时，把经度填上 */
-function cityOf(s){s=String(s||'').trim();return s?CITIES.find(c=>c[0]===s)||CITIES.find(c=>c[0]===s+'市')||null:null;}
-function onPlace(){
-  const c=cityOf(F('place').value), h=$('pf-lonhint');
+/* 出生地：先选省份，再选城市。城市经度表 CITIES 是 [名字, 省份, 经度] 的列表（data/cities.json）。
+   省份的先后照行政区划代码；直辖市、香港、澳门在表里没有省份，它们自己就是一项，城市只有它自己。
+   表里没有的地方选「其他地方」，自己写地名、填经度。选了城市就把经度填上 */
+const PROV=['北京市','天津市','河北省','山西省','内蒙古自治区','辽宁省','吉林省','黑龙江省','上海市','江苏省','浙江省','安徽省','福建省','江西省','山东省','河南省','湖北省','湖南省','广东省','广西壮族自治区','海南省','重庆市','四川省','贵州省','云南省','西藏自治区','陕西省','甘肃省','青海省','宁夏回族自治区','新疆维吾尔自治区','台湾','香港','澳门'];
+const provOf=c=>c[1]||c[0];
+const citiesIn=p=>CITIES.filter(c=>provOf(c)===p).sort((a,b)=>a[0].localeCompare(b[0],'zh-Hans-CN'));
+function fillCity(p,city){
+  const list=citiesIn(p);
+  F('city').innerHTML=list.length?list.map(c=>`<option value="${esc(c[0])}"${c[0]===city?' selected':''}>${esc(c[0])}</option>`).join(''):'<option value="">—</option>';
+  F('city').disabled=!list.length;
+  $('pf-place-l').hidden=F('mode').value!=='time'||p!=='其他';
+}
+function onProv(){fillCity(F('prov').value,'');onCity();}
+function onCity(){
+  const c=CITIES.find(x=>x[0]===F('city').value&&provOf(x)===F('prov').value), h=$('pf-lonhint');
   if(c){F('lon').value=c[2];h.textContent=`经度按${c[0]}${c[1]?'（'+c[1]+'）':''}取东经 ${c[2]} 度。出生的地方离市区很远的话，可以自己改。`;}
   else h.textContent='';
-  h.hidden=!c;
+  h.hidden=!c||F('mode').value!=='time';
+}
+/* 存下来的出生地是一段字：省份加城市（直辖市、香港、澳门只写自己），或者「其他地方」里写的地名。编辑时从这段字认回省份和城市 */
+function placeOf(){
+  const p=F('prov').value; if(!p) return '';
+  if(p==='其他') return F('place').value.trim().slice(0,30);
+  const c=CITIES.find(x=>x[0]===F('city').value&&provOf(x)===p);
+  return c?(c[1]||'')+c[0]:'';
+}
+function placeSel(s){
+  s=String(s||'').trim(); if(!s) return {p:'',c:''};
+  const bare=n=>n.replace(/市$/,'');
+  const c=CITIES.find(x=>[x[0],(x[1]||'')+x[0],bare(x[0]),(x[1]||'')+bare(x[0])].includes(s))
+    ||CITIES.find(x=>x[1]&&s.startsWith(x[1].slice(0,2))&&s.includes(bare(x[0])));
+  return c?{p:provOf(c),c:c[0]}:{p:'其他',c:'',t:s};
+}
+/* 两种填法：按出生时间，或者直接输入八字。换着显示各自的那几项 */
+let baziFound=[];
+function setMode(m){
+  F('mode').value=m;
+  document.querySelectorAll('#pform .m-time').forEach(el=>{el.hidden=m!=='time';});
+  document.querySelectorAll('#pform .m-bazi').forEach(el=>{el.hidden=m!=='bazi';});
+  $('pf-place-l').hidden=m!=='time'||F('prov').value!=='其他';
+  $('pf-lonhint').hidden=m!=='time'||!$('pf-lonhint').textContent;
+  formMsg('');
+  if(m==='bazi') onBazi();
+}
+/* 直接输入八字：认出四柱，查出 1900 到 2100 年里四柱都对得上的日子（chart.js 的 datesOf），列出来选一个，默认选第一个 */
+function onBazi(){
+  const r=baziCheck(F('bazi').value), box=F('dates');
+  baziFound=r.p?datesOf(r.p):[];
+  if(!r.p){box.innerHTML=r.msg?`<p class="msg">${esc(r.msg)}</p>`:'';return;}
+  if(!baziFound.length){box.innerHTML='<p class="msg">1900 到 2100 年里没有四柱都对得上的日子。</p>';return;}
+  box.innerHTML=`<p class="hint">找到 ${baziFound.length} 个四柱都对得上的日子，选一个：</p>`+baziFound.map((d,i)=>{
+    const [y,m,dd]=d.birth.split('-').map(Number), L=lunarOf(y,m,dd);
+    return `<label class="check"><input type="radio" name="pf-pick" value="${i}"${i===0?' checked':''}>${y} 年 ${m} 月 ${dd} 日，${d.shichen}时${L?`<small>农历${L.year}年${L.month}月${L.day}</small>`:''}</label>`;}).join('');
 }
 function newId(){let id;do{id='u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);}while(PEOPLE.some(p=>p.id===id)||LOCAL.some(x=>x.id===id));return id;}
 function saveForm(){
-  const old=LOCAL.find(x=>x.id===editing);
-  const info=Object.assign({},old,{id:old?old.id:newId(),name:F('name').value.trim().slice(0,20)||'未命名',gender:F('gender').value,
-    birth:`${F('date').value} ${F('time').value}`,place:F('place').value.trim().slice(0,30),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
-  if(F('dst').checked) info.dst=true; else delete info.dst;
-  if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;}   // 只知道时辰：时间和经度都不用
-  else delete info.shichen;
+  const old=LOCAL.find(x=>x.id===editing), base={id:old?old.id:newId(),name:F('name').value.trim().slice(0,20)||'未命名',gender:F('gender').value};
+  let info;
+  if(F('mode').value==='bazi'){        // 直接输入八字：存下选中的那一天和时辰，和「只知道时辰」一样
+    const r=baziCheck(F('bazi').value), pick=document.querySelector('#pf-dates input[name="pf-pick"]:checked'), d=pick?baziFound[+pick.value]:null;
+    if(!r.p){formMsg(r.msg||'先输入八字：年、月、日、时四柱一共八个字。');return;}
+    if(!d){formMsg(baziFound.length?'从找到的日子里选一个。':'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。');return;}
+    info=Object.assign({},old,base,{birth:d.birth,shichen:d.shichen,place:''});
+    delete info.lon;delete info.dst;
+  }else{
+    info=Object.assign({},old,base,{birth:`${F('date').value} ${F('time').value}`,place:placeOf(),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
+    if(F('dst').checked) info.dst=true; else delete info.dst;
+    if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;}   // 只知道时辰：时间和经度都不用
+    else delete info.shichen;
+  }
   const bad=checkInfo(info);
   if(bad){formMsg(bad);return;}
   if(old) LOCAL[LOCAL.indexOf(old)]=info; else LOCAL.push(info);
@@ -3455,13 +3673,23 @@ document.addEventListener('click',e=>{
   if(b.id==='pf-del'){deleteEditing();return;}
   if(b.id==='pf-import'){F('file').click();return;}
   if(b.id==='pf-export'){exportLocal();return;}
+  if(b.dataset.x&&b.classList.contains('tb')){      // 大运流年一页的柱子：先换到那一柱，再在旁边列出这一柱的明细；再点一次收起
+    const key=b.dataset.x, again=sel.x===key&&!$('sheet').hidden;
+    pickLayer(b);
+    if(again) closeSheet(); else openSheet(key,anchorOf(key,0));
+    return;
+  }
   if(b.dataset.x){
     if(sel.x===b.dataset.x&&!$('sheet').hidden) closeSheet(); else openSheet(b.dataset.x,b);
     return;
   }
   if(b.dataset.p!==undefined){
     if(Number(b.dataset.p)!==sel.p) usePerson(Number(b.dataset.p));
-  }else if(b.dataset.dy!==undefined){
+  }else pickLayer(b);
+});
+/* 换大运、流年、流月、流日。选择器的卡片和大运流年一页的柱子都走这里；不是这四样的按钮返回 false */
+function pickLayer(b){
+  if(b.dataset.dy!==undefined){
     sel.dy=Number(b.dataset.dy); const d=P.dayun[sel.dy];
     sel.y=(REAL_Y>=d.y0&&REAL_Y<=d.y1)?REAL_Y:d.y0;
     if(sel.y===REAL_Y&&NOW_M>=0) sel.m=NOW_M;
@@ -3476,8 +3704,9 @@ document.addEventListener('click',e=>{
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
     renderPan();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();refreshSheet();
-  }
-});
+  }else return false;
+  return true;
+}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&sel.x){closeSheet();return;}
   // 焦点在标签上时，左右方向键换页，Home、End 到头尾
@@ -3492,9 +3721,11 @@ window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
 try{const t=(localStorage.getItem('bz-tabs')||'').split(',');if(TABS.natal.includes(t[0])) sel.tab.natal=t[0];if(TABS.pan.includes(t[1])) sel.tab.pan=t[1];}catch(e){}
-$('pf-cities').innerHTML=CITIES.map(c=>`<option value="${esc(c[0])}"${c[1]?` label="${esc(c[1])}"`:''}></option>`).join('');
-F('place').addEventListener('input',onPlace);
-F('place').addEventListener('change',onPlace);
+F('prov').innerHTML='<option value="">不填</option>'+PROV.map(p=>`<option value="${p}">${p}</option>`).join('')+'<option value="其他">其他地方</option>';
+F('prov').addEventListener('change',onProv);
+F('city').addEventListener('change',onCity);
+F('mode').addEventListener('change',()=>setMode(F('mode').value));
+F('bazi').addEventListener('input',onBazi);
 $('pform').addEventListener('submit',e=>{e.preventDefault();saveForm();});
 F('file').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
