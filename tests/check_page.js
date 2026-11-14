@@ -100,6 +100,7 @@ const relOf = ps => ev(`relations(${JSON.stringify(mkCols(ps))}).map(r=>r.t+r.c)
   ['子未相害', ['甲子', '乙未'], ['相害子未']],
   ['子酉相破', ['甲子', '乙酉'], ['相破子酉']],
 ].forEach(([name, ps, want]) => sameSet(name, relOf(ps), want));
+eq('每条关系记着是哪几柱凑成的：寅巳申三刑是年、月、日三柱；甲戊相克有两处时记两次', [ev(`JSON.stringify(relations(${JSON.stringify(mkCols(['甲寅', '丁巳', '庚申']))}).find(r=>r.t==='三刑').inst)`), ev(`JSON.stringify(relations(${JSON.stringify(mkCols(['甲子', '戊子', '戊子']))}).find(r=>r.t==='相克').inst)`)], ['[["年","月","日"]]', '[["年","月"],["年","日"]]']);
 eq('大运带来的关系记在大运那一层', ev(`relations(${JSON.stringify(mkCols(['甲子']).concat([{ k: '大运', g: '己', z: '丑', layer: 1 }]))}).map(r=>[r.t+r.c,r.top,r.where.join()])`), [['五合甲己', 1, '年干'], ['六合子丑', 1, '年支']]);
 const kindsUnit = new Set();
 {
@@ -325,11 +326,24 @@ people.forEach((id, pi) => {
   const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
   eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
   eq('「这张盘先看什么」列了四件事，五行的个数和五行一栏的相同', [d.querySelectorAll('#rd-key li').length, ev("wxCounts().cnt.every((n,i)=>document.getElementById('rd-key').textContent.includes(EL[i]+' '+n))")], [4, true]);
+  // 关系图和小签是同一批关系；每条线上圈出来的字就是这条关系的字
+  const lks = [...d.querySelectorAll('#lkmap .lk-t')], pills = [...d.querySelectorAll('.relpills .rel')];
+  eq('关系图上的名字和小签是同一批关系，一条不多一条不少', [[...new Set(lks.map(b => b.dataset.x))].sort(), lks.length >= pills.length], [[...new Set(pills.map(b => b.dataset.x))].sort(), true]);
+  eq('关系图每条线上圈出来的字，就是这条关系里的字', lks.filter(b => { const nodes = [...b.closest('.lk').querySelectorAll('i')].map(txt), c = b.dataset.x.split('|')[2]; return [...new Set(nodes)].sort().join('') !== [...new Set(c)].sort().join('') || nodes.length < 2; }).map(b => b.dataset.x), []);
+  // 生克图：相邻的十处，拿五行另算一遍对照
+  const sk = JSON.parse(ev('JSON.stringify(skPairs())')), skWant = sk.map(([a, b]) => ['同类', '生', '克', '克', '生'][(b - a + 5) % 5] + ((b - a + 5) % 5 === 0 ? '' : (b - a + 5) % 5 <= 2 ? '>' : '<'));
+  const skGot = [...d.querySelectorAll('#skmap .sk-b')].map(el => { const s = txt(el), fwd = /[→↓]$/.test(s), back = /^[←↑]/.test(s); return s.replace(/[←→↑↓]/g, '') + (fwd ? '>' : back ? '<' : ''); });
+  const skOrder = [];     // 页面上的顺序：每一柱先是干支之间，然后是它和下一柱的天干、地支
+  for (let i = 0; i < 4; i++) { skOrder.push(6 + i); if (i < 3) skOrder.push(2 * i, 2 * i + 1); }
+  eq('生克图：相邻的十处，生、克、同类和箭头的方向，和按五行另算的一致', skGot, skOrder.map(i => skWant[i]));
+  // 十神的个数、六亲表
+  eq('十神对照里的个数加起来，等于三个天干加地支里藏的天干', [...d.querySelectorAll('#gods .gn')].map(el => parseInt(txt(el), 10) || 0).reduce((a, b) => a + b, 0), ev('natalStems().length+natalHidden().length'));
+  eq('六亲表有六行，位置一栏和各个十神自己的解释里列的相同', [d.querySelectorAll('#liuqin tr').length, ev("liuqinRows().every(r=>r.at===(whereGod(g=>god(g)===r.god).join('、')||'原局里没有'))"), [...d.querySelectorAll('#liuqin tr')].map(tr => txt(tr.cells[1])).join()], [6, true, ev('P.gender') ? '偏财,正印,比肩,正财,七杀,正官' : '偏财,正印,比肩,正官,食神,伤官']);
   eq('版块的先后：细盘、十神对照、五行和日主、干支关系', ['h-pan', 'h-gods', 'h-wx', 'h-tk', 'h-rel'].map(id => $(id)).every((el, i, a) => !i || (a[i - 1].compareDocumentPosition(el) & 4) === 4), true);
   eq('读盘顺序里的链接都指向页面上有的地方', [...d.querySelectorAll('.guide a')].map(a => a.getAttribute('href')).filter(h => !/^#./.test(h) || !d.getElementById(h.slice(1))), []);
   const groups = [...d.querySelectorAll('#kv .kv')], last = groups[groups.length - 1];
   eq('日主一栏分两组，各家的四行（强弱、格局、调候、三行对照）在后一组，前面有小标题', [groups.length, ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => !!byX('kv|' + k) && byX('kv|' + k).closest('.kv') === last), !!d.querySelector('#kv .kv-h')], [2, [true, true, true, true], true]);
-  const fixed = ['meta', 'meta-yun', 'kv', 'foot', 'note-yun', 'note-wx', 'rd-key', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  const fixed = ['meta', 'meta-yun', 'kv', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'skmap', 'rd-key', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
@@ -468,6 +482,7 @@ console.log('添加、编辑、删除、导入');
   ok('导入一个带手写解读的人，四柱和 lunar_python 排出的相同', ev('PEOPLE.length') === n0 + 2 && txt($('title')) === '癸酉壬戌甲子戊辰' && /导入了 1 个人/.test(msg), [msg, txt($('title'))]);
   const note = ev(`X('g|年|癸')`).p.find(p => p[0] === '你的盘');
   ok('手写解读显示出来了，夹带的脚本被去掉', !!note && note[1].includes('<b>手写的话</b>') && !/script|onerror|<img/i.test(note[1]) && ev('window.hacked') === undefined, note);
+  eq('导入的是女命：六亲表里配偶看正官，子女看食神和伤官', [...d.querySelectorAll('#liuqin tr')].map(tr => txt(tr.cells[0]) + txt(tr.cells[1])).join(), '父亲偏财,母亲正印,兄弟姐妹比肩,丈夫正官,儿子食神,女儿伤官');
   // 导入 gen_data.py 生成的那种数据：一个排好的人。这里用上面那个虚构的出生时间，由页面自己排好再导回去。
   const ready = ev(`JSON.stringify({people:[chartOf({id:'x1',name:'排好的人',gender:'女',birth:'1993-10-10',shichen:'辰',place:'成都市'})]})`);
   const again = ev(`importText(${JSON.stringify(ready)})`);

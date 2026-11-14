@@ -54,7 +54,8 @@ function relations(cols){
   const add=(grp,kind,t,c,n,ps)=>{
     const top=Math.max(...ps.map(p=>p.layer||0)), key=[grp,top,t,c].join('|');
     let it=out.find(o=>o.key===key);
-    if(!it){it={key,grp,top,t,c,n:n||'',where:[]};out.push(it);}
+    if(!it){it={key,grp,top,t,c,n:n||'',where:[],inst:[]};out.push(it);}
+    it.inst.push(ps.map(p=>p.k));       // 这一次是哪几柱凑成的，画关系图时用
     const lab=p=>p.layer?p.k:p.k+kind;
     const ws=top===0?[ps.map(lab).join('–')]:ps.filter(p=>(p.layer||0)<top).map(lab);
     ws.forEach(w=>{if(!it.where.includes(w)) it.where.push(w);});

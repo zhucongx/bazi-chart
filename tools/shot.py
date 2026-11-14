@@ -89,7 +89,7 @@ def main():
         overflow(pg, '桌面')
         pg.screenshot(path=str(out / 'desktop.png'), full_page=True)
         people = pg.locator('#people [data-p]').count()
-        if click_first(pg, '#rel-nz [data-x]', '桌面打开一条解释'):
+        if click_first(pg, '#lkmap [data-x]', '桌面打开一条解释'):
             pg.wait_for_timeout(500)
             pg.screenshot(path=str(out / 'desktop_sheet.png'))
         pg.close()
