@@ -78,6 +78,15 @@ th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decorati
 .switch[aria-pressed="true"]{color:var(--ink)}
 .switch[aria-pressed="true"] .knob{background:var(--accent)}
 .switch[aria-pressed="true"] .knob::after{left:14px}
+/* 右上角：解读开关、浅色深色切换、GitHub 链接。切换按钮在浅色时画月亮（点了变深色），深色时画太阳 */
+.tools{display:flex;align-items:center;gap:8px}
+.icb{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;padding:0;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink2);cursor:pointer;text-decoration:none}
+.icb:hover{border-color:var(--ink3);color:var(--ink)}
+.icb .ic{width:16px;height:16px}
+.icb .gh{fill:currentColor;stroke:none}
+#theme .sun{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #theme .sun{display:block} :root:not([data-theme="light"]) #theme .moon{display:none}}
+:root[data-theme="dark"] #theme .sun{display:block} :root[data-theme="dark"] #theme .moon{display:none}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
 /* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱，日柱的天干上面是「日主」。都用样式生成，不占文字内容 */
@@ -100,7 +109,7 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pform{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px;align-items:end}
 .pform[hidden]{display:none}
 .pform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink2);min-width:0}
-.pform input:not([type=checkbox]),.pform select{font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0;height:36px}
+.pform input:not([type=checkbox]):not([type=radio]),.pform select{font:inherit;font-size:15px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%;min-width:0;height:36px}
 .pform input:focus-visible,.pform select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pform .wide{grid-column:1/-1}
 .pform .check{flex-direction:row;align-items:baseline;gap:8px}
@@ -686,6 +695,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <symbol id="i-t-sy" viewBox="0 0 24 24"><path d="M4 20.2h16"/><rect x="5.6" y="12.6" width="3.2" height="7.6" rx=".9"/><rect x="10.4" y="6.6" width="3.2" height="13.6" rx=".9"/><rect x="15.2" y="10" width="3.2" height="10.2" rx=".9"/></symbol>
   <symbol id="i-q-yy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a4.2 4.2 0 0 1 0 8.4a4.2 4.2 0 0 0 0 8.4"/><circle cx="12" cy="7.8" r="1"/><circle cx="12" cy="16.2" r="1"/></symbol>
   <symbol id="i-q-ga" viewBox="0 0 24 24"><path d="M4.4 16.4a7.6 7.6 0 0 1 15.2 0"/><path d="M12 16.4l3.4-4.6"/><circle cx="12" cy="16.4" r="1.3"/><path d="M6.2 12.6l1.1.6M12 8.8V10M17.8 12.6l-1.1.6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.8V5M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.6 14.7A7.9 7.9 0 0 1 9.3 4.4a7.9 7.9 0 1 0 10.3 10.3z"/></symbol>
   <symbol id="i-q-ge" viewBox="0 0 24 24"><rect x="4.4" y="4.4" width="15.2" height="15.2" rx="1.8"/><rect x="8.6" y="8.6" width="6.8" height="6.8" rx="1"/></symbol>
 </svg>
 <main>
@@ -693,7 +704,11 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 <header class="top">
   <div class="toprow">
     <p class="eyebrow" id="eyebrow"></p>
-    <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
+    <div class="tools">
+      <button class="switch" id="rd" type="button" aria-pressed="true"><span class="knob" aria-hidden="true"></span>显示解读</button>
+      <button class="icb" id="theme" type="button" aria-label="换成深色" title="换成深色"><svg class="ic moon" aria-hidden="true" focusable="false"><use href="#i-moon"/></svg><svg class="ic sun" aria-hidden="true" focusable="false"><use href="#i-sun"/></svg></button>
+      <a class="icb" id="gh" href="https://github.com/zhucongx/bazi-chart" target="_blank" rel="noopener" aria-label="GitHub 上的这个项目" title="GitHub 上的这个项目"><svg class="ic gh" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg></a>
+    </div>
   </div>
   <div class="people" id="people" role="group" aria-label="选择命盘"></div>
   <p class="hint" id="pp-hint" hidden></p>
@@ -2115,12 +2130,13 @@ function xiPillar(gz){
   const sum=nlSum(nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false)), x=xiNow(), de=gEl(DM), want=x.xi||[(de+4)%5,de];
   return {gz,sum,score:want.reduce((a,e)=>a+sum[e],0),want};
 }
-/* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照本气的阴阳算，和定十神的办法一致。
-   另一种分法照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。两种分法在子、午、巳、亥四支上相反（diff）。 */
+/* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。
+   另一种分法照本气的阴阳算（yang2），和定十神的办法一致。两种分法在子、午、巳、亥四支上相反（diff）。
+   2026-11-14 用户说默认应该显示不照本气的那一种，原来两种的先后反过来了 */
 function yinYang(){
   const gs=NATAL.map(p=>p.g), zs=NATAL.map(p=>p.z), ben=z=>!isYin(HID[z][0]), pei=z=>Z.indexOf(z)%2===0;
   const a=gs.filter(g=>!isYin(g)).length, b=zs.filter(ben).length, c=zs.filter(pei).length;
-  return {yang:a+b,yin:8-a-b,yang2:a+c,yin2:8-a-c,diff:NATAL.filter(p=>ben(p.z)!==pei(p.z))};
+  return {yang:a+c,yin:8-a-c,yang2:a+b,yin2:8-a-b,diff:NATAL.filter(p=>ben(p.z)!==pei(p.z))};
 }
 function wxCounts(){
   const all=NATAL.map(p=>p.g).concat(natalHidden()), cnt=[0,0,0,0,0], face=[0,0,0,0,0];
@@ -2409,12 +2425,12 @@ function kvRows(){return memo('kv',()=>{
       ['是什么','日柱的天干，代表这张盘的主人，是全盘的原点。'],
       ['这张盘',`${DM}是${yy(DM)}${EL[de]}。`],
       ['典籍',dts(DM)]]},
-    {k:'阴阳',dd:`八个字里阳 ${yz.yang} 个，阴 ${yz.yin} 个`+(yz.yang2!==yz.yang?`；地支换一种分法，是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`:''),t:'阴阳',p:[
+    {k:'阴阳',dd:`八个字里阳 ${yz.yang} 个，阴 ${yz.yin} 个`+(yz.yang2!==yz.yang?`；地支照本气算，是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`:''),t:'阴阳',p:[
       ['是什么','天干和地支各分阴阳。这一行只数盘面的八个字里阳的几个、阴的几个。'],
       ['天干',`《渊海子平》讲阳刃时说到十干的阴阳：${q('yh_wuyang')}。这张盘的四个天干：${NATAL.map(p=>`${p.k}干${p.g}是${yy(p.g)}`).join('，')}。`],
-      ['地支',`地支照本气的阴阳算，和这一页定十神的办法一致：${NATAL.map(p=>`${p.k}支${p.z}的本气${HID[p.z][0]}是${yy(HID[p.z][0])}`).join('，')}。合起来阳 ${yz.yang} 个，阴 ${yz.yin} 个。`],
-      ['另一种分法','地支也可以照六十甲子的配法分：子、寅、辰、午、申、戌只和阳干相配，算阳；丑、卯、巳、未、酉、亥只和阴干相配，算阴。两种分法在子、午、巳、亥四支上相反。'
-        +(yz.diff.length?`这张盘的${yz.diff.map(p=>p.k+'支'+p.z).join('、')}在这四支里，照这种分法是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`+(yz.yang2===yz.yang?'，合计和上面一样。':'。'):'这张盘的四个地支都不在这四支里，两种分法数出来一样。')],
+      ['地支',`地支照六十甲子的配法分：子、寅、辰、午、申、戌只和阳干相配，算阳；丑、卯、巳、未、酉、亥只和阴干相配，算阴。这张盘的四个地支：${NATAL.map(p=>`${p.k}支${p.z}是${Z.indexOf(p.z)%2?'阴':'阳'}`).join('，')}。合起来阳 ${yz.yang} 个，阴 ${yz.yin} 个。`],
+      ['另一种分法','地支也可以照本气的阴阳算，和这一页定十神的办法一致。两种分法在子、午、巳、亥四支上相反：子、午的本气癸、丁是阴，巳、亥的本气丙、壬是阳。'
+        +(yz.diff.length?`这张盘的${yz.diff.map(p=>p.k+'支'+p.z).join('、')}在这四支里，照本气算是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`+(yz.yang2===yz.yang?'，合计和上面一样。':'。'):'这张盘的四个地支都不在这四支里，两种分法数出来一样。')],
       ['注意','阴阳多少只是个数。排盘软件里的阴阳参考是怎么算的，没有读到说明，这一行不一定和它相同。']]},
     {k:'根',dd:r.length?r.map(x=>`${x.k}支${x.z}中有${gN(x.h)}`).join('，')+(r.length===1?`，是地支里唯一的${EL[de]}`:''):`地支里没有${EL[de]}，日主没有根`,t:'根',p:[
       ['是什么','天干在地支里找到同一五行的藏干，叫通根，也叫有根。有根的天干站得稳，没有根的叫虚浮。'],
@@ -2442,7 +2458,7 @@ function quadItems(){
   // 每一项：k 名目，x 点开的解释，big 大字，sub 下面一行小字。旺衰参考两种办法各占一行，大字后面用小字写明是哪一种
   return [
     {k:'日主属性',x:'kv|日主',big:`<span class="${gCls(DM)}">${DMN}</span>`,sub:`${yy(DM)}${EL[de]}，生于${mz}月（${SEASON[mz]}）`},
-    {k:'阴阳参考',x:'kv|阴阳',big:`阳 ${yz.yang} · 阴 ${yz.yin}`,sub:yz.yang2!==yz.yang?`盘面八个字，地支照本气算；换一种分法是阳 ${yz.yang2} · 阴 ${yz.yin2}`:'盘面八个字，地支照本气算'},
+    {k:'阴阳参考',x:'kv|阴阳',big:`阳 ${yz.yang} · 阴 ${yz.yin}`,sub:yz.yang2!==yz.yang?`盘面八个字，地支子寅辰午申戌为阳；照本气算是阳 ${yz.yang2} · 阴 ${yz.yin2}`:'盘面八个字，地支子寅辰午申戌为阳'},
     {k:'旺衰参考',x:'kv|强弱参考',big:`<span class="ln">${q0.tier==='中'?'中强（中弱）':q0.tier}<em>《千里命稿》</em></span><span class="ln">${({强:'身强',弱:'身弱',间:'未定'})[qs.tier]}<em>强弱计分 ${qs.help} 分</em></span>`,sub:'两种办法并列，详见「用神」一栏'},
     {k:'格局参考',x:'kv|格局参考',big:g.list?gejuNames(g).join('、'):`${cls}一类`,
       sub:g.list?'照《子平真诠》':gEl(g.ben)!==gEl(DM)?'照《子平真诠》；也可能归印格，书里没有定说':'照《子平真诠》；用神要在别处另取'}];
@@ -3180,6 +3196,12 @@ function setTab(card,id,focus){
   }
   reveal();
 }
+/* 浅色、深色：默认跟着系统；点了右上角的按钮就换成另一种，记在 localStorage 的 bz-theme 里，读写包在 try/catch 里 */
+const darkNow=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);};
+function setTheme(t){
+  if(t) document.documentElement.dataset.theme=t;
+  const next=darkNow()?'浅色':'深色', b=$('theme'); b.setAttribute('aria-label','换成'+next); b.title='换成'+next;
+}
 function setRead(on){
   document.documentElement.dataset.read=on?'on':'off';
   $('rd').setAttribute('aria-pressed',String(on));
@@ -3665,6 +3687,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.id==='sheet-x'){closeSheet();return;}
   if(b.id==='pp-add'){openForm(null);return;}
@@ -3718,6 +3741,8 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
 
+let themeSaved=''; try{themeSaved=localStorage.getItem('bz-theme')||'';}catch(e){}
+setTheme(themeSaved==='light'||themeSaved==='dark'?themeSaved:'');
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
 try{const t=(localStorage.getItem('bz-tabs')||'').split(',');if(TABS.natal.includes(t[0])) sel.tab.natal=t[0];if(TABS.pan.includes(t[1])) sel.tab.pan=t[1];}catch(e){}

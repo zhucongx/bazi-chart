@@ -448,9 +448,9 @@ people.forEach((id, pi) => {
     // 四项里的话和它们指的那几行一致；阴阳照另算的结果
     const dds = Object.fromEntries([...$('quad').querySelectorAll('.qd')].map(q => [txt(q.querySelector('.qd-k')), txt(q)]));
     const ps4 = JSON.parse(ev('JSON.stringify(NATAL.map(p=>[p.g,p.z]))')), hid = JSON.parse(ev('JSON.stringify(HID)')), G10 = '甲乙丙丁戊己庚辛壬癸', Z12 = '子丑寅卯辰巳午未申酉戌亥';
-    const yang = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => G10.indexOf(hid[x[1]][0]) % 2 === 0).length;
-    const yang2 = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => Z12.indexOf(x[1]) % 2 === 0).length;
-    eq('阴阳参考：八个字里阳几个、阴几个，地支照本气算；照六十甲子的配法数出来不一样时，另写那一种的数', [dds['阴阳参考'].includes(`阳 ${yang} · 阴 ${8 - yang}`), dds['阴阳参考'].includes('换一种分法'), yang2 === yang || dds['阴阳参考'].endsWith(`换一种分法是阳 ${yang2} · 阴 ${8 - yang2}`)], [true, yang2 !== yang, true]);
+    const yang = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => Z12.indexOf(x[1]) % 2 === 0).length;      // 地支照六十甲子的配法
+    const yang2 = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => G10.indexOf(hid[x[1]][0]) % 2 === 0).length;      // 照本气
+    eq('阴阳参考：八个字里阳几个、阴几个，地支照六十甲子的配法算；照本气数出来不一样时，另写那一种的数', [dds['阴阳参考'].includes(`阳 ${yang} · 阴 ${8 - yang}`), dds['阴阳参考'].includes('照本气算'), yang2 === yang || dds['阴阳参考'].endsWith(`照本气算是阳 ${yang2} · 阴 ${8 - yang2}`)], [true, yang2 !== yang, true]);
     const q0 = ev('qrNow().tier==="中"?"中强（中弱）":qrNow().tier'), qt = ev('qsOf(DM,NATAL).tier'), gj = JSON.parse(ev('JSON.stringify((g=>g.list?gejuNames(g):[g.kind==="阳刃"?"阳刃":"建禄月劫"])(geju()))'));
     eq('旺衰参考和格局参考：写着照的是哪一种办法，归的类和用神那一页相同；日主属性写着日主和它的阴阳五行', [dds['旺衰参考'].includes(`${q0}《千里命稿》`), dds['旺衰参考'].includes({ 强: '身强', 弱: '身弱', 间: '未定' }[qt] + '强弱计分'), dds['格局参考'].includes('照《子平真诠》') && gj.every(x => dds['格局参考'].includes(x)), dds['日主属性'].includes(ev('DMN')) && dds['日主属性'].includes(ev('yy(DM)+EL[gEl(DM)]'))], [true, true, true, true]);
   }
@@ -651,6 +651,11 @@ pick(0);
   ok('开关关掉解读', d.documentElement.dataset.read === 'off' && $('rd').getAttribute('aria-pressed') === 'false');
   click($('rd'));
   ok('开关打开解读', d.documentElement.dataset.read === 'on' && $('rd').getAttribute('aria-pressed') === 'true');
+  click($('theme')); const th1 = d.documentElement.dataset.theme, st1 = w.localStorage.getItem('bz-theme');
+  click($('theme')); const th2 = d.documentElement.dataset.theme, st2 = w.localStorage.getItem('bz-theme');
+  ok('右上角的按钮在浅色和深色之间换，选的那一种记在浏览器里', ['light', 'dark'].includes(th1) && ['light', 'dark'].includes(th2) && th1 !== th2 && st1 === th1 && st2 === th2 && $('theme').title === (th2 === 'dark' ? '换成浅色' : '换成深色'), [th1, th2, st1, st2]);
+  delete d.documentElement.dataset.theme; w.localStorage.removeItem('bz-theme');
+  ok('右上角有指向 GitHub 项目的链接，在新窗口打开', !!$('gh') && $('gh').getAttribute('href') === 'https://github.com/zhucongx/bazi-chart' && $('gh').getAttribute('target') === '_blank');
   click(byX('row|神煞'));
   d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   ok('按 Esc 收起', $('sheet').hidden);

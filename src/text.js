@@ -372,12 +372,13 @@ function xiPillar(gz){
   const sum=nlSum(nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false)), x=xiNow(), de=gEl(DM), want=x.xi||[(de+4)%5,de];
   return {gz,sum,score:want.reduce((a,e)=>a+sum[e],0),want};
 }
-/* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照本气的阴阳算，和定十神的办法一致。
-   另一种分法照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。两种分法在子、午、巳、亥四支上相反（diff）。 */
+/* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。
+   另一种分法照本气的阴阳算（yang2），和定十神的办法一致。两种分法在子、午、巳、亥四支上相反（diff）。
+   2026-11-14 用户说默认应该显示不照本气的那一种，原来两种的先后反过来了 */
 function yinYang(){
   const gs=NATAL.map(p=>p.g), zs=NATAL.map(p=>p.z), ben=z=>!isYin(HID[z][0]), pei=z=>Z.indexOf(z)%2===0;
   const a=gs.filter(g=>!isYin(g)).length, b=zs.filter(ben).length, c=zs.filter(pei).length;
-  return {yang:a+b,yin:8-a-b,yang2:a+c,yin2:8-a-c,diff:NATAL.filter(p=>ben(p.z)!==pei(p.z))};
+  return {yang:a+c,yin:8-a-c,yang2:a+b,yin2:8-a-b,diff:NATAL.filter(p=>ben(p.z)!==pei(p.z))};
 }
 function wxCounts(){
   const all=NATAL.map(p=>p.g).concat(natalHidden()), cnt=[0,0,0,0,0], face=[0,0,0,0,0];
@@ -666,12 +667,12 @@ function kvRows(){return memo('kv',()=>{
       ['是什么','日柱的天干，代表这张盘的主人，是全盘的原点。'],
       ['这张盘',`${DM}是${yy(DM)}${EL[de]}。`],
       ['典籍',dts(DM)]]},
-    {k:'阴阳',dd:`八个字里阳 ${yz.yang} 个，阴 ${yz.yin} 个`+(yz.yang2!==yz.yang?`；地支换一种分法，是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`:''),t:'阴阳',p:[
+    {k:'阴阳',dd:`八个字里阳 ${yz.yang} 个，阴 ${yz.yin} 个`+(yz.yang2!==yz.yang?`；地支照本气算，是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`:''),t:'阴阳',p:[
       ['是什么','天干和地支各分阴阳。这一行只数盘面的八个字里阳的几个、阴的几个。'],
       ['天干',`《渊海子平》讲阳刃时说到十干的阴阳：${q('yh_wuyang')}。这张盘的四个天干：${NATAL.map(p=>`${p.k}干${p.g}是${yy(p.g)}`).join('，')}。`],
-      ['地支',`地支照本气的阴阳算，和这一页定十神的办法一致：${NATAL.map(p=>`${p.k}支${p.z}的本气${HID[p.z][0]}是${yy(HID[p.z][0])}`).join('，')}。合起来阳 ${yz.yang} 个，阴 ${yz.yin} 个。`],
-      ['另一种分法','地支也可以照六十甲子的配法分：子、寅、辰、午、申、戌只和阳干相配，算阳；丑、卯、巳、未、酉、亥只和阴干相配，算阴。两种分法在子、午、巳、亥四支上相反。'
-        +(yz.diff.length?`这张盘的${yz.diff.map(p=>p.k+'支'+p.z).join('、')}在这四支里，照这种分法是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`+(yz.yang2===yz.yang?'，合计和上面一样。':'。'):'这张盘的四个地支都不在这四支里，两种分法数出来一样。')],
+      ['地支',`地支照六十甲子的配法分：子、寅、辰、午、申、戌只和阳干相配，算阳；丑、卯、巳、未、酉、亥只和阴干相配，算阴。这张盘的四个地支：${NATAL.map(p=>`${p.k}支${p.z}是${Z.indexOf(p.z)%2?'阴':'阳'}`).join('，')}。合起来阳 ${yz.yang} 个，阴 ${yz.yin} 个。`],
+      ['另一种分法','地支也可以照本气的阴阳算，和这一页定十神的办法一致。两种分法在子、午、巳、亥四支上相反：子、午的本气癸、丁是阴，巳、亥的本气丙、壬是阳。'
+        +(yz.diff.length?`这张盘的${yz.diff.map(p=>p.k+'支'+p.z).join('、')}在这四支里，照本气算是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`+(yz.yang2===yz.yang?'，合计和上面一样。':'。'):'这张盘的四个地支都不在这四支里，两种分法数出来一样。')],
       ['注意','阴阳多少只是个数。排盘软件里的阴阳参考是怎么算的，没有读到说明，这一行不一定和它相同。']]},
     {k:'根',dd:r.length?r.map(x=>`${x.k}支${x.z}中有${gN(x.h)}`).join('，')+(r.length===1?`，是地支里唯一的${EL[de]}`:''):`地支里没有${EL[de]}，日主没有根`,t:'根',p:[
       ['是什么','天干在地支里找到同一五行的藏干，叫通根，也叫有根。有根的天干站得稳，没有根的叫虚浮。'],
@@ -699,7 +700,7 @@ function quadItems(){
   // 每一项：k 名目，x 点开的解释，big 大字，sub 下面一行小字。旺衰参考两种办法各占一行，大字后面用小字写明是哪一种
   return [
     {k:'日主属性',x:'kv|日主',big:`<span class="${gCls(DM)}">${DMN}</span>`,sub:`${yy(DM)}${EL[de]}，生于${mz}月（${SEASON[mz]}）`},
-    {k:'阴阳参考',x:'kv|阴阳',big:`阳 ${yz.yang} · 阴 ${yz.yin}`,sub:yz.yang2!==yz.yang?`盘面八个字，地支照本气算；换一种分法是阳 ${yz.yang2} · 阴 ${yz.yin2}`:'盘面八个字，地支照本气算'},
+    {k:'阴阳参考',x:'kv|阴阳',big:`阳 ${yz.yang} · 阴 ${yz.yin}`,sub:yz.yang2!==yz.yang?`盘面八个字，地支子寅辰午申戌为阳；照本气算是阳 ${yz.yang2} · 阴 ${yz.yin2}`:'盘面八个字，地支子寅辰午申戌为阳'},
     {k:'旺衰参考',x:'kv|强弱参考',big:`<span class="ln">${q0.tier==='中'?'中强（中弱）':q0.tier}<em>《千里命稿》</em></span><span class="ln">${({强:'身强',弱:'身弱',间:'未定'})[qs.tier]}<em>强弱计分 ${qs.help} 分</em></span>`,sub:'两种办法并列，详见「用神」一栏'},
     {k:'格局参考',x:'kv|格局参考',big:g.list?gejuNames(g).join('、'):`${cls}一类`,
       sub:g.list?'照《子平真诠》':gEl(g.ben)!==gEl(DM)?'照《子平真诠》；也可能归印格，书里没有定说':'照《子平真诠》；用神要在别处另取'}];
