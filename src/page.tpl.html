@@ -11,7 +11,7 @@
 :root{
   /* 版面：从上到下三张白色卡片。第一张讲原局，带标签栏：日主、五行、十神、六亲、宫位、用神，一次看一页。
      第二张是四行选择器。第三张跟着选择器走，也带标签栏：四柱细盘、干支关系、根和透、大运流年。前三页都是八列，前四列是选中的流日、流月、流年、大运；
-     大运流年一页是一张计分表。
+     大运流年一页是四排柱子和一张计分表。
      每一页带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
      五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。 */
@@ -254,29 +254,73 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sy tbody th{font-weight:400}
 .sy .gz{margin-left:8px;font-family:var(--display);font-weight:700;font-size:17px}
 .sy .sum th,.sy .sum td{border-top:1px solid var(--ink3);font-weight:600}
-/* 分数画成的图。.stk 是一条分段的条：一段一种五行，长短照分数，颜色是五行自己的颜色；比劫加印绶和另外三行之间留一道缝（.gap）。.v 是竖着画。
-   .sybar：一行一层的累计条。.sycol：一根柱子一步大运或者一个流年，是按钮，点了就换到那一步、那一年，选中的样子和选择器的卡片一样。
-   .qsw：强弱计分的条，上面两道竖线是 25 分和 30 分。.lg：图例 */
+/* 分数画成的图。.stk 是一条分段的条：一段一种五行，长短照分数，颜色是五行自己的颜色；比劫加印绶和另外三行之间留一道缝（.gap）。.lg：图例 */
 .stk{display:flex;height:14px;min-width:0;border-radius:4px;overflow:hidden;background:var(--wash)}
 .stk i{display:block;min-width:0;background:currentColor}
 .stk i+i{margin-left:1px}
 .stk i.gap{margin-left:4px}
-.stk.v{flex-direction:column-reverse;width:22px;height:104px}
-.stk.v i+i{margin-left:0;margin-bottom:1px}
-.stk.v i.gap{margin-left:0;margin-bottom:4px}
-.sybar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 14px;align-items:center;font-variant-numeric:tabular-nums}
-.sybar .lb,.sybar .tx{font-size:13px;color:var(--ink2);white-space:nowrap}
-.sybar .gz{margin-left:6px;font-family:var(--display);font-weight:700;font-size:16px}
-.sycol{display:flex;gap:4px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
-.sycol .c{flex:1 0 36px;display:flex;flex-direction:column;align-items:center;gap:4px;font:inherit;color:var(--ink);background:var(--card);border:1px solid transparent;border-radius:10px;padding:6px 2px 5px;cursor:pointer;font-variant-numeric:tabular-nums}
-.sycol .c:hover{border-color:var(--line)}
-.sycol .c[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
-.sycol small{font-size:11.5px;line-height:1.2;color:var(--ink3);white-space:nowrap}
-.sycol .gz{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap}
-.sycol .hp{font-size:12px;line-height:1.2;color:var(--ink2)}
-.qsw{position:relative;display:block;max-width:520px;margin-top:8px;padding-top:15px}
-.qsw .tk{position:absolute;top:2px;bottom:-3px;border-left:1px solid var(--ink2)}
-.qsw .tk b{position:absolute;top:-3px;left:3px;font:400 11px/1 var(--body);color:var(--ink3)}
+/* 用神一页最上面的强弱分析（renderQs）。.qg 是强弱计分的条：从 0 到这张盘的分数涂上印、比劫的颜色，25 分、30 分两道竖线穿过条，
+   分数标在涂色的末端，下面是刻度和身弱、身强两段。.qt 是分数从哪里来的四块，.qx 是扶抑取的喜用和忌 */
+.qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 20px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.qs-dm{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.qs-dm span,.qs-dm small{font-size:12px;color:var(--ink3)}
+.qs-dm b{font-family:var(--display);font-size:34px;line-height:1.15}
+.qs-main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.qs-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.qs-t{font-size:24px;font-weight:700;color:var(--ink)}
+.qs-h>span{font-size:14px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.qg{position:relative;max-width:560px;padding-top:22px;font-variant-numeric:tabular-nums}
+.qg-v{position:absolute;top:0;transform:translateX(-50%);font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap}
+.qg-bar{position:relative;height:14px;border-radius:4px;background:var(--line)}
+.qg-fill{position:absolute;left:0;top:0;bottom:0;display:flex;border-radius:4px 0 0 4px;overflow:hidden}
+.qg-fill i{display:block;min-width:0;background:currentColor}
+.qg-fill i+i{margin-left:1px}
+.qg-tk{position:absolute;top:-6px;bottom:-6px;border-left:2px solid var(--ink)}
+.qg-ax{position:relative;height:18px;margin-top:8px;font-size:11.5px;color:var(--ink3)}
+.qg-ax span{position:absolute;top:0;transform:translateX(-50%)}
+.qg-ax span:first-child{transform:none}
+.qg-ax span:last-child{transform:translateX(-100%)}
+.qg-zone{display:grid;font-size:12px;color:var(--ink2);text-align:center}
+.qt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px}
+.qt{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums}
+.qt span,.qt small{font-size:12px;color:var(--ink3)}
+.qt b{font-size:18px;color:var(--ink)}
+.qs-li{margin:0;padding-left:1.3em;font-size:13.5px;color:var(--ink2);columns:2 260px;column-gap:28px}
+.qs-li li{break-inside:avoid;margin-bottom:3px}
+.qx-row{display:flex;flex-wrap:wrap;gap:8px}
+.qx{display:flex;flex-direction:column;gap:2px;min-width:130px;padding:8px 14px;border:1px solid var(--line);border-radius:10px}
+.qx>span,.qx small{font-size:12px;color:var(--ink3)}
+.qx b{display:flex;gap:10px;font-size:20px}
+.qx b.no{font-size:16px;color:var(--ink2)}
+@media (max-width:599px){      /* 手机上日主那一小块横过来放在上面，下面的四块排成两列 */
+  .qs{grid-template-columns:minmax(0,1fr);padding:14px}
+  .qs-dm{flex-direction:row;align-items:baseline;gap:8px;justify-self:start;padding:6px 12px}
+  .qs-dm b{font-size:26px}
+  .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qx{min-width:0;flex:1 1 120px}
+}
+/* 大运流年一页的四排柱子（renderSy）。.tb 一根柱子是一个按钮：上面是分数，柱子的高低照这一柱的喜用分（满分 13），下面是干支和时间；
+   选中的样子和选择器的卡片一样。流日一排柱子多，.many 收窄，干支竖着排 */
+.trend{display:flex;flex-direction:column;gap:16px}
+.tr-row{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tbars{display:flex;gap:4px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.tb{flex:1 0 40px;display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;color:var(--ink);background:none;border:1px solid transparent;border-radius:8px;padding:4px 2px 5px;cursor:pointer;font-variant-numeric:tabular-nums}
+.tb:hover{border-color:var(--line)}
+.tb[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.tb .v{font-size:12.5px;font-weight:600;line-height:1.2}
+.tb .bar{position:relative;display:block;width:18px;height:84px;border-radius:4px;background:var(--line);overflow:hidden}
+.tb .fill{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column-reverse}
+.tb .fill i{display:block;min-height:0;background:currentColor}
+.tb .fill i+i{margin-bottom:1px}
+.tb .gz{font-family:var(--display);font-weight:700;font-size:14px;line-height:1.15;white-space:nowrap}
+.tb small{font-size:11px;line-height:1.2;color:var(--ink3);white-space:nowrap}
+.tbars.many{gap:2px}
+.tbars.many .tb{flex:1 0 26px;padding:3px 1px 4px}
+.tbars.many .bar{width:12px;height:70px}
+.tbars.many .gz{display:flex;flex-direction:column;font-size:12.5px}
+.tbars.many .v{font-size:11px}
+.lg .x{font-size:inherit}
+.lg .rest i{background:var(--line)}
 .stkw{display:block;max-width:220px;margin-top:6px}
 .lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
 .lg span{display:inline-flex;align-items:center;gap:5px}
@@ -434,14 +478,19 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gw .gz{font-size:26px}
   .sy thead small{font-size:12.5px}
   .stk{height:16px}
-  .stk.v{width:26px;height:130px}
-  .sybar{gap:12px 18px}
-  .sybar .lb,.sybar .tx{font-size:14px}
-  .sybar .gz{font-size:18px}
-  .sycol{gap:6px}
-  .sycol small{font-size:12.5px}
-  .sycol .gz{font-size:17px}
-  .sycol .hp{font-size:13px}
+  .qs{padding:18px 22px;gap:18px 24px}
+  .qs-dm b{font-size:40px}
+  .qs-t{font-size:26px}
+  .tbars{gap:6px}
+  .tb{flex-basis:48px}
+  .tb .bar{width:22px;height:110px}
+  .tb .gz{font-size:16px}
+  .tb .v{font-size:13.5px}
+  .tb small{font-size:12px}
+  .tbars.many{gap:3px}
+  .tbars.many .tb{flex-basis:30px}
+  .tbars.many .bar{width:14px;height:90px}
+  .tbars.many .gz{font-size:13.5px}
   .lg{font-size:13.5px}
   .sy .gz{font-size:19px}
   .layers{gap:10px}
@@ -682,7 +731,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-gw"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
-    <p class="sub">用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论</p>
+    <p class="sub">用神是一张盘里拿来作主的字。最上面是强弱和照扶抑取的喜用，下面几行各照一本书走一遍，不合成结论</p>
+    <div class="qs" id="qs"></div>
     <div class="kvs" id="kv2"></div>
     <div class="read" id="rd-ys"></div>
   </div>
@@ -754,20 +804,9 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-gt"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
-    <p class="sub">选中的大运、流年、流月、流日各带来多少分，加上以后两组分数怎么变；下面是它们各是日主的什么十神</p>
+    <p class="sub">每一柱带来的 13 分里，喜用的五行占几分。下面的表是选中的四层各带来的分数，最后是它们各是日主的什么十神</p>
     <p class="lg" id="sy-lg"></p>
-    <h3>从原局加到选中的四层 <small>每一条是累计到这一层的五行分数</small></h3>
-    <div class="sybar" id="sy-bars"></div>
-    <div class="duo">
-      <div class="pane">
-        <h3>八步大运 <small>每一步自己带来的 13 分</small></h3>
-        <div class="sycol" id="sy-dy" role="group" aria-label="八步大运各带来的分数"></div>
-      </div>
-      <div class="pane">
-        <h3 id="h-syln"></h3>
-        <div class="sycol" id="sy-ln" role="group" aria-label="这步大运里各个流年带来的分数"></div>
-      </div>
-    </div>
+    <div class="trend" id="trend"></div>
     <p class="note" id="note-syfig"></p>
     <div class="tablewrap">
       <table class="gods sy">
