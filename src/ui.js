@@ -167,14 +167,14 @@ function renderPerson(){
   const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k)), quad=quadItems(), inQuad=['日主','阴阳'];
   const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
   $('kv').innerHTML=dl(quad)+dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
-  $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut));
+  $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut).filter(r=>r.k!=='强弱计分'));      // 强弱计分画成了这一页最上面的卡片（renderQs）
   $('h-gods-s').textContent=`以${DMN}为原点；个数连地支里藏的天干一起数，不算日主自己`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderBars();renderGods();renderGw();renderDynamic();
+  renderBars();renderGods();renderGw();renderQs();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -228,9 +228,10 @@ function renderYunRead(){
     ['流年',yearGZ(sel.y),`${sel.y} 年 · ${sel.y-P.clock[0]+1} 岁`],
     ['流月',monthGZ(sel.y,sel.m),`${JIE[sel.m]} ${jieMD(sel.y)[sel.m]} 起`],
     ['流日',dayGZ(sel.d),`${new Date(sel.d).getUTCFullYear()} 年 ${mdText(sel.d)}`]];
-  const say=gz=>{
-    const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h);
-    return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`);
+  const x=xiNow(), say=gz=>{
+    const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h), v=xiPillar(gz).score;
+    return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`)
+      +(x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里${GRP[0]}加${GRP[4]}占 ${v} 分。`);
   };
   $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
 }
@@ -346,24 +347,51 @@ function renderGw(){
     +row('五行能量',c=>`${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>${GRP[0]}加${GRP[4]} ${c.nl.help} 分，其余 ${c.nl.rest} 分<span class="stkw" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>`)
     +'</tbody></table>';
 }
-/* 大运流年一页的计分表（nlLayers）：一行一层，原局、大运、流年、流月、流日，最后是合计。外来的四层写成加号 */
+/* 大运流年一页。上面四排柱子：八步大运、选中这步大运里的各年、选中这一年的十二个月、选中这个月的每一天。
+   柱子的高低是这一柱带来的 13 分里喜用占几分（xiPillar）；不定喜用时画比劫加印绶。柱子是按钮，点了就换到那一步、那一年、那个月、那一天。
+   下面是选中的四层各带来多少分的表（nlLayers）：一行一层，最后是合计。外来的四层写成加号。总数对谁都一样，所以表里不列每一层的合计 */
 function renderSy(){
-  const L=nlLayers(), de=gEl(DM), se=(de+4)%5, n=(v,plus)=>(plus?'+':'')+v;
-  $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">合计</th><th scope="col">${GRP[0]}加${GRP[4]}<small>${EL[de]}、${EL[se]}</small></th><th scope="col">${GRP[1]}、${GRP[2]}、${GRP[3]}<small>其余三行</small></th><th scope="col">加到这一层<small>${GRP[0]}加${GRP[4]}占</small></th></tr>`;
-  const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.total,plus)}</td><td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
+  const L=nlLayers(), x=xiNow(), de=gEl(DM), se=(de+4)%5, n=(v,plus)=>(plus?'+':'')+v;
+  const want=x.xi||[se,de], mark=g=>x.xi&&g.every(e=>x.xi.includes(e))?' · 喜用':'';
+  $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">${GRP[0]}加${GRP[4]}<small>${EL[de]}、${EL[se]}${mark([se,de])}</small></th><th scope="col">${GRP[1]}、${GRP[2]}、${GRP[3]}<small>其余三行${mark([(de+1)%5,(de+2)%5,(de+3)%5])}</small></th><th scope="col">加到这一层<small>${GRP[0]}加${GRP[4]}占</small></th></tr>`;
+  const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
-  // 图。图例：五行的先后和图里的相同，后面是这一类十神的合称
-  $('sy-lg').innerHTML=nlOrder().map((e,j)=>`<span class="${ELC[e]}"><i></i>${EL[e]} ${GRP[(e-de+5)%5]}</span>`).join('');
-  // 横条：从原局累计到每一层的五行分数
-  let acc=[0,0,0,0,0];
-  $('sy-bars').innerHTML=L.rows.map((r,i)=>{acc=acc.map((v,e)=>v+r.sum[e]);
-    return `<span class="lb">${i?(i===1?'加上':'再加')+r.k:'原局'}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</span>${stk(acc)}<span class="tx">${acc.reduce((a,b)=>a+b,0)} 分 · ${GRP[0]}加${GRP[4]} ${r.acc}</span>`;}).join('');
-  // 柱子：八步大运、这步大运里的各个流年，各自带来的 13 分。是按钮，点了就换到那一步、那一年
-  const Y=nlYun(), col=(x,attr,on,top)=>`<button type="button" class="c" ${attr} aria-pressed="${on}"><small>${top}</small>${stk(x.sum,'v')}<span class="gz">${gzSpan(x.gz)}</span><span class="hp">+${x.help}</span></button>`;
-  $('sy-dy').innerHTML=Y.dy.map(x=>col(x,`data-dy="${x.i}"`,x.i===sel.dy,x.y0)).join('');
-  $('sy-ln').innerHTML=Y.ln.map(x=>col(x,`data-y="${x.y}"`,x.y===sel.y,x.y)).join('');
-  $('h-syln').innerHTML=`${P.dayun[sel.dy].gz}运里的流年 <small>每一年自己带来的 13 分</small>`;
+  // 图例：算进柱子的几种五行
+  $('sy-lg').innerHTML=(x.xi?`${xb('x','xi','喜用（扶抑）')}`:`不定喜用，柱子画${GRP[0]}加${GRP[4]}`)+want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span>';
+  const d=P.dayun[sel.dy], ys=[]; for(let y=d.y0;y<=d.y1;y++) ys.push(y);
+  const bar=(gz,attr,on,top,label)=>{const v=xiPillar(gz);
+    const segs=want.filter(e=>v.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${v.sum[e]}"></i>`).join('');
+    return `<button type="button" class="tb" ${attr} aria-pressed="${on}" aria-label="${label}${gz}，${x.xi?'喜用':GRP[0]+'加'+GRP[4]} ${v.score} 分"><b class="v">${v.score}</b><span class="bar"><span class="fill" style="height:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><span class="gz">${gzSpan(gz)}</span><small>${top}</small></button>`;};
+  const rows=[
+    ['八步大运',P.dayun.map((v,i)=>bar(v.gz,`data-dy="${i}"`,i===sel.dy,String(v.y0),`${v.y0} 年起的大运`))],
+    [`${d.gz}运的${cn(ys.length)}年`,ys.map(y=>bar(yearGZ(y),`data-y="${y}"`,y===sel.y,String(y),`${y} 年`))],
+    [`${sel.y} ${yearGZ(sel.y)}年的十二个月`,[...Array(12).keys()].map(m=>bar(monthGZ(sel.y,m),`data-m="${m}"`,m===sel.m,JIE[m],`${JIE[m]}起的一个月`))],
+    [`${monthGZ(sel.y,sel.m)}月的每一天`,monthDays(sel.y,sel.m).map(t=>bar(dayGZ(t),`data-d="${t}"`,t===sel.d,String(new Date(t).getUTCDate()),mdText(t)+' '))]];
+  $('trend').innerHTML=rows.map(([h,bs],i)=>`<div class="tr-row"><h3>${h}</h3><div class="tbars${i===3?' many':''}" role="group" aria-label="${h}">${bs.join('')}</div></div>`).join('');
   $('note-syfig').textContent=noteSyFig();
+}
+/* 用神一页最上面的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
+function renderQs(){
+  const r=qsOf(DM,NATAL), pt=qsParts(DM,NATAL), x=xiNow(), de=gEl(DM), se=(de+4)%5, W=r.total, pos=v=>(v/W*100).toFixed(2)+'%';
+  const fill=[se,de].filter(e=>r.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${r.sum[e]}"></i>`).join('');
+  const gauge=`<div class="qg" role="img" aria-label="${GRP[0]}加${GRP[4]} ${r.help} 分，满分 ${W} 分；25 分以下身弱，30 分以上身强">`
+    +`<span class="qg-v" style="left:${pos(r.help)}">${r.help} 分</span>`
+    +`<div class="qg-bar"><span class="qg-fill" style="width:${pos(r.help)}">${fill}</span><i class="qg-tk" style="left:${pos(25)}"></i><i class="qg-tk" style="left:${pos(30)}"></i></div>`
+    +`<div class="qg-ax"><span style="left:0">0</span><span style="left:${pos(25)}">25</span><span style="left:${pos(30)}">30</span><span style="left:100%">${W}</span></div>`
+    +`<div class="qg-zone" style="grid-template-columns:25fr 5fr ${W-30}fr"><span>身弱</span><span></span><span>身强</span></div></div>`;
+  const tile=(k,v,sub)=>`<div class="qt"><span>${k}</span><b>${v} 分</b><small>${sub}</small></div>`;
+  const els=a=>a.map(e=>`<span class="${ELC[e]}">${EL[e]}</span>`).join('');
+  const rule=`按${JXF}的计分：${GRP[0]}加${GRP[4]}在 30 分以上算身强，25 分以下算身弱`
+    +(r.help===25?`；正好 25 分时看月支，${r.mHelp?'月支帮着日主，算身强':'月支不帮日主，算身弱'}`:r.tier==='间'?'；中间这一段书里没有说':'');
+  $('qs').innerHTML=`<div class="qs-dm"><span>日主</span><b class="${gCls(DM)}">${DM}</b><small>${yy(DM)}${EL[de]}</small></div>`
+    +`<div class="qs-main">`
+    +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱未定'})[r.tier]}</b><span>${GRP[0]}加${GRP[4]} ${r.help} 分，满分 ${W} 分</span></div>`
+    +`<p class="sub">${rule}</p>${gauge}`
+    +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`)}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
+    +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
+    +`<div class="qx-row">`+(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>忌</span><b>${els(x.ji)}</b></div>`
+      :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b><small>强弱在两条线之间，扶抑取不了</small></div>`)+`</div>`
+    +`</div>`;
 }
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);

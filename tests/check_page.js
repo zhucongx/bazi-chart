@@ -181,10 +181,20 @@ console.log('五行能量和强弱计分');
     const tier = help >= 30 ? '强' : help > 25 ? '间' : help === 25 && mHelp ? '强' : '弱';
     const q = JSON.parse(ev(`JSON.stringify(qsOf(${JSON.stringify(dm)},${JSON.stringify(mkCols(ps))}))`));
     if (q.help !== help || q.rest !== 60 - help || q.tier !== tier || q.mHelp !== mHelp) bad.push([ps.join(' '), '强弱计分', q, { help, tier, mHelp }]);
+    // 强弱拆开：日主自己 5 分，月支（加倍）、另外三个地支、三个天干里的比劫和印，四块加起来就是 help
+    const ok = e => e === elG(dm) || e === (elG(dm) + 4) % 5;
+    let yue = 0, zhi = 0, gan = 0;
+    ps.forEach((x, i) => { if (i !== 2 && ok(elG(x[0]))) gan += 5; Object.entries(asMap(TABLE[x[1]])).forEach(([h, n]) => { if (ok(elG(h))) { if (i === 1) yue += n * 2; else zhi += n; } }); });
+    const pt = JSON.parse(ev(`JSON.stringify(qsParts(${JSON.stringify(dm)},${JSON.stringify(mkCols(ps))}))`));
+    if (pt.self !== 5 || pt.yue !== yue || pt.zhi !== zhi || pt.gan !== gan || 5 + yue + zhi + gan !== help) bad.push([ps.join(' '), '拆开', pt, { yue, zhi, gan }]);
+    // 扶抑喜用：身弱取印和比劫，身强取另外三行，26 到 29 分不定
+    const de0 = elG(dm), xiWant = tier === '弱' ? [(de0 + 4) % 5, de0] : tier === '强' ? [(de0 + 1) % 5, (de0 + 2) % 5, (de0 + 3) % 5] : null;
+    const xi = JSON.parse(ev(`JSON.stringify(xiOf(${JSON.stringify(dm)},${JSON.stringify(mkCols(ps))}))`));
+    if (JSON.stringify(xi.xi) !== JSON.stringify(xiWant)) bad.push([ps.join(' '), '喜用', xi, xiWant]);
     const kind = help >= 30 ? '30 分以上' : help > 25 ? '26 到 29 分' : help === 25 ? (mHelp ? '25 分、月支帮日主' : '25 分、月支不帮') : '25 分以下';
     seen[kind] = (seen[kind] || 0) + 1;
   }
-  eq('4000 组随机的四柱：五行的分数和照表另算的一致，一共都是 60 分；强弱计分的归类和照文章的话另算的一致', bad.slice(0, 3), []);
+  eq('4000 组随机的四柱：五行的分数和照表另算的一致，一共都是 60 分；强弱计分的归类、拆开的四块、扶抑取的喜用，都和照书里的话另算的一致', bad.slice(0, 3), []);
   eq('随机的四柱里五种情形都碰到了：30 分以上、26 到 29 分、正好 25 分（月支帮和不帮）、25 分以下', ['30 分以上', '26 到 29 分', '25 分、月支帮日主', '25 分、月支不帮', '25 分以下'].filter(k => !seen[k]), []);
 }
 
@@ -433,7 +443,7 @@ people.forEach((id, pi) => {
   eq('每个标签对着自己的那一页，里面的东西各归各位', [['tk', 'kv'], ['wx', 'bars'], ['gods', 'gods'], ['lq', 'liuqin'], ['gw', 'gwmap'], ['ys', 'kv2'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap'], ['sy', 'sy']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
   // 日主那一页：最上面四项（日主属性、阴阳参考就是「日主」「阴阳」两行；旺衰参考、格局参考是用神那一页的一句话），下面是根、印、月令透干
   const inBox = (box, k) => !!$(box).querySelector(`[data-x="kv|${k}"]`), kvNames = [...$('kv').querySelectorAll('dt')].map(txt);
-  eq('日主那一页最上面是日主属性、阴阳参考、旺衰参考、格局参考四项，下面有根、印、月令透干；各家的五行在用神那一页', [kvNames.slice(0, 4), ['日主', '阴阳', '强弱参考', '格局参考'].map(k => inBox('kv', k)), ['根', '印', '月令透干'].every(k => kvNames.includes(k)), ['强弱参考', '强弱计分', '格局参考', '调候参考', '三行对照'].map(k => inBox('kv2', k)), d.querySelectorAll('#kv dt, #kv2 dt').length], [['日主属性', '阴阳参考', '旺衰参考', '格局参考'], [true, true, true, true], true, [true, true, true, true, true], ev('kvRows().length') + 2]);
+  eq('日主那一页最上面是日主属性、阴阳参考、旺衰参考、格局参考四项，下面有根、印、月令透干；各家的几行在用神那一页，强弱计分画成那一页最上面的卡片', [kvNames.slice(0, 4), ['日主', '阴阳', '强弱参考', '格局参考'].map(k => inBox('kv', k)), ['根', '印', '月令透干'].every(k => kvNames.includes(k)), ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => inBox('kv2', k)), inBox('qs', '强弱计分'), inBox('kv2', '强弱计分'), d.querySelectorAll('#kv dt, #kv2 dt').length], [['日主属性', '阴阳参考', '旺衰参考', '格局参考'], [true, true, true, true], true, [true, true, true, true], true, false, ev('kvRows().length') + 1]);
   {
     // 四项里的话和它们指的那几行一致；阴阳照另算的结果
     const dds = Object.fromEntries([...$('kv').querySelectorAll('dt')].map(dt => [txt(dt), txt(dt.nextElementSibling)]));
@@ -452,8 +462,15 @@ people.forEach((id, pi) => {
     eq('五行能量：五行的分数加起来 60 分，页面上的分数、占比和合称都和另算的一致', [nums, nums.reduce((a, b) => a + b, 0), pcs, rowsNl.map(r => r.name + r.grp)], [sum, 60, sum.map(n => Math.round(n / 60 * 100) + '%'), ['木', '火', '土', '金', '水'].map((e, i) => e + GRPS[(i - de + 5) % 5])]);
     const parts = [0, 1, 2, 3, 4].map(i => { const p = JSON.parse(ev(`JSON.stringify(X('nl|${i}').p)`)).find(x => x[0] === '怎么加的')[1]; const ns = (p.match(/ (\d+) 分/g) || []).map(x => parseInt(x, 10)); return sum[i] ? ns.slice(0, -1).reduce((a, b) => a + b, 0) === sum[i] && ns[ns.length - 1] === sum[i] : /0 分/.test(p); });
     eq('五行能量：点开每一行，各笔加起来就是这一行的分数', parts, [true, true, true, true, true]);
-    const q = JSON.parse(ev('JSON.stringify(qsOf(DM,NATAL))')), dd = txt(byX('kv|强弱计分').closest('dt').nextElementSibling);
-    eq('强弱计分一行写的两组分数，就是五行能量里比劫加印绶、其余三类的分数', [q.help, q.rest, dd.includes(`比劫加印绶 ${q.help} 分`) && dd.includes(`${q.rest} 分`), dd.includes({ 强: '照它算身强', 弱: '照它算身弱', 间: '落在两条线之间' }[q.tier])], [sum[de] + sum[(de + 4) % 5], 60 - sum[de] - sum[(de + 4) % 5], true, true]);
+    // 强弱分析卡片：分数、归类、拆开的四块、每一笔、扶抑取的喜用和忌，都拿原局另算一遍
+    const se = (de + 4) % 5, ELN = ['木', '火', '土', '金', '水'], q = JSON.parse(ev('JSON.stringify(qsOf(DM,NATAL))'));
+    const ps4 = JSON.parse(ev('JSON.stringify(NATAL.map(p=>[p.g,p.z]))')), elOf = JSON.parse(ev('JSON.stringify(Object.fromEntries(G.split("").map(g=>[g,gEl(g)])))'));
+    const ok = e => e === de || e === se, part = { yue: 0, zhi: 0, gan: 0 }, items = [];
+    ps4.forEach(([g, z], i) => { if (i !== 2 && ok(elOf[g])) { part.gan += 5; items.push(5); } JSON.parse(ev(`JSON.stringify(nlOf(${JSON.stringify(z)}))`)).forEach(([h, n]) => { if (ok(elOf[h])) { const v = i === 1 ? n * 2 : n; if (i === 1) part.yue += v; else part.zhi += v; items.push(v); } }); });
+    const head = txt($('qs').querySelector('.qs-h')), tiles = [...$('qs').querySelectorAll('.qt b')].map(b => parseInt(txt(b), 10)), lis = [...$('qs').querySelectorAll('.qs-li li')].map(li => (txt(li).match(/(\d+) 分/) || [])[1]).filter(Boolean).map(Number);
+    eq('强弱分析：卡片上的分数就是五行能量里比劫加印绶的分数，归类照书里的线；日主自己、月支、另外三个地支、三个天干四块，和下面列的每一笔，都和另算的一致', [q.help, q.rest, head.includes(`比劫加印绶 ${q.help} 分`), head.includes({ 强: '身强', 弱: '身弱', 间: '强弱未定' }[q.tier]), tiles, tiles.reduce((a, b) => a + b, 0), lis], [sum[de] + sum[se], 60 - sum[de] - sum[se], true, true, [5, part.yue, part.zhi, part.gan], sum[de] + sum[se], items]);
+    const restEls = [(de + 1) % 5, (de + 2) % 5, (de + 3) % 5], xiWant = q.tier === '弱' ? [se, de] : q.tier === '强' ? restEls : null;
+    eq('强弱分析：扶抑取的喜用，身弱是印和比劫，身强是食伤、财、官杀，在两条线之间不定；卡片上的喜用和忌和另算的一致', [JSON.parse(ev('JSON.stringify(xiNow().xi)')), [...$('qs').querySelectorAll('.qx b')].map(txt)], [xiWant, xiWant ? [xiWant.map(e => ELN[e]).join(''), (q.tier === '弱' ? restEls : [se, de]).map(e => ELN[e]).join('')] : ['不定']]);
     // 十神表第一列的合称
     const first = [...d.querySelectorAll('#gods tr')].map(tr => txt(tr.cells[0]));
     eq('十神表的第一列在五种关系后面写着合称，点开的标题里有它包含的两个十神', [first, GRPS.map((g, i) => ev(`X('grp|${i}').t`))], [['同我', '我生', '我克', '克我', '生我'].map((r, i) => r + GRPS[i]), ['比劫 · 比肩和劫财', '食伤 · 食神和伤官', '财才 · 正财和偏财', '官杀 · 正官和七杀', '印绶 · 正印和偏印']]);
@@ -498,37 +515,49 @@ people.forEach((id, pi) => {
     const lay = layers.map(([k, g, z]) => { const sum = [0, 0, 0, 0, 0]; sum[elOf[g]] += 5; JSON.parse(ev(`JSON.stringify(nlOf(${JSON.stringify(z)}))`)).forEach(([h, n]) => { sum[elOf[h]] += n; }); return { k, gz: g + z, sum }; });
     const nat = [0, 1, 2, 3, 4].map(e => nlWant.reduce((a, s) => a + s[e], 0)), all = [{ k: '原局', gz: '', sum: nat }].concat(lay);
     let accH = 0, accT = 0;
-    const syWant = all.map((r, i) => { const t = r.sum.reduce((a, b) => a + b, 0), h = r.sum[de] + r.sum[se], p = i ? '+' : ''; accH += h; accT += t; return [r.k + r.gz].concat(r.sum.map(v => v ? p + v : ''), [p + t, p + h, p + (t - h), Math.round(accH / accT * 100) + '%']); });
+    const syWant = all.map((r, i) => { const t = r.sum.reduce((a, b) => a + b, 0), h = r.sum[de] + r.sum[se], p = i ? '+' : ''; accH += h; accT += t; return [r.k + r.gz].concat(r.sum.map(v => v ? p + v : ''), [p + h, p + (t - h), Math.round(accH / accT * 100) + '%']); });
     const totS = [0, 1, 2, 3, 4].map(e => all.reduce((a, r) => a + r.sum[e], 0)), totT = totS.reduce((a, b) => a + b, 0), totH = totS[de] + totS[se];
-    syWant.push(['合计'].concat(totS.map(v => v ? String(v) : ''), [String(totT), String(totH), String(totT - totH), Math.round(totH / totT * 100) + '%']));
-    eq('大运流年：原局、大运、流年、流月、流日各带来的分数，累计的占比和合计，都和照分值另算的一致；外来的四层每层 13 分', [[...$('sy').rows].map(tr => [...tr.cells].map(txt)), lay.every(r => r.sum.reduce((a, b) => a + b, 0) === 13)], [syWant, true]);
+    syWant.push(['合计'].concat(totS.map(v => v ? String(v) : ''), [String(totH), String(totT - totH), Math.round(totH / totT * 100) + '%']));
+    eq('大运流年：原局、大运、流年、流月、流日各带来的分数，两组分数和累计的占比，都和照分值另算的一致；外来的四层每层 13 分，表里不列每层的合计', [[...$('sy').rows].map(tr => [...tr.cells].map(txt)), lay.every(r => r.sum.reduce((a, b) => a + b, 0) === 13), [...$('sy-h').querySelectorAll('th')].length], [syWant, true, 9]);
     eq('大运流年：每一行点开，「怎么加的」里各笔加起来就是这一行的合计', layers.map(([k]) => { const r = JSON.parse(ev(`JSON.stringify(X('nly|${k}'))`)), ns = (r.p.find(x => x[0] === '怎么加的')[1].match(/ (\d+) 分/g) || []).map(x => parseInt(x, 10)); return ns.slice(0, -1).reduce((a, b) => a + b, 0) === 13 && ns[ns.length - 1] === 13 && /带来的分数 · 13 分$/.test(r.t); }), [true, true, true, true]);
     // 图：每一段是一种五行，长短照分数（flex 的值），先后是印绶、比劫、食伤、财才、官杀；比劫加印绶和后面三行之间留一道缝
     const ELCN = ['wood', 'fire', 'earth', 'metal', 'water'], order = [se, de, (de + 1) % 5, (de + 2) % 5, (de + 3) % 5];
     const segs = el => [...el.querySelectorAll('i')].filter(i => !i.classList.contains('tk')).map(i => [ELCN.find(c => i.classList.contains(c)), +(i.getAttribute('style').match(/flex:(\d+)/) || [])[1], i.classList.contains('gap')]);
     const segWant = sum => { let helped = false, gapped = false; return order.map((e, j) => { if (!sum[e]) return null; const gap = j >= 2 && helped && !gapped; if (j < 2) helped = true; if (gap) gapped = true; return [ELCN[e], sum[e], gap]; }).filter(Boolean); };
-    let cum = [0, 0, 0, 0, 0]; const cumWant = all.map(r => { cum = cum.map((v, e) => v + r.sum[e]); return cum.slice(); });
-    eq('大运流年的图：五条横条是从原局累计到每一层的五行分数，每一段的长短和先后都照分数', [[...$('sy-bars').querySelectorAll('.stk')].map(segs), [...$('sy-bars').querySelectorAll('.tx')].map(txt)], [cumWant.map(segWant), cumWant.map((c, i) => { const t = c.reduce((a, b) => a + b, 0); return `${t} 分 · 比劫加印绶 ${Math.round((c[de] + c[se]) / t * 100)}%`; })]);
+    // 四排柱子：八步大运、这步大运里的各年、这一年的十二个月、这个月的每一天。柱子的高低是这一柱 13 分里喜用（不定时是比劫加印绶）的分数
     const pillarSum = gz => { const sum = [0, 0, 0, 0, 0]; sum[elOf[gz[0]]] += 5; JSON.parse(ev(`JSON.stringify(nlOf(${JSON.stringify(gz[1])}))`)).forEach(([h, n]) => { sum[elOf[h]] += n; }); return sum; };
-    const dys = JSON.parse(ev('JSON.stringify(P.dayun.map(d=>[d.gz,d.y0,d.y1]))')), sdy = ev('sel.dy'), sy0 = ev('sel.y');
-    const colOf = b => ({ seg: segs(b.querySelector('.stk')), gz: txt(b.querySelector('.gz')), hp: txt(b.querySelector('.hp')), top: txt(b.querySelector('small')), on: b.getAttribute('aria-pressed') === 'true' });
-    eq('大运流年的图：八步大运一步一根柱子，每根 13 分，下面的数字是归比劫加印绶的分数，选中的是现在这一步', [...$('sy-dy').querySelectorAll('.c')].map(colOf), dys.map(([gz, y0], i) => { const sum = pillarSum(gz); return { seg: segWant(sum), gz, hp: '+' + (sum[de] + sum[se]), top: String(y0), on: i === sdy }; }));
+    const tier = ev('qsOf(DM,NATAL).tier'), want = tier === '弱' ? [se, de] : tier === '强' ? [(de + 1) % 5, (de + 2) % 5, (de + 3) % 5] : [se, de];
+    const dys = JSON.parse(ev('JSON.stringify(P.dayun.map(d=>[d.gz,d.y0,d.y1]))')), sdy = ev('sel.dy'), sy0 = ev('sel.y'), sm0 = ev('sel.m'), sd0 = ev('sel.d');
+    const barOf = b => ({ v: txt(b.querySelector('.v')), seg: [...b.querySelectorAll('.fill i')].map(i => [ELCN.find(c => i.classList.contains(c)), +(i.getAttribute('style').match(/flex:(\d+)/) || [])[1]]), h: b.querySelector('.fill').getAttribute('style'), gz: txt(b.querySelector('.gz')), top: txt(b.querySelector('small')), on: b.getAttribute('aria-pressed') === 'true' });
+    const barWant = (gz, top, on) => { const s = pillarSum(gz), v = want.reduce((a, e) => a + s[e], 0); return { v: String(v), seg: want.filter(e => s[e]).map(e => [ELCN[e], s[e]]), h: `height:${(v / 13 * 100).toFixed(1)}%`, gz, top, on }; };
+    const trRow = i => [...$('trend').querySelectorAll('.tbars')[i].querySelectorAll('.tb')];
     const years = []; for (let y = dys[sdy][1]; y <= dys[sdy][2]; y++) years.push(y);
-    eq('大运流年的图：这步大运里一年一根柱子，选中的是现在这一年', [...$('sy-ln').querySelectorAll('.c')].map(colOf), years.map(y => { const gz = ev(`yearGZ(${y})`), sum = pillarSum(gz); return { seg: segWant(sum), gz, hp: '+' + (sum[de] + sum[se]), top: String(y), on: y === sy0 }; }));
-    // 点柱子就换到那一步大运、那一年，和点选择器一样
+    const days = JSON.parse(ev('JSON.stringify(monthDays(sel.y,sel.m))'));
+    eq('大运流年的柱子：四排，依次是八步大运、这步大运里的各年、这一年的十二个月、这个月的每一天', [$('trend').querySelectorAll('.tbars').length, trRow(0).length, trRow(1).length, trRow(2).length, trRow(3).length], [4, dys.length, years.length, 12, days.length]);
+    eq('大运流年的柱子：八步大运一步一根，柱子的高低是这一柱 13 分里喜用的分数，选中的是现在这一步', trRow(0).map(barOf), dys.map(([gz, y0], i) => barWant(gz, String(y0), i === sdy)));
+    eq('大运流年的柱子：这步大运里一年一根，选中的是现在这一年', trRow(1).map(barOf), years.map(y => barWant(ev(`yearGZ(${y})`), String(y), y === sy0)));
+    eq('大运流年的柱子：这一年的十二个月一月一根，下面写着这个月从哪个节起，选中的是现在这个月', trRow(2).map(barOf), [...Array(12).keys()].map(m => barWant(ev(`monthGZ(${sy0},${m})`), ev(`JIE[${m}]`), m === sm0)));
+    eq('大运流年的柱子：这个月一天一根，选中的是现在这一天', trRow(3).map(barOf), days.map(t => barWant(ev(`dayGZ(${t})`), String(new Date(t).getUTCDate()), t === sd0)));
+    // 点柱子就换到那一步大运、那一年、那个月、那一天，和点选择器一样
     const otherDy = (sdy + 1) % dys.length;
-    click($('sy-dy').querySelectorAll('.c')[otherDy]);
-    const afterDy = [ev('sel.dy'), $('dayun').querySelector('[aria-pressed="true"]').dataset.dy, $('sy-dy').querySelector('[aria-pressed="true"]').dataset.dy];
-    const lnBtns = [...$('sy-ln').querySelectorAll('.c')], pickY = lnBtns[lnBtns.length - 1].dataset.y;
-    click(lnBtns[lnBtns.length - 1]);
-    eq('大运流年的图：点柱子换大运、换流年，选择器和图上选中的一起变', [afterDy, [String(ev('sel.y')), $('liunian').querySelector('[aria-pressed="true"]').dataset.y, $('sy-ln').querySelector('[aria-pressed="true"]').dataset.y]], [[otherDy, String(otherDy), String(otherDy)], [pickY, pickY, pickY]]);
-    click($('dayun').querySelector(`[data-dy="${sdy}"]`)); click($('liunian').querySelector(`[data-y="${sy0}"]`));
+    click(trRow(0)[otherDy]);
+    const afterDy = [ev('sel.dy'), $('dayun').querySelector('[aria-pressed="true"]').dataset.dy, trRow(0).find(b => b.getAttribute('aria-pressed') === 'true').dataset.dy];
+    const pickY = trRow(1)[trRow(1).length - 1].dataset.y; click(trRow(1)[trRow(1).length - 1]);
+    const afterY = [String(ev('sel.y')), $('liunian').querySelector('[aria-pressed="true"]').dataset.y, trRow(1).find(b => b.getAttribute('aria-pressed') === 'true').dataset.y];
+    click(trRow(2)[3]);
+    const afterM = [String(ev('sel.m')), $('liuyue').querySelector('[aria-pressed="true"]').dataset.m, trRow(2).find(b => b.getAttribute('aria-pressed') === 'true').dataset.m];
+    const pickD = trRow(3)[1].dataset.d; click(trRow(3)[1]);
+    const afterD = [String(ev('sel.d')), $('liuri').querySelector('[aria-pressed="true"]').dataset.d, trRow(3).find(b => b.getAttribute('aria-pressed') === 'true').dataset.d];
+    eq('大运流年的柱子：点柱子换大运、流年、流月、流日，选择器和柱子上选中的一起变', [afterDy, afterY, afterM, afterD], [[otherDy, String(otherDy), String(otherDy)], [pickY, pickY, pickY], ['3', '3', '3'], [pickD, pickD, pickD]]);
+    click($('dayun').querySelector(`[data-dy="${sdy}"]`)); click($('liunian').querySelector(`[data-y="${sy0}"]`)); click($('liuyue').querySelector(`[data-m="${sm0}"]`));
+    if ($('liuri').querySelector(`[data-d="${sd0}"]`)) click($('liuri').querySelector(`[data-d="${sd0}"]`));
+    eq('大运流年的柱子：换回原来选中的那一天以后，四层都和一开始一样', [ev('sel.dy'), ev('sel.y'), ev('sel.m'), ev('sel.d')], [sdy, sy0, sm0, sd0]);
     // 强弱计分的条：原局的 60 分，两道竖线在 25 分和 30 分；宫位每一柱的小条照这一柱的分数
-    const qw = $('kv2').querySelector('.qsw');
-    eq('强弱计分的条：各段是原局五行的分数，两道竖线在 60 分里的 25 分和 30 分', [segs(qw.querySelector('.stk')), [...qw.querySelectorAll('.tk')].map(t => t.getAttribute('style') + ' ' + txt(t))], [segWant(nat), ['left:41.67% 25', 'left:50.00% 30']]);
+    const qg = $('qs').querySelector('.qg'), hp = nat[de] + nat[se], w = (hp / 60 * 100).toFixed(2) + '%';
+    eq('强弱计分的条：涂色到这张盘的分数，两段是印和比劫各自的分数；两道竖线在 60 分里的 25 分和 30 分；分数标在涂色的末端', [qg.querySelector('.qg-fill').getAttribute('style'), [...qg.querySelectorAll('.qg-fill i')].map(i => [ELCN.find(c => i.classList.contains(c)), +(i.getAttribute('style').match(/flex:(\d+)/) || [])[1]]), [...qg.querySelectorAll('.qg-tk')].map(t => t.getAttribute('style')), qg.querySelector('.qg-v').getAttribute('style') + ' ' + txt(qg.querySelector('.qg-v'))], [`width:${w}`, [se, de].filter(e => nat[e]).map(e => [ELCN[e], nat[e]]), ['left:41.67%', 'left:50.00%'], `left:${w} ${hp} 分`]);
     eq('宫位里每一柱的小条：各段照这一柱的分数，条的宽度照这一柱的合计（月柱 21 分最宽）', rowOf('五行能量').map(td => [segs(td.querySelector('.stk')), td.querySelector('.stkw').getAttribute('style')]), nlWant.map(s2 => [segWant(s2), `width:${Math.round(s2.reduce((a, b) => a + b, 0) / 21 * 100)}%`]));
   }
-  const fixed = ['meta', 'meta-yun', 'kv', 'kv2', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  const fixed = ['meta', 'meta-yun', 'kv', 'kv2', 'qs', 'trend', 'sy-lg', 'note-syfig', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
