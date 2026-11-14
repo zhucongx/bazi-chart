@@ -120,6 +120,12 @@ function setTab(card,id,focus){
   }
   reveal();
 }
+/* 浅色、深色：默认跟着系统；点了右上角的按钮就换成另一种，记在 localStorage 的 bz-theme 里，读写包在 try/catch 里 */
+const darkNow=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);};
+function setTheme(t){
+  if(t) document.documentElement.dataset.theme=t;
+  const next=darkNow()?'浅色':'深色', b=$('theme'); b.setAttribute('aria-label','换成'+next); b.title='换成'+next;
+}
 function setRead(on){
   document.documentElement.dataset.read=on?'on':'off';
   $('rd').setAttribute('aria-pressed',String(on));
@@ -605,6 +611,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.id==='sheet-x'){closeSheet();return;}
   if(b.id==='pp-add'){openForm(null);return;}
@@ -658,6 +665,8 @@ document.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
 
+let themeSaved=''; try{themeSaved=localStorage.getItem('bz-theme')||'';}catch(e){}
+setTheme(themeSaved==='light'||themeSaved==='dark'?themeSaved:'');
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
 try{const t=(localStorage.getItem('bz-tabs')||'').split(',');if(TABS.natal.includes(t[0])) sel.tab.natal=t[0];if(TABS.pan.includes(t[1])) sel.tab.pan=t[1];}catch(e){}
