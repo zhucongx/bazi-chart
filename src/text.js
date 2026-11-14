@@ -752,7 +752,7 @@ function readGods(){
   have.forEach(g=>{(grp[c[g]]=grp[c[g]]||[]).push(g);});
   const byN=Object.keys(grp).map(Number).sort((a,b)=>b-a).map(k=>grp[k].length>1?`${grp[k].join('、')}各 ${k} 个`:`${grp[k][0]} ${k} 个`).join('，');
   return box('解读',`<ul class="cols">${lis([
-    '十神是五种五行关系（同我、我生、我克、克我、生我）各按阴阳是否相同分成两个，一共十个。它们是八字里通用的词汇，后面所有的判断都用它们来说。',
+    '十神是五种五行关系（同我、我生、我克、克我、生我）各按阴阳是否相同分成两个，一共十个。它们是八字里通用的词汇，别的版块都用它们来说。',
     `这张盘上十个里出现了${cn(have.length)}个`+(miss.length?`，缺${miss.join('、')}`:'')+`。露在天干上的是${[...new Set(stems)].map(g=>god(g)+g).join('、')}，其余都藏在地支里。`,
     `按个数，${byN}。点表里的名字看每个十神的传统读法。`,
     '十神还被拿来配亲属，叫六亲，配法出自《渊海子平》。生日主的正印是母亲；母亲的丈夫是偏财，所以偏财是父亲；男命以所克的财为妻，以克自己的正官、七杀为子女；女命以正官为夫，以所生的食神、伤官为子女。近代的《千里命稿》另有一套配法：父母都看印，子女不分男女命都看食神和伤官。点表里的名字可以看原文。这些是分类的办法，不能据此对具体的人下判断。'])}</ul>`);
@@ -765,7 +765,7 @@ function footItems(){
     '标着「典籍」的引文出自《滴天髓》《穷通宝鉴》《渊海子平》《子平真诠》《三命通会》《协纪辨方书》《神峰通考》，每一句都对着所据的本子逐字核对过。各本常有异文，这里照所据的本子。',
     '八字是一套传统的符号推演体系，没有可靠证据表明它能预测人生。'];
 }
-/* 生克图：原局相邻的十处，按五行看谁生谁克。
+/* 干支关系图中间的生克：相邻的两个字，按五行看谁生谁克。skPairs 是原局相邻的十处，图下面那句话数的就是它。
    skOf(a,b)：a、b 是五行的序号。返回 [同、生、克, 方向]：方向 1 是 a 作用于 b，-1 是 b 作用于 a，0 是同类。 */
 function skOf(a,b){const d=(b-a+5)%5;return d===0?['同',0]:d===1?['生',1]:d===2?['克',1]:d===3?['克',-1]:['生',-1];}
 function skPairs(){     // 三对左右相邻的天干、三对左右相邻的地支、四柱各自的干和支
@@ -778,7 +778,8 @@ function noteSK(){
   const ts=skPairs().map(([a,b])=>skOf(a,b)[0]), n=k=>ts.filter(x=>x===k).length;
   const {face}=wxCounts(), miss=[0,1,2,3,4].filter(i=>!face[i]);
   const links=[0,1,2,3,4].filter(i=>face[i]&&face[(i+1)%5]).map(i=>`${EL[i]}生${EL[(i+1)%5]}`);
-  return `相邻的十处里，相生 ${n('生')} 处，相克 ${n('克')} 处，同类 ${n('同')} 处。箭头从生或者克的一方指向另一方。`
+  return '中间那两行，相邻的两个字之间的小圈写着生、克或者同（同类），相生是实线，相克是虚线，线头的小尖从生或者克的一方指向另一方。都按五行算，地支用它自己的五行。前四列从流日到大运连成一串，原局四柱连成一串；它们对日主是生是克，看字上面和下面的十神。'
+    +`原局相邻的十处里，相生 ${n('生')} 处，相克 ${n('克')} 处，同类 ${n('同')} 处。`
     +(miss.length?`只看盘面八个字，缺${miss.map(i=>EL[i]).join('、')}；五行相生的五环里，两头都有字的是${links.length?links.join('、'):'零环'}。`:'只看盘面八个字，五行齐全，相生的五环（木生火、火生土、土生金、金生水、水生木）两头都有字。')
     +'排盘软件常把这些叫流通，还会打一个分数。打分的权重没有出处，这一页只列事实，不打分。';
 }
@@ -794,20 +795,8 @@ function noteLq(){
     +(P.gender?'':'书里讲女命时只另说了丈夫和子女，父亲、母亲和兄弟姐妹这里照男命的配法列。')
     +'近代的《千里命稿》另有一套配法。表里列的只是这套分类办法下的位置，不能据此说这张盘的主人和哪位亲属怎样。';
 }
-/* 页面最上面的一框：这张盘先看哪几件事。只列机械的事实，顺序和下面版块的顺序相同，每一条指到对应的版块 */
-function readKey(){
-  const de=gEl(DM), mz=NATAL[1].z, st=wxState(de), {cnt}=wxCounts();
-  const mx=Math.max(...cnt), mn=Math.min(...cnt), names=v=>[0,1,2,3,4].filter(i=>cnt[i]===v).map(i=>EL[i]).join('、');
-  const c=catCounts(), cm=Math.max(...c), top=CAT.filter((_,i)=>c[i]===cm);
-  return box('解读 · 这张盘先看什么',`<ol class="cols">${lis([
-    `<b>日主是<span class="${gCls(DM)}">${DMN}</span>。</b>日柱的天干代表这张盘的主人，其余的字都拿它当原点来看。它在<a href="#h-pan">四柱细盘</a>里日柱的天干那一格。`,
-    `<b>十神里${top.map(x=>x[0]).join('、')}最多。</b>别的字相对于${DMN}是什么，叫十神。按五类数，${top.length===1?`${top[0][0]}有 ${cm} 处，传统上读作${top[0][2]}`:`这几类各有 ${cm} 处`}。十个名字各是什么意思，见<a href="#h-gods">十神对照</a>。`,
-    (mx===mn?`<b>五行一样多，各 ${mx} 个。</b>`:`<b>五行里${names(mx)}最多，${names(mn)}最少。</b>`)+`连地支里藏的天干一起数，${[0,1,2,3,4].map(i=>`${EL[i]} ${cnt[i]}`).join('、')}。见<a href="#h-wx">五行</a>。`,
-    `<b>生在${mz}月，${EL[zEl(mz)]}当令。</b>月支叫月令，说的是出生的季节。${EL[de]}在这个月处在${st}的状态：${STATEX[st]}见<a href="#h-tk">日主</a>一栏。`])}</ol>`+
-    '<p>再往下，各家入手的地方不同。日主一栏后面几行各照一本书走一遍，页面把它们并列出来，不合成一个结论，也不往下判断好坏。</p>');
-}
 /* 解读框：notes.read 里有手写的就用手写的，没有就用上面按规则生成的 */
-const READS={key:readKey,pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods};
+const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods};
 function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slot]():h;}
 
 /* ---------- 点开的解释 ---------- */
@@ -826,9 +815,15 @@ function xRel(t,c,n,where,top,grp){
   const isG=grp==='g', ws=where.split('、'), chars=c.split('');
   const p=[['是什么',RT[t==='相冲'?(isG?'相冲g':'相冲z'):t]]];
   if(top===0){
-    const idx=ws[0].split('–').map(w=>'年月日时'.indexOf(w[0]));
-    const gap=idx.length===2?Math.abs(idx[0]-idx[1]):0;
-    p.push(['这一条',`在原局的${ws[0].replace(/–/g,'和')}之间。`+['','两柱紧挨着。','中间隔了一柱，作用打了折扣。','隔了两柱，作用很小。'][gap]]);
+    // 同一种关系在原局里可以不止一处（比如年干同时克月干和日干）。关系图上每一处是一条线，这里把几处都说到
+    const at=ws.map(w=>{
+      const idx=w.split('–').map(x=>'年月日时'.indexOf(x[0]));
+      const gap=idx.length===2?Math.abs(idx[0]-idx[1]):0;
+      return [w.replace(/–/g,'和')+'之间',['','两柱紧挨着','中间隔了一柱，作用打了折扣','隔了两柱，作用很小'][gap]];
+    });
+    p.push(['这一条',at.length===1
+      ?`在原局的${at[0][0]}。`+(at[0][1]?at[0][1]+'。':'')
+      :`原局里有${'零一两三四五六'[at.length]}处：`+at.map(x=>x[0]+(x[1]?'，'+x[1]:'')).join('；')+'。']);
   }else{
     const gz=layerGZ(top), inc=isG?gz[0]:gz[1];
     const others=chars.filter(ch=>ch!==inc);
@@ -859,8 +854,17 @@ function xRel(t,c,n,where,top,grp){
     }
   }
   if(d) p.push(['细节',d]);
-  const gods=[...new Set(chars)].map(ch=>isG?`${ch}是${ch===DM&&where.includes('日干')?'日主':god(ch)}`:`${ch}的本气${HID[ch][0]}是${godZ(ch)}`).join('，');
-  p.push(['涉及的十神',gods+'。']);
+  // 和日主同一个字的天干：在日干上的是日主，在别的位置上的是比肩。一条关系里两种位置都有时分开说
+  const godOf=ch=>{
+    if(!isG) return `${ch}的本气${HID[ch][0]}是${godZ(ch)}`;
+    if(ch!==DM) return `${ch}是${god(ch)}`;
+    const toks=[...new Set(where.split(/[、–]/))];
+    const stemAt=w=>/干$/.test(w)?NATAL.find(c=>c.k===w[0]).g:layerGZ(LAYER.indexOf(w))[0];
+    const others=toks.filter(w=>w!=='日干'&&stemAt(w)===ch);
+    if(top&&layerGZ(top)[0]===ch) others.unshift(LAYER[top]);
+    return !toks.includes('日干')?`${ch}是${god(ch)}`:!others.length?`${ch}是日主`:`${ch}在日干是日主，在${others.join('、')}是${god(ch)}`;
+  };
+  p.push(['涉及的十神',[...new Set(chars)].map(godOf).join('，')+'。']);
   if(top===0){
     const g=natalRelNote(t,c,n,grp), mine=note('rel',t+c);
     if(mine) p.push(['你的盘',mine]); else if(g) p.push(['这张盘',g]);

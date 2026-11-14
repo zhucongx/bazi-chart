@@ -138,7 +138,7 @@ function renderPerson(){
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
-  ['key','pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  ['pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
@@ -147,7 +147,8 @@ function renderPerson(){
   $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h"><span class="tag">进阶</span>各家从哪里入手找用神<small>用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论。</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
-  renderBars();renderGods();renderSK();renderDynamic();
+  $('note-sk').textContent=noteSK();
+  renderBars();renderGods();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -226,11 +227,14 @@ function renderRelations(){
   $('rel-lr').innerHTML=relChips(byLayer[4]);
   renderLinks(byLayer.flat());
 }
-/* 关系图：八柱横排，和细盘的列对齐。天干的关系画在上面，地支的画在下面。
-   每一组有关系的字是一条横线，各圈一个圈；线上面是关系的名字，同一组字有几种关系的（比如巳申同时是六合、相刑、相破）并排写在同一条线上。
-   互不重叠的几条排在同一行，原局的靠近干支，各层带来的往外排。
+/* 干支关系图：八柱横排，和细盘的列对齐。一张图里画两样东西。
+   中间是八柱的干支。相邻的两个字之间一条细线、一个小圈，圈里写生、克或者同，箭头从生或克的一方指向另一方（按五行，地支用它自己的五行）。
+   前四列（流日到大运）连成一串，原局四柱连成一串，两串之间不连；每一柱的干和支之间也标。
+   上面是天干之间的合、冲、克，下面是地支之间的合、冲、刑、害：每一组有关系的字是一条横线，各圈一个圈，线上面是关系的名字；
+   同一组字有几种关系的（比如巳申同时是六合、相刑、相破）并排写在同一条线上。互不重叠的几条排在同一行，原局的靠近干支，各层带来的往外排。
    每个名字和下面对应的小签是同一个解释（data-x 相同）。电脑上显示这张图，窄屏上显示小签。 */
 const LK_COL={流日:0,流月:1,流年:2,大运:3,年:4,月:5,日:6,时:7};
+const LK_GW=['祖辈','父母','自己 · 配偶','子女'];
 function renderLinks(all){
   const cs=cols();
   const pack=grp=>{
@@ -253,38 +257,38 @@ function renderLinks(all){
     });
     return {groups,n:rows.length};
   };
-  const g=pack('g'), z=pack('z'), head=g.n+1;
+  const g=pack('g'), z=pack('z'), R=g.n;      // 中间那一块占六行，从第 R+1 行起：列名、天干的十神、天干、干支之间、地支、地支的十神
   const link=(it,row,isG)=>{
     const k=it.b-it.a+1, he=it.rels.map(o=>HE_TYPES.includes(o.r.t));
-    const tone=he.every(Boolean)?'':he.some(Boolean)?' mix':' bad';       // 线的颜色：都是相合一类用蓝，都是冲刑害破克用棕，两样都有用灰
+    const tone=he.some(Boolean)?'':' bad';       // 线型：全是冲刑害破克的用虚线，只要有相合一类的就用实线
     return `<span class="lk${tone}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
       +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}" data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
       +'</span><span class="lk-l"></span>'
       +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)}" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';
   };
-  $('lkmap').innerHTML=
-    `<span class="lk-bg" style="grid-row:1/${g.n+z.n+4}"></span>`
-    +g.groups.map(it=>link(it,g.n-it.row,true)).join('')
-    +cs.map((c,i)=>`<span class="lk-h" style="grid-column:${i+2};grid-row:${head}">${c.dyn?c.k:c.k+'柱'}</span>`).join('')
-    +`<span class="lk-n" style="grid-row:${head+1}">天干</span>`+cs.map((c,i)=>`<b class="lk-c ${gCls(c.g)}" style="grid-column:${i+2};grid-row:${head+1}">${c.g}</b>`).join('')
-    +`<span class="lk-n" style="grid-row:${head+2}">地支</span>`+cs.map((c,i)=>`<b class="lk-c ${zCls(c.z)}" style="grid-column:${i+2};grid-row:${head+2}">${c.z}</b>`).join('')
-    +z.groups.map(it=>link(it,head+3+it.row,false)).join('');
-}
-/* 生克图：原局四柱，相邻的两个字之间标出谁生谁克。每一柱上面是宫位，干支旁边是十神 */
-const SK_GW=['祖辈','父母','自己 · 配偶','子女'];
-function renderSK(){
-  const badge=(a,b,v)=>{const [k,dir]=skOf(a,b), arrow=v?(dir>0?'↓':'↑'):(dir>0?'→':'←');
-    return `<span class="sk-b ${k==='生'?'sheng':k==='克'?'ke':'tong'}">${dir<0?`<i>${arrow}</i>`:''}${k==='同'?'同类':k}${dir>0?`<i>${arrow}</i>`:''}</span>`;};
-  let h='';
-  NATAL.forEach((p,i)=>{
-    const col=i*2+1, at=r=>`style="grid-column:${col};grid-row:${r}"`;
-    h+=`<span class="sk-h" ${at(1)}>${p.k}柱<small>${SK_GW[i]}</small></span><span class="sk-g" ${at(2)}>${p.day?'日主':god(p.g)}</span>`
-      +`<span ${at(3)}>${glyph('g',p)}</span><span ${at(4)}>${badge(gEl(p.g),zEl(p.z),true)}</span><span ${at(5)}>${glyph('z',p)}</span><span class="sk-g" ${at(6)}>${godZ(p.z)}</span>`;
-    if(i<3){const q=NATAL[i+1];
-      h+=`<span style="grid-column:${col+1};grid-row:3">${badge(gEl(p.g),gEl(q.g),false)}</span><span style="grid-column:${col+1};grid-row:5">${badge(zEl(p.z),zEl(q.z),false)}</span>`;}
+  // 相邻两个字之间的生克：a、b 是五行的序号。横的跨两列，竖的在一列里
+  const sk=(a,b,cls,style)=>{const [k,dir]=skOf(a,b);return `<span class="${cls} ${k==='生'?'sheng':k==='克'?'ke':'tong'}${dir<0?' rev':''}" style="${style}"><b>${k}</b></span>`;};
+  const dy=P.dayun[sel.dy], sub=[mdText(sel.d),jieMD(sel.y)[sel.m]+' 起',sel.y+' 年',dy.y0+'–'+dy.y1].concat(LK_GW);
+  let mid='';
+  cs.forEach((c,i)=>{
+    const col=`grid-column:${i+2}`;
+    mid+=`<span class="lk-h" style="${col};grid-row:${R+1}">${c.dyn?c.k:c.k+'柱'}<small>${sub[i]}</small></span>`
+      +`<span class="lk-g" style="${col};grid-row:${R+2}">${c.day?'日主':god(c.g)}</span>`
+      +`<span class="lk-cell" style="${col};grid-row:${R+3}">${xb('x lk-c '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}</span>`
+      +sk(gEl(c.g),zEl(c.z),'sk-y',`${col};grid-row:${R+4}`)
+      +`<span class="lk-cell" style="${col};grid-row:${R+5}">${xb('x lk-c '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`
+      +`<span class="lk-g" style="${col};grid-row:${R+6}">${godZ(c.z)}</span>`;
+    if(i!==DYN-1&&i<cs.length-1){            // 大运和年柱之间不连：前四列是一串，原局是一串
+      const n=cs[i+1], span=`grid-column:${i+2}/${i+4}`;
+      mid+=sk(gEl(c.g),gEl(n.g),'sk-x',`${span};grid-row:${R+3}`)+sk(zEl(c.z),zEl(n.z),'sk-x',`${span};grid-row:${R+5}`);
+    }
   });
-  $('skmap').innerHTML=h;
-  $('note-sk').textContent=noteSK();
+  $('lkmap').innerHTML=
+    `<span class="lk-bg" style="grid-row:1/${g.n+z.n+7}"></span>`
+    +g.groups.map(it=>link(it,g.n-it.row,true)).join('')
+    +`<span class="lk-n" style="grid-row:${R+3}">天干</span><span class="lk-n" style="grid-row:${R+5}">地支</span>`
+    +mid
+    +z.groups.map(it=>link(it,R+7+it.row,false)).join('');
 }
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
