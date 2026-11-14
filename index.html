@@ -121,6 +121,18 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pform .btn.warn{color:var(--warn)}
 .pform .msg{margin:0;font-size:13px;color:var(--warn)}
 .pform .msg[hidden]{display:none}
+/* 时辰不详的人：标题下面一排十二个时辰（renderHours），点哪个就按哪个排，选中的样子和选择器的卡片一样；标题里的时柱淡一些，标「不详」 */
+.hours{display:flex;flex-direction:column;gap:8px;padding:12px 14px 13px;border-radius:12px;background:var(--wash)}
+.hours[hidden]{display:none}
+.hours-h{font-size:13.5px;color:var(--ink2)}
+.hours-h b{margin-right:8px;color:var(--ink)}
+.hours-b{display:flex;flex-wrap:wrap;gap:6px}
+.hr{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:46px;padding:5px 6px 6px;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.hr:hover{border-color:var(--ink3)}
+.hr b{font-size:12.5px;font-weight:600;color:var(--ink2)}
+.hr .gz{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.3}
+.hr[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+h1 .pl.guess>span{opacity:.45}
 .pform .dates{display:flex;flex-direction:column;gap:6px;font-size:14px}
 .pform .dates .check{color:var(--ink)}
 .pform .dates small{margin-left:8px;font-size:12.5px;color:var(--ink3)}
@@ -718,7 +730,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <label>怎么填<select id="pf-mode"><option value="time">按出生时间</option><option value="bazi">直接输入八字</option></select></label>
     <label class="m-time">出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
     <label class="m-time">出生时间（北京时间）<input type="time" id="pf-time"></label>
-    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
+    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option><option value="none">不知道时辰</option></select></label>
     <label class="m-time">出生的省份<select id="pf-prov"></select></label>
     <label class="m-time">城市<select id="pf-city"></select></label>
     <label class="m-time" id="pf-place-l" hidden>地名<input type="text" id="pf-place" maxlength="30" placeholder="比如：纽约"></label>
@@ -741,6 +753,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </div>
   </form>
   <h1 id="title"></h1>
+  <div class="hours" id="hours" hidden></div>
   <dl class="meta" id="meta"></dl>
 </header>
 
@@ -1290,21 +1303,22 @@ function parseDay(text){
   const a=m.slice(1).map(Number), b=fromSec(toSec(...a));
   return a.every((v,i)=>v===b[i])?a:null;
 }
-/* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。 */
+/* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。
+   时辰不详的带 nohour: true，birth 只写日期；排盘时由页面另给一个时辰（shichen），当作「只知道时辰」来排 */
 function checkInfo(info){
-  const sh=info&&info.shichen;
+  const sh=info&&info.shichen, no=!!(info&&info.nohour);
   if(sh&&!(typeof sh==='string'&&sh.length===1&&Z.includes(sh))) return '时辰要选十二个时辰里的一个。';
-  const a=sh?parseDay(info.birth):parseBirth(info&&info.birth);
-  if(!a) return sh?'出生日期没有填，或者不是一个存在的日子。':'出生日期和时间没有填全，或者不是一个存在的时刻。';
+  const a=sh||no?parseDay(info.birth):parseBirth(info&&info.birth);
+  if(!a) return sh||no?'出生日期没有填，或者不是一个存在的日子。':'出生日期和时间没有填全，或者不是一个存在的时刻。';
   if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX) return `只支持 ${BIRTH_MIN} 到 ${BIRTH_MAX} 年出生。`;
   if(info.gender!=='男'&&info.gender!=='女') return '性别要填男或女。';
-  if(!sh&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
+  if(!sh&&!no&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
   return '';
 }
 /* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同。 */
 function chartOf(info){
   const bad=checkInfo(info); if(bad) throw new Error(bad);
-  const sh=info.shichen||'';
+  const sh=info.shichen||(info.nohour?'午':'');            // 时辰不详而没有另给时辰的，先按午时排
   const c=sh?toSec(...parseDay(info.birth),2*Z.indexOf(sh)):toSec(...parseBirth(info.birth))-(info.dst?3600:0), clock=fromSec(c);
   const dlonSec=sh?0:roundHalfUp((info.lon-120)*240);
   const eotSec=sh?0:roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
@@ -1327,6 +1341,7 @@ function chartOf(info){
   for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
   const p={id:info.id,name:info.name,gender:man?1:0,clock};
   if(sh) p.shichen=sh;
+  if(info.nohour) p.nohour=true;
   if(info.dst&&!sh) p.dst=true;
   if(info.source) p.source=info.source;
   p.place=info.place||'';
@@ -1382,7 +1397,8 @@ function datesOf(ps){
 function infoFrom(p){
   const c=p.clock, pad=n=>String(n).padStart(2,'0');
   const day=`${c[0]}-${pad(c[1])}-${pad(c[2])}`;
-  const info=p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
+  const info=p.nohour?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,nohour:true,place:p.place||''}
+    :p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
     :{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${day} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
   if(p.source) info.source=p.source;
   if(p.notes) info.notes=p.notes;
@@ -2398,6 +2414,14 @@ function metaRows(){return memo('meta',()=>{
       ['是什么','出生时间只记到时辰，没有钟表时间。一个时辰是两小时，按当地太阳的位置定，相当于这一页别处说的真太阳时，所以不用再做经度和均时差的换算。'],
       ['这张盘',`排盘时取${sc.z}时的中点，${mid?mid+' 点整':'零点'}。时柱只看时辰，不受这个取法影响。起运的日子是按这个中点算的，出生在这个时辰的头上或尾上的话，起运会早或晚五天左右。`+(mid?'':'子时跨着零点。这里取零点，日柱算记载的那一天。')]]});
     put('出生地',{k:'出生地',dd:esc(P.place),t:'出生地',p:[['怎么用','这里只作参考。出生时间记的是时辰，不用拿经度来换算。']]});
+    if(P.nohour){              // 时辰不详：时柱是按选中的时辰排的，不是记载
+      put('公历',{k:'公历',dd:`${c[0]} 年 ${c[1]} 月 ${c[2]} 日，时辰不详`,t:'公历出生日期',p:[
+        ['是什么','只知道出生日期，不知道时辰。'],
+        ['怎么用','年柱、月柱、日柱由日期定下来；时柱要看时辰，这里先按选中的时辰排，标题下面一排十二个时辰可以换着看。']]});
+      put('时辰',{k:'时辰',dd:`不详，现在按${sc.z}时排`,t:'时辰不详',p:[
+        ['是什么','不知道出生的时辰。时柱是按标题下面选中的时辰排的，不是记载。'],
+        ['怎么看','十二个时辰换着看：年柱、月柱、日柱一般不变，时柱和跟着它的十神、神煞、关系、强弱计分会变。标题下面那一段列出了十二个时辰里哪些结果不一样。']]});
+    }
   }
   return addRows(rows,note('meta'));
 });}
@@ -2545,6 +2569,7 @@ function colX(k){
       ['是什么','出生时辰的干支，两小时一个时辰。'+(!ok?'':late?`时干由日干推出。晚上 11 点以后出生，这里按第二天的日干${base}来推：${base}日的子时是${hp}。`:`时干由日干推出：${DM}日的子时从${G[(bi%5)*2]}子起，`+(hi?`排到${p.z}时是${hp}。`:`子时就是${hp}。`))],
       ['宫位',gongwei('时').plain],['宫位的出处',gongwei('时').src],
       ['这张盘',basic],
+      P.nohour?['注意',`这张盘的时辰不详，时柱是按标题下面选中的${p.z}时排的，换一个时辰就变。`]:
       P.shichen?['注意',`时柱取决于时辰记得准不准。${P.source?'出处：'+esc(P.source)+'。':''}这里按${p.z}时来排。`]:
       ['注意',`时柱取决于出生时间准不准。${P.source?esc(P.source)+'记的是':'钟表时间是'} ${hm(P.clock)}，换算成真太阳时是 ${hmNear(P.tst)}，在${p.z}时。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}，出了这个范围时柱就会变。`+(hi===0?'子时跨着零点。这里以零点换日：晚上 11 点到零点出生的，日柱算当天，时干按第二天的日干来推。也有人主张晚上 11 点就换日。':'')]]};
   }
@@ -2711,9 +2736,22 @@ function readGods(){
 function readLq(){
   return box('解读','<p>这套配法是顺着生克推出来的。生日主的正印是母亲；母亲的丈夫是偏财，所以偏财是父亲；男命以所克的财为妻，以克自己的正官、七杀为子女；女命以正官为夫，以所生的食神、伤官为子女。近代的《千里命稿》配法不同：父母都看印，子女不分男女命都看食神和伤官。</p>');
 }
+/* 时辰不详时，十二个时辰里哪些结果跟着变。rows 是每个时辰排出来的：四柱 p、强弱计分 help 和 tier、扶抑取的喜用 xi、大运 dy */
+function hoursSay(rows){
+  const same=k=>rows.every(r=>r.p[k]===rows[0].p[k]), hs=rows.map(r=>r.help), cnt=t=>rows.filter(r=>r.tier===t).length, groups={};
+  rows.forEach(r=>{const k=r.xi?elNames(r.xi):'';(groups[k]=groups[k]||[]).push(r.h);});
+  const fixed=['年柱','月柱','日柱'].filter((x,k)=>same(k)), dyS=rows.every(r=>r.dy===rows[0].dy);
+  const mon=same(1)?'':`出生那天交节气，月柱也跟着时辰变：${[...new Set(rows.map(r=>r.p[1]))].map(m=>`${rows.filter(r=>r.p[1]===m).map(r=>r.h).join('、')}时是${m}月`).join('，')}。`;
+  const gs=Object.entries(groups);
+  return `换时辰，${fixed.join('、')}${dyS?'和大运的干支':''}都不变，变的是时柱，还有跟着时柱的十神、神煞、关系和命宫、身宫。`+mon
+    +`十二个时辰里，强弱计分从 ${Math.min(...hs)} 分到 ${Math.max(...hs)} 分：${cnt('弱')} 个算身弱，${cnt('强')} 个算身强`+(cnt('间')?`，${cnt('间')} 个在两条线之间`:'')+'。'
+    +(gs.length===1?(gs[0][0]?`扶抑取的喜用都一样，是${gs[0][0]}。`:'扶抑都取不了喜用。')
+      :`扶抑取的喜用跟着变：${gs.map(([k,v])=>`${v.join('、')}时${k?'喜'+k:'取不了'}`).join('；')}。`)
+    +'起运的日子按选中时辰的中点算，换时辰最多差几个月。';
+}
 function footItems(){
   return [
-    P.shichen?`出生时间只记到时辰：${NATAL[3].z}时。${P.source?'出处：'+esc(P.source)+'。':''}`:`时辰按真太阳时取：${P.source?esc(P.source)+'上的':''}钟表时间是 ${hm(P.clock)}，换算后落在${NATAL[3].z}时。`,
+    P.nohour?`时辰不详，时柱按标题下面选中的${NATAL[3].z}时排。`:P.shichen?`出生时间只记到时辰：${NATAL[3].z}时。${P.source?'出处：'+esc(P.source)+'。':''}`:`时辰按真太阳时取：${P.source?esc(P.source)+'上的':''}钟表时间是 ${hm(P.clock)}，换算后落在${NATAL[3].z}时。`,
     `年柱以立春为界，月柱以节气为界；大运${P.yun.forward?'顺':'逆'}排，在${jiaoyun().when}交接。`,
     '神煞按常见口诀查出，各家取法不一，只是标签，不单独作判断。',
     '标着「典籍」的引文出自《滴天髓》《穷通宝鉴》《渊海子平》《子平真诠》《三命通会》《协纪辨方书》《神峰通考》，每一句都对着所据的本子逐字核对过。各本常有异文，这里照所据的本子。',
@@ -3098,9 +3136,11 @@ function writeLocal(){
   try{localStorage.setItem('bz-people',JSON.stringify(LOCAL));STORE_OK=true;}catch(e){STORE_OK=false;}
   return STORE_OK;
 }
+/* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
+const HOUR_PICK={};
 function rebuildPeople(){
   PEOPLE.length=DATA.people.length;
-  LOCAL.forEach(info=>{try{const p=chartOf(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  LOCAL.forEach(info=>{try{const p=chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);p.local=true;PEOPLE.push(p);}catch(e){}});
 }
 
 function jieUTC(y,m){const [mm,dd]=jieMD(y)[m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
@@ -3235,7 +3275,7 @@ function renderPerson(){
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
-  $('title').innerHTML=NATAL.map(p=>`<span class="pl" data-k="${p.k}柱"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
   const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
@@ -3258,7 +3298,18 @@ function renderPerson(){
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+  renderHours();renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+}
+/* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
+function renderHours(){
+  const box=$('hours'), info=P.nohour?LOCAL.find(x=>x.id===P.id):null;
+  box.hidden=!info; if(!info){box.innerHTML='';return;}
+  const rows=Z.split('').map(h=>{const c=chartOf(Object.assign({},info,{shichen:h}));
+    const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps), x=xiOf(c.pillars[2][0],ps);
+    return {h,p:c.pillars,help:q.help,tier:q.tier,xi:x.xi,dy:c.dayun.map(d=>d.gz).join()};});
+  box.innerHTML=`<p class="hours-h"><b>时辰不详</b>现在按${P.shichen}时排，点别的时辰换着看</p>`
+    +`<div class="hours-b" role="group" aria-label="选一个时辰">${rows.map(r=>`<button type="button" class="hr" data-hour="${r.h}" aria-pressed="${r.h===P.shichen}"><b>${r.h}时</b><span class="gz">${gzSpan(r.p[3])}</span></button>`).join('')}</div>`
+    +`<p class="note">${hoursSay(rows)}</p>`;
 }
 /* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
    箭头指向被生、被克的一方。每个圈下面是这一类十神对日主的合称，日主所属的那一行圈加粗 */
@@ -3532,12 +3583,12 @@ function formMsg(s){F('msg').textContent=s||'';F('msg').hidden=!s;}
 const NO_STORE='这个环境不能保存数据，关掉页面以后刚才添加的人会消失。可以先点「导出」把他们存成文件。';
 function openForm(info){
   editing=info?info.id:null;
-  const b=info&&(info.shichen?parseDay(info.birth):parseBirth(info.birth)), p2=n=>String(n).padStart(2,'0');
+  const b=info&&(info.shichen||info.nohour?parseDay(info.birth):parseBirth(info.birth)), p2=n=>String(n).padStart(2,'0');
   F('name').value=info?info.name:'';
   F('gender').value=info?info.gender:'男';
   F('date').value=b?`${b[0]}-${p2(b[1])}-${p2(b[2])}`:'';
   F('time').value=b&&b.length>3?`${p2(b[3])}:${p2(b[4])}`:'';
-  F('shichen').value=info&&info.shichen||'';
+  F('shichen').value=info&&info.nohour?'none':info&&info.shichen||'';
   const pl=placeSel(info&&info.place);
   F('prov').value=pl.p;fillCity(pl.p,pl.c);F('place').value=pl.t||'';
   F('lon').value=info&&typeof info.lon==='number'?info.lon:120;
@@ -3613,12 +3664,13 @@ function saveForm(){
     if(!r.p){formMsg(r.msg||'先输入八字：年、月、日、时四柱一共八个字。');return;}
     if(!d){formMsg(baziFound.length?'从找到的日子里选一个。':'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。');return;}
     info=Object.assign({},old,base,{birth:d.birth,shichen:d.shichen,place:''});
-    delete info.lon;delete info.dst;
+    delete info.lon;delete info.dst;delete info.nohour;
   }else{
     info=Object.assign({},old,base,{birth:`${F('date').value} ${F('time').value}`,place:placeOf(),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
     if(F('dst').checked) info.dst=true; else delete info.dst;
-    if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;}   // 只知道时辰：时间和经度都不用
-    else delete info.shichen;
+    if(F('shichen').value==='none'){info.nohour=true;info.birth=F('date').value;delete info.shichen;delete info.lon;delete info.dst;}   // 不知道时辰：只存日期
+    else if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;delete info.nohour;}   // 只知道时辰：时间和经度都不用
+    else{delete info.shichen;delete info.nohour;}
   }
   const bad=checkInfo(info);
   if(bad){formMsg(bad);return;}
@@ -3687,6 +3739,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.dataset.hour){HOUR_PICK[P.id]=b.dataset.hour;const i=sel.p;rebuildPeople();usePerson(i);return;}      // 时辰不详的人换一个时辰看
   if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.id==='sheet-x'){closeSheet();return;}

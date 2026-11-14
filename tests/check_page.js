@@ -809,6 +809,27 @@ console.log('添加、编辑、删除、导入');
   submit();
   ok('选一个日子保存，四柱就是输入的那一副，存下来的是那一天和时辰，没有经度', txt($('title')) === '癸酉壬戌甲子戊辰' && $('pform').hidden && stored().some(x => x.name === '输入八字' && x.birth === '1993-10-10' && x.shichen === '辰' && x.lon === undefined), stored().map(x => x.name));
   ev('LOCAL=[];writeLocal();rebuildPeople();usePerson(0)');
+  // 时辰不详：表单里选「不知道时辰」，存下来只有日期；标题下面一排十二个时辰，先按午时排，点哪个就按哪个排
+  click($('pp-add'));
+  fill({ name: '时辰不详', gender: '男', date: '1993-10-10', time: '', shichen: 'none' });
+  submit();
+  const nh = stored().find(x => x.name === '时辰不详');
+  ok('选「不知道时辰」可以保存，存下来的只有日期，没有时辰和经度', !!nh && nh.nohour === true && nh.birth === '1993-10-10' && nh.shichen === undefined && nh.lon === undefined, nh);
+  const hb = () => [...$('hours').querySelectorAll('[data-hour]')], pressed = () => ($('hours').querySelector('[aria-pressed="true"]') || {}).dataset;
+  const pillarsAtHour = h => ev(`chartOf({id:'t',name:'t',gender:'男',birth:'1993-10-10',shichen:${JSON.stringify(h)}}).pillars.join('')`);
+  ok('标题下面一排十二个时辰，先按午时排，标题里的时柱标着不详', !$('hours').hidden && hb().length === 12 && pressed().hour === '午' && txt($('title')) === pillarsAtHour('午') && !!$('title').querySelector('.pl.guess'), [hb().length, txt($('title'))]);
+  const nhKept = checked; checkAll('时辰不详的人');
+  ok(`时辰不详的人，${checked - nhKept} 条解释都有内容`, checked > nhKept && !bad.length, bad.slice(0, 3));
+  click(hb()[0]);
+  ok('点子时，四柱换成按子时排的，人还是这一位，存下来的出生信息不变', txt($('title')) === pillarsAtHour('子') && ev('P.name') === '时辰不详' && pressed().hour === '子' && JSON.stringify(stored().find(x => x.name === '时辰不详')) === JSON.stringify(nh), txt($('title')));
+  const hsWant = '子丑寅卯辰巳午未申酉戌亥'.split('').map(h => ev(`(c=>qsOf(c.pillars[2][0],c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2}))).help)(chartOf({id:'t',name:'t',gender:'男',birth:'1993-10-10',shichen:${JSON.stringify(h)}}))`));
+  ok('说明里的强弱计分范围，和十二个时辰各排一遍算出来的一致', txt($('hours')).includes(`强弱计分从 ${Math.min(...hsWant)} 分到 ${Math.max(...hsWant)} 分`), [txt($('hours')), hsWant]);
+  click($('pp-edit'));
+  ok('再点编辑，表单里还是「不知道时辰」', $('pf-shichen').value === 'none' && $('pf-date').value === '1993-10-10');
+  click($('pf-cancel'));
+  ev('usePerson(0)');
+  ok('页面自带的人没有这一排', $('hours').hidden);
+  ev('LOCAL=[];writeLocal();rebuildPeople();usePerson(0)');
   // 反查：随便取 300 个虚构的日子和时辰，排出四柱，再拿四柱反查，原来的日子一定在里面，查出来的每一个日子排出来四柱都相同
   {
     let seed = 7; const rnd = n => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
