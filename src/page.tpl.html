@@ -9,8 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
 <style>
 :root{
-  /* 版面：从上到下三张白色卡片。第一张讲原局，带标签栏：日主、五行、十神、六亲、用神，一次看一页。
-     第二张是四行选择器。第三张跟着选择器走，也带标签栏：四柱细盘、干支关系、根和透，三页都是八列，前四列是选中的流日、流月、流年、大运。
+  /* 版面：从上到下三张白色卡片。第一张讲原局，带标签栏：日主、五行、十神、六亲、宫位、用神，一次看一页。
+     第二张是四行选择器。第三张跟着选择器走，也带标签栏：四柱细盘、干支关系、根和透、大运流年。前三页都是八列，前四列是选中的流日、流月、流年、大运；
+     大运流年一页是一张计分表。
      每一页带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
      五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。 */
@@ -125,9 +126,9 @@ p{margin:0}
 .tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
 .tab{display:inline-flex;align-items:center;gap:6px;margin:0 0 -1px;padding:0 1px 9px;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.5;letter-spacing:.03em;color:var(--ink3);background:none;border:0;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;cursor:pointer}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-.tab .tag{font-family:var(--body)}
 .panel,.pane{display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel[hidden]{display:none}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px 40px;align-items:start}      /* 五行一页：五行个数、含藏干数、五行能量三种数法并排，窄了就上下排 */
 .sub{font-size:12.5px;color:var(--ink3)}
 
 .read{background:var(--wash);border-radius:10px;padding:13px 17px 15px;font-size:14px;display:flex;flex-direction:column;gap:8px}
@@ -219,19 +220,68 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bars .fill{display:block;height:100%;border-radius:5px;background:currentColor}
 .bars .n{font-size:13px;color:var(--ink2);white-space:nowrap}
 .bars .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px}
+.bars.c3{grid-template-columns:auto 1fr auto}
+/* 五行能量的条：五行名字后面是这一类十神的合称；条上一道竖线是平均数（12 分）的位置；右边是分数和占比 */
+.gp{margin-left:8px;font-family:var(--body);font-size:12px;font-weight:400;letter-spacing:0;color:var(--ink2);white-space:nowrap}
+.bars .el .gp{margin-left:2px}
+.bars.nl .track{position:relative}
+.bars.nl .track::after{content:"";position:absolute;top:0;bottom:0;left:var(--avg);width:1px;background:var(--ink3)}
+.bars .pc{min-width:2.8em;text-align:right;font-size:12px;color:var(--ink3)}
 /* 日主和用神两页的几行：行名一列，内容一列，按第一行的基线对齐。日主那一页是盘面上的事实，用神那一页是各家照各自的书走出来的几行 */
 .kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
 .kv{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-columns:subgrid;gap:8px 14px;align-items:baseline;font-size:14px;margin:0}
 .kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
 .kv dd{margin:0;min-width:0}
-.tag{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px}
 .gods{font-size:14px;text-align:left}
 .gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
-.gods tr:last-child td{border-bottom:0}
+.gods tr:last-child td,.gods tbody tr:last-child th{border-bottom:0}
 .gods .have{font-weight:600}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .gods .eli .ic{width:14px;height:14px}
+/* 宫位一页：一列一柱的表，格子里是几行短句。大运流年一页：一行一层的计分表，数字靠右 */
+.gw{table-layout:fixed;min-width:640px}
+.gw th:first-child{width:6.5em}
+.gw thead th{font-size:13px;font-weight:600;color:var(--ink)}
+.gw tbody th{font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.gw td{line-height:1.75}
+.gw .gz{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.3;letter-spacing:.04em}
+.gw .gz .x{text-decoration:none}
+.sy{min-width:640px;font-variant-numeric:tabular-nums}
+.sy th,.sy td{text-align:right}
+.sy th:first-child{text-align:left;white-space:nowrap}
+.sy thead th{vertical-align:bottom}
+.sy thead small{display:block;font-size:11.5px}
+.sy tbody th{font-weight:400}
+.sy .gz{margin-left:8px;font-family:var(--display);font-weight:700;font-size:17px}
+.sy .sum th,.sy .sum td{border-top:1px solid var(--ink3);font-weight:600}
+/* 分数画成的图。.stk 是一条分段的条：一段一种五行，长短照分数，颜色是五行自己的颜色；比劫加印绶和另外三行之间留一道缝（.gap）。.v 是竖着画。
+   .sybar：一行一层的累计条。.sycol：一根柱子一步大运或者一个流年，是按钮，点了就换到那一步、那一年，选中的样子和选择器的卡片一样。
+   .qsw：强弱计分的条，上面两道竖线是 25 分和 30 分。.lg：图例 */
+.stk{display:flex;height:14px;min-width:0;border-radius:4px;overflow:hidden;background:var(--wash)}
+.stk i{display:block;min-width:0;background:currentColor}
+.stk i+i{margin-left:1px}
+.stk i.gap{margin-left:4px}
+.stk.v{flex-direction:column-reverse;width:22px;height:104px}
+.stk.v i+i{margin-left:0;margin-bottom:1px}
+.stk.v i.gap{margin-left:0;margin-bottom:4px}
+.sybar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 14px;align-items:center;font-variant-numeric:tabular-nums}
+.sybar .lb,.sybar .tx{font-size:13px;color:var(--ink2);white-space:nowrap}
+.sybar .gz{margin-left:6px;font-family:var(--display);font-weight:700;font-size:16px}
+.sycol{display:flex;gap:4px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.sycol .c{flex:1 0 36px;display:flex;flex-direction:column;align-items:center;gap:4px;font:inherit;color:var(--ink);background:var(--card);border:1px solid transparent;border-radius:10px;padding:6px 2px 5px;cursor:pointer;font-variant-numeric:tabular-nums}
+.sycol .c:hover{border-color:var(--line)}
+.sycol .c[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.sycol small{font-size:11.5px;line-height:1.2;color:var(--ink3);white-space:nowrap}
+.sycol .gz{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.2;white-space:nowrap}
+.sycol .hp{font-size:12px;line-height:1.2;color:var(--ink2)}
+.qsw{position:relative;display:block;max-width:520px;margin-top:8px;padding-top:15px}
+.qsw .tk{position:absolute;top:2px;bottom:-3px;border-left:1px solid var(--ink2)}
+.qsw .tk b{position:absolute;top:-3px;left:3px;font:400 11px/1 var(--body);color:var(--ink3)}
+.stkw{display:block;max-width:220px;margin-top:6px}
+.lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
+.lg span{display:inline-flex;align-items:center;gap:5px}
+.lg i{width:10px;height:10px;border-radius:2px;background:currentColor}
 /* 十神名字后面的个数：几处，加一小段同样长短的条 */
 .gn{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .gn i{display:inline-block;vertical-align:middle;margin-left:6px;width:calc(var(--n)*9px);height:6px;border-radius:3px;background:currentColor;opacity:.4}
@@ -306,7 +356,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .tab{font-size:21px;padding-bottom:12px}
   .sub{font-size:13.5px}
   .panel,.pane{gap:18px}
-  /* 内容窄的两页（日主、五行）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
+  /* 内容窄的一页（日主）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
   .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
   :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
   .split .read .cols{columns:1}
@@ -372,14 +422,29 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .bars .track{height:12px;border-radius:6px}
   .bars .n{font-size:14px}
   .bars .st{font-size:13px;padding:0 10px}
+  .gp,.bars .pc{font-size:13px}
   .kvs{gap:18px}
   .kv{gap:11px 20px;font-size:15px}
   .kv dt{font-size:14px}
-  .tag{font-size:12px}
   .gods{font-size:15px}
   .gods th,.gods td{padding:10px 16px 10px 0}
   .gods thead th{font-size:13px}
   .gods .eli .ic{width:16px;height:16px}
+  .gw thead th{font-size:14.5px}
+  .gw tbody th{font-size:13px}
+  .gw .gz{font-size:26px}
+  .sy thead small{font-size:12.5px}
+  .stk{height:16px}
+  .stk.v{width:26px;height:130px}
+  .sybar{gap:12px 18px}
+  .sybar .lb,.sybar .tx{font-size:14px}
+  .sybar .gz{font-size:18px}
+  .sycol{gap:6px}
+  .sycol small{font-size:12.5px}
+  .sycol .gz{font-size:17px}
+  .sycol .hp{font-size:13px}
+  .lg{font-size:13.5px}
+  .sy .gz{font-size:19px}
   .layers{gap:10px}
   .layers>div{grid-template-columns:180px 1fr;gap:2px 18px;padding-top:10px}
   .layers dt{font-size:14px}
@@ -560,20 +625,33 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1">五行</button>
     <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1">十神</button>
     <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1">六亲</button>
-    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1">用神<span class="tag">进阶</span></button>
+    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1">宫位</button>
+    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1">用神</button>
   </div>
   <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk">
     <div class="pane">
-      <p class="sub">日主是什么；它在地支里的根，生它的印；月令透出了哪些字</p>
+      <p class="sub">日主是什么，八个字的阴阳，两项参考；下面是它在地支里的根、生它的印、月令透出的字</p>
       <div class="kvs" id="kv"></div>
     </div>
     <div class="read" id="rd-tk"></div>
   </div>
-  <div class="panel split" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
-    <div class="pane">
-      <p class="sub" id="h-wx-s"></p>
-      <div class="bars" id="bars"></div>
-      <p class="note" id="note-wx"></p>
+  <div class="panel" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
+    <p class="sub">五行各有多少，三种数法：只数盘面的八个字，连地支里藏的天干一起数，照一种算法换成分数</p>
+    <div class="duo">
+      <div class="pane">
+        <h3>五行个数 <small>只数盘面的八个字</small></h3>
+        <div class="bars c3" id="bars0"></div>
+      </div>
+      <div class="pane">
+        <h3>含藏干数 <small id="h-wx-s"></small></h3>
+        <div class="bars" id="bars"></div>
+        <p class="note" id="note-wx"></p>
+      </div>
+      <div class="pane">
+        <h3>五行能量 <small>藏干分主次，月支加倍，一共 60 分</small></h3>
+        <div class="bars nl" id="bars2"></div>
+        <p class="note" id="note-nl"></p>
+      </div>
     </div>
     <div class="read" id="rd-wx"></div>
   </div>
@@ -581,7 +659,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="sub" id="h-gods-s"></p>
     <div class="tablewrap">
       <table class="gods">
-        <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+        <thead><tr><th scope="col">关系和合称</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
         <tbody id="gods"></tbody>
       </table>
     </div>
@@ -598,6 +676,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="note" id="note-lq"></p>
     <div class="read" id="rd-lq"></div>
   </div>
+  <div class="panel" role="tabpanel" id="p-gw" aria-labelledby="h-gw" hidden>
+    <p class="sub">四柱各配一类亲属。每一柱里有哪些十神，和别的柱有什么关系，在五行能量里占几分</p>
+    <div class="tablewrap" id="gwmap"></div>
+    <p class="note" id="note-gw"></p>
+    <div class="read" id="rd-gw"></div>
+  </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
     <p class="sub">用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论</p>
     <div class="kvs" id="kv2"></div>
@@ -606,7 +690,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </section>
 
 <section aria-labelledby="h-yun">
-  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面的前四列，细盘、干支关系、根和透三页都跟着变</small></h2>
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面的前四列，下面那张卡片的四页都跟着变</small></h2>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
   <dl class="meta" id="meta-yun"></dl>
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
@@ -620,6 +704,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true">四柱细盘</button>
     <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1">干支关系</button>
     <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1">根和透</button>
+    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1">大运流年</button>
   </div>
   <div class="panel" role="tabpanel" id="p-pan" aria-labelledby="h-pan">
     <p class="sub">后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</p>
@@ -642,7 +727,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </table>
     </div>
     <div class="read" id="rd-pan"></div>
-    <div class="read" id="rd-yun"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-rel" aria-labelledby="h-rel" hidden>
     <p class="sub">相邻的字谁生谁克；原局和大运、流年、流月、流日之间的合、冲、刑、害</p>
@@ -669,6 +753,31 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="tablewrap" id="gtmap"></div>
     <p class="note" id="note-gt"></p>
     <div class="read" id="rd-gt"></div>
+  </div>
+  <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
+    <p class="sub">选中的大运、流年、流月、流日各带来多少分，加上以后两组分数怎么变；下面是它们各是日主的什么十神</p>
+    <p class="lg" id="sy-lg"></p>
+    <h3>从原局加到选中的四层 <small>每一条是累计到这一层的五行分数</small></h3>
+    <div class="sybar" id="sy-bars"></div>
+    <div class="duo">
+      <div class="pane">
+        <h3>八步大运 <small>每一步自己带来的 13 分</small></h3>
+        <div class="sycol" id="sy-dy" role="group" aria-label="八步大运各带来的分数"></div>
+      </div>
+      <div class="pane">
+        <h3 id="h-syln"></h3>
+        <div class="sycol" id="sy-ln" role="group" aria-label="这步大运里各个流年带来的分数"></div>
+      </div>
+    </div>
+    <p class="note" id="note-syfig"></p>
+    <div class="tablewrap">
+      <table class="gods sy">
+        <thead id="sy-h"></thead>
+        <tbody id="sy"></tbody>
+      </table>
+    </div>
+    <p class="note" id="note-sy"></p>
+    <div class="read" id="rd-yun"></div>
   </div>
 </section>
 

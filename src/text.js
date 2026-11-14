@@ -293,6 +293,71 @@ function touGan(){
 /* 根和透。天干 g 在地支 z 里有没有根：z 里和 g 同一五行的那个藏干（一个地支里同一五行的藏干最多一个），没有就是 null。
    ben：这个藏干是不是 z 的本气。tou：它和 g 是不是同一个字，是的话也就是 z 里的这个字透在了 g 上。 */
 function gtOf(g,z){const i=HID[z].split('').findIndex(h=>gEl(h)===gEl(g));return i<0?null:{h:HID[z][i],i,ben:i===0,tou:HID[z][i]===g};}
+/* 五类十神的合称。下标和 CAT、relOf 的结果相同：同我、我生、我克、克我、生我。十神表的第一列和五行能量里都用它 */
+const GRP=['比劫','食伤','财才','官杀','印绶'];
+/* 五行能量和强弱计分：一种公开的计分法，不是典籍里的办法。
+   出自台湾吉祥坊易经开运中心《大师教你论八字》第二章第十四节「五行分数算法」和第十五节「八字身强、身弱算最简单的判断法」。
+   原页面（131.com.tw）已经下线，读的是互联网档案馆 2020-06-29 的存档，网址和读的经过记在 docs/取法约定.md 的「五行能量和强弱计分」一节。
+   算法：天干每个 5 分。地支每个 8 分，按藏干分：藏一个字的 8 分，藏两个的 5、3 分，藏三个的 5、2、1 分。月支加倍。四柱一共 60 分。
+   藏干的先后照页面自己的次序（HID）。文章的表里把巳的藏干排成庚、戊、丙，照表是戊 2 分、庚 1 分；文章自己算的例子却是庚 2 分、戊 1 分，
+   和页面的次序一致，页面照例子。文章的例子（辛酉、癸巳、壬寅、辛亥：金 22、水 15、木 8、火 12、土 3）是检查脚本里的测试。 */
+const NL_Z=[[8],[5,3],[5,2,1]];
+const nlOf=z=>{const hs=HID[z].split('');return hs.map((h,j)=>[h,NL_Z[hs.length-1][j]]);};      // 一个地支里各藏干的分数，没有加倍
+function nlPillar(p,month){      // 一柱的各笔分数。p 是 {k,g,z}，外来的柱带 dyn。month 为真表示它是原局的月柱，地支加倍
+  const gn=p.dyn?p.k+'天干':p.k+'干', zn=p.dyn?p.k+'地支':p.k+'支';
+  return [{e:gEl(p.g),n:5,say:`${gn}${p.g} 5 分`}].concat(nlOf(p.z).map(([h,n])=>({e:gEl(h),n:month?n*2:n,say:`${zn}${p.z}里的${h} ${month?n*2:n} 分`+(month?'（月支加倍）':'')})));
+}
+const nlSum=items=>{const sum=[0,0,0,0,0];items.forEach(x=>{sum[x.e]+=x.n;});return sum;};
+function nlScore(ps){            // ps 是四柱 [{k,g,z}]，第二个是月柱。sum 是木、火、土、金、水各多少分，items 是每一笔
+  const items=ps.flatMap((p,i)=>nlPillar(p,i===1)), sum=nlSum(items);
+  return {sum,items,total:sum.reduce((a,b)=>a+b,0)};
+}
+const nlNow=()=>memo('nl',()=>nlScore(NATAL));
+/* 分数画成图。五行的先后：生日主的（印绶）、和日主同类的（比劫）排在前面，后面依次是日主所生、所克、克日主的。前两段合起来就是比劫加印绶。
+   stk(sum, cls)：一条分段的条，一段一种五行，长短照分数（flex 的值就是分数），颜色是五行自己的颜色；比劫加印绶和后面三段之间留一道缝。
+   cls 是 'v' 时竖着画，比劫加印绶在下面。 */
+const nlOrder=()=>{const de=gEl(DM);return [(de+4)%5,de,(de+1)%5,(de+2)%5,(de+3)%5];};
+function stk(sum,cls){
+  let helped=false, gapped=false;
+  return `<span class="stk${cls?' '+cls:''}">`+nlOrder().map((e,j)=>{
+    if(!sum[e]) return '';
+    const gap=j>=2&&helped&&!gapped; if(j<2) helped=true; if(gap) gapped=true;
+    return `<i class="${ELC[e]}${gap?' gap':''}" style="flex:${sum[e]}" title="${EL[e]} ${sum[e]} 分"></i>`;}).join('')+'</span>';
+}
+/* 八步大运、选中的这步大运里的各个流年，各自带来的分数。每一柱都是 13 分，help 是其中归比劫加印绶的 */
+function nlYun(){
+  const de=gEl(DM), se=(de+4)%5, d=P.dayun[sel.dy], ln=[];
+  const mk=(gz,extra)=>{const sum=nlSum(nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false)), help=sum[de]+sum[se];return Object.assign({gz,sum,help,rest:13-help},extra);};
+  for(let y=d.y0;y<=d.y1;y++) ln.push(mk(yearGZ(y),{y}));
+  return {dy:P.dayun.map((x,i)=>mk(x.gz,{i,y0:x.y0,y1:x.y1})),ln};
+}
+/* 大运流年的计分：把同一套分值用到选中的大运、流年、流月、流日上。这是页面自己的延伸，那篇文章只算原局。
+   外来的一柱照样是天干 5 分、地支 8 分按藏干分，不加倍。rows 依次是原局、大运、流年、流月、流日，各有五行的分数 sum、合计 total、
+   比劫加印绶 help、其余三类 rest；acc 是从原局加到这一层为止，比劫加印绶占累计总分的多少。tot 是五层的合计。 */
+function nlLayers(){
+  const cs=cols(), de=gEl(DM), se=(de+4)%5, mk=(k,gz,sum)=>{const total=sum.reduce((a,b)=>a+b,0), help=sum[de]+sum[se];return {k,gz,sum,total,help,rest:total-help};};
+  const rows=[mk('原局','',nlNow().sum)].concat([3,2,1,0].map(i=>mk(cs[i].k,cs[i].g+cs[i].z,nlSum(nlPillar(cs[i],false)))));
+  let h=0,t=0; rows.forEach(r=>{h+=r.help;t+=r.total;r.acc=pct(h,t);});
+  const tot=mk('合计','',[0,1,2,3,4].map(e=>rows.reduce((a,r)=>a+r.sum[e],0))); tot.acc=pct(tot.help,tot.total);
+  return {rows,tot};
+}
+const pct=(n,t)=>Math.round(n/t*100)+'%';
+/* 强弱计分：比劫加印绶这一组的分数 help。文章的线：30 分以上算身强，25 分以下算身弱；
+   这一组只有 25 分、而月支的五行和日主相同或者生日主的，也算身强。月支是辰、未、戌、丑时，文章按三会局把它算作木、火、金、水。
+   26 到 29 分文章没有说，tier 记作「间」。 */
+function qsOf(dm,ps){
+  const s=nlScore(ps), de=gEl(dm), se=(de+4)%5, help=s.sum[de]+s.sum[se], mz=ps[1].z;
+  const hui=({辰:0,未:1,戌:3,丑:4})[mz], mEl=hui===undefined?zEl(mz):hui, mHelp=mEl===de||mEl===se;
+  const tier=help>=30?'强':help>25?'间':(help===25&&mHelp)?'强':'弱';
+  return {sum:s.sum,total:s.total,help,rest:s.total-help,mz,mEl,mHelp,hui:hui!==undefined,tier};
+}
+/* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照本气的阴阳算，和定十神的办法一致。
+   另一种分法照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。两种分法在子、午、巳、亥四支上相反（diff）。 */
+function yinYang(){
+  const gs=NATAL.map(p=>p.g), zs=NATAL.map(p=>p.z), ben=z=>!isYin(HID[z][0]), pei=z=>Z.indexOf(z)%2===0;
+  const a=gs.filter(g=>!isYin(g)).length, b=zs.filter(ben).length, c=zs.filter(pei).length;
+  return {yang:a+b,yin:8-a-b,yang2:a+c,yin2:8-a-c,diff:NATAL.filter(p=>ben(p.z)!==pei(p.z))};
+}
 function wxCounts(){
   const all=NATAL.map(p=>p.g).concat(natalHidden()), cnt=[0,0,0,0,0], face=[0,0,0,0,0];
   all.forEach(g=>cnt[gEl(g)]++);
@@ -405,6 +470,26 @@ function qiangruoRow(){
     ['注意',`三条依据是书里的，怎么数是这一页定的：帮扶只数三个天干，地支的气要三支一致才算。照这样数，书里举的八个例子都归到书上说的那一档。书里自己并没有给出数法，它断盘时是通盘权衡的。所以这一行只是照一本书、一种数法走出来的参考。`
       +(four?`另外，这一页的五行一栏把辰、未、戌、丑四个月都算土当令；这里照《千里命稿》，只把四立前的十八天算土当令。两处不同。`:'')]]};
 }
+function qsRow(){
+  const r=qsOf(DM,NATAL), de=gEl(DM), se=(de+4)%5, E=EL[de], S=EL[se], q0=qrNow();
+  const verdict={强:'照它算身强',弱:'照它算身弱',间:'落在两条线之间，文章没有说怎么算'}[r.tier];
+  const mSay=(r.hui?`月支${r.mz}，文章按三会局把它算作${EL[r.mEl]}；`:`月支${r.mz}属${EL[r.mEl]}；`)+(r.mEl===de?`和日主同属${E}。`:r.mEl===se?`${S}生${E}，生日主。`:`既不和日主同类，也不生日主。`);
+  const line=r.help>=30?`这张盘前一组 ${r.help} 分，在 30 分以上，照它算身强。`
+    :r.help>25?`这张盘前一组 ${r.help} 分，在 25 分和 30 分之间。这一段文章没有说怎么算。`
+    :r.help===25?`这张盘前一组正好 25 分。${r.mHelp?'月支帮着日主，照补的那一条算身强。':'月支不帮日主，照它算身弱。'}`
+    :`这张盘前一组 ${r.help} 分，在 25 分以下，照它算身弱。`;
+  const a=['最强','次强'].includes(q0.tier)?'强':['最弱','次弱'].includes(q0.tier)?'弱':'间';
+  const cmp=a===r.tier?(a==='间'?'两种办法都没有把它归到强或者弱的一边。':`两种办法都把它归在身${a}一边。`)
+    :(a==='间'||r.tier==='间')?'两种办法一个归到了一边，一个落在中间。':'两种办法归的方向相反。';
+  const gauge=`<span class="qsw">${stk(r.sum)}<i class="tk" style="left:${(25/r.total*100).toFixed(2)}%"><b>25</b></i><i class="tk" style="left:${(30/r.total*100).toFixed(2)}%"><b>30</b></i></span>`;
+  return {k:'强弱计分',dd:`照五行能量的分数：${GRP[0]}加${GRP[4]} ${r.help} 分，${GRP[1]}、${GRP[2]}、${GRP[3]} ${r.rest} 分。那篇文章的线是 30 分以上身强、25 分以下身弱，这张盘${verdict}${gauge}`,t:'强弱计分',p:[
+    ['是什么',`另一种看强弱的办法，和「五行」一栏的五行能量是同一套算法。把五行能量分成两组：和日主同类的${GRP[0]}、生日主的${GRP[4]}是一组，${GRP[1]}、${GRP[2]}、${GRP[3]}是另一组，看前一组占多少分。出自台湾吉祥坊的《大师教你论八字》第二章第十五节。`],
+    ['这张盘',`${DMN}属${E}。${E} ${r.sum[de]} 分，生它的${S} ${r.sum[se]} 分，前一组合计 ${r.help} 分；其余三行合计 ${r.rest} 分。一共 ${r.total} 分。每一行的分数怎么来的，见「五行」一栏。`],
+    ['怎么划线',`文章说前一组在 30 分以上算身强，25 分以下算身弱。又补了一条：这一组只有 25 分，而月支的五行和日主相同或者生日主的，也算身强，理由是月令的分量重。${line}`],
+    ['月支',mSay+(r.hui?`这一页别处把${r.mz}算作土，《千里命稿》只把四立前的十八天算土当令，三处不一样。`:'')],
+    ['和上一行',`上一行照《千里命稿》的三条依据，把这张盘归到${qrName(q0)}。那一行看月令、三个天干和三个地支上的十二长生，这一行看分数，看的东西不一样。${cmp}这里只说两行一致不一致，不说该听哪一个。`],
+    ['注意','分值和两条线都是文章定的，没有典籍出处。文章自己也说这个办法不是每次都对，还要配合经验。它只算了个数、藏干的主次和月支，没有算合、冲、刑、害。这一行只是照一种算法走出来的参考，页面不据此定喜用神。']]};
+}
 /* 三行对照：强弱、格局、调候三行各照一本书走，这里只把它们落在哪些字上摆在一起，看重合不重合，不合成结论。
    dzOf 是纯计算。dm 日干；gj 格局一行落的天干；th 调候一行点到的天干。
    same：两行都有的天干。el：天干不同、五行相同的（五行的序号）。side：每个字对日主是不是帮扶（同类，或者生它）。 */
@@ -427,10 +512,10 @@ function duizhaoRow(){
   const fu=d.side.filter(x=>x.fu).map(x=>gN(x.g)), ke=d.side.filter(x=>!x.fu).map(x=>gN(x.g));
   const sides=[fu.length?`${fu.join('、')}帮扶日主`:'',ke.length?`${ke.join('、')}克泄日主`:''].filter(Boolean).join('，');
   return {k:'三行对照',dd:`${a}，调候一行点到${ts}`+(hit?`，${hit}`:'')+`。强弱一行归到${qrName(r)}；照它的分法，${sides}`,t:'三行对照',p:[
-    ['是什么','上面三行各照一本书走了一遍，入手的地方不同：《千里命稿》看强弱，《子平真诠》从月令定格局，《穷通宝鉴》按季节看调候。这一行把三行各自落在哪些字上摆在一起，只看重合不重合。'],
+    ['是什么','强弱参考、格局参考、调候参考三行各照一本书走了一遍，入手的地方不同：《千里命稿》看强弱，《子平真诠》从月令定格局，《穷通宝鉴》按季节看调候。这一行把三行各自落在哪些字上摆在一起，只看重合不重合。'],
     ['格局和调候',(fixed?`格局一行从月令${g.mz}出发，落在${gs}上。`:`格局一行归在${cls}一类时，用神要在别处另取，要找的是天干上的财、正官、七杀、食神和伤官。这张盘的天干上`+(gj.length?`有${gs}。`:'一个也没有。'))
       +`调候一行照《穷通宝鉴》论${c.mon}的${DMN}，点到${ts}。`+hitLong],
-    ['和强弱一行',`强弱一行不点具体的字，只把这张盘归到${qrName(r)}。它把天干分成两边：和日主同类的、生日主的算帮扶，其余三种算克泄。上面两行点到的字里，`+d.side.map(x=>`${gN(x.g)}${RELN[x.r]}，在${x.fu?'帮扶':'克泄'}一边`).join('；')+'。'],
+    ['和强弱一行',`强弱一行不点具体的字，只把这张盘归到${qrName(r)}。它把天干分成两边：和日主同类的、生日主的算帮扶，其余三种算克泄。格局、调候两行点到的字里，`+d.side.map(x=>`${gN(x.g)}${RELN[x.r]}，在${x.fu?'帮扶':'克泄'}一边`).join('；')+'。'],
     ['注意','这一行只陈述重合不重合，不说该听哪一家。几本书的取法不同，所以会落在不同的字上。页面不把三行合成一个结论，也不给各家打分。']]};
 }
 function tiaohouRow(){
@@ -553,13 +638,20 @@ function addRows(rows,extra){
 
 /* ---------- 日主一栏 ---------- */
 function kvRows(){return memo('kv',()=>{
-  const de=gEl(DM), se=(de+4)%5, mz=NATAL[1].z, r=roots(), s=seals(), tg=touGan();
+  const de=gEl(DM), se=(de+4)%5, mz=NATAL[1].z, r=roots(), s=seals(), tg=touGan(), yz=yinYang();
   const noRoot=NATAL.filter(p=>!r.some(x=>x.k===p.k)).map(p=>`${p.k}支${p.z}`);
   const rows=[
     {k:'日主',dd:`<b class="${gCls(DM)}">${DMN}</b>，${yy(DM)}${EL[de]}，生于${mz}月（${SEASON[mz]}）`,t:'日主',p:[
       ['是什么','日柱的天干，代表这张盘的主人，是全盘的原点。'],
       ['这张盘',`${DM}是${yy(DM)}${EL[de]}。`],
       ['典籍',dts(DM)]]},
+    {k:'阴阳',dd:`八个字里阳 ${yz.yang} 个，阴 ${yz.yin} 个`+(yz.yang2!==yz.yang?`；地支换一种分法，是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`:''),t:'阴阳',p:[
+      ['是什么','天干和地支各分阴阳。这一行只数盘面的八个字里阳的几个、阴的几个。'],
+      ['天干',`《渊海子平》讲阳刃时说到十干的阴阳：${q('yh_wuyang')}。这张盘的四个天干：${NATAL.map(p=>`${p.k}干${p.g}是${yy(p.g)}`).join('，')}。`],
+      ['地支',`地支照本气的阴阳算，和这一页定十神的办法一致：${NATAL.map(p=>`${p.k}支${p.z}的本气${HID[p.z][0]}是${yy(HID[p.z][0])}`).join('，')}。合起来阳 ${yz.yang} 个，阴 ${yz.yin} 个。`],
+      ['另一种分法','地支也可以照六十甲子的配法分：子、寅、辰、午、申、戌只和阳干相配，算阳；丑、卯、巳、未、酉、亥只和阴干相配，算阴。两种分法在子、午、巳、亥四支上相反。'
+        +(yz.diff.length?`这张盘的${yz.diff.map(p=>p.k+'支'+p.z).join('、')}在这四支里，照这种分法是阳 ${yz.yang2} 个，阴 ${yz.yin2} 个`+(yz.yang2===yz.yang?'，合计和上面一样。':'。'):'这张盘的四个地支都不在这四支里，两种分法数出来一样。')],
+      ['注意','阴阳多少只是个数。排盘软件里的阴阳参考是怎么算的，没有读到说明，这一行不一定和它相同。']]},
     {k:'根',dd:r.length?r.map(x=>`${x.k}支${x.z}中有${gN(x.h)}`).join('，')+(r.length===1?`，是地支里唯一的${EL[de]}`:''):`地支里没有${EL[de]}，日主没有根`,t:'根',p:[
       ['是什么','天干在地支里找到同一五行的藏干，叫通根，也叫有根。有根的天干站得稳，没有根的叫虚浮。'],
       ['这张盘',r.length?`${DMN}的根在${r.map(x=>`${x.k}支${x.z}，${x.z}里藏着${gN(x.h)}`).join('；')}。`+(noRoot.length?`${noRoot.join('、')}里都没有${EL[de]}。`:''):`四个地支里都没有${EL[de]}，${DMN}没有根。`]]},
@@ -570,6 +662,7 @@ function kvRows(){return memo('kv',()=>{
       ['是什么','月支里藏的天干出现在某一柱的天干上，叫透干。藏着的力量露了出来，分量最重。'],
       ['这张盘',tg+'。格局法从月令透出的字来定格局，见「用神」一栏的「格局参考」一行。']]},
     qiangruoRow(),
+    qsRow(),
     gejuRow(),
     tiaohouRow(),
     duizhaoRow()
@@ -577,6 +670,37 @@ function kvRows(){return memo('kv',()=>{
   return addRows(rows,note('kv'));
 });}
 
+/* 日主一栏最上面的四项，照排盘软件里常见的那张小卡片：日主属性、阴阳参考、旺衰参考、格局参考。
+   前两项是盘面上的事实，就是「日主」「阴阳」两行。后两项是「用神」一栏里三行的一句话，写明照的是哪本书、哪种算法，点开是那一行的解释。 */
+function quadItems(){
+  const kv=kvRows(), dd=k=>(kv.find(r=>r.k===k)||{}).dd||'', q0=qrNow(), qs=qsOf(DM,NATAL), g=geju();
+  const cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
+  const ge=g.list?`归${gejuNames(g).join('和')}`:gEl(g.ben)!==gEl(DM)?`归${cls}一类还是归印格，书里没有定说`:`归${cls}一类，用神要在别处另取`;
+  return [
+    {k:'日主属性',x:'kv|日主',dd:dd('日主')},
+    {k:'阴阳参考',x:'kv|阴阳',dd:dd('阴阳')},
+    {k:'旺衰参考',x:'kv|强弱参考',dd:`照《千里命稿》归${qrName(q0)}；照五行能量的计分${({强:'算身强',弱:'算身弱',间:'落在强弱两条线之间'})[qs.tier]}。两行都在「用神」一栏`},
+    {k:'格局参考',x:'kv|格局参考',dd:`照《子平真诠》${ge}。详见「用神」一栏`}];
+}
+/* 宫位一栏：按年、月、日、时四柱各列一栏，只列事实。每一柱：配谁；天干和藏干各是什么十神；「六亲」一栏里配在这一柱的亲属看哪个十神、
+   那个十神在不在这一柱（日柱只看日支，因为配偶配的是日支）；它和另外三柱之间的合冲刑害（就是原局的那些关系，按柱分开）；十二长生；
+   落没落在日柱、年柱查出的空亡里；它在五行能量里占几分。 */
+function gwCols(){
+  const base=relations(NATAL), kin=liuqinRows(), xk=xunkong(NATAL[2].g,NATAL[2].z), xkY=xunkong(NATAL[0].g,NATAL[0].z), de=gEl(DM), se=(de+4)%5;
+  const WHO={年:'祖上',月:'父母。《渊海子平》把伯叔、兄弟也放在这里',日:'日干是自己，日支是配偶',时:'子女'};
+  return NATAL.map((p,i)=>{
+    const hs=HID[p.z].split(''), its=nlPillar(p,i===1), sum=nlSum(its), total=sum.reduce((a,b)=>a+b,0), help=sum[de]+sum[se];
+    const rel=[];
+    base.forEach(r=>r.inst.forEach(ks=>{if(ks.includes(p.k)) rel.push({key:['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|'),t:r.t,n:r.n,others:ks.filter(k=>k!==p.k).map(k=>k+(r.grp==='g'?'干':'支'))});}));
+    const falls=[];
+    if(p.k!=='日'&&xk.includes(p.z)) falls.push(`日柱查出的${xk}`);
+    if(p.k!=='年'&&xkY.includes(p.z)) falls.push(`年柱查出的${xkY}`);
+    return {k:p.k,g:p.g,z:p.z,day:!!p.day,who:WHO[p.k],god:p.day?'日主':god(p.g),hid:hs.map(h=>[h,god(h)]),
+      kin:kin.filter(r=>r.gong[0]===p.k).map(r=>({who:r.who,god:r.god,at:(p.k!=='日'&&god(p.g)===r.god?[`${p.k}干${p.g}`]:[]).concat(hs.filter(h=>god(h)===r.god).map(h=>`${p.k}支${p.z}里的${h}`))})),
+      rel,zz:stage(p.g,p.z),st:stage(DM,p.z),xk:falls.length?`${p.z}落在${falls.join('和')}里`:`${p.z}没有落空`,
+      nl:{total,sum,help,rest:total-help}};
+  });
+}
 /* 宫位：四柱各配哪一类亲属。plain 先用一句白话说这一柱配谁，src 是几部书的原文。 */
 function gongwei(k){
   const mine={年:'年柱配祖上。',月:'月柱配父母，《渊海子平》把伯叔、兄弟也放在这里。',日:'日柱配自己和配偶：日干是自己，日支紧挨着日主，通常叫配偶宫。',时:'时柱配子女。'}[k];
@@ -733,12 +857,38 @@ function readWx(){
   const {cnt,face,n}=wxCounts(), de=gEl(DM), me=zEl(NATAL[1].z);
   const lst=a=>[0,1,2,3,4].sort((x,y)=>a[y]-a[x]||x-y).map(i=>`${EL[i]} ${a[i]}`).join('、');
   const max=Math.max(...cnt), tops=[0,1,2,3,4].filter(i=>cnt[i]===max), help=cnt[de]+cnt[(de+4)%5];
-  return box('解读',`<ul>${lis([
+  return box('解读',`<ul class="cols">${lis([
     `两种数法。只数盘面八个字，${lst(face)}。把地支里藏的天干也算上，一共 ${n} 个，${lst(cnt)}。`,
     (tops.length===1?`${EL[tops[0]]}最多`+(tops[0]===me?'，又正当令。':`，当令的是${EL[me]}。`):`${tops.map(i=>EL[i]).join('、')}一样多，当令的是${EL[me]}。`)+`${DMN}自己属${EL[de]}，处在${wxState(de)}的状态。帮它的${EL[(de+4)%5]}和${EL[de]}合起来 ${help} 个，消耗它的${[1,2,3].map(k=>EL[(de+k)%5]).join('、')}合起来 ${n-help} 个。`,
-    '数个数是最粗的办法。同一个字在不在月令、有没有透到天干，分量差得很多。点左边的字看每一行分别在哪里。'])}</ul>`);
+    '数个数是最粗的办法。同一个字在不在月令、有没有透到天干，分量差得很多。点五行的名字看每一行分别在哪里。',
+    `五行能量是把个数换成分数的一种算法：藏干分主次，月支加倍。照它算，${[0,1,2,3,4].sort((x,y)=>nlNow().sum[y]-nlNow().sum[x]||x-y).map(i=>`${EL[i]} ${nlNow().sum[i]} 分`).join('、')}。排盘软件拿这类分数作判断喜用神的参考。分值是人定的，这一页只把它列出来，不据此下结论。`])}</ul>`);
 }
-function noteWx(){return `右侧是${NATAL[1].z}月的月令状态：当令者旺，令所生者相，生令者休，克令者囚，令所克者死。括号里是只数盘面八个字的个数。`;}
+function noteWx(){return `右侧是${NATAL[1].z}月的月令状态：当令者旺，令所生者相，生令者休，克令者囚，令所克者死。`;}
+/* 宫位一栏、大运流年一栏下面的一句话 */
+function noteGw(){return '表里只列位置和关系。宫位是分类的办法，同一年同一个月出生的人，年柱和月柱完全一样，不能据此说这张盘的主人和哪位亲属怎样。';}
+function noteSy(){
+  return '把五行能量的分值用到选中的大运、流年、流月、流日上：每一柱天干 5 分，地支 8 分、按藏干分。这是这一页自己的延伸，那篇文章只算原局；它定身强身弱的两条线也只对原局说，这里不拿来给加上大运流年以后的数归类。'
+    +'最后一列是从原局加到这一层为止，比劫加印绶占累计总分的多少。分数只是在记力量的账，页面不给哪一步大运、哪一年打好坏的分。点每一行的名字看它是怎么加出来的。';
+}
+function noteSyFig(){
+  const o=nlOrder();
+  return `图里一段是一种五行，长短照分数。横条是从原局累计到那一层的分数；柱子是一步大运、一个流年自己带来的 13 分，下面的数字是其中归${GRP[0]}加${GRP[4]}的。${GRP[4]}（${EL[o[0]]}）和${GRP[0]}（${EL[o[1]]}）排在最左边、最下面，和另外三行之间留了一道缝。点柱子可以换到那一步大运、那一年。`;
+}
+function readGw(){
+  return box('解读',`<ul class="cols">${lis([
+    '四柱各配一类亲属，叫宫位：年柱配祖上，月柱配父母，日支配配偶，时柱配子女。点列名看原文和别家的分法。',
+    '十神也配亲属，见「六亲」一栏。排盘软件常把两样对起来看：一位亲属看的十神，在不在配他的那一柱里。表里「配的亲属」一行列的就是这个，只说在不在。',
+    '「和别的柱」一行是这一柱和另外三柱之间的合、冲、刑、害。它们就是「干支关系」一栏里原局的那些关系，这里按柱分开列。',
+    '月柱在五行能量里的分数最多，因为那种算法把月支加倍。四柱的分数加起来是 60 分。',
+    '这些都只是位置和关系，页面不写某一柱如何如何的断语，也不把四柱配到人生的几个年龄段：这两样都没有找到可以核对的出处。'])}</ul>`);
+}
+/* 五行能量下面的一句话 */
+function noteNl(){
+  const r=qsOf(DM,NATAL);
+  return `天干每个 5 分；地支每个 8 分，按藏干的主次分；月支加倍。条上的竖线是五行平均的 12 分。`
+    +`${GRP[0]}加${GRP[4]} ${r.help} 分，其余三类 ${r.rest} 分，见「用神」一栏的「强弱计分」。`
+    +'这是一种公开的计分法，分值没有典籍出处，也没有算合、冲、刑、害。排盘软件各有各的算法，数字不会和这里相同。点分数看它是怎么加出来的。';
+}
 function readTk(){
   const de=gEl(DM), mz=NATAL[1].z, st=wxState(de), r=roots(), s=seals();
   return box('解读',`<ul>${lis([
@@ -749,7 +899,7 @@ function readTk(){
 }
 function readYs(){
   return box('解读',`<ul class="cols">${lis([
-    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面「强弱参考」一行，照《千里命稿》的三条依据数了一遍，它只是一本书、一种数法的结果。',
+    '日主是强是弱，要把月令、根、印和其余的字放在一起权衡。《滴天髓》说'+q('dts_sw')+'，意思是弄懂了强弱，论命就明白了一大半。正因为要紧，各派的算法分歧也多。上面「强弱参考」一行，照《千里命稿》的三条依据数了一遍；「强弱计分」一行，照一种公开的计分法算了一遍。它们各是一种数法的结果，两行不一定一致。',
     '格局和调候是两种找用神的办法，一种从月令出发，一种看季节。上面「格局参考」「调候参考」两行，分别列出《子平真诠》和《穷通宝鉴》对这张盘怎么说，点开可以看原文和每一步的依据。几本书落在哪些字上，「三行对照」一行摆在了一起；它们不一定一致，这一页不替它们裁决。'])}</ul>`);
 }
 function readGods(){
@@ -823,7 +973,7 @@ function readGT(){
     '大运、流年的地支能给原局的天干带来根，它们的天干也可能正好是原局某个地支里藏的字。表的前四列和下面四行就是这两种情况，换一步大运、换一年，这些格子跟着变。'])}</ul>`);
 }
 /* 解读框：notes.read 里有手写的就用手写的，没有就用上面按规则生成的 */
-const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods,ys:readYs,lq:readLq,gt:readGT};
+const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods,ys:readYs,lq:readLq,gt:readGT,gw:readGw};
 function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slot]():h;}
 
 /* ---------- 点开的解释 ---------- */
@@ -922,9 +1072,63 @@ function xGT(rk,ck){
     t.tou?['透',`${c.z}里藏的${t.h}和${rn}是同一个字。反过来看，就是${zn}${c.z}里的${t.h}透到了${rn}上。`]:null,
     ['典籍',`《子平真诠》：${q('zp_gen')}又分轻重：${q('zp_gen2')}这张表只标出是不是本气，没有照这个分法分轻重。`]]};
 }
+/* 五类十神的合称 */
+const GRPX=[
+  {w:'比肩和劫财的合称。两个都和日主同一五行，也就是「同我」。',d:()=>`《子平真诠》：${q('zp_gen8')}。`},
+  {w:'食神和伤官的合称。两个都是日主所生的五行，也就是「我生」。书里也倒过来写作伤食。',d:()=>`《渊海子平》在这种关系后面注了名字：${q('yh_ws')}。`},
+  {w:'正财和偏财的合称。两个都是日主所克的五行，也就是「我克」。旧书里只说一个「财」字。排盘软件常拿「财」代正财、「才」代偏财，合起来写成财才。',d:()=>`《渊海子平》：${q('yh_wk')}。《子平真诠》把正财和偏财合在一起讲：${q('zp_yinshou')}偏财在书里也写作偏才：${q('zp_fu')}`},
+  {w:'正官和七杀的合称。两个都是克日主的五行，也就是「克我」。七杀也叫偏官，旧书里常写作煞。',d:()=>`《渊海子平》：${q('yh_kw')}。《子平真诠》写作官煞：${q('zp_zi')}`},
+  {w:'正印和偏印的合称。两个都是生日主的五行，也就是「生我」。也单说一个「印」字。',d:()=>`《渊海子平》：${q('yh_sw')}，又说${q('df_正印')}。《子平真诠》：${q('zp_yinshou')}`,v:()=>`印绶有时单指正印。《渊海子平》列甲木的十神时，${q('yh_yin1')}，说的是正印；偏印另有名字，${q('yh_dao')}。`}
+];
+function xGrp(i){
+  const x=GRPX[i]; if(!x) return null;
+  const two=CAT[i][0].split('和'), all=natalStems().concat(natalHidden()), n=gd=>all.filter(g=>god(g)===gd).length, s=nlNow(), e=(gEl(DM)+i)%5;
+  return {t:`${GRP[i]} · ${CAT[i][0]}`,p:[['是什么',x.w],['典籍',x.d()],x.v?['异文',x.v()]:null,
+    ['这张盘',`${DMN}的${GRP[i]}是${EL[e]}。原局里${two[0]} ${n(two[0])} 处，${two[1]} ${n(two[1])} 处；五行能量里${EL[e]} ${s.sum[e]} 分。`]]};
+}
+/* 五行能量里某一行的分数是怎么加出来的 */
+function xNl(i){
+  const s=nlNow(), its=s.items.filter(x=>x.e===i), n=s.sum[i], r=(i-gEl(DM)+5)%5;
+  return {t:`${EL[i]}的能量 · ${n} 分`,p:[
+    ['怎么加的',its.length?its.map(x=>x.say).join('，')+`。合计 ${n} 分。`:`盘里没有${EL[i]}，0 分。`],
+    ['占多少',`四柱一共 ${s.total} 分，${EL[i]}占 ${pct(n,s.total)}。五行平均各 12 分，${EL[i]}${n>12?`比平均多 ${n-12} 分`:n<12?`比平均少 ${12-n} 分`:'正好是平均数'}。`],
+    ['对日主',`${EL[i]}${wxRole(i)}这一类合称${GRP[r]}。`],
+    ['算法','天干每个 5 分。地支每个 8 分：藏一个字的全给它，藏两个的 5 分、3 分，藏三个的 5 分、2 分、1 分。月支加倍，算 16 分。四柱一共 60 分。'],
+    ['出处','台湾吉祥坊易经开运中心的《大师教你论八字》第二章第十四节「五行分数算法」。这是现代的一种算法，分值没有典籍出处。排盘软件里的五行能量、五行分数各有各的算法，多数不公开，数字不会和这里相同。'],
+    ['没有算的','它只算了个数、天干和地支的比重、藏干的主次和月支。合、冲、刑、害怎么影响分数，月支以外各柱的位置怎么加权，文章里没有，页面也没有自己加。分数高低不等于好坏，页面不据此定喜用神。']]};
+}
+/* 大运流年一栏的一行：原局、大运、流年、流月、流日、合计 */
+function xNly(k){
+  const L=nlLayers(), r=k==='合计'?L.tot:L.rows.find(x=>x.k===k); if(!r) return null;
+  const five=s=>[0,1,2,3,4].filter(e=>s[e]).map(e=>`${EL[e]} ${s[e]} 分`).join('、')||'没有', two=`${GRP[0]}加${GRP[4]}`, three=`${GRP[1]}、${GRP[2]}、${GRP[3]}`;
+  const ext='把五行能量的分值用到大运、流年、流月、流日上，是这一页自己的延伸，那篇文章只算原局。外来的一柱照样是天干 5 分，地支 8 分、按藏干分，不加倍。分数只是在记力量的账：加力不等于好事，减力也不等于坏事。页面不给哪一步大运、哪一年打好坏的分。';
+  if(k==='原局') return {t:`原局的五行能量 · ${r.total} 分`,p:[['是什么','出生时四柱的五行能量，就是「五行」一栏里的那一组分数。'],['五行',five(r.sum)+'。'],['两组',`${two} ${r.help} 分，${three} ${r.rest} 分。${two}占 ${r.acc}。`]]};
+  if(k==='合计') return {t:`原局加上选中的四层 · ${r.total} 分`,p:[['是什么','原局的分数，加上选中的大运、流年、流月、流日各自带来的分数。'],['五行',five(r.sum)+'。'],['两组',`${two} ${r.help} 分，${three} ${r.rest} 分。${two}占 ${r.acc}；只看原局是 ${L.rows[0].acc}。`],['说明',ext]]};
+  const c=cols().find(x=>x.k===k), its=nlPillar(c,false);
+  return {t:`${k}${c.g}${c.z}带来的分数 · ${r.total} 分`,p:[
+    ['怎么加的',its.map(x=>x.say).join('，')+`。合计 ${r.total} 分。`],
+    ['五行',five(r.sum)+'。'],
+    ['两组',`${two}这一组多 ${r.help} 分，${three}那一组多 ${r.rest} 分。从原局加到这一层，${two}占 ${r.acc}。`],
+    ['十神',`天干${c.g}是${god(c.g)}，地支${c.z}的本气${HID[c.z][0]}是${godZ(c.z)}。`],
+    ['说明',ext]]};
+}
+/* 宫位一栏里某一柱的五行能量 */
+function xNlp(k){
+  const i='年月日时'.indexOf(k); if(i<0) return null;
+  const p=NATAL[i], its=nlPillar(p,i===1), sum=nlSum(its), total=sum.reduce((a,b)=>a+b,0), de=gEl(DM), help=sum[de]+sum[(de+4)%5];
+  return {t:`${k}柱${p.g}${p.z}在五行能量里 · ${total} 分`,p:[
+    ['怎么加的',its.map(x=>x.say).join('，')+`。合计 ${total} 分。`],
+    ['五行',[0,1,2,3,4].filter(e=>sum[e]).map(e=>`${EL[e]} ${sum[e]} 分`).join('、')+'。'],
+    ['两组',`${GRP[0]}加${GRP[4]} ${help} 分，${GRP[1]}、${GRP[2]}、${GRP[3]} ${total-help} 分。`],
+    ['说明',(i===1?'月柱的分数最多，因为这种算法把月支加倍。':'天干 5 分，地支 8 分，这一柱一共 13 分。')+'四柱加起来是 60 分。算法和出处见「五行」一栏。']]};
+}
 function X0(key){
   const a=key.split('|'), k=a[0];
   if(k==='gt') return xGT(a[1],a[2]);
+  if(k==='nly') return xNly(a[1]);
+  if(k==='nlp') return xNlp(a[1]);
+  if(k==='grp') return xGrp(+a[1]);
+  if(k==='nl') return xNl(+a[1]);
   if(k==='meta'||k==='kv'){const r=(k==='meta'?metaRows():kvRows()).find(x=>x.k===a[1]);return r?{t:r.t,p:r.p}:null;}
   if(k==='term'){          // 页面上零散的术语
     const male=!!P.gender;

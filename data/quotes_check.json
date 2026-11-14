@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-14",
- "total": 303,
- "hash": 583112238,
+ "total": 311,
+ "hash": 1532129426,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -22,7 +22,7 @@
   },
   "yhzp": {
    "book": "《渊海子平》",
-   "quotes": 29,
+   "quotes": 36,
    "pages": [
     "淵海子平（版本 2593607）"
    ]
@@ -94,7 +94,7 @@
   },
   "zpzq": {
    "book": "《子平真诠》",
-   "quotes": 26,
+   "quotes": 27,
    "pages": [
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53623.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53626.html",
@@ -106,6 +106,7 @@
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53636.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53641.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53643.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53655.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53663.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53665.html"
    ]

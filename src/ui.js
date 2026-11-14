@@ -101,9 +101,9 @@ function refreshSheet(){
   if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
 }
 /* ---------- 标签栏 ----------
-   两张卡片各有一排标签，一次显示一页：原局是日主、五行、十神、六亲、用神，排盘是四柱细盘、干支关系、根和透。
+   两张卡片各有一排标签，一次显示一页：原局是日主、五行、十神、六亲、宫位、用神，排盘是四柱细盘、干支关系、根和透、大运流年。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
-const TABS={natal:['tk','wx','gods','lq','ys'],pan:['pan','rel','gt']};
+const TABS={natal:['tk','wx','gods','lq','gw','ys'],pan:['pan','rel','gt','sy']};
 function setTab(card,id,focus){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   sel.tab[card]=id;
@@ -142,7 +142,7 @@ function relChips(list){
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
 /* 各家的那几行：从其中的第一行起，放在「用神」那一页 */
-const KV_SCHOOLS=['强弱参考','格局参考','调候参考','三行对照'];
+const KV_SCHOOLS=['强弱参考','强弱计分','格局参考','调候参考','三行对照'];
 /* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
 const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
@@ -158,20 +158,23 @@ function renderPerson(){
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
-  ['pan','yun','rel','rel2','wx','tk','gods','ys','lq','gt'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  ['pan','yun','rel','rel2','wx','tk','gods','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
   // 日主一栏的几行分在两页：前面盘面上的事实在「日主」，从各家的第一行起在「用神」
-  const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k));
-  const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
-  $('kv').innerHTML=dl(cut<0?kv:kv.slice(0,cut));
+  // 「日主」那一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「用神」那一页的一句话
+  const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k)), quad=quadItems(), inQuad=['日主','阴阳'];
+  const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
+  $('kv').innerHTML=dl(quad)+dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
   $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
-  renderBars();renderGods();renderDynamic();
+  $('note-gw').textContent=noteGw();
+  $('note-sy').textContent=noteSy();
+  renderBars();renderGods();renderGw();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -328,9 +331,51 @@ function renderGT(){
       return `<td class="${cc(c,i)}">${t?xb(`gt-c${t.ben?' ben':''}${t.tou?' tou':''}`,`gt|${r.k}|${c.k}`,`<i class="${gCls(t.h)}">${t.h}</i>${t.ben||t.tou?`<small>${[t.ben?'本气':'',t.tou?'透':''].filter(Boolean).join('<br>')}</small>`:''}`):''}</td>`;}).join('')+'</tr>').join('');
   $('gtmap').innerHTML=`<table class="gt"><thead>${head}</thead><tbody>${body}</tbody></table>`;
 }
+/* 宫位一页：一列一柱（gwCols），八行：配谁、干支、十神、配的亲属、和别的柱、十二长生、空亡、五行能量。只列事实 */
+function renderGw(){
+  const cs=gwCols(), row=(label,fn)=>`<tr><th scope="row">${label}</th>${cs.map(c=>`<td>${fn(c)}</td>`).join('')}</tr>`;
+  const tg=gd=>gd==='日主'?gd:xb('x','tg|'+gd,gd), five=s=>[0,1,2,3,4].filter(e=>s[e]).map(e=>`${EL[e]} ${s[e]} 分`).join('、');
+  $('gwmap').innerHTML=`<table class="gods gw"><thead><tr><th></th>${cs.map(c=>`<th scope="col">${xb('x','col|'+c.k,c.k+'柱')}</th>`).join('')}</tr></thead><tbody>`
+    +row('配谁',c=>c.who)
+    +row('干支',c=>`<span class="gz">${xb('x '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}${xb('x '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`)
+    +row('十神',c=>`天干${c.g}：${tg(c.god)}<br>地支${c.z}里：${c.hid.map(([h,gd])=>`${h} ${tg(gd)}`).join('、')}`)
+    +row('配的亲属',c=>c.kin.length?c.kin.map(r=>`${r.who}看${tg(r.god)}：${r.at.length?'在这一柱，'+r.at.join('、'):'不在这一柱'}`).join('<br>'):'「六亲」一栏的表里没有配祖上的十神')
+    +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
+    +row('十二长生',c=>`${c.g}坐${c.z}是${xb('x','zz|'+c.k,c.zz)}`+(c.day?'':`<br>日主到${c.z}是${xb('x','st|'+c.k,c.st)}`))
+    +row('空亡',c=>c.xk)
+    +row('五行能量',c=>`${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>${GRP[0]}加${GRP[4]} ${c.nl.help} 分，其余 ${c.nl.rest} 分<span class="stkw" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>`)
+    +'</tbody></table>';
+}
+/* 大运流年一页的计分表（nlLayers）：一行一层，原局、大运、流年、流月、流日，最后是合计。外来的四层写成加号 */
+function renderSy(){
+  const L=nlLayers(), de=gEl(DM), se=(de+4)%5, n=(v,plus)=>(plus?'+':'')+v;
+  $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">合计</th><th scope="col">${GRP[0]}加${GRP[4]}<small>${EL[de]}、${EL[se]}</small></th><th scope="col">${GRP[1]}、${GRP[2]}、${GRP[3]}<small>其余三行</small></th><th scope="col">加到这一层<small>${GRP[0]}加${GRP[4]}占</small></th></tr>`;
+  const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.total,plus)}</td><td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
+  $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
+  // 图。图例：五行的先后和图里的相同，后面是这一类十神的合称
+  $('sy-lg').innerHTML=nlOrder().map((e,j)=>`<span class="${ELC[e]}"><i></i>${EL[e]} ${GRP[(e-de+5)%5]}</span>`).join('');
+  // 横条：从原局累计到每一层的五行分数
+  let acc=[0,0,0,0,0];
+  $('sy-bars').innerHTML=L.rows.map((r,i)=>{acc=acc.map((v,e)=>v+r.sum[e]);
+    return `<span class="lb">${i?(i===1?'加上':'再加')+r.k:'原局'}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</span>${stk(acc)}<span class="tx">${acc.reduce((a,b)=>a+b,0)} 分 · ${GRP[0]}加${GRP[4]} ${r.acc}</span>`;}).join('');
+  // 柱子：八步大运、这步大运里的各个流年，各自带来的 13 分。是按钮，点了就换到那一步、那一年
+  const Y=nlYun(), col=(x,attr,on,top)=>`<button type="button" class="c" ${attr} aria-pressed="${on}"><small>${top}</small>${stk(x.sum,'v')}<span class="gz">${gzSpan(x.gz)}</span><span class="hp">+${x.help}</span></button>`;
+  $('sy-dy').innerHTML=Y.dy.map(x=>col(x,`data-dy="${x.i}"`,x.i===sel.dy,x.y0)).join('');
+  $('sy-ln').innerHTML=Y.ln.map(x=>col(x,`data-y="${x.y}"`,x.y===sel.y,x.y)).join('');
+  $('h-syln').innerHTML=`${P.dayun[sel.dy].gz}运里的流年 <small>每一年自己带来的 13 分</small>`;
+  $('note-syfig').textContent=noteSyFig();
+}
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
-  $('bars').innerHTML=cnt.map((n,i)=>`${xb('x el '+ELC[i],'wx|'+i,ic(i)+EL[i])}<span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个（${face[i]}）</span><span class="st">${wxState(i)}</span>`).join('');
+  // 三种数法并排，每行都是五行的名字、这一类十神的合称、一段条、数字。
+  // 五行个数只数盘面八个字；含藏干数连地支里藏的天干一起数，点名字看每一个在哪里，右边是月令状态
+  const de=gEl(DM), gp=i=>`<span class="gp">${xb('x','grp|'+(i-de+5)%5,GRP[(i-de+5)%5])}</span>`, fmax=Math.max(...face);
+  $('bars0').innerHTML=face.map((n,i)=>`<span class="el ${ELC[i]}">${ic(i)}${EL[i]}${gp(i)}</span><span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/fmax*100)}%"></span></span><span class="n">${n} 个</span>`).join('');
+  $('bars').innerHTML=cnt.map((n,i)=>`<span class="el ${ELC[i]}">${xb('x','wx|'+i,ic(i)+EL[i])}${gp(i)}</span><span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个</span><span class="st">${wxState(i)}</span>`).join('');
+  // 五行能量：一种公开的计分法（nlScore）。条上的竖线是平均数的位置，右边是分数和占比
+  const s=nlNow(), top=Math.max(...s.sum);
+  $('bars2').innerHTML=s.sum.map((n,i)=>`<span class="el ${ELC[i]}">${ic(i)}${EL[i]}${gp(i)}</span><span class="track ${ELC[i]}" style="--avg:${(s.total/5/top*100).toFixed(2)}%"><span class="fill" style="width:${Math.round(n/top*100)}%"></span></span><span class="n">${xb('x','nl|'+i,n+' 分')}</span><span class="pc">${pct(n,s.total)}</span>`).join('');
+  $('note-nl').textContent=noteNl();
 }
 const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
 function renderGods(){
@@ -339,7 +384,7 @@ function renderGods(){
   const cell=g=>{const n=all.filter(x=>x===g).length;
     return `<td class="${n?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} 处<i style="--n:${n}"></i>`:'没有'}</span></td>`;};
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
-    return `<tr><td>${r[1]}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
+    return `<tr><td>${r[1]}<span class="gp">${xb('x','grp|'+i,GRP[i])}</span></td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
   $('liuqin').innerHTML=liuqinRows().map(r=>`<tr><td>${r.who}</td><td>${xb('x','tg|'+r.god,r.god)}</td><td>${r.at}</td><td>${r.gong}</td></tr>`).join('');
   $('note-lq').textContent=noteLq();
 }
@@ -352,7 +397,7 @@ function reveal(){
     if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollLeft=l-(box.clientWidth-b.offsetWidth)/2;
   });
 }
-function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderGT();renderYunRead();reveal();refreshSheet();}
+function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();}
 
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
@@ -485,10 +530,10 @@ document.addEventListener('click',e=>{
     renderDynamic();
   }else if(b.dataset.m!==undefined){
     sel.m=Number(b.dataset.m);
-    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderGT();renderYunRead();reveal();refreshSheet();
+    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
-    renderPan();renderLiuri();renderRelations();renderGT();renderYunRead();refreshSheet();
+    renderPan();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();refreshSheet();
   }
 });
 document.addEventListener('keydown',e=>{
