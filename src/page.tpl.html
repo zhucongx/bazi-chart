@@ -51,7 +51,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
-th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on{background-color:var(--accent-soft);text-decoration:none}
 .x.on,.hs.on,.glyph.on,.rel.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
@@ -67,6 +67,7 @@ th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-
 .top{display:flex;flex-direction:column;gap:16px}
 .toprow{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap}
 .eyebrow{margin:0;font-size:12.5px;color:var(--ink2);letter-spacing:.14em}
+.eyebrow .x{letter-spacing:inherit}
 .switch{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .switch .knob{position:relative;flex:none;width:28px;height:16px;border-radius:999px;background:var(--ink3)}
 .switch .knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--card)}
@@ -75,6 +76,11 @@ th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-
 .switch[aria-pressed="true"] .knob::after{left:14px}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
+/* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱，日柱的天干上面是「日主」。都用样式生成，不占文字内容 */
+h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;padding-top:16px}
+h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
+h1 .dm{position:relative}
+h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:translateX(-50%);font:600 10.5px/1 var(--body);letter-spacing:.06em;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:3px 5px}
 .meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 32px}
 .meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:7px 0}
 .meta dt{flex:0 0 5.2em;font-size:13px;color:var(--ink3)}
@@ -120,9 +126,6 @@ p{margin:0}
 .read b{font-weight:600}
 .read a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .guide{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
-.guide>p:not(.rd-h){max-width:none}
-.guide .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px 40px}
-.guide .g2>div{display:flex;flex-direction:column;gap:6px;min-width:0}
 :root[data-read="off"] .read{display:none}
 .layers{margin:0;display:flex;flex-direction:column;gap:8px}
 .layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
@@ -207,10 +210,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 日主一栏：前一组是盘面上的事实，后一组是各家照各自的书走出来的几行，中间一个小标题。两组共用同一套列宽；行名和内容按第一行的基线对齐 */
 .kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
 .kv{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-columns:subgrid;gap:8px 14px;align-items:baseline;font-size:14px;margin:0}
-.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap;scroll-margin-top:72px}
+.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
 .kv dd{margin:0;min-width:0}
 .kv-h{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--line);padding-top:13px}
-.kv-h small{font-size:12px;font-weight:400;color:var(--ink3)}
+.kv-h small{flex-basis:100%;font-size:12px;font-weight:400;color:var(--ink3)}
+.tag{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px}
 .gods{font-size:14px;text-align:left}
 .gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
@@ -238,6 +242,100 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 @media (min-width:760px){
   .read .cols{columns:2;column-gap:40px}
+}
+/* 电脑上：页面放宽到 1280，字和间距都大一档。细盘里行名和内容仍然从同一条线起头：行名上面留 10，格子是 3 加 7、8 加 2 */
+@media (min-width:900px){
+  body{font-size:16px}
+  main{max-width:1280px;padding:44px 32px 72px;gap:28px}
+  .top{gap:20px}
+  .eyebrow{font-size:13.5px}
+  .switch{font-size:14px;padding:5px 14px 5px 7px}
+  .pp{font-size:14.5px;padding:6px 18px}
+  h1{font-size:56px;gap:.1em .7em}
+  h1 .pl::after{font-size:13px}
+  h1 .dm::before{font-size:11.5px}
+  section{padding:28px 32px 30px;gap:18px;border-radius:16px}
+  h2{font-size:21px;gap:14px}
+  h2 small{font-size:13.5px}
+  h3{font-size:14px}
+  .note{font-size:14px}
+  .read{padding:18px 22px 20px;font-size:15px;gap:10px;border-radius:12px}
+  .rd-h{font-size:12.5px}
+  .read li{margin-bottom:8px}
+  .read .cols{column-gap:48px}
+  .meta{gap:0 48px}
+  .meta div{padding:9px 0;gap:16px}
+  .meta dt{font-size:14px}
+  .pan{--lh:26px}
+  .pan thead th{padding:10px 4px;font-size:14.5px}
+  .pan thead th:first-child{width:68px}
+  .pan thead small{font-size:13px}
+  .pan tbody th{padding:10px 0 10px 8px;font-size:13px}
+  .pan td>.x{padding:7px 2px}
+  .pan .big td{padding:10px 2px}
+  .pan .multi td{padding:8px 2px}
+  .pan .sm{font-size:14.5px}
+  .pan .ss{font-size:13.5px}
+  .hs{font-size:14.5px}
+  .hs small{font-size:13px;margin-left:6px}
+  .glyph{width:74px;height:74px;font-size:38px;border-radius:14px}
+  .glyph .ic{top:6px;right:6px;width:15px;height:15px}
+  .glyph[data-z]::after{right:7px;bottom:6px;font-size:11px}
+  .prow{grid-template-columns:104px minmax(0,1fr);gap:4px 16px}
+  .prow h3{font-size:15.5px}
+  .prow h3 small{font-size:13px}
+  .picker{gap:8px;padding:12px 2px 10px}
+  .pk{flex-basis:96px;padding:8px 4px 9px;border-radius:12px;gap:2px}
+  #liunian .pk{flex-basis:88px}
+  #liuyue .pk{flex-basis:78px}
+  /* 流日：一个月二十九到三十二天，电脑上不横向滚动，排成两行全部露出来（窗口窄的时候是三行） */
+  #liuri{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;overflow:visible}
+  #liuri .pk{padding-left:2px;padding-right:2px}
+  .pk .yr,.pk .gd,.pk .ag{font-size:12.5px}
+  #liuri .pk .gd{font-size:11.5px}
+  .pk .gz{font-size:23px}
+  .rels{gap:10px}
+  .rel{font-size:14.5px;padding:6px 15px;gap:7px}
+  .rel b{font-size:17px}
+  .rel small{font-size:13px}
+  .none{font-size:14px}
+  .relblock{gap:10px}
+  .relgrid{gap:22px 40px;padding-top:18px}
+  .relgrid>div{gap:10px}
+  .two{gap:28px}
+  .bars{gap:14px 16px}
+  .bars .el{font-size:20px}
+  .bars .el .ic{width:17px;height:17px}
+  .bars .track{height:12px;border-radius:6px}
+  .bars .n{font-size:14px}
+  .bars .st{font-size:13px;padding:0 10px}
+  .kvs{gap:18px}
+  .kv{gap:11px 20px;font-size:15px}
+  .kv dt{font-size:14px}
+  .kv-h{padding-top:17px}
+  .kv-h small{font-size:13px}
+  .tag{font-size:12px}
+  .gods{font-size:15px}
+  .gods th,.gods td{padding:10px 16px 10px 0}
+  .gods thead th{font-size:13px}
+  .gods .eli .ic{width:16px;height:16px}
+  .layers{gap:10px}
+  .layers>div{grid-template-columns:180px 1fr;gap:2px 18px;padding-top:10px}
+  .layers dt{font-size:14px}
+  .layers dt b{font-size:19px}
+  .layers dt small{font-size:13px}
+  footer{font-size:14px}
+  .sheet{width:min(500px,calc(100vw - 24px));font-size:15px}
+  .sheet-in{padding:0 20px 18px}
+  .sheet-h{padding:15px 0 10px}
+  .sheet-h h3{font-size:17.5px}
+  .sheet-x{font-size:13px}
+  .sheet-b{gap:11px}
+  .sheet-b .lb{font-size:13.5px}
+  .pform{padding:20px 22px 22px;gap:14px 16px}
+  .pform label{font-size:14px}
+  .pform .btn{font-size:14px;padding:5px 16px}
+  .hint{font-size:13px}
 }
 @media (max-width:560px){
   .layers>div{grid-template-columns:1fr}
@@ -311,10 +409,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
     <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
     <label>只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
-    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="比如：北京市"></label>
+    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="输入城市名，从列表里选" list="pf-cities"></label>
+    <datalist id="pf-cities"></datalist>
     <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <p class="wide hint" id="pf-lonhint" hidden></p>
     <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
-    <p class="wide hint">经度用来把钟表时间换算成真太阳时，可以在地图软件里查到出生城市的经度；填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <p class="wide hint">出生地从列表里选城市，经度会自动填上；列表里没有的地方，可以在地图软件里查到经度自己填。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
     <p class="wide msg" id="pf-msg" hidden></p>
     <div class="wide row">
       <button type="submit" class="btn main" id="pf-save">保存</button>
@@ -330,6 +430,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="read">
     <p class="rd-h">解读 · 怎么看这一页</p>
     <ul class="cols">
+      <li>八字是把出生的年、月、日、时各记成一个天干加一个地支，四柱一共八个字。日柱的天干叫日主，代表这张盘的主人；看盘就是看其余的字和它之间的生克关系。</li>
       <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
       <li>细盘里的每一格、带虚线的字、每一条合冲刑害都可以点。点开的那一处会套上一圈蓝框，解释出现在它旁边；再点一次或者点一下空白处收起。</li>
       <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
@@ -339,35 +440,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <dl class="meta" id="meta"></dl>
 </header>
 
-<div class="read guide">
-  <p class="rd-h">解读 · 读盘的顺序</p>
-  <p>先在<a href="#h-pan">四柱细盘</a>里认字：八个字各是日主的什么十神，地支里藏着什么。往下从哪里入手，各家不一样。</p>
-  <div class="g2">
-    <div>
-      <p><b>各家的入口。</b>页面把每一家做成<a href="#h-tk">日主</a>一栏里的一行，各照各的书走一遍，不合成一个结论。</p>
-      <ul>
-        <li>《千里命稿》从强弱入手，见<a href="#kv-qr">强弱参考</a>。</li>
-        <li>《子平真诠》从月令入手，定格局，见<a href="#kv-gj">格局参考</a>。</li>
-        <li>《穷通宝鉴》从出生的季节入手，看调候，见<a href="#kv-th">调候参考</a>。</li>
-        <li>《神峰通考》从盘里的病和药入手。这一步要通盘权衡，页面没有单列一行，只在「格局参考」的解释里引了它的话。</li>
-        <li>几行各自落在哪些字上、重合不重合，见<a href="#kv-dz">三行对照</a>。</li>
-      </ul>
-    </div>
-    <div>
-      <p><b>《千里命稿》的八步。</b>这本书把评断排成八步。这只是其中一家的顺序，别家有别的顺序。页面做到哪一步：</p>
-      <ul>
-        <li>第一步看强弱、第二步定格局：就是「强弱参考」和「格局参考」两行。</li>
-        <li>第三步取用神：用神是一张盘里拿来作主的字。各家取法不同，页面只列依据，不取定。</li>
-        <li>第五步查岁运：<a href="#h-yun">大运和流年</a>、<a href="#h-rel">干支关系</a>里列出每一层带来的十神和合冲，不判断好坏。</li>
-        <li>第四步论喜忌要先取定用神；第六步推六亲、第七步评性情、第八步断事业是对具体的人下判断。这四步页面都不做。十神怎么配六亲是书里的分类办法，见<a href="#h-gods">十神对照</a>。</li>
-      </ul>
-    </div>
-  </div>
-</div>
+<div class="read guide" id="rd-key"></div>
 
 <section aria-labelledby="h-yun">
   <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
+  <dl class="meta" id="meta-yun"></dl>
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
   <div class="prow"><h3 id="h-ly"></h3><div class="picker" id="liuyue" role="group" aria-label="流月"></div></div>
   <div class="prow"><h3 id="h-lr"></h3><div class="picker" id="liuri" role="group" aria-label="流日"></div></div>
@@ -375,7 +453,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </section>
 
 <section aria-labelledby="h-pan">
-  <h2 id="h-pan">四柱细盘 <small>前四列是上面选中的流日、流月、流年和大运</small></h2>
+  <h2 id="h-pan">四柱细盘 <small>后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</small></h2>
   <div class="tablewrap">
     <table class="pan">
       <thead>
@@ -398,23 +476,15 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="read" id="rd-yun"></div>
 </section>
 
-<section aria-labelledby="h-rel">
-  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
-  <div class="relblock">
-    <h3>原局 · 天干</h3>
-    <div class="rels" id="rel-ng"></div>
-    <h3>原局 · 地支</h3>
-    <div class="rels" id="rel-nz"></div>
+<section aria-labelledby="h-gods">
+  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+      <tbody id="gods"></tbody>
+    </table>
   </div>
-  <div class="read" id="rd-rel"></div>
-  <div class="relgrid">
-    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
-    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
-    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
-    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
-  </div>
-  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
-  <div class="read" id="rd-rel2"></div>
+  <div class="read" id="rd-gods"></div>
 </section>
 
 <div class="two">
@@ -431,15 +501,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </section>
 </div>
 
-<section aria-labelledby="h-gods">
-  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
-      <tbody id="gods"></tbody>
-    </table>
+<section aria-labelledby="h-rel">
+  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
+  <div class="relblock">
+    <h3>原局 · 天干</h3>
+    <div class="rels" id="rel-ng"></div>
+    <h3>原局 · 地支</h3>
+    <div class="rels" id="rel-nz"></div>
   </div>
-  <div class="read" id="rd-gods"></div>
+  <p class="note">蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
+  <div class="read" id="rd-rel"></div>
+  <div class="relgrid">
+    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
+    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
+    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
+    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+  </div>
+  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
+  <div class="read" id="rd-rel2"></div>
 </section>
 
 <footer>
@@ -458,6 +537,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 <script>
 const DATA=/*DATA*/;
 const TABLES=/*TABLES*/;
+const CITIES=/*CITIES*/;
 /*ENGINE*/
 /*CHART*/
 /*CLASSICS*/

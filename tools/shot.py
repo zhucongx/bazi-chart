@@ -8,6 +8,8 @@
 页面上不止一个人时，再切到第二个人截一张桌面整页。
 同时报告页面有没有横向溢出、有没有脚本报错。
 
+页面用了 Google 的网络字体。取不到的时候不等它，照样截图，这时图里是系统自带的宋体。
+
 需要：pip install playwright
 浏览器：优先用本机的 Google Chrome；没有的话先运行 playwright install chromium。
 也可以用环境变量 CHROME_PATH 指定浏览器的可执行文件。
@@ -19,6 +21,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
+os.environ.setdefault('PW_TEST_SCREENSHOT_NO_FONTS_READY', '1')     # 截图时不等网络字体，取不到字体也不会卡住
 NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png']
 
 
@@ -49,14 +52,19 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     for name in NAMES:              # 先清掉上一次的，免得这次跳过的那几张还留着旧图
         (out / name).unlink(missing_ok=True)
-    msgs = []
+    msgs, slow = [], []
     with sync_playwright() as p:
         b = launch(p)
 
         def page(w, h, scheme):
             pg = b.new_page(viewport={'width': w, 'height': h}, color_scheme=scheme, device_scale_factor=1)
             pg.on('pageerror', lambda e: msgs.append(str(e)))
-            pg.goto(url)
+            try:
+                pg.goto(url, timeout=15000)
+            except Exception:           # 多半是网络字体迟迟取不到。页面本身已经在了，接着截
+                if not slow:
+                    print('网络字体没有及时取到，图里可能是系统自带的字体')
+                slow.append(1)
             pg.wait_for_timeout(1200)
             return pg
 
@@ -77,7 +85,7 @@ def main():
                 return False
             return True
 
-        pg = page(1100, 900, 'light')
+        pg = page(1440, 900, 'light')
         overflow(pg, '桌面')
         pg.screenshot(path=str(out / 'desktop.png'), full_page=True)
         people = pg.locator('#people [data-p]').count()
@@ -101,7 +109,7 @@ def main():
             pg.screenshot(path=str(out / 'mobile_form.png'))
         pg.close()
 
-        pg = page(1100, 900, 'dark')
+        pg = page(1440, 900, 'dark')
         pg.evaluate("() => { const el = document.getElementById('h-pan'); if (el) el.scrollIntoView(); }")
         if click_first(pg, '[data-x^="ss|"]', '深色打开一条解释'):
             pg.wait_for_timeout(500)
@@ -109,7 +117,7 @@ def main():
         pg.close()
 
         if people > 1:
-            pg = page(1100, 900, 'light')
+            pg = page(1440, 900, 'light')
             if click_first(pg, '#people [data-p] >> nth=1', '切到第二个人'):
                 pg.wait_for_timeout(500)
                 overflow(pg, '桌面，第二个人')

@@ -51,7 +51,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
-th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on{background-color:var(--accent-soft);text-decoration:none}
 .x.on,.hs.on,.glyph.on,.rel.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
@@ -67,6 +67,7 @@ th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-
 .top{display:flex;flex-direction:column;gap:16px}
 .toprow{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap}
 .eyebrow{margin:0;font-size:12.5px;color:var(--ink2);letter-spacing:.14em}
+.eyebrow .x{letter-spacing:inherit}
 .switch{font:inherit;font-size:13px;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .switch .knob{position:relative;flex:none;width:28px;height:16px;border-radius:999px;background:var(--ink3)}
 .switch .knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--card)}
@@ -75,6 +76,11 @@ th .x,dt .x,.gods .x,.bars .x{text-decoration:underline dotted var(--ink3);text-
 .switch[aria-pressed="true"] .knob::after{left:14px}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
+/* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱，日柱的天干上面是「日主」。都用样式生成，不占文字内容 */
+h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;padding-top:16px}
+h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
+h1 .dm{position:relative}
+h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:translateX(-50%);font:600 10.5px/1 var(--body);letter-spacing:.06em;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:3px 5px}
 .meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 32px}
 .meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:7px 0}
 .meta dt{flex:0 0 5.2em;font-size:13px;color:var(--ink3)}
@@ -120,9 +126,6 @@ p{margin:0}
 .read b{font-weight:600}
 .read a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .guide{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
-.guide>p:not(.rd-h){max-width:none}
-.guide .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px 40px}
-.guide .g2>div{display:flex;flex-direction:column;gap:6px;min-width:0}
 :root[data-read="off"] .read{display:none}
 .layers{margin:0;display:flex;flex-direction:column;gap:8px}
 .layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
@@ -207,10 +210,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 日主一栏：前一组是盘面上的事实，后一组是各家照各自的书走出来的几行，中间一个小标题。两组共用同一套列宽；行名和内容按第一行的基线对齐 */
 .kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
 .kv{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-columns:subgrid;gap:8px 14px;align-items:baseline;font-size:14px;margin:0}
-.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap;scroll-margin-top:72px}
+.kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
 .kv dd{margin:0;min-width:0}
 .kv-h{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--line);padding-top:13px}
-.kv-h small{font-size:12px;font-weight:400;color:var(--ink3)}
+.kv-h small{flex-basis:100%;font-size:12px;font-weight:400;color:var(--ink3)}
+.tag{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px}
 .gods{font-size:14px;text-align:left}
 .gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
@@ -238,6 +242,100 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 @media (min-width:760px){
   .read .cols{columns:2;column-gap:40px}
+}
+/* 电脑上：页面放宽到 1280，字和间距都大一档。细盘里行名和内容仍然从同一条线起头：行名上面留 10，格子是 3 加 7、8 加 2 */
+@media (min-width:900px){
+  body{font-size:16px}
+  main{max-width:1280px;padding:44px 32px 72px;gap:28px}
+  .top{gap:20px}
+  .eyebrow{font-size:13.5px}
+  .switch{font-size:14px;padding:5px 14px 5px 7px}
+  .pp{font-size:14.5px;padding:6px 18px}
+  h1{font-size:56px;gap:.1em .7em}
+  h1 .pl::after{font-size:13px}
+  h1 .dm::before{font-size:11.5px}
+  section{padding:28px 32px 30px;gap:18px;border-radius:16px}
+  h2{font-size:21px;gap:14px}
+  h2 small{font-size:13.5px}
+  h3{font-size:14px}
+  .note{font-size:14px}
+  .read{padding:18px 22px 20px;font-size:15px;gap:10px;border-radius:12px}
+  .rd-h{font-size:12.5px}
+  .read li{margin-bottom:8px}
+  .read .cols{column-gap:48px}
+  .meta{gap:0 48px}
+  .meta div{padding:9px 0;gap:16px}
+  .meta dt{font-size:14px}
+  .pan{--lh:26px}
+  .pan thead th{padding:10px 4px;font-size:14.5px}
+  .pan thead th:first-child{width:68px}
+  .pan thead small{font-size:13px}
+  .pan tbody th{padding:10px 0 10px 8px;font-size:13px}
+  .pan td>.x{padding:7px 2px}
+  .pan .big td{padding:10px 2px}
+  .pan .multi td{padding:8px 2px}
+  .pan .sm{font-size:14.5px}
+  .pan .ss{font-size:13.5px}
+  .hs{font-size:14.5px}
+  .hs small{font-size:13px;margin-left:6px}
+  .glyph{width:74px;height:74px;font-size:38px;border-radius:14px}
+  .glyph .ic{top:6px;right:6px;width:15px;height:15px}
+  .glyph[data-z]::after{right:7px;bottom:6px;font-size:11px}
+  .prow{grid-template-columns:104px minmax(0,1fr);gap:4px 16px}
+  .prow h3{font-size:15.5px}
+  .prow h3 small{font-size:13px}
+  .picker{gap:8px;padding:12px 2px 10px}
+  .pk{flex-basis:96px;padding:8px 4px 9px;border-radius:12px;gap:2px}
+  #liunian .pk{flex-basis:88px}
+  #liuyue .pk{flex-basis:78px}
+  /* 流日：一个月二十九到三十二天，电脑上不横向滚动，排成两行全部露出来（窗口窄的时候是三行） */
+  #liuri{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;overflow:visible}
+  #liuri .pk{padding-left:2px;padding-right:2px}
+  .pk .yr,.pk .gd,.pk .ag{font-size:12.5px}
+  #liuri .pk .gd{font-size:11.5px}
+  .pk .gz{font-size:23px}
+  .rels{gap:10px}
+  .rel{font-size:14.5px;padding:6px 15px;gap:7px}
+  .rel b{font-size:17px}
+  .rel small{font-size:13px}
+  .none{font-size:14px}
+  .relblock{gap:10px}
+  .relgrid{gap:22px 40px;padding-top:18px}
+  .relgrid>div{gap:10px}
+  .two{gap:28px}
+  .bars{gap:14px 16px}
+  .bars .el{font-size:20px}
+  .bars .el .ic{width:17px;height:17px}
+  .bars .track{height:12px;border-radius:6px}
+  .bars .n{font-size:14px}
+  .bars .st{font-size:13px;padding:0 10px}
+  .kvs{gap:18px}
+  .kv{gap:11px 20px;font-size:15px}
+  .kv dt{font-size:14px}
+  .kv-h{padding-top:17px}
+  .kv-h small{font-size:13px}
+  .tag{font-size:12px}
+  .gods{font-size:15px}
+  .gods th,.gods td{padding:10px 16px 10px 0}
+  .gods thead th{font-size:13px}
+  .gods .eli .ic{width:16px;height:16px}
+  .layers{gap:10px}
+  .layers>div{grid-template-columns:180px 1fr;gap:2px 18px;padding-top:10px}
+  .layers dt{font-size:14px}
+  .layers dt b{font-size:19px}
+  .layers dt small{font-size:13px}
+  footer{font-size:14px}
+  .sheet{width:min(500px,calc(100vw - 24px));font-size:15px}
+  .sheet-in{padding:0 20px 18px}
+  .sheet-h{padding:15px 0 10px}
+  .sheet-h h3{font-size:17.5px}
+  .sheet-x{font-size:13px}
+  .sheet-b{gap:11px}
+  .sheet-b .lb{font-size:13.5px}
+  .pform{padding:20px 22px 22px;gap:14px 16px}
+  .pform label{font-size:14px}
+  .pform .btn{font-size:14px;padding:5px 16px}
+  .hint{font-size:13px}
 }
 @media (max-width:560px){
   .layers>div{grid-template-columns:1fr}
@@ -311,10 +409,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
     <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
     <label>只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
-    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="比如：北京市"></label>
+    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="输入城市名，从列表里选" list="pf-cities"></label>
+    <datalist id="pf-cities"></datalist>
     <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <p class="wide hint" id="pf-lonhint" hidden></p>
     <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
-    <p class="wide hint">经度用来把钟表时间换算成真太阳时，可以在地图软件里查到出生城市的经度；填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <p class="wide hint">出生地从列表里选城市，经度会自动填上；列表里没有的地方，可以在地图软件里查到经度自己填。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
     <p class="wide msg" id="pf-msg" hidden></p>
     <div class="wide row">
       <button type="submit" class="btn main" id="pf-save">保存</button>
@@ -330,6 +430,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="read">
     <p class="rd-h">解读 · 怎么看这一页</p>
     <ul class="cols">
+      <li>八字是把出生的年、月、日、时各记成一个天干加一个地支，四柱一共八个字。日柱的天干叫日主，代表这张盘的主人；看盘就是看其余的字和它之间的生克关系。</li>
       <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
       <li>细盘里的每一格、带虚线的字、每一条合冲刑害都可以点。点开的那一处会套上一圈蓝框，解释出现在它旁边；再点一次或者点一下空白处收起。</li>
       <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
@@ -339,35 +440,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <dl class="meta" id="meta"></dl>
 </header>
 
-<div class="read guide">
-  <p class="rd-h">解读 · 读盘的顺序</p>
-  <p>先在<a href="#h-pan">四柱细盘</a>里认字：八个字各是日主的什么十神，地支里藏着什么。往下从哪里入手，各家不一样。</p>
-  <div class="g2">
-    <div>
-      <p><b>各家的入口。</b>页面把每一家做成<a href="#h-tk">日主</a>一栏里的一行，各照各的书走一遍，不合成一个结论。</p>
-      <ul>
-        <li>《千里命稿》从强弱入手，见<a href="#kv-qr">强弱参考</a>。</li>
-        <li>《子平真诠》从月令入手，定格局，见<a href="#kv-gj">格局参考</a>。</li>
-        <li>《穷通宝鉴》从出生的季节入手，看调候，见<a href="#kv-th">调候参考</a>。</li>
-        <li>《神峰通考》从盘里的病和药入手。这一步要通盘权衡，页面没有单列一行，只在「格局参考」的解释里引了它的话。</li>
-        <li>几行各自落在哪些字上、重合不重合，见<a href="#kv-dz">三行对照</a>。</li>
-      </ul>
-    </div>
-    <div>
-      <p><b>《千里命稿》的八步。</b>这本书把评断排成八步。这只是其中一家的顺序，别家有别的顺序。页面做到哪一步：</p>
-      <ul>
-        <li>第一步看强弱、第二步定格局：就是「强弱参考」和「格局参考」两行。</li>
-        <li>第三步取用神：用神是一张盘里拿来作主的字。各家取法不同，页面只列依据，不取定。</li>
-        <li>第五步查岁运：<a href="#h-yun">大运和流年</a>、<a href="#h-rel">干支关系</a>里列出每一层带来的十神和合冲，不判断好坏。</li>
-        <li>第四步论喜忌要先取定用神；第六步推六亲、第七步评性情、第八步断事业是对具体的人下判断。这四步页面都不做。十神怎么配六亲是书里的分类办法，见<a href="#h-gods">十神对照</a>。</li>
-      </ul>
-    </div>
-  </div>
-</div>
+<div class="read guide" id="rd-key"></div>
 
 <section aria-labelledby="h-yun">
   <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
+  <dl class="meta" id="meta-yun"></dl>
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
   <div class="prow"><h3 id="h-ly"></h3><div class="picker" id="liuyue" role="group" aria-label="流月"></div></div>
   <div class="prow"><h3 id="h-lr"></h3><div class="picker" id="liuri" role="group" aria-label="流日"></div></div>
@@ -375,7 +453,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </section>
 
 <section aria-labelledby="h-pan">
-  <h2 id="h-pan">四柱细盘 <small>前四列是上面选中的流日、流月、流年和大运</small></h2>
+  <h2 id="h-pan">四柱细盘 <small>后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</small></h2>
   <div class="tablewrap">
     <table class="pan">
       <thead>
@@ -398,23 +476,15 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="read" id="rd-yun"></div>
 </section>
 
-<section aria-labelledby="h-rel">
-  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
-  <div class="relblock">
-    <h3>原局 · 天干</h3>
-    <div class="rels" id="rel-ng"></div>
-    <h3>原局 · 地支</h3>
-    <div class="rels" id="rel-nz"></div>
+<section aria-labelledby="h-gods">
+  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+      <tbody id="gods"></tbody>
+    </table>
   </div>
-  <div class="read" id="rd-rel"></div>
-  <div class="relgrid">
-    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
-    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
-    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
-    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
-  </div>
-  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
-  <div class="read" id="rd-rel2"></div>
+  <div class="read" id="rd-gods"></div>
 </section>
 
 <div class="two">
@@ -431,15 +501,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </section>
 </div>
 
-<section aria-labelledby="h-gods">
-  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
-      <tbody id="gods"></tbody>
-    </table>
+<section aria-labelledby="h-rel">
+  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
+  <div class="relblock">
+    <h3>原局 · 天干</h3>
+    <div class="rels" id="rel-ng"></div>
+    <h3>原局 · 地支</h3>
+    <div class="rels" id="rel-nz"></div>
   </div>
-  <div class="read" id="rd-gods"></div>
+  <p class="note">蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
+  <div class="read" id="rd-rel"></div>
+  <div class="relgrid">
+    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
+    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
+    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
+    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+  </div>
+  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
+  <div class="read" id="rd-rel2"></div>
 </section>
 
 <footer>
@@ -458,6 +537,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 <script>
 const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"freq":{"三奇贵人":0.6,"丧门":23.0,"九丑":15.0,"亡神":38.5,"元辰":23.0,"八专":13.3,"六秀日":10.0,"劫煞":38.5,"勾绞煞":23.0,"十恶大败":16.7,"十灵日":16.7,"华盖":38.6,"吊客":23.0,"四废日":3.3,"国印贵人":47.2,"地转":1.7,"天乙贵人":67.6,"天医":23.0,"天厨贵人":47.3,"天喜":23.0,"天德合":30.5,"天德贵人":31.1,"天罗地网":12.0,"天赦日":1.7,"天转":1.7,"太极贵人":80.0,"孤辰":23.0,"孤鸾煞":13.3,"学堂":23.0,"寡宿":23.0,"将星":38.6,"德秀贵人":88.0,"披麻":23.0,"拱禄":0.7,"文昌贵人":50.4,"月德合":34.6,"月德贵人":34.5,"桃花":38.5,"流霞":25.6,"灾煞":23.0,"禄神":28.2,"福星贵人":69.2,"空亡":64.7,"童子煞":57.6,"红艳煞":32.0,"红鸾":23.0,"羊刃":30.7,"血刃":23.0,"词馆":22.9,"金神":9.6,"金舆":47.3,"阴差阳错":20.0,"飞刃":30.6,"驿马":36.5,"魁罡":6.7},"people":[{"id":"kangxi","name":"康熙帝","gender":1,"clock":[1654,5,4,10,0,0],"shichen":"巳","source":"《清实录·圣祖仁皇帝实录》卷一：「诞上于景仁宫。乃顺治十一年甲午三月十八日巳时也」","place":"北京紫禁城景仁宫","dlonSec":0,"eotSec":0,"tst":[1654,5,4,10,0,0],"lunar":{"year":"甲午","month":"三","day":"十八","leap":false},"xingzuo":"金牛","pillars":["甲午","戊辰","戊申","丁巳"],"pillarsClock":["甲午","戊辰","戊申","丁巳"],"prevJie":{"name":"清明","at":[1654,4,4,23,59,49],"min":42360},"nextJie":{"name":"立夏","at":[1654,5,5,19,48,20],"min":2028},"taiyuan":"己未","minggong":"壬申","shengong":"甲戌","taixi":"癸巳","yun":{"forward":true,"y":0,"m":5,"d":19,"h":0,"start":[1654,10,23],"jie":"立夏","gapMin":2028},"dayun":[{"gz":"己巳","y0":1654,"y1":1663,"a0":1,"a1":10},{"gz":"庚午","y0":1664,"y1":1673,"a0":11,"a1":20},{"gz":"辛未","y0":1674,"y1":1683,"a0":21,"a1":30},{"gz":"壬申","y0":1684,"y1":1693,"a0":31,"a1":40},{"gz":"癸酉","y0":1694,"y1":1703,"a0":41,"a1":50},{"gz":"甲戌","y0":1704,"y1":1713,"a0":51,"a1":60},{"gz":"乙亥","y0":1714,"y1":1723,"a0":61,"a1":70},{"gz":"丙子","y0":1724,"y1":1733,"a0":71,"a1":80}]},{"id":"zeng-guofan","name":"曾国藩","gender":1,"clock":[1811,11,26,22,0,0],"shichen":"亥","source":"《曾文正公年谱》卷一，嘉庆十六年：「公生十月十一日亥时」","place":"湖南湘乡","dlonSec":0,"eotSec":0,"tst":[1811,11,26,22,0,0],"lunar":{"year":"辛未","month":"十","day":"十一","leap":false},"xingzuo":"射手","pillars":["辛未","己亥","丙辰","己亥"],"pillarsClock":["辛未","己亥","丙辰","己亥"],"prevJie":{"name":"立冬","at":[1811,11,8,14,54,46],"min":26345},"nextJie":{"name":"大雪","at":[1811,12,8,6,49,10],"min":16369},"taiyuan":"庚寅","minggong":"乙未","shengong":"己亥","taixi":"辛酉","yun":{"forward":false,"y":6,"m":1,"d":5,"h":12,"start":[1818,1,1],"jie":"立冬","gapMin":26346},"dayun":[{"gz":"戊戌","y0":1818,"y1":1827,"a0":8,"a1":17},{"gz":"丁酉","y0":1828,"y1":1837,"a0":18,"a1":27},{"gz":"丙申","y0":1838,"y1":1847,"a0":28,"a1":37},{"gz":"乙未","y0":1848,"y1":1857,"a0":38,"a1":47},{"gz":"甲午","y0":1858,"y1":1867,"a0":48,"a1":57},{"gz":"癸巳","y0":1868,"y1":1877,"a0":58,"a1":67},{"gz":"壬辰","y0":1878,"y1":1887,"a0":68,"a1":77},{"gz":"辛卯","y0":1888,"y1":1897,"a0":78,"a1":87}]},{"id":"sun-yat-sen","name":"孙中山","gender":1,"clock":[1866,11,12,4,0,0],"shichen":"寅","source":"吴相湘《孙逸仙先生传》上册第 18 页，据卢慕贞订婚时交换的八字：同治五年十月初六日寅时。这是转述，不是原始记录","place":"广东香山翠亨村","dlonSec":0,"eotSec":0,"tst":[1866,11,12,4,0,0],"lunar":{"year":"丙寅","month":"十","day":"初六","leap":false},"xingzuo":"天蝎","pillars":["丙寅","己亥","辛卯","庚寅"],"pillarsClock":["丙寅","己亥","辛卯","庚寅"],"prevJie":{"name":"立冬","at":[1866,11,7,22,52,59],"min":6067},"nextJie":{"name":"大雪","at":[1866,12,7,15,3,34],"min":36663},"taiyuan":"庚寅","minggong":"壬辰","shengong":"庚寅","taixi":"丙戌","yun":{"forward":true,"y":8,"m":5,"d":25,"h":6,"start":[1875,5,7],"jie":"大雪","gapMin":36663},"dayun":[{"gz":"庚子","y0":1875,"y1":1884,"a0":10,"a1":19},{"gz":"辛丑","y0":1885,"y1":1894,"a0":20,"a1":29},{"gz":"壬寅","y0":1895,"y1":1904,"a0":30,"a1":39},{"gz":"癸卯","y0":1905,"y1":1914,"a0":40,"a1":49},{"gz":"甲辰","y0":1915,"y1":1924,"a0":50,"a1":59},{"gz":"乙巳","y0":1925,"y1":1934,"a0":60,"a1":69},{"gz":"丙午","y0":1935,"y1":1944,"a0":70,"a1":79},{"gz":"丁未","y0":1945,"y1":1954,"a0":80,"a1":89}]}]};
 const TABLES={"jieFrom":1644,"jieBase":-10286984342,"jie":"00003sjt4ocd5n3h6fd16t0o6nys61o054ni466l3fdz32wz37or3sjm4og25na66fl96t7l6o2n61pl54ny466v3fdg32vc37nb3skc4oj75ndn6fln6t366ntq61fl54hi465r3fgn330137qz3sly4oiz5nbs6fj26t1t6nu961g954hu466o3fi7330b37o53sg64ocu5n9c6fm76t8i6o2a61nf54lv46733fgb32yd37nh3sfv4obp5n7m6fli6t8x6o1h61ki54h346113fan32v837nw3sjf4oga5nan6fmo6ta76o3y61ns54jy462e3fa732tv37mv3siz4off5n8h6fij6t5s6o2761pg54on468m3ffc32vp37kp3se94oax5n5a6ffq6t2i6o0v61ru54se46ae3fe432rn37f23s924o8f5n7i6fnc6tbz6o7961ui54to46cb3fgh32tk37fq3s8k4o7b5n676fl16t8v6o2061n354nn46az3fki331337ni3sd64o6m5n076fcr6t316o2061qi54qm46cj3flf331437m53sa84o2n5mx66fcl6t5m6o7r61yy54yd46fz3fjv32xs37kb3sb04o505mz66fd16t3v6o2q61sl54tk46da3fig32x037kr3sdo4o9q5n3o6ff56t3h6o1561r154t646eq3fl532zf37ls3scs4o7e5n1i6fdk6t256o0b61qn54u246hw3fq2334837nx3sbe4o3z5my16fbb6t0y6o0861rg54te46e63fkq32ze37l03sag4o4i5n0i6fh56t9o6o8a61w254ua46ci3fhs32wy37kj3scj4o8a5n3k6fgy6t6t6o4961rr54re46br3fir32yy37n03sej4o8k5n0y6fbo6t196o2i61ug54vw46fr3fke32wd37gc3s6b4o1u5myo6fex6t7m6o9u622v554746lg3fm632v237db3s2v4nzk5my56fg06t8w6o7g61wm54y746ij3fmi32xd37fx3s4k4nzr5mx16fdv6t766o7n61wu54xd46ie3fog331a37ka3s6j4nx95mrf6f816t376o7g6209551p46ly3fri334737mj3s7p4nwy5mop6f3j6syb6o3y620f553i46ky3fmj32xd37h63s5z4nz55mtb6f8y6t3l6o7h621f554446mf3fnf32wo37fn3s5t4o1v5mxx6fbd6t1t6o2c61uo54z446m33frk332f37js3s6j4nze5mtt6f786sxu6nzv61u254z246mi3fsj332b37h53s114nso5mph6f996t5t6o9q6233555446ob3fr4330p37gx3s234ntw5mq36f9p6t796o9r61zp54zs46ip3fmn32yj37hw3s5k4nxx5ms16f7v6t3p6o8u621k552146k63fmy32y937hp3s504nw35mpf6f5c6t1k6o956263559f46rt3fsg32zz37fh3s124nt05mno6f4b6szz6o6x625l55aw46sn3fre32ws37aw3rwl4nqm5moo6f8l6t666obk626k55aj46tx3fu632zx37d63rxh4nqr5mop6f7u6t4l6o9b622m556146sb3fxd336w37l23s2w4nqz5mjn6f096sxb6o5i6235557w46su3fwk334x37ik3s064nnz5mgw6ezt6t0p6obq62b455fo46wx3fvd331637fo3s0c4nrg5mly6f3s6t206o8z624s559a46t33fty330v37g43s234nup5mp86f4f6sym6o4m621o557e46t33fvx333p37hr3s0o4nq65mkm6f2n6szn6o6n624l55ay46wt3fzj336937i73rz64no65miv6f216t0m6o7w624q559246sc3ftr331137ev3rxv4noc5mk96f4m6t526odh628g559u46r13fr432yd37di3ryi4nqj5mmm6f596t3s6oc0627u559y46rx3fss330c37fh3rzz4nqf5mjz6f0v6syg6o81628855e746x43fvk32yb378r3rqv4nhz5mep6f0f6t2x6of262g055m547363fy932y7376j3rnr4ng15mfl6f3l6t6e6off62bh55fy46zs3fzc332g37br3rro4nh75mdx6ezd6t0h6ob9629s55ee46ys3g0k336g37gq3ru04ne65m6i6es36swx6oc362f055lg47453g3d337l37hf3rvl4ngu5m856era6suu6oa362dx55l8472p3fzd331w37cl3rtz4nix5mcp6ev86swm6oa662ci55jt47303g0d332437by3rts4nks5mgg6eyr6sxb6o7o628n55gr472u3g3u337m37gt3rw44nk55me36ewn6svg6o59626j55fr472t3g3y336e37dc3rqd4nde5m926ewa6t186oeo62f755kz473h3g1f333o37c83rqy4nfa5mc16f096t5m6oho62er55h546yf3fx9331s37da3ruk4njg5me36eyg6t0i6odg62e955iq46zr3fxg331337c03rs24nf65m8k6etk6syf6oez62jw55rm478x3g3m332d378w3rnm4ncq5m926evg6t056oft62k255ro478p3g2n32zz37533rj84n9f5m8g6exd6t2g6ogs62ip55pf478b3g4q333l378h3rky4n8w5m666euv6t126og362i555on478f3g7k339c37fb3rq44n9y5m2d6eof6sv06ocg62hj55q5479l3g6p336937b73rlz4n675lza6em86sv86ogc62np55wf47dg3g6s334337933rlu4n8t5m496ern6sy96of962jn55re47a43g60334s37al3roc4nc55m716es26sum6o9062e655oe479m3g7v337z37cu3rmz4n6t5lzx6emj6stj6ob962ho55ss47e73gbo33a837d23rlz4n635m0k6eon6swu6ofc62jz55r347983g5k335337ab3rlt4n7h5m2r6eqz6sy96og562kg55qg477b3g303331379t3rn44n9l5m3j6epz6sx16ofc62l755sz47ad3g5l334q37as3rnx4nae5m3u6ep16sv16odl62l255vo47ep3g81332g373v3rek4n1y5lz36eoh6sxp6oil62qv561647iw3gak333e372w3rc14mze5lz46esj6t3e6olh62pd55wq47fc3gai336v378a3rh74n295lyk6ep46sym6oh962mq55uz47e63gb833a337ci3rip4mym5lq26ef16ssb6ohd62s2562p47kj3ge333a237bg3riw4n0v5lth6ehr6stk6oig62tc562v47iz3gai335237773rhp4n3b5lya6em86sue6ofd62p2560347if3gbc335r376u3rgw4n355ly46ell6stt6odm62mc55yg47je3gf233ax37b73riw4n325lxt6elz6suk6oe962lz55xr47jg3gf4339i377x3rdh4mw75ls36ejr6swh6ojt62si561g47ir3gbu336l376r3rdy4mx95lth6emz6t1a6one62ts560547ff3g89334o377u3ri94n365lxe6em86sx56oj462rm560s47hf3g9r334u37653rdv4mwk5lps6eee6sre6oii62w8568z47qh3ggc336n373a3r9a4mth5lqe6eid6svq6olo62yb569b47pr3gff335d371h3r7b4ms05lqf6ekb6sxg6ok362tz565b47o43ggq338t375e3r9u4mrt5lm96edq6ssx6oij62ti565447op3gj633dq37bm3rf84mun5lmi6ebt6sq86ohm62ur567d47qa3gi1339o376l3ras4mrd5lkr6eb86spu6oik62xy56b247s03gh7337837403r9u4msn5lo06eg86suj6ojc62vg567o47pp3ggw338a375q3rcj4mww5lsj6eio6su16ogk62r3564947ot3gik33bc377d3r9m4mpm5ljq6eb16sq36ohj62v0568s47t03glr33cy377d3r8r4moe5ljr6ee26svp6oof630w569u47p23gfd337037473r964mr85ln46eh76sxp6oo262z9568s47nv3gdn335b373e3r9r4msf5llv6ec26ssc6olh62zw56ca47sy3gic338c374h3r994mrh5lm66ed76ssk6om2632256g647xl3gkt336d36y83r0s4mjn5lhu6eda6suq6oo2634e56iu48003gn6338m36z93qzx4mhb5lfi6edf6sxv6oq7632t56ex47wv3gn933c3374t3r5u4mlu5lhc6ebt6suk6oo3631f56dc47vh3gne33em378b3r6q4mi35l956e1b6sl96ok9634956jv481j3gq733e5376o3r6c4mjb5lbe6e486so46omj636h56kv480g3gmt3395372d3r5o4mn95li66eal6sr06ojq630056fq47yr3gnu33ay37373r574mmd5lg66e6g6sm46ofs62wl56dk47zc3grg33gc377u3r6v4mlb5lft6e8u6spp6ojg62zh56eh47yn3gpc33cw373u3r2k4mgw5lck6e906st36onr633k56gi47wz3glk339j37243r2p4mhp5lcn6e946svb6oqn634r56fr47ur3gin337c37233r5o4mn65lic6ebh6sue6oq0635f56hn47xc3gkq337x37063r0c4mff5la46e416sny6on8638n56p7485u3gqv339g36x73qvb4mam5l7v6e646sta6osb63c656qr485w3gq8338g36w53quq4mbe5la46e9i6swr6ot6639056mw48483grp33c9370a3qx14ma85l446dzd6smz6onz637y56nc485e3gue33gy37633r1s4mca5l4a6dz26smd6oop63bi56sd48913gu033cx37133qyc4mb15l4p6e0g6snm6oon63bg56td48a03gu033bj36yu3qwv4mbe5l6a6e256son6onk637o56ov487e3gua33dz37243r0f4mfr5lbp6e6o6sql6oni635z56mi486a3gvi33gx37423qy04m8u5l2x6dze6sm16om9638156q5489c3gx633h4373f3qxd4m7n5l1h6dzv6sqi6ot063dm56rf48613gr433b437043qy74mcc5l7y6e5k6sua6ouh63cs56q4484u3gpq339n36z03qxy4mca5l5i6dyz6sld6onu63ay56s648913gub33cw37043qwu4m9y5l4i6e0j6snr6oq063el56xn48eg3gwi33ae36tu3qp64m3v5l256e2o6ssr6otn63f956xg48et3gy233ck36uv3qo24m0v5kye6dzk6srb6otg63d956sw48au3gxn33g837183qui4m5b5l0e6dze6sq36otq63fc56ua48ae3gwz33h1372v3quj4m215ktk6dqt6sia6ooz63gc570948gp3gzr33fq37003qt34m2a5ku76dr86sjt6orp63ik571148g53gxb33bf36vk3qrf4m5m5l236e016spe6osb63ex56ww48ee3gyf33dt36x63qrf4m465kyp6dul6si76oli63al56v948fp3h2p33jt372b3qsy4m1h5kv56du26slb6oq063fb56yy48gy3h0l33fe36xm3qpa4lzg5kv56dwt6sr46owe63jc570148f93gxx33db36ws3qps4m0f5kv36dus6snz6oud63i356yd48dg3gwe33cq36xu3qsn4m4o5kzk6dxn6soq6ov563ks572a48h63gz133dk36vx3qns4ly85kt56dsi6sks6osb63ld577l48ov3h5e33fs36tw3qjd4lt95kpc6dr66smw6ow563nc576v48nc3h4c33fg36u53qk54lv25kt76dwt6ssa6oz663mp573m48k93h4233ih36z03qoh4lw35koh6dn96sh56oqi63j5573n48li3h6133lw373e3qs14lx55kn96dl96sg86orf63mf578w48pf3h4z33g536wf3qnf4lwz5kr96dr36slp6ov363nh578c48ov3h4z33fh36ul3qlh4lw65krs6drg6sjg6oqf63hp572g48kz3h4i33hx36y33qoj4lyk5ku76dui6smp6osm63is572t48l03h5733jl36yu3qm44lt05kn86dp16sl16otu63la576648nx3h6933ih36wt3qk54lqo5kkf6dmk6slb6oy763pv576u48kh3h0g33cu36tn3qkt4luw5kr36dtv6sqw6p1m63sf578q48l63h0033bi36s83qk34lu95knx6dn76shq6ot063oj57ao48qi3h5q33fe36sz3qhm4lpz5kkd6dli6sia6ouz63rv57g948wu3h9633ee36o23qax4lky5kjw6dpz6spl6p1o63um57fq48w93has33he36qh3qb84lin5kfz6dlp6skr6ox563qf57ak48rp3h9y33lb36xt3qix4lnh5kgj6djl6sj36ox963t157e348tp3ha833lk36y83qik4llu5kcz6deh6ses6ov963u357iv48zp3hdi33km36v93qgi4llh5kdi6de56sdb6oun63te57gq48x53hb333i336t33qgb4lot5kkv6dns6skv6ox363s657ec48ve3hbd33jz36v53qhl4lov5kik6djk6sff6oqo63mg57bc48vo3heh33or36zb3qin4lm75kel6dgr6sg06ouk63r257ep48wd3hbi33jh36u03qev4lkv5kgo6dmq6sov6p4263y057gr48u83h7v33g136s03qeu4llz5kh46dl96skl6oyt63ua57ej48sn3h6q33fs36sy3qgw4loc5kig6dky6skc6ozp63x957jm48y13hab33ge36pi3qa64lh75kde6die6sjt6p0u63zu57oq49523hgi33iz36o63q5z4lbl5k8c6df96sij6p1c63zu57mb49213heu33j036pd3q7b4lck5k9q6dio6sna6p4s641e57lx49093he033ks36tf3qc94lfg5k746dan6sdl6owm63x057m6493b3hhs33on36x03qe64lf25k4o6d5w6s8f6oug63yi57q6496w3hh833jm36q53q934le35k8y6de96sh56p0v641t57qg49633hh933jr36pp3q8l4lel5kae6dfd6seu6oty63ta57ja49233hha33n536u63qby4lfw5k9s6de46sfj6ovx63um57k3492t3hid33oo36ub3q994lb45k5b6dc06sh26p0z640c57og495g3hiy33ng36sx3q8d4l9u5k346d9j6sf76p1g641x57nm49193hd233i436qd3q9i4ldx5k8f6df86ske6p4s644q57ql49313hcw33gn36oy3q9o4lfa5k886dbm6sec6oyo641657rx498j3hjk33le36pt3q6d4l9w5k3w6d8m6sc66oy2642p57vc49cf3hla33jw36le3q0c4l4w5k3b6dej6smf6p7v648d57w349b63hlk33lz36o23q274l555k1o6dbr6sif6p2q642s57qk496m3hk233os36tz3q8p4l925k0s6d6i6sdf6p1a644v57ub499m3hl233oe36sk3q6e4l6j5jyp6d556sd76p3f649k580p49fs3ho033mr36or3q3e4l5c5jys6d576sbi6p09645v57wo49c53hle33ky36nh3q3c4l7f5k336db06sh46p2l645957vq49c23hmm33n736pl3q4g4l735k0z6d7b6scy6oyx641y57tp49cr3hq033rw36tf3q4t4l3n5jw56d336sa46oyy644i57w349cj3hml33mx36ow3q204l2o5jxd6d8a6sj56p8o64c757zn49br3hjh33j836md3q214l565k026d8i6sg76p3j646x57wb49aq3hjs33k636nl3q3b4l685jzs6d5h6sc36p1h6480580249fw3hof33m136ks3pw94kxt5ju56d4u6sf26p6a64dv586n49mk3htk33oa36ka3ptm4ktu5jq46d2j6see6p5c64b1581u49hr3hr033ou36n23px04kw55jql6d286sfh6p7a64ci582849gu3hqa33q036ql3q1v4kzr5jqb6cxf6s8e6p2364au583q49k83hts33sw36sw3q2y4kzj5jp56cuf6s346oxb649t585v49me3hsp33o536mg3pxz4ky75js66d1y6scy6p5364du586r49ls3hsb33nk36ld3pxg4kzw5jw06d5g6sde6p16646d57zf49hq3hsl33rd36q73q0q4l0c5ju26d246saq6p0p647757zy49hy3ht233rv36p73pww4kua5joj6d0y6sf06p9064gs587k49lp3hst33p836mu3pw94kuk5joc6d0a6ser6p9864gl586349ic3ho133kj36jx3pw24kwt5jr56d1k6sf56p9w64ic588v49l03hpe33k936iq3pv84kwf5jqm6czs6sbd6p6c64hn58c649rx3hxl33qk36kt3psj4kr05jlf6cw36s7x6p2l64fp58d849u33hyn33pn36ho3pnr4km55jip6cyd6sg06pbt64kw58dh49si3hyg33rj36kx3pr84kp05jke6cxp6scs6p7r64g4588549o33hx533uf36r33pxr4ksp5jj46crl6s4n6p1v64f658ad49qg3hxw33tf36ok3pug4kp65jg86cqz6s6w6p6664lc58hn49wl3i0d33rj36kv3ps24kpn5jiq6ctk6s886p4n64ga58bi49ru3hxn33qc36k73prx4kr15jln6cwd6s9m6p4j64eq589749q93hxu33s936mr3ptk4kqd5jjg6cuj6s8c6p4b64fo58aj49s73i0u33vu36pk3pu24ko65jfy6crl6s6m6p3h64gl58c449r73hw733ph36jv3pqj4kn25jgf6cua6sdh6pcn64ny58fu49rh3hu233m336h03ppz4kpr5jld6cxn6sct6pa564ld58e049re3hvc33nr36ic3pql4kpg5jjw6cuh6s7p6p5764k258go49w83i0933q236fm3pj74kfy5jc26csb6sc36pck64s158os4a3e3i4w33rk36eu3pgw4kd85ja06crv6sdr6pec64py58ja49xx3i2733sf36i83pku4kfv5ja76cpd6s9y6pby64q458jy49xr3i2433u036ly3ppb4kht5j806ck86s406p8964qx58om4a3k3i6o33wi36my3ppl4ki85j8b6cja6s126p3o64nr58on4a4q3i6133t236hr3pl64kgt5ja76cnk6s6v6p8z64pp58nj4a3f3i6233tq36hy3pl14ki45jeb6csg6s8q6p7664kz58hn49zc3i6033xm36no3ppn4kjh5jcc6cp06s596p3r64iu58gj49ym3i5u33xj36m73ply4kdd5j5e6cla6s8f6pcf64su58oq4a2l3i4t33tj36iq3pky4kf15j8f6cnv6sar6peu64t358m849yc3hzx33pc36gi3plb4khm5jbf6coo6s7u6pb064s758nr4a0h3i1b33pd36fi3pjs4kf15j826clt6s5k6p9i64tp58t94a8b3i9033uf36g73pgj4kam5j4w6ckj6s5l6p8m64rr58sp4a913i9k33tq36do3pca4k5z5j1m6ck16s966pf564vz58ry4a6g3i8h33v136gn3pfl4k8j5j3i6ckq6s7g6pcr64ug58q64a4a3i7n33xb36m23pm84kd35j3b6cg96s0s6p5u64r558ri4a783i9733vx36hv3pgt4k7u5iyn6cde6s1z6pao64xd58yh4add3ic133un36eh3pe14k885j2y6cj86s6k6pcn64v458tb4a8o3i9u33ur36fd3peq4k915j4d6ckh6s5c6p9464rn58qa4a6l3i9m33wq36ig3pgn4k765izb6cfv6s3v6pab64uu58uh4aas3idh340436ku3phk4k725iyk6cez6s466pbq64wb58vj4a9j3i9633u536fa3pe04k605iz36cg86s6s6pgh651058xl4a993i7f33ro36dc3pdx4k885j3a6cju6s6z6pej64zr58xx4aay3ia033u936fg3pf94k8q5j2e6chv6s3q6p9h64w058yh4af23iez33wo36cq3p7r4jyx5itj6ccz6s556pfq652r59484ajx3iie33yl36de3p734jxj5itc6cey6s8q6pjf653558zu4adl3ie733yi36h23pci4k235iuv6cd06s3p6pdi650058yu4acc3icl33yb36ja3pfy4k3b5irl6c6b6rxh6pag6516594d4ajj3ihv340036i93ped4k3r5iua6c916ryg6p9w64zy593m4aj13ig833w836cp3p954k1a5ivk6ccw6s256pc264zt59134agh3ifg33wv36df3p974k1a5ix36cfy6s4i6pby64xt58ye4aef3ifm33zt36i13pd94k2y5ivw6cdq6s3b6paq64w558xf4aec3ifw33z736fb3p8b4jw55iod6c7w6s306phj6561595l4aib3if233vg36bn3p664jw75iqm6cbq6s786pll658p595i4afn3ib833s0369y3p7a4jzn5iua6cd66s4j6pfz655759664aip3ieh33u036a83p5k4jv65ing6c5r6rz86pds656f59bs4arl3inf33zw36b93p284jqy5ilm6c6z6s246pgr657k59bc4aqq3in133zx36au3p0t4jol5ijh6c6c6s326pip658o599a4an73il3340z36ef3p524jrk5ik36c4k6rzy6pft657q599t4anf3il5342o36is3pbf4jxk5imv6c3e6rwg6pbe6549599q4aq83inq341z36eg3p5f4jrw5iig6c076rv56pdg658n59eh4au43ipf341636c23p324jrk5ilq6c6q6s1z6ph2657q59a94ap23im6340r36dt3p5z4jv55ipf6c9l6s276pdo652r595y4amf3ilk342736gf3p784jsc5iim6c1l6rx86pdn655v59a04aqb3iol343z36gs3p6j4jrs5ijc6c3z6s0t6pif65as59cp4aoq3ijf33xb36ay3p3d4jrp5il36c6c6s306pk165c459d44ao43ihj33uh36843p1q4jrz5img6c6g6s1a6pho65az59eo4ars3ilo33xq369s3p234jrp5ima6c6p6s1a6pgo659i59f84avl3iqv3409366v3otu4jgj5ic16c0m6s0c6pk865ev59ji4ayf3iss3422368i3ou54jez5i9z6c0v6s3t6pof65h159i84aub3ip7341u36c83p0c4jl55id26bzl6rzc6piu65cz59gw4au53iot341x36ds3p2b4jkp5i8i6bqp6rpk6pdc65d059lh4b1f3ivc345436dh3p0n4jkj5ib56bva6rt56pf565ea59m14b0l3ita341r36943ox54jjw5idt6c086rxo6pfy65be59hl4ax43is0342h36ak3oy14jk85idw6bzi6rwp6peo659159f84aw23it4345v36fb3p294jmd5ie86bzz6ry86ph265as59fp4aw23iss344736bt3oxf4jge5i836bvm6rxd6pku65i159m84ayj3iqw340c368m3ovx4jgp5i9j6by76s1d6poq65ks59nj4axn3io633x9366t3ox14jl45iff6c236s176plk65hl59n14b013irk33zk36713oua4jf65i7m6btn6rtk6ph965hl59r94b7o3j03345u368m3orb4jad5i4h6bux6ryh6pmq65lj59sb4b633ixw3447367t3or84jao5i4v6bw06s0j6poa65kv59pc4b2c3iva344a36aj3ouz4jdg5i4o6br56rte6piy65ip59pq4b3m3iwd345s36df3oz04jha5i7d6bsp6rta6phu65ie59r54b6p3iyv344o368c3osg4jbi5i3c6bqx6rt26pio65ks59ug4b9b3izx344536663op94j905i2y6bt76rxl6plu65jy59qz4b5a3ixc344036863osg4jd25i7p6bx66rzd6plj65hj59nl4b373ixm346k36bp3otw4j9d5hzd6bn06rqi6phi65j259rj4b763j0i347z36bo3osy4j865hya6bny6ruf6pn665pf59w44b6s3ivm341736623or44jas5i3c6bsq6ry16pos65ot59v34b6k3iv333zp363w3op84ja55i3c6bpx6rrs6piv65lp59vg4ba23j07344e366p3opk4j8q5i2d6brt6rus6pkn65mr59x94bdq3j4s346n364m3oje4j0b5huh6bnn6rve6pnw65qc59zn4bem3j53347u366b3okb4izg5hrw6bl66rvu6pqa65rg59y44bao3j16346u369h3oqs4j765hyc6bns6ruf6pnu65q259xz4bba3j1h347036ai3orq4j5t5htn6bfy6rkm6pg565o25a1f4bhn3j7d349n36973oou4j435hu46bj06rp66pjv65qo5a2v4bgy3j55346c365f3omc4j545hzb6bqh6rwe6pne65oi59xo4bcy3j3m3470366w3omx4j4k5hy06bn86rr96pir65l259ux4bbi3j4j34ai36bt3or14j5n5hwq6bnp6rum6pnj65pz59yi4bcz3j3q346y366h3oll4j0x5hsr6blg6rvt6pru65vs5a3p4bey3j1p3430362n3oj44j075hsw6bl46rvt6psq65ws5a4f4bf23j10341r361v3ojt4j315hxo6bpj6rww6prn65w85a5l4bi33j4s344o362n3oh14iwc5hor6bgt6rpb6plo65u35a8c4bor3jcx34ba36513of24irq5hjm6be56rra6pqg65y25a9g4bn13jac349h364n3og44iu55hmy6bhg6rui6ptf65yf5a6u4bjf3j7m349936763ok24ixg5hn76bc36rk36pj365st5a5s4bkp3j9l34bk36ab3onq4j015ho16bd36rle6pji65to5a8i4bok3jc1349m364f3oh44ivw5hn96bey6rp16pmu65vb5a9c4bp03jc0349c36353oen4ito5hmp6bfn6rq86pn965t45a4m4bk23j96349m365w3oi84ix55hqs6bkm6rua6pq165uk5a434bih3j8734aa367y3oj74iu75hjt6bcd6rns6pmp65vi5a834bmu3jb234b0366m3oh54isb5hhh6bal6rp96prs661s5aco4bn33j6v344b360f3oee4iuq5hoa6bia6rve6pw4663p5ad24bnp3j7b343v35z13ocr4itm5hnd6bf16rnv6pn165y35acj4br93jd1349g362e3oco4iq55hiu6bds6rqk6pq8660f5afg4bvj3jhf34b5360b3o7l4ik15he26bcc6rtu6pwj665m5ahn4bvi3jh634cg362g3o8q4ij05hau6b7m6rpb6pts66495af94brb3jd534bf365q3of84iq35hg76baa6rp46pso664k5ahc4btr3jej34bw366g3ofy4ipi5hd06b456rhf6plk66115ajb4bzp3jks34er364q3oc24img5hbn6b406rih6png662e5aix4bxq3ji734c136243oaj4inw5hhl6bda6rr96psp662h5afb4btw3jgb34co36483ocd4iob5hg16b9d6rky6pl565wg5abo4bsg3jh434fs368m3ofx4ioi5hcx6b6p6rm66ppb66125afm4bum3jge34bl362p3oan4ilo5hcp6b8f6rqc6pwf668c5ake4bvt3jed348235yz3o7t4ikf5hct6b866rnx6psp665u5ait4bug3jd5347735yt3o8r4img5hfq6bbr6rqm6ptl666p5alh4byk3jhe34a735zf3o5s4igd5h8e6b576rmh6pr6665g5anc4c443jol34fu36143o3e4iba5h2d6b056rkv6ptz66985anp4c113jku34dr36193o5c4ie85h6b6b556rpw6pyj66cl5aoj4bz93jhz34c5362f3o8x4iia5h7i6b0y6rgq6pnh664w5amu4c1k3jle34f636503ob34ij25h6c6az36rfx6pnu665z5apr4c643joj34dn35yw3o3l4ieb5h6q6b3r6rmr6puy66aw5ara4c5p3jo134dv35yq3o284ici5h616b4d6rmc6prp665w5all4c0p3jlo34f736303o764ifu5h796b596roe6pui66885amz4c0r3jl734fc36433o7h4idt5h2p6azp6rkq6pu966ar5ar74c593jo634fv362g3o5d4ic35h0s6awx6rid6pv066ee5atu4c4f3jk1349z35x63o2x4idr5h6c6b4p6rph6pzt66he5aw54c6a3jkv349g35vq3o1p4ids5h6l6b2k6rjn6pqw669h5atk4c9f3jrj34ge36003o1l4i995h026axn6rie6psb66as5aux4ccd3jux34hn35y63nx14i3u5gwu6ayt6rnz6q0z66iq5ay04cat3jsh34hk360b3nzs4i595gvt6avu6rjc6puq66dh5au44c6o3jol34g6362x3o5k4ibh5gzd6avm6rhg6pte66de5aw54c9p3jqc34g0361s3o3x4i9w5gxx6atb6rea6pr966d55ayi4cew3jw634iy36063nzs4i605gvx6ass6rdp6pqk66cr5awh4cb03js534fu35y13nym4i6k5gzi6b066rmw6pxa66f15avn4c8u3jqa34fl35zg3o0u4i8h5gzk6axi6riq6psb66a75asr4c8g3jry34il362r3o2l4i6t5gur6as26rfu6ptz66eb5awr4caz3jrc34eb35wj3nwv4i3g5guw6avv6rmg6q3566oo5b4m4ce33jqh34bk35tb3nuf4i2m5gv86aw16rk66pxc66j15b1r4cde3jqv34cd35u53nvc4i3h5gvi6avf6rjj6px366j05b3r4chz3jwl34h835wa3nt14hxu5gpg6aqz6rhr6py466l65b6n4cmv3k3334mt35yu3nsb4hu75gk56am26reb6px566m05b5b4ci83jxx34k135zi3nvq4hyl5gnx6apd6ri16q0j66of5b734ci73jvy34i735zy3nz84i3z5grs6ao16rbr6pry66h35b4f4ckh3k0c34lz36293o024i395gq06all6r8g6pp766fw5b4u4cmj3k2034kk35x93ntk4hyj5gq16ard6rhq6pyg66ms5b7t4clx3k0d34jt35wz3nt14hyd5gqy6atg6rj06pvm66g95b0b4cfn3jx234kb360l3nxk4i175gqx6ar46rhd6pwt66i45b174cfl3jwm34k8360t3nwi4hy75gmu6anu6rgi6pzy66om5b824ckl3jyn34j135xo3ntu4hwn5glg6am36rej6pyo66pe5b914cj83jug34db35sh3nr74hxh5gp16aqs6rjh6q2n66rx5bbx4cm93jw734d235qi3noy4hwq5gpl6aqc6rgf6pxh66ml5b9w4cpk3k3g34kt35vg3noq4hrb5gi56akb6rcm6pw366n15baw4crg3k5j34lg35ts3nkl4hlj5gd36ajn6ri56q5m66wu5bgl4crc3k2w34k635uv3nnj4how5gf36aja6rfd6q0966qs5bcb4cop3k1934kf35y23nsz4hua5ghd6ag66r906pvf66op5bd24crp3k4d34lt35xa3nq64hqq5geu6afg6r8y6pwg66rw5bhx4cxh3k9s34ol35wh3nnr4hor5geb6agc6r9u6pv466ou5bdm4csj3k5m34m735vm3nnr4hpo5ggk6ak36rf86pzx66q85bcl4cql3k3y34lv35x23nqb4hsf5gi86aju6rdd6pxw66od5bb34cqj3k5s34p6360p3nsm4hri5geh6afb6r9i6pwc66px5bdy4cs73k4534k035ty3nmp4ho25gdx6ai16rg86q5w67025blq4cvb3k3434go35q33nk94hom5ghd6alx6rhd6q2p66uo5bht4cuf3k4f34is35rt3nky4ho95gfy6aj56rdg6pzj66sv5bhx4cx43k9234nh35tv3nhz4hgu5g7p6aec6rdr6q3p66yt5bnq4d2e3ke034ra35vu3nif4hfj5g4n6aav6rbs6q3766yh5bla4cx63k8034nf35vi3nl44hji5g7o6abc6ray6q3366yz5bmf4cxr3k6y34lq35v93nnf4hnu5gbg6abx6r776pxf66v25bm24d133kc134pp35wz3nn44hlw5g916a9s6r4d6pt766rk5bl44d273kcp34nt35s13ngk4hgp5g7c6acq6rbw6q2f66yk5boj4d2e3kby34no35s43ngd4hgt5g996ag66rei6q1w66u75bhz4cwr3k9c34oq35w33nkw4hj75g896ace6r9u6pzb66u75bie4cwk3k9334p435wj3njo4hff5g2k6a7w6r9g6q3k672e5bry4d3s3kby34nl35sq3ngz4hf45g3l6a8g6r9s6q3v672e5brc4d283k8s34j935om3neo4hfs5g6m6ab66rah6q3l671y5bs64d4k3kbk34l235os3ndj4heg5g5r6ab26r9d6q0s66zg5bs34d8c3kim34sx35ug3nev4haw5fzw6a6a6r6z6pz866xy5br04d813kih34se35t73ncf4h7c5fw26a476r9s6q72676o5bw44d7q3kfg34q735th3nf34hbm5g0s6a7p6ra16q4e672s5bsi4d523kdn34pu35vn3njq4hgo5g3j6a5x6r456pxm66yi5brq4d6z3kgf34rf35uh3nfo4hbc5fym6a3c6r4w6q0u673l5by54dda3kl134sr35sj3ncp4h9r5fzt6a6m6r8t6q39672a5btf4d7o3kgk34qe35s43nd64ham5g1a6a8d6ra36q4467245bru4d563kee34pq35t73nf34hbo5g076a6m6r8u6q3j67315btv4d7g3kgq34s635vl3ngt4hbo5fyb6a3n6r6k6q2n673q5bwd4d9q3kfm34n335ob3n9p4h6u5fw86a3e6r8v6q8w67bp5c2m4dck3kfi34ko35kp3n6l4h655fze6a936rc26q7j678f5c024dcf3khz34ok35oa3n8u4h6d5fxg6a5j6r7n6q25673m5by74de83kmj34tm35qj3n5m4gy55fmv69x46r5o6q6j67am5c4y4djq3kqm34wb35s63n6t4gyq5fmu69wn6r5w6q8c67bq5c2r4dep3kkw34sr35s93na24h385fqc69x16r296q3d678s5c2d4dev3kkb34rk35s53nc24h665frp69w76qzf6pz0675y5c3g4djf3kq934w935ua3nc44h5o5frw69wp6qzo6pxm672x5c1d4djc3kq334ue35pw3n634h0m5fq569yc6r436q4767865c2e4dh53knu34tm35qa3n6m4h175fsi6a3o6r966q65676z5byl4dcl3kl134u235u43nc24h5b5fsy6a106r616q3l675m5bye4dce3kke34ta35si3n8q4h075fm569uc6r3n6q7r67ei5c8r4dkf3knh34r835ny3n584gzl5foo69y66r796qbh67hf5c9c4dj53kkp34ne35k43n2s4gzl5fr46a0v6r6v6q7q67dz5c8u4dl43knr34pz35l53n1y4gwz5fmq69ws6r4i6q6167d05can4dqk3kvr34xz35qf3n2q4gtr5fi769t76r3m6q7467dg5c9w4dpl3kul34wu35p43n0s4gr15ff569qh6r2l6q9y67ix5cdc4doy3ks434vc35q13n3u4guq5fij69td6r2x6q6z67ff5cbc4do53krm34ve35ry3n8a4h0f5fmd69sz6qz56q16679k5c8g4dp33kup34xu35qz3n3i4gtz5fg869o26qwu6q2n67dm5cdi4du53kyj34z535pr3n0w4grw5fhb69sw6r346q7w67f95ca24do13ksz34w935pt3n2w4guh5fjq69v56r406q6167c35c724dky3kql34vh35r13n554gva5fgj69pf6qzv6q5067dh5cac4dow3ktu34xk35s73n5l4gvf5fh069pm6r0f6q7867gh5cd64dqg3krz34s735l13mz04gri5fgd69qs6r1i6q9j67l15ch84ds73krw34qm35ib3mw64gpu5fhb69uw6r576q9567ij5cfz4dt53kup34u735ln3myk4gr45fh169t66r3r6q7b67f05cdc4du03kyv34ze35nt3mv74gin5f6769j96qyq6q9r67lz5cjv4dy93l17350h35oq3mw54gj05f6f69kk6r1d6qdn67pu5ckj4dur3kvh34vz35o33mzu4gpa5fc069n06qzi6q8467kq5cj24dvi3kvz34v535n33mzy4gps5faf69ii6qtt6q3667i15ckh4e0z3l32350s35p63myw4go75fb969lf6qx36q5p67iy5cki4e163l2v34zc35lw3mtw4gje5f9269mo6qzw6q8n67l55cjx4dy43l0634yj35mp3muz4gjn5f9369og6r2w6qa467k65chg4dvf3kyp34zq35qv3n134gpc5fbs69nh6r166q9g67jp5ch24dvh3kyv34zd35oq3mwo4gj95f4n69g26qvu6q9z67qc5cpr4e243l1734xa35kq3mte4ghz5f6269k26r0w6qed67ti5cr64e1i3kyw34u035hs3msb4gjr5fa069nx6r216qav67o25coc4e2e3l1z34x835jf3mri4gg05f3e69g46qvk6q7567ma5cos4e6e3l93355635pa3msz4gdh5f0169el6qwn6qaw67ql5cqp4e563l5y352535na3mrz4gcu5ez869du6qw96qb667sf5cs34e3r3l2k34z335mj3mtv4gg35f1s69el6quu6q7t67og5cq64e4a3l3t350535o53mx74gl85f6v69gw6quf6q5x67lj5cny4e4x3l6v352j35mk3mra4gde5f0069c86qrf6q5i67oi5cs84e8m3l99353935lw3mpe4gav5ez069fg6qyh6qce67rr5cqy4e3z3l3r34zj35la3mrl4gez5f3m69jc6r156qcj67pe5co14e1g3l2234z335m73mt54geo5ez569ba6qt36q8r67qg5cry4e6g3l6h351v35mx3mry4gcq5ey869c06qvd6qd267wo5cxv4e9c3l4q34wb35fr3mm04ga55ezb69f96qyd6qek67y15czr4eb63l6a34wp35eo3mjt4g805ey469ey6qxj6qbs67tu5cxe4eck3lam352735jk3mmw4g925exv69ed6qy26qd367tq5cvy4ecr3le4357c35mg3ml14g2a5eoc695e6qs36qc867y05d194efo3leo357a35nj3mmx4g3d5enp694k6qte6qfa680o5d214ed83l9h352a35m33mqk4gb95ewp69ae6qu26qbm67vo5cyw4ecy3lad352n35lu3mqm4gay5eu7694s6qln6q3n67r55cym4egp3lgj358335o03mp24g825ete697j6qqu6q8f67uf5d094eg53ldv354e35jx3ml94g635euh69bo6qwn6qcu67va5cxu4eca3lar353035k13mlq4g5q5ete69ab6qv26qbm67tf5cv44e9o3l9d353n35n23mq84g9t5evk69au6qvu6qe267x45cy24eb43l9n352k35jn3mkw4g3o5ep869586qs26qdl681u5d5x4ehn3lbn34zw35eu3mgc4g0p5eo669616qv06qhe68485d794ei43lav34xy35cm3mfc4g2l5et969bw6qyf6qh4681k5d564ej73leo352a35f63meo4fxj5ekj69216qp96qaj67yn5d594emd3ll035a135lc3mgl4fuz5efp68yp6qq86qf1684s5da84en93li6356c35j03mgg4fws5ei7690l6qrs6qgc685g5dab4emd3lg6354135i03mhf4fz05ek568zn6qml6q9h67zc5d6t4emi3liq357835la3ml24g315env692l6qo86q9v67ze5d6z4eny3llr359o35jx3mfs4fw85ei668zk6qnp6qaa68105d9q4eqe3lmz359t35jp3meo4fu85egc68zn6qr46qf9682r5d794elh3lhw356w35k43mi54fzm5emk695h6qv96qhf683a5d5y4ej93lg1356735l13mk14fzm5eid68xs6qmc6qal681l5d8l4ene3ljl358935lb3miq4fxu5egu68x36qo16qf0687s5df54eqy3lhw352735dg3mcj4fwd5ekw69406quc6qiz68995dfb4eri3lj0352g35c33m9o4ft95eiu692g6qqo6qd468315db24erd3lmz358n35hx3md14ft25eg5690h6qs16qgh68605dci4esa3lp735bi35is3man4fnn5e8u68tr6qoq6qhd68a35dhe4ev13loz35a835iq3mbk4fo55e7p68qu6qmc6qhe68ap5dh14esz3lkx355w35gv3mdw4fu95efw68xx6qoz6qg1688n5dfz4etj3lmk357335h63mdw4ft85ecl68sj6qhg6q77682m5dfe4exm3lt635d435jm3mbp4fos5e8o68qu6qjm6qbn68695dhf4ex83lqe359a35fp3m8k4fo15ec268xu6qrv6qiv68995dfd4etg3lnp358p35h13mag4for5eb868vb6qmv6qd3684p5dbv4eqt3lmp359w35ke3mex4frz5eb668tt6qnk6qgc689v5dh84eue3lnp358235fr3m9c4fng5e8968rx6qnc6qil68em5dnz4f0g3lq5356e35bu3m4s4fju5e6g68r76qmv6qiq68e65dn24ezu3lps355x35bc3m4r4fld5eah68xb6qrt6qka68dy5dmj4f0v3lt535ak35fb3m6b4fig5e3768oe6qjy6qe168a45dlx4f3f3lyi35h935ko3m824fgh5dyc68iq6qhg6qgm68fc5dq74f3e3lu835bt35h43m7s4fjq5e4c68pe6qmu6qkl68hp5dqn4f2p3lsl359j35fs3m8j4fm45e6v68pb6qhb6qb0688m5dlc4f1r3luq35cp35im3may4fo05e7g68pg6qir6qcr689x5dms4f403lxl35e435g33m4x4fhj5e3w68pq6qm76qhq68e75dpl4f5f3lxj35dc35f83m334feg5e0u68o76qmg6qj068dw5dm04ezp3ls535ai35fw3m6l4fiw5e5068sg6qqh6qm868h55doc4f043lr6359c35fn3m7a4fib5e0t68l26qiv6qgq68f85dqw4f573lvv35br35f23m4c4fez5dxv68hn6qge6qi168jr5dwg4f8p3lvf357n35903lyz4fd55e1g68ph6qo46qn468ml5dxk4f9t3lx7358z35913lxk4fav5dzb68ne6qk26qfd68dn5dri4f8s3m1335g035gd3m2b4fb35duu68hk6qi16qho68gr5dtg4fa53m3335i235gk3m014f755dqr68eq6qhw6qlq68ne5dz94fcn3m1x35ft35fz3m154f8i5dr068d16qe66qhk68k05dwg4f9m3lyd35ck35f33m3z4feb5dxn68im6qgy6qh068j05dwz4fbk3m0p35dw35f63m3n4fdl5dvx68fh6qcu6qbx68e95dvm4fen3m6m35jn35hl3m1j4f9d5ds668d16qc76qdv68gq5dwd4fcq3m2w35fp35ed3lzd4f8x5dvi68l26qme6qms68m35dwm4f9q3lzh35dq35en3m1f4fb65dwe68ju6qiv6qh368g45dsi4f7l3lz335f635hl3m4w4fda5duy68fn6qgc6qiy68kt5dxq4fbo3m0k35ct35bj3lxk4f7o5dt968he6qk46qow68sp5e5o4fhj3m2n35ba35813ltd4f475drg68h76qjl6qmb68oz5e2p4ffw3m2835bi358c3lti4f4a5drv68iu6qm96qo668pi5e324fhp3m5s35g135cb3lv54f1s5dlv68be6qg86ql968os5e414fks3mb635mi35hc3lwl4ezi5dga683x6q9h6qix68r95e754fk13m6d35go35dj3lw94f2a5dle68af6qfo6qn268tv5e8u4fkx3m5y35f135ch3lxl4f665dpo68bf6qbh6qe168j85e1o4fjn3m9435jo35g23lzc4f6d5do5688h6q8x6qdd68jc5e1x4fku3mbc35kr35dp3ltp4f025dla68b96qfh6qlc68qo5e6b4flt3ma235jd35de3lth4eyz5djm68aq6qg46qkk68ne5e194ffj3m4a35g635dv3lx34f3h5dml68bn6qh36qms68qc5e3s4fgp3m3v35f035d83lx84f335dkn687t6qcu6ql368s15e864fml3m8y35hb35bw3ltc4ez75dht68556q9h6qjb68tz5ebv4foc3m7g35cw355y3lo34ewr5dju68c16qic6qpp68xa5ee14fqv3ma435er356f3lne4evv5dje68b46qga6ql168po5e7h4fpc3me435m535dy3lrt4ev85ddr68366qad6qk868s25e9b4fq73mf735n535do3lpp4erj5da8682f6qd26qql691f5eht4ftw3mdk35jn35bu3lqh4etv5dc9682v6qbl6qm568v95ecy4fqo3maz35hg35b73lso4eyk5dh468556qau6qkd68u15ed54fsw3me935k035bs3lr64evj5de768346q996qj768tn5ee64fw83mjk35p335e03lph4erq5dah680t6q806qio68ts5edk4ft53mf535lb35bv3lot4es05dc168556qfd6qq468yc5eel4fru3mcn35j635bh3lqm4ev65deu68586qcw6qmi68u05eb04fqb3md535lb35em3ltr4ewl5dcv68056q6w6qjk68vm5ees4ftu3mes35j6358q3lm54eq15d9v681x6qc76qqk694e5enx4g073mgn35hj355c3lim4eo15da1683o6qdy6qoq68ya5eht4fx53mgn35jb357d3ljx4eod5d9g681z6qbs6qnt68xo5egs4fxg3mjf35nt35bu3llp4elg5d3c67w36q886qnv690y5ekj4g0m3mmt35rq35f63lni4elf5d0q67rm6q3g6qk9690n5em24fze3mhr35la35al3lmm4enx5d5267w36q7s6qno69255en34g0y3mi935jv358m3lmc4eqv5daa67zk6q6t6qiw68vb5ehj4fzx3mlv35pf35d03lo34epy5d7m67wg6q396qfy68u25eh44g063mmx35pj35ac3li94eis5d2r67xm6qao6qps693c5enl4g293mlf35ne359i3lio4ejr5d3r67z66qdi6qri69105eih4fwk3mgm35kv359y3llm4en85d5e67xf6q9q6qpw692h5ekj4fxr3mgq35ka359j3ll14el85d2767u76q7l6qqh697e5esh4g613mmy35mw35883lhn4eid5d0e67ss6q5l6qo3696q5eu24g753mlt35jc35323lcn4efl5d1067wc6qaq6qs869845eug4g923mp135mj35543ld74efc5d1767wg6q9u6qpy693u5epn4g7h3msm35tz35d93lil4efh5cvv67op6q2o6qlu693i5eqm4g7k3ms735t235bu3lgf4ecd5cs767mn6q4n6qrl69bo5eys4gc03mr535ph359c3lgw4efu5cx267qa6q5r6qpc695y5eso4g823mp935oi359b3liq4eji5d0x67ri6q276qjt691u5eqd4g7y3mr935r735aw3lhk4efg5cw967p26q2h6ql469485etz4gc83mvo35up35by3lg44ed95cum67os6q3w6qmn69445err4g7o3mpx35pl358n3ler4eda5cvw67r56q7l6qrj697i5es44g633mni35ni35813lfx4efo5cya67s76q726qqm69735ery4g6d3moh35p435a13lhv4egd5cwg67oc6q2c6qmt696u5ev74gad3mqe35mr353k3l9j4e8u5crs67no6q676qtv69ff5f474ghb3mt935lz350e3l5g4e655cse67r76qaa6qv769c15eyu4ge83mtw35p735493l874e6s5cr067o16q5d6qqw699x5exj4ge43mwh35u8359o3lad4e2x5ci767f26q0l6qrd69ez5f4k4gjs3n0135wl35bd3lc44e525cj567ds6pyi6qpw69el5f4r4gij3mw535rf357k3lbp4e825cnw67hb6pz06qoo69cn5f3e4gj13mx935rh356q3lbk4e9w5crk67kl6pzo6qlz698l5f094giw3n0t35x135bo3le84ea85cqb67jb6py96qje695g5eya4gih3n1935wk358v3l8t4e3f5ckw67hz6q2j6qro69dq5f3k4gjm3mz835u6357w3l964e4p5cnc67m06q7h6qvb69dq5ezl4gdx3mue35ry35903ld44e9e5cpv67kr6q2q6qqk69c65f084gem3mu935ra35853lbd4e5p5ckc67ey6pzl6qrj69hb5f8r4gni3n0935sl35573l734e3i5cl767h56q1b6qsn69i05f944gn93mz235px35163l2q4e0h5cl067jk6q3n6qsy69gc5f704gn13n1035sv353p3l3l4dzf5cip67hc6q2t6qse69f55f5f4gmr3n3v35z035b03l9b4e135cfl67bt6pxy6qpu69es5f6c4gn83n2u35wa357d3l5d4dx55cby678o6pwy6qt569lc5fd74gr53n2935t4354i3l4r4dze5cgj67e76q0s6qtg69iw5f9n4gol3n1h35t5354w3l6c4e2b5cjg67ez6pxn6qn769d25f6i4go93n3i35w7","lunarFrom":1899,"lunar":"34fkl2dt5e3tp3m2yu1x27nt63l9hn2nkpn1w8ra3ctwq2hyl51nh3m34evm2ao853qwpx2t6x71z82z3fmi52kqjv1q7vt3799l2ghaq3wjo22ytr924vgt3laae2qcae1tfp13cu6s2hz8p1qbo234gb62algm3o2ej2t6xj1z7p23fo7u2njys1t809378092dms33tpqr2ys6j225i33ih7x2qctm1w9xx3cv502hykp1nhqr34fit2808d3o2eu2t6zx221ey3fn3m2ks6d1tave3a2bu2dqqd3qwlz2ys7q24yph3ih912qd3m1w7fp3cvqd2hxl61ks5z31me32atei3o2ga2t755221qq3ihci2krol1qmob378ln2dsq33qv1p2vz3h24yuh3lay12qefm1waat3cvfp2jsr13wity31kty27qut3o2qd2t7s92236a3ihzm2nl7q1qdzq34fh32dsra3tobe2vzdh24urt3l9op2qd1v1tfl73a0q32f5971ngpm31ld6281g53qwtg2w0951z98z3fo2d2kqi51qkdp34fjp2dz8q3tosy2ytut252dm3lave2qe8l1w8q63a0ra2f5bp1ngs234es227smd3o2sl2t64r1z6hj3cvcb2kqje1qe3a378tl2ec7m3tpw22ytd1251sb3ih572njjf1tisb3a0tp2f5gq1nhw234g422auxx3o3z92t6xh1z8313fmwm2hxh11qene379hl2gnte3tqj62ytra24ymu3ih5j2njkm1tcr93a15h2hxs91ksk331llf2808b3o2ej2qdsr1z87u3fn1m2krqd1qmve378sq2dtw53tpqt2vz1p225kd3ih852qcve1tdph3a2ed2hyyy1nogl31ms62811q3o2fq2t7051z8aa3fnbm2ksdh1te8a34eq32axzr3qvfv2vz2z225li3ihd62qd761w9453a1xh2f5aj1knff31l7v27xwb"};
+const CITIES=[["上海市","",121.47],["北京市","",116.41],["天津市","",117.21],["澳门","",113.54],["重庆市","",106.51],["香港","",114.16],["临沧市","云南省",100.09],["丽江市","云南省",100.22],["保山市","云南省",99.17],["大理白族自治州","云南省",100.27],["德宏傣族景颇族自治州","云南省",98.58],["怒江傈僳族自治州","云南省",98.85],["文山壮族苗族自治州","云南省",104.23],["昆明市","云南省",102.71],["昭通市","云南省",103.71],["普洱市","云南省",100.97],["曲靖市","云南省",103.8],["楚雄彝族自治州","云南省",101.55],["玉溪市","云南省",102.54],["红河哈尼族彝族自治州","云南省",103.38],["西双版纳傣族自治州","云南省",100.8],["迪庆藏族自治州","云南省",99.71],["乌兰察布市","内蒙古自治区",113.12],["乌海市","内蒙古自治区",106.82],["兴安盟","内蒙古自治区",122.07],["包头市","内蒙古自治区",109.83],["呼伦贝尔市","内蒙古自治区",119.75],["呼和浩特市","内蒙古自治区",111.66],["巴彦淖尔市","内蒙古自治区",107.41],["赤峰市","内蒙古自治区",118.88],["通辽市","内蒙古自治区",122.26],["鄂尔多斯市","内蒙古自治区",110.0],["锡林郭勒盟","内蒙古自治区",116.09],["阿拉善盟","内蒙古自治区",105.7],["台中市","台湾",120.68],["台北市","台湾",121.56],["台南市","台湾",120.19],["新北市","台湾",121.47],["桃园市","台湾",121.31],["高雄市","台湾",120.3],["吉林市","吉林省",126.56],["四平市","吉林省",124.36],["延边朝鲜族自治州","吉林省",129.5],["松原市","吉林省",124.81],["白城市","吉林省",122.83],["白山市","吉林省",126.42],["辽源市","吉林省",125.14],["通化市","吉林省",125.95],["长春市","吉林省",125.32],["乐山市","四川省",103.76],["内江市","四川省",105.06],["凉山彝族自治州","四川省",102.26],["南充市","四川省",106.08],["宜宾市","四川省",104.64],["巴中市","四川省",106.76],["广元市","四川省",105.84],["广安市","四川省",106.63],["德阳市","四川省",104.39],["成都市","四川省",104.06],["攀枝花市","四川省",101.71],["泸州市","四川省",105.44],["甘孜藏族自治州","四川省",101.96],["眉山市","四川省",103.84],["绵阳市","四川省",104.74],["自贡市","四川省",104.76],["资阳市","四川省",104.64],["达州市","四川省",107.49],["遂宁市","四川省",105.57],["阿坝藏族羌族自治州","四川省",102.22],["雅安市","四川省",103.0],["中卫市","宁夏回族自治区",105.19],["吴忠市","宁夏回族自治区",106.19],["固原市","宁夏回族自治区",106.28],["石嘴山市","宁夏回族自治区",106.37],["银川市","宁夏回族自治区",106.22],["亳州市","安徽省",115.77],["六安市","安徽省",116.51],["合肥市","安徽省",117.28],["安庆市","安徽省",117.03],["宣城市","安徽省",118.75],["宿州市","安徽省",116.97],["池州市","安徽省",117.48],["淮北市","安徽省",116.79],["淮南市","安徽省",117.02],["滁州市","安徽省",118.31],["芜湖市","安徽省",118.36],["蚌埠市","安徽省",117.35],["铜陵市","安徽省",117.81],["阜阳市","安徽省",115.8],["马鞍山市","安徽省",118.51],["黄山市","安徽省",118.32],["东营市","山东省",118.47],["临沂市","山东省",118.35],["威海市","山东省",122.1],["德州市","山东省",116.31],["日照市","山东省",119.43],["枣庄市","山东省",117.55],["泰安市","山东省",117.08],["济南市","山东省",116.98],["济宁市","山东省",116.57],["淄博市","山东省",118.05],["滨州市","山东省",118.01],["潍坊市","山东省",119.1],["烟台市","山东省",121.45],["聊城市","山东省",115.98],["菏泽市","山东省",115.43],["青岛市","山东省",120.4],["临汾市","山西省",111.51],["吕梁市","山西省",111.14],["大同市","山西省",113.29],["太原市","山西省",112.54],["忻州市","山西省",112.72],["晋中市","山西省",112.74],["晋城市","山西省",112.85],["朔州市","山西省",112.43],["运城市","山西省",111.0],["长治市","山西省",113.11],["阳泉市","山西省",113.58],["东莞市","广东省",113.75],["中山市","广东省",113.35],["云浮市","广东省",112.04],["佛山市","广东省",113.11],["广州市","广东省",113.26],["惠州市","广东省",114.42],["揭阳市","广东省",116.36],["梅州市","广东省",116.12],["汕头市","广东省",116.68],["汕尾市","广东省",115.33],["江门市","广东省",113.08],["河源市","广东省",114.69],["深圳市","广东省",114.05],["清远市","广东省",113.05],["湛江市","广东省",110.4],["潮州市","广东省",116.63],["珠海市","广东省",113.57],["肇庆市","广东省",112.47],["茂名市","广东省",110.92],["阳江市","广东省",111.96],["韶关市","广东省",113.59],["北海市","广西壮族自治区",109.1],["南宁市","广西壮族自治区",108.32],["崇左市","广西壮族自治区",107.37],["来宾市","广西壮族自治区",109.23],["柳州市","广西壮族自治区",109.43],["桂林市","广西壮族自治区",110.29],["梧州市","广西壮族自治区",111.32],["河池市","广西壮族自治区",108.08],["玉林市","广西壮族自治区",110.15],["百色市","广西壮族自治区",106.62],["贵港市","广西壮族自治区",109.59],["贺州市","广西壮族自治区",111.55],["钦州市","广西壮族自治区",108.62],["防城港市","广西壮族自治区",108.3],["乌鲁木齐市","新疆维吾尔自治区",87.61],["伊犁哈萨克自治州","新疆维吾尔自治区",81.32],["克孜勒苏柯尔克孜自治州","新疆维吾尔自治区",76.17],["克拉玛依市","新疆维吾尔自治区",84.87],["博尔塔拉蒙古自治州","新疆维吾尔自治区",82.07],["吐鲁番市","新疆维吾尔自治区",89.18],["和田地区","新疆维吾尔自治区",79.92],["哈密市","新疆维吾尔自治区",93.52],["喀什地区","新疆维吾尔自治区",75.99],["塔城地区","新疆维吾尔自治区",82.98],["巴音郭楞蒙古自治州","新疆维吾尔自治区",86.17],["昌吉回族自治州","新疆维吾尔自治区",87.32],["阿克苏地区","新疆维吾尔自治区",80.27],["阿勒泰地区","新疆维吾尔自治区",88.13],["南京市","江苏省",118.78],["南通市","江苏省",120.89],["宿迁市","江苏省",118.28],["常州市","江苏省",119.97],["徐州市","江苏省",117.19],["扬州市","江苏省",119.44],["无锡市","江苏省",120.28],["泰州市","江苏省",119.9],["淮安市","江苏省",119.02],["盐城市","江苏省",120.16],["苏州市","江苏省",120.62],["连云港市","江苏省",119.18],["镇江市","江苏省",119.46],["上饶市","江西省",117.96],["九江市","江西省",116.0],["南昌市","江西省",115.89],["吉安市","江西省",114.98],["宜春市","江西省",114.38],["抚州市","江西省",116.36],["新余市","江西省",114.92],["景德镇市","江西省",117.2],["萍乡市","江西省",113.85],["赣州市","江西省",114.93],["鹰潭市","江西省",117],["保定市","河北省",115.48],["唐山市","河北省",118.17],["廊坊市","河北省",116.7],["张家口市","河北省",114.88],["承德市","河北省",117.93],["沧州市","河北省",116.85],["石家庄市","河北省",114.51],["秦皇岛市","河北省",119.59],["衡水市","河北省",115.69],["邢台市","河北省",114.48],["邯郸市","河北省",114.49],["三门峡市","河南省",111.19],["信阳市","河南省",114.07],["南阳市","河南省",112.53],["周口市","河南省",114.64],["商丘市","河南省",115.65],["安阳市","河南省",114.35],["平顶山市","河南省",113.3],["开封市","河南省",114.34],["新乡市","河南省",113.89],["洛阳市","河南省",112.42],["漯河市","河南省",114.01],["濮阳市","河南省",115.03],["焦作市","河南省",113.23],["许昌市","河南省",113.82],["郑州市","河南省",113.66],["驻马店市","河南省",114.03],["鹤壁市","河南省",114.29],["丽水市","浙江省",119.92],["台州市","浙江省",121.42],["嘉兴市","浙江省",120.75],["宁波市","浙江省",121.55],["杭州市","浙江省",120.17],["温州市","浙江省",120.66],["湖州市","浙江省",120.09],["绍兴市","浙江省",120.58],["舟山市","浙江省",122.2],["衢州市","浙江省",118.88],["金华市","浙江省",119.65],["三亚市","海南省",109.5],["三沙市","海南省",112.34],["儋州市","海南省",109.58],["海口市","海南省",110.32],["十堰市","湖北省",110.78],["咸宁市","湖北省",114.33],["孝感市","湖北省",113.91],["宜昌市","湖北省",111.28],["恩施土家族苗族自治州","湖北省",109.48],["武汉市","湖北省",114.3],["荆州市","湖北省",112.24],["荆门市","湖北省",112.21],["襄阳市","湖北省",112.15],["鄂州市","湖北省",114.88],["随州市","湖北省",113.37],["黄冈市","湖北省",114.88],["黄石市","湖北省",115.03],["娄底市","湖南省",112.0],["岳阳市","湖南省",113.13],["常德市","湖南省",111.68],["张家界市","湖南省",110.48],["怀化市","湖南省",109.96],["株洲市","湖南省",113.15],["永州市","湖南省",111.6],["湘潭市","湖南省",112.92],["湘西土家族苗族自治州","湖南省",109.74],["益阳市","湖南省",112.33],["衡阳市","湖南省",112.59],["邵阳市","湖南省",111.47],["郴州市","湖南省",113.03],["长沙市","湖南省",112.97],["临夏回族自治州","甘肃省",103.21],["兰州市","甘肃省",103.83],["嘉峪关市","甘肃省",98.29],["天水市","甘肃省",105.73],["定西市","甘肃省",104.63],["平凉市","甘肃省",106.68],["庆阳市","甘肃省",107.64],["张掖市","甘肃省",100.46],["武威市","甘肃省",102.63],["甘南藏族自治州","甘肃省",102.91],["白银市","甘肃省",104.18],["酒泉市","甘肃省",98.5],["金昌市","甘肃省",102.19],["陇南市","甘肃省",105.35],["三明市","福建省",117.63],["南平市","福建省",118.17],["厦门市","福建省",118.08],["宁德市","福建省",119.52],["泉州市","福建省",118.59],["漳州市","福建省",117.66],["福州市","福建省",119.29],["莆田市","福建省",119.01],["龙岩市","福建省",117.02],["山南市","西藏自治区",92.56],["拉萨市","西藏自治区",91.14],["日喀则市","西藏自治区",88.88],["昌都市","西藏自治区",97.18],["林芝市","西藏自治区",94.36],["那曲市","西藏自治区",92.06],["阿里地区","西藏自治区",80.1],["六盘水市","贵州省",104.83],["安顺市","贵州省",105.93],["毕节市","贵州省",105.29],["贵阳市","贵州省",106.71],["遵义市","贵州省",106.93],["铜仁市","贵州省",109.19],["黔东南苗族侗族自治州","贵州省",107.97],["黔南布依族苗族自治州","贵州省",107.51],["黔西南布依族苗族自治州","贵州省",104.9],["丹东市","辽宁省",124.38],["大连市","辽宁省",121.6],["抚顺市","辽宁省",123.89],["朝阳市","辽宁省",120.45],["本溪市","辽宁省",123.76],["沈阳市","辽宁省",123.43],["盘锦市","辽宁省",122.06],["营口市","辽宁省",122.23],["葫芦岛市","辽宁省",120.84],["辽阳市","辽宁省",123.18],["铁岭市","辽宁省",123.84],["锦州市","辽宁省",121.13],["阜新市","辽宁省",121.65],["鞍山市","辽宁省",122.99],["咸阳市","陕西省",108.71],["商洛市","陕西省",109.92],["安康市","陕西省",109.02],["宝鸡市","陕西省",107.18],["延安市","陕西省",109.49],["榆林市","陕西省",109.74],["汉中市","陕西省",107.03],["渭南市","陕西省",109.47],["西安市","陕西省",108.94],["铜川市","陕西省",108.94],["果洛藏族自治州","青海省",100.24],["海东市","青海省",102.1],["海北藏族自治州","青海省",100.9],["海南藏族自治州","青海省",100.62],["海西蒙古族藏族自治州","青海省",97.37],["玉树藏族自治州","青海省",97.01],["西宁市","青海省",101.78],["黄南藏族自治州","青海省",102.02],["七台河市","黑龙江省",131.01],["伊春市","黑龙江省",128.89],["佳木斯市","黑龙江省",130.37],["双鸭山市","黑龙江省",131.15],["哈尔滨市","黑龙江省",126.63],["大兴安岭地区","黑龙江省",123.9],["大庆市","黑龙江省",125.01],["牡丹江市","黑龙江省",129.6],["绥化市","黑龙江省",126.98],["鸡西市","黑龙江省",130.96],["鹤岗市","黑龙江省",130.28],["黑河市","黑龙江省",127.49],["齐齐哈尔市","黑龙江省",123.95]];
 /* 干支换算、干支关系、神煞口诀。
    这个文件只做计算：不碰页面，也不含任何一个人的数据。构建时原样拼进页面。 */
 const G='甲乙丙丁戊己庚辛壬癸', Z='子丑寅卯辰巳午未申酉戌亥', EL='木火土金水';
@@ -1382,7 +1462,20 @@ function liuqin(gd){
     `近代韦千里的《千里命稿》另定了一套配法：财只配妻，父亲改看印。`,
     `近代韦千里的《千里命稿》另定了一套配法：正官和七杀只配丈夫，子女改看食神和伤官。`,
     `近代韦千里的《千里命稿》认为旧说有误，另定了一套：${q('ql_fu')}，母亲也一样。`][Math.floor(GODS.indexOf(gd)/2)];
-  return m+why+ql+`这张盘是${P.gender?'男':'女'}命。这些是书里的分类办法，不能据此说这张盘的主人和哪位亲属怎样。`;
+  const male=!!P.gender;
+  const plain={
+    正印:'照《渊海子平》，正印配母亲。',
+    偏印:'照《渊海子平》，偏印配偏母（生母以外的母亲）和祖父。',
+    偏财:'照《渊海子平》，偏财配父亲，男命又配偏妻。',
+    正财:'照《渊海子平》，男命的正财配妻子。',
+    比肩:'照《渊海子平》，比肩配兄弟姐妹。',
+    劫财:'《渊海子平》只说比肩配兄弟姐妹，没有单提劫财。',
+    七杀:male?'照《渊海子平》，男命的七杀配儿子。':'照《渊海子平》，女命的七杀配偏夫。',
+    正官:male?'照《渊海子平》，男命的正官配女儿。':'照《渊海子平》，女命的正官配丈夫。',
+    食神:male?'照《渊海子平》，男命的食神配孙子。':'照《渊海子平》，女命的食神配儿子。',
+    伤官:male?'照《渊海子平》，男命的伤官配孙女和祖母。':'照《渊海子平》，女命的伤官配女儿。'
+  }[gd];
+  return {plain:plain+`这张盘是${male?'男':'女'}命。别的书配法不同，原文见下面一段。这些是书里的分类办法，不能据此说这张盘的主人和哪位亲属怎样。`,src:m+why+ql};
 }
 /* 神煞的出处和异文。d 是出处和原文，v 是别的书或同一本书里不一样的取法。
    m 为 true 的五条，口诀在读到的典籍里没有找到，引的是问真八字《神煞大全》里通行的说法。 */
@@ -1799,17 +1892,18 @@ function kvRows(){return memo('kv',()=>{
   return addRows(rows,note('kv'));
 });}
 
-/* 宫位：四柱各配哪一类亲属。两部书的原文都引出来，再说这一柱。 */
+/* 宫位：四柱各配哪一类亲属。plain 先用一句白话说这一柱配谁，src 是几部书的原文。 */
 function gongwei(k){
-  const two=`四柱各配一类亲属，叫宫位。《渊海子平》说${q('gw')}《子平真诠》说${q('zp_gf')}`;
-  const mine={年:'年柱配祖上。',月:'月柱配父母，《渊海子平》把伯叔、兄弟也放在这里。',日:'日柱配自己和配偶：日干是自己，日支紧挨着日主，通常叫配偶宫。',时:'《渊海子平》那一句没有说到时柱。按《子平真诠》的顺序，时柱配子女。'}[k];
-  return two+mine+`近代的《千里命稿》列了两种看法：一种${q('ql_gong1')}、月为父母，一种${q('ql_gong2')}、月为兄弟姊妹；两种都以日支为配偶、时为子女。`+`《渊海子平》还拿植物打比方，说${q('gmhg')}。后来有把四柱配到人生早、中、晚几个阶段的说法，各家划的岁数不一样，这一页没有找到它在典籍里的出处。宫位是分类的办法，不能据此说这张盘的主人和哪位亲属怎样。`;
+  const mine={年:'年柱配祖上。',月:'月柱配父母，《渊海子平》把伯叔、兄弟也放在这里。',日:'日柱配自己和配偶：日干是自己，日支紧挨着日主，通常叫配偶宫。',时:'时柱配子女。'}[k];
+  const two=`《渊海子平》说${q('gw')}《子平真诠》说${q('zp_gf')}`+(k==='时'?'《渊海子平》那一句没有说到时柱，时柱配子女是照《子平真诠》的顺序。':'');
+  return {plain:'四柱各配一类亲属，叫宫位。'+mine+'宫位是分类的办法，不能据此说这张盘的主人和哪位亲属怎样。',
+    src:two+`近代的《千里命稿》列了两种看法：一种${q('ql_gong1')}、月为父母，一种${q('ql_gong2')}、月为兄弟姊妹；两种都以日支为配偶、时为子女。`+`《渊海子平》还拿植物打比方，说${q('gmhg')}。后来有把四柱配到人生早、中、晚几个阶段的说法，各家划的岁数不一样，这一页没有找到它在典籍里的出处。`};
 }
 
 /* ---------- 细盘的行名和列名 ---------- */
 function rowX(name){
   const N=NATAL, K=p=>p.k;
-  if(name==='主星') return {t:'主星',p:[['是什么',`每一柱的天干相对于日主${DMN}的十神。`],['这张盘',N.filter(p=>!p.day).map(p=>`${K(p)}干${p.g}是${god(p.g)}`).join('，')+'。日干就是日主自己。'],['怎么读','天干露在外面，传统上说它主看得见的一面；藏在地支里的十神主内里。点任意一个天干，可以看它的十神是怎么推出来的。']]};
+  if(name==='十神') return {t:'十神',p:[['是什么',`每一柱的天干相对于日主${DMN}是什么，一共十种叫法，合称十神。地支的十神看藏干一行里的小字。排盘软件里这一行常叫主星。`],['这张盘',N.filter(p=>!p.day).map(p=>`${K(p)}干${p.g}是${god(p.g)}`).join('，')+'。日干就是日主自己。'],['怎么读','天干露在外面，传统上说它主看得见的一面；藏在地支里的十神主内里。点任意一个天干，可以看它的十神是怎么推出来的。']]};
   if(name==='天干') return {t:'天干',p:[['是什么','甲乙丙丁戊己庚辛壬癸，共十个。两个一组配五行：甲乙木、丙丁火、戊己土、庚辛金、壬癸水。每组前一个为阳，后一个为阴。'],['颜色和图标','绿是木，红是火，棕是土，金黄是金，蓝是水。大字右上角的小图标也是五行：嫩芽是木，火苗是火，山是土，铜钱是金，水滴是水。'],['典籍',`《滴天髓》说${q('dts_yy')}：十个天干里，丙火最阳，癸水最阴。`]]};
   if(name==='地支') return {t:'地支',p:[['是什么','子丑寅卯辰巳午未申酉戌亥，共十二个，对应十二个月、十二个时辰，也就是十二生肖。'],['怎么读','地支本身不直接定十神，要看它里面藏的天干。地支之间的合、冲、刑、害见下面的干支关系。'],['颜色和图标','颜色和右上角的图标是这个地支的五行。右下角的小字是它的生肖，屏幕窄的时候不显示。']]};
   if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
@@ -1834,9 +1928,9 @@ function rowX(name){
       ['是什么','按固定口诀从干支里查出来的标签。名字好听的叫神，难听的叫煞。它们是早期算命术留下的，子平法兴起以后退到了次要位置。'],
       ['怎么读','每个口诀只看一两个字，所以每个标签都很常见，单独拿出来下判断没有意义。点具体的名字，可以看它的口诀和有多常见。'],
       ['这张盘',`四柱一共查出 ${total} 个标签。`+(mixed?`${'年月日时'[mixed.i]}柱同时带着${mixed.ji.join('、')}这${cn(mixed.ji.length)}个旧说算吉的，和${mixed.xi.join('、')}这${cn(mixed.xi.length)}个旧说算凶的。吉凶互相打架，是因为每个口诀各查各的。`:'')],
-      ['范围',`这一页查 ${SS_NAMES.length} 个，名单和查法照排盘软件问真八字：${SS_NAMES.join('、')}。别的书和软件里还有别的神煞，这里没列出来不等于盘里没有。`],
-      ['前四列','流日、流月、流年、大运这四列的神煞，是拿它们的干支去对原局的年柱、月支和日柱查出来的，查法和原局四柱相同。只看原局自己的那几条不适用：天赦日、三奇贵人、四废日、阴差阳错、魁罡、孤鸾煞、十恶大败、金神、天转、地转、十灵日、六秀日、八专、九丑、童子煞、拱禄。'],
       ['典籍',`神煞在各部书里的分量很不一样。《三命通会》《协纪辨方书》《星学大成》逐条记着它们的取法，这一页的口诀出处写在每个神煞自己的说明里；有五条在典籍里没有找到，也照实写明了。《子平真诠》却专有一章说星辰和格局无关：${q('zp_xc')}`],
+      ['前四列','流日、流月、流年、大运这四列的神煞，是拿它们的干支去对原局的年柱、月支和日柱查出来的，查法和原局四柱相同。只看原局自己的那几条不适用：天赦日、三奇贵人、四废日、阴差阳错、魁罡、孤鸾煞、十恶大败、金神、天转、地转、十灵日、六秀日、八专、九丑、童子煞、拱禄。'],
+      ['范围',`这一页查 ${SS_NAMES.length} 个，名单和查法照排盘软件问真八字：${SS_NAMES.join('、')}。别的书和软件里还有别的神煞，这里没列出来不等于盘里没有。`],
       ['统计','有多常见的数字，是用同样的口诀把 1924 到 2043 年的每一天、每个时辰都排了一遍数出来的，共 52 万多张盘，只算原局四柱。']]};
   }
   return null;
@@ -1846,20 +1940,20 @@ function colX(k){
   if(i>=0){
     const p=NATAL[i], [yp,mp,dp,hp]=P.pillars, h=HID[p.z][0];
     const basic=`${gN(p.g)}是${god(p.g)}，${zN(p.z)}的本气${h}是${god(h)}。`;
-    if(k==='年') return {t:`年柱 · ${yp}`,p:[['是什么','出生那一年的干支。以立春为界，不看正月初一。'],['宫位',gongwei('年')],['这张盘',basic]]};
+    if(k==='年') return {t:`年柱 · ${yp}`,p:[['是什么','出生那一年的干支。以立春为界，不看正月初一。'],['宫位',gongwei('年').plain],['宫位的出处',gongwei('年').src],['这张盘',basic]]};
     if(k==='月'){
       const ys=G.indexOf(yp[0]), mi=(Z.indexOf(p.z)+10)%12, ok=G[((ys%5)*2+2+mi)%10]+p.z===mp;
-      return {t:`月柱 · ${mp}`,p:[['是什么','出生那个月的干支，以节气为界。'+(ok?`月干由年干推出：${yp[0]}年的正月从${G[((ys%5)*2+2)%10]}寅起，`+(mi?`排到${MONTHS[mi]}是${mp}。`:`正月就是${mp}。`):'')],['为什么重要','月支叫月令，代表出生的季节，是衡量全盘每个字强弱的基准。《滴天髓》说'+q('dts_yl')+'，把月令比作一个人住的宅子。'],['宫位',gongwei('月')],['这张盘',basic+touGan()+'。']]};
+      return {t:`月柱 · ${mp}`,p:[['是什么','出生那个月的干支，以节气为界。'+(ok?`月干由年干推出：${yp[0]}年的正月从${G[((ys%5)*2+2)%10]}寅起，`+(mi?`排到${MONTHS[mi]}是${mp}。`:`正月就是${mp}。`):'')],['为什么重要','月支叫月令，代表出生的季节，是衡量全盘每个字强弱的基准。《滴天髓》说'+q('dts_yl')+'，把月令比作一个人住的宅子。'],['宫位',gongwei('月').plain],['宫位的出处',gongwei('月').src],['这张盘',basic+touGan()+'。']]};
     }
     if(k==='日'){
       const rt=roots().filter(x=>x.k==='日');
-      return {t:`日柱 · ${dp}`,p:[['是什么','出生那天的干支。六十甲子一天一个，连续循环，和年、月无关。'],['宫位',gongwei('日')],['这张盘',`${DMN}坐在${zN(p.z)}上。${p.z}的本气${gN(h)}是${god(h)}。`+(rt.length?`${DMN}在这里有根。`:`${p.z}里没有${EL[gEl(DM)]}，${DMN}在自己坐的这一支上没有根。`)]]};
+      return {t:`日柱 · ${dp}`,p:[['是什么','出生那天的干支。六十甲子一天一个，连续循环，和年、月无关。'],['宫位',gongwei('日').plain],['宫位的出处',gongwei('日').src],['这张盘',`${DMN}坐在${zN(p.z)}上。${p.z}的本气${gN(h)}是${god(h)}。`+(rt.length?`${DMN}在这里有根。`:`${p.z}里没有${EL[gEl(DM)]}，${DMN}在自己坐的这一支上没有根。`)]]};
     }
     const sc=shichen(), hi=Z.indexOf(p.z), late=P.tst[3]===23, base=late?G[(G.indexOf(DM)+1)%10]:DM, bi=G.indexOf(base);
     const ok=G[((bi%5)*2+hi)%10]+p.z===hp;
     return {t:`时柱 · ${hp}`,p:[
       ['是什么','出生时辰的干支，两小时一个时辰。'+(!ok?'':late?`时干由日干推出。晚上 11 点以后出生，这里按第二天的日干${base}来推：${base}日的子时是${hp}。`:`时干由日干推出：${DM}日的子时从${G[(bi%5)*2]}子起，`+(hi?`排到${p.z}时是${hp}。`:`子时就是${hp}。`))],
-      ['宫位',gongwei('时')],
+      ['宫位',gongwei('时').plain],['宫位的出处',gongwei('时').src],
       ['这张盘',basic],
       P.shichen?['注意',`时柱取决于时辰记得准不准。${P.source?'出处：'+esc(P.source)+'。':''}这里按记载的${p.z}时来排。`]:
       ['注意',`时柱取决于出生时间准不准。${P.source?esc(P.source)+'记的是':'钟表时间是'} ${hm(P.clock)}，换算成真太阳时是 ${hmNear(P.tst)}，在${p.z}时。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}，出了这个范围时柱就会变。`+(hi===0?'子时跨着零点。这里以零点换日：晚上 11 点到零点出生的，日柱算当天，时干按第二天的日干来推。也有人主张晚上 11 点就换日。':'')]]};
@@ -1893,7 +1987,7 @@ function readPan(){
   const help=whereGod(g=>rel(g)===4), same=whereGod(g=>rel(g)===0), de=gEl(DM);
   return box('解读 · 这张表怎么读',`<ol class="cols">${lis([
     `先找日柱的天干<b class="${gCls(DM)}">${DM}</b>。它叫日主，代表这张盘的主人。其余七个字，都要先换算成它是${DMN}的什么。`,
-    `换算的结果叫十神，就是主星一行和藏干旁边的小字。例如月干${gN(mg)}：${stemWhy(mg)}`,
+    `换算的结果叫十神，就是十神一行和藏干旁边的小字。例如月干${gN(mg)}：${stemWhy(mg)}`,
     `数一数十神，按五类来分：${CAT.map((x,i)=>`${x[0]} ${c[i]} 处`).join('，')}。`+(top.length===1?`最多的是${top[0][0]}，传统上读作${top[0][2]}。`:`最多的是${top.map(x=>x[0]).join('、')}，各 ${max} 处。`)+'个数多只说明这一类的字多，不等于它的力量一定大。',
     `再看谁在帮日主。生${DMN}的${EL[(de+4)%5]}`+(help.length?`有 ${help.length} 处：${help.join('、')}。`:'一处也没有。')+`和它同类的${EL[de]}`+(same.length?`有 ${same.length} 处：${same.join('、')}。`:'，除了日主自己一处也没有。')+`消耗它的字，也就是它所生、所克和克它的，有 ${c[1]+c[2]+c[3]} 处。数个数是最粗的办法，强弱还要看月令和根，各派的算法也不一样。`,
     '星运、自坐、空亡、纳音、神煞是附加的标注，越往下越次要。点行名可以看每一行是什么，点格子可以看这一格是怎么来的。'])}</ol>`);
@@ -1901,8 +1995,8 @@ function readPan(){
 function readYun(){
   return box('解读 · 现在选中的四层',
     `<p>大运从月柱推出来，十年一步。${yunWhy(3)}。流年、流月、流日是那一年、那个月、那一天本身的干支，所有人都一样。读法相同：把选中的干支当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。</p>`+
+    `<p>下面每一层后面都说它对${DMN}是加力还是减力：生身、帮身是加力，泄身、耗身、克身是减力。加力不等于好事，减力也不等于坏事，这里只是在记力量的账。</p>`+
     '<dl class="layers" id="layers"></dl>'+
-    `<p>生身、帮身是给${DMN}加力，泄身、耗身、克身是减力。加力不等于好事，减力也不等于坏事，这里只是在记力量的账。</p>`+
     '<p>传统上说大运是十年的背景，流年是当年的主题，流月和流日一层比一层细，分量也一层比一层轻。大运的天干和地支，有的流派说各管五年，有的说十年合看、以地支为重。</p>');
 }
 function noteYun(){
@@ -1946,7 +2040,7 @@ function readRel(){
   return box(`解读 · 原局的${cn(n)}条关系`,`<ul class="cols">${lis(li)}</ul>`);
 }
 function readRel2(){
-  return box('解读 · 大运和流年带来的关系',
+  return box('解读 · 这些关系怎么读',
     '<p>点任意一条，可以看它的来历和涉及的十神。读的时候先按力量排个序：一般的说法是三会、三合成了局的力量最大，相冲其次，再往下是六合、相刑，相害和相破最小。相邻的强，隔得远的弱。各派的排法略有不同。</p>'+
     '<p>宫位（年柱祖辈、月柱父母、日支配偶、时柱子女）只是分类的习惯。同一年同一个月出生的人，年柱和月柱完全一样，流年对这两柱的冲、刑、害，对他们每个人都相同。所以这一页只说明干支之间的结构，不把它翻成具体的人和事。</p>');
 }
@@ -1989,8 +2083,20 @@ function footItems(){
     '标着「典籍」的引文出自《滴天髓》《穷通宝鉴》《渊海子平》《子平真诠》《三命通会》《协纪辨方书》《神峰通考》，每一句都对着所据的本子逐字核对过。各本常有异文，这里照所据的本子。',
     '八字是一套传统的符号推演体系，没有可靠证据表明它能预测人生。'];
 }
+/* 页面最上面的一框：这张盘先看哪几件事。只列机械的事实，顺序和下面版块的顺序相同，每一条指到对应的版块 */
+function readKey(){
+  const de=gEl(DM), mz=NATAL[1].z, st=wxState(de), {cnt}=wxCounts();
+  const mx=Math.max(...cnt), mn=Math.min(...cnt), names=v=>[0,1,2,3,4].filter(i=>cnt[i]===v).map(i=>EL[i]).join('、');
+  const c=catCounts(), cm=Math.max(...c), top=CAT.filter((_,i)=>c[i]===cm);
+  return box('解读 · 这张盘先看什么',`<ol class="cols">${lis([
+    `<b>日主是<span class="${gCls(DM)}">${DMN}</span>。</b>日柱的天干代表这张盘的主人，其余的字都拿它当原点来看。它在<a href="#h-pan">四柱细盘</a>里日柱的天干那一格。`,
+    `<b>十神里${top.map(x=>x[0]).join('、')}最多。</b>别的字相对于${DMN}是什么，叫十神。按五类数，${top.length===1?`${top[0][0]}有 ${cm} 处，传统上读作${top[0][2]}`:`这几类各有 ${cm} 处`}。十个名字各是什么意思，见<a href="#h-gods">十神对照</a>。`,
+    (mx===mn?`<b>五行一样多，各 ${mx} 个。</b>`:`<b>五行里${names(mx)}最多，${names(mn)}最少。</b>`)+`连地支里藏的天干一起数，${[0,1,2,3,4].map(i=>`${EL[i]} ${cnt[i]}`).join('、')}。见<a href="#h-wx">五行</a>。`,
+    `<b>生在${mz}月，${EL[zEl(mz)]}当令。</b>月支叫月令，说的是出生的季节。${EL[de]}在这个月处在${st}的状态：${STATEX[st]}见<a href="#h-tk">日主</a>一栏。`])}</ol>`+
+    '<p>再往下，各家入手的地方不同。日主一栏后面几行各照一本书走一遍，页面把它们并列出来，不合成一个结论，也不往下判断好坏。</p>');
+}
 /* 解读框：notes.read 里有手写的就用手写的，没有就用上面按规则生成的 */
-const READS={pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods};
+const READS={key:readKey,pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,gods:readGods};
 function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slot]():h;}
 
 /* ---------- 点开的解释 ---------- */
@@ -2066,13 +2172,19 @@ function branchPosNote(c){
 function X0(key){
   const a=key.split('|'), k=a[0];
   if(k==='meta'||k==='kv'){const r=(k==='meta'?metaRows():kvRows()).find(x=>x.k===a[1]);return r?{t:r.t,p:r.p}:null;}
+  if(k==='term'){          // 页面上零散的术语
+    const male=!!P.gender;
+    return {t:male?'乾造':'坤造',p:[
+      ['是什么','排盘时的习惯写法：男命叫乾造，女命叫坤造。'],
+      ['有什么用',`性别用来定大运的方向：阳年出生的男性和阴年出生的女性顺着排，另外两种倒着排。${yunWhy(2)}。十神配亲属的时候，男命和女命的配法也不一样。`]]};
+  }
   if(k==='row') return rowX(a[1]);
   if(k==='col') return colX(a[1]);
   if(k==='tg'){
     const gd=a[1]; if(!GODX[gd]) return null;
     const w=whereGod(g=>god(g)===gd), s=stemOfGod(gd), y=nextYearWith(v=>yearGZ(v)[0]===s);
     const df=dfText(gd);
-    return {t:gd,p:[['是什么',godDesc(gd)],['传统读法',GODX[gd]],df?['典籍',df]:null,['六亲',liuqin(gd)],['这张盘',w.length?w.join('、')+'。':'原局里没有。它只会随着大运、流年进来'+(y?`，比如 ${y} ${yearGZ(y)}年的天干${s}`:'')+'。']]};
+    return {t:gd,p:[['是什么',godDesc(gd)],['传统读法',GODX[gd]],df?['典籍',df]:null,['六亲',liuqin(gd).plain],['六亲的出处',liuqin(gd).src],['这张盘',w.length?w.join('、')+'。':'原局里没有。它只会随着大运、流年进来'+(y?`，比如 ${y} ${yearGZ(y)}年的天干${s}`:'')+'。']]};
   }
   if(k==='wx'){
     const i=+a[1], w=whereGod(g=>gEl(g)===i), st=wxState(i);
@@ -2282,24 +2394,30 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
-/* 日主一栏里各家的那几行。读盘顺序里的链接按这些 id 跳过来 */
-const KV_ID={强弱参考:'kv-qr',格局参考:'kv-gj',调候参考:'kv-th',三行对照:'kv-dz'};
+/* 日主一栏里各家的那几行：从其中的第一行起算后一组，前面加小标题 */
+const KV_SCHOOLS=['强弱参考','格局参考','调候参考','三行对照'];
+/* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
+const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
   $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
     +'<button type="button" class="pp add" id="pp-add">＋ 添加</button>'
     +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'');
-  $('eyebrow').textContent=P.gender?'乾造 · 男命':'坤造 · 女命';
+  $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
-  $('title').innerHTML=NATAL.map(p=>`<span>${gzSpan(p.g+p.z)}</span>`).join('');
-  $('meta').innerHTML=metaRows().map(r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`).join('');
-  ['pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl" data-k="${p.k}柱"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
+  const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
+  const top=meta.filter(r=>!META_YUN.includes(r.k));
+  $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
+  $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
+  ['key','pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
-  const kv=kvRows(), cut=kv.findIndex(r=>KV_ID[r.k]);
-  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt${KV_ID[r.k]?` id="${KV_ID[r.k]}"`:''}>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
-  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h">各家的取法<small>各照一本书走一遍，不合成结论</small></h3>'+dl(kv.slice(cut));
+  const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k));
+  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
+  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h"><span class="tag">进阶</span>各家从哪里入手找用神<small>用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论。</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   renderBars();renderGods();renderDynamic();
@@ -2308,7 +2426,7 @@ function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
   const row=(label,fn,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
-    row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
+    row('十神',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
     row('天干',c=>glyph('g',c),'big')+
     row('地支',c=>glyph('z',c),'big')+
     row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
@@ -2345,7 +2463,7 @@ function renderLiuyue(){
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)} 周${W[new Date(t).getUTCDay()]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span></button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span></button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
@@ -2420,9 +2538,18 @@ function openForm(info){
   F('dst').checked=!!(info&&info.dst);
   F('del').hidden=!info;F('del').textContent='删除这一位';F('del').dataset.sure='';
   formMsg('');say('');
+  $('pf-lonhint').hidden=true;
   $('pform').hidden=false;
 }
 function closeForm(){$('pform').hidden=true;editing=null;}
+/* 城市经度表 CITIES 是 [名字, 省份, 经度] 的列表（data/cities.json）。出生地填的是表里的城市时，把经度填上 */
+function cityOf(s){s=String(s||'').trim();return s?CITIES.find(c=>c[0]===s)||CITIES.find(c=>c[0]===s+'市')||null:null;}
+function onPlace(){
+  const c=cityOf(F('place').value), h=$('pf-lonhint');
+  if(c){F('lon').value=c[2];h.textContent=`经度按${c[0]}${c[1]?'（'+c[1]+'）':''}取东经 ${c[2]} 度。出生的地方离市区很远的话，可以自己改。`;}
+  else h.textContent='';
+  h.hidden=!c;
+}
 function newId(){let id;do{id='u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);}while(PEOPLE.some(p=>p.id===id)||LOCAL.some(x=>x.id===id));return id;}
 function saveForm(){
   const old=LOCAL.find(x=>x.id===editing);
@@ -2533,6 +2660,9 @@ window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn
 
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
+$('pf-cities').innerHTML=CITIES.map(c=>`<option value="${esc(c[0])}"${c[1]?` label="${esc(c[1])}"`:''}></option>`).join('');
+F('place').addEventListener('input',onPlace);
+F('place').addEventListener('change',onPlace);
 $('pform').addEventListener('submit',e=>{e.preventDefault();saveForm();});
 F('file').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
