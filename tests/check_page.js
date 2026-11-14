@@ -462,21 +462,25 @@ people.forEach((id, pi) => {
     eq('五行能量：五行的分数加起来 60 分，页面上的分数、占比和合称都和另算的一致', [nums, nums.reduce((a, b) => a + b, 0), pcs, rowsNl.map(r => r.name + r.grp)], [sum, 60, sum.map(n => Math.round(n / 60 * 100) + '%'), ['木', '火', '土', '金', '水'].map((e, i) => e + GRPS[(i - de + 5) % 5])]);
     const parts = [0, 1, 2, 3, 4].map(i => { const p = JSON.parse(ev(`JSON.stringify(X('nl|${i}').p)`)).find(x => x[0] === '怎么加的')[1]; const ns = (p.match(/ (\d+) 分/g) || []).map(x => parseInt(x, 10)); return sum[i] ? ns.slice(0, -1).reduce((a, b) => a + b, 0) === sum[i] && ns[ns.length - 1] === sum[i] : /0 分/.test(p); });
     eq('五行能量：点开每一行，各笔加起来就是这一行的分数', parts, [true, true, true, true, true]);
-    // 五行一页的生克图：五个圈、合称、日主那一行加粗；箭头方向拿圈的位置另算：相生指向它生的那一行，相克指向它克的那一行
-    const ELC5 = ['wood', 'fire', 'earth', 'metal', 'water'], nds = [...$('wxmap').querySelectorAll('.nd')];
-    eq('五行一页的生克图：五个圈各是一行五行，下面写着这一类十神的合称，日主那一行加粗；相生五条实线、相克五条虚线', [nds.map(n => ELC5.find(c => n.classList.contains(c)) + ' ' + txt(n.querySelector('.ch')) + ' ' + txt(n.querySelector('.gp')) + (n.classList.contains('me') ? ' me' : '')), $('wxmap').querySelectorAll('line.sh').length, $('wxmap').querySelectorAll('line.ke').length], [ELC5.map((c, e) => `${c} ${'木火土金水'[e]} ${e === de ? '日主（比劫）' : GRPS[(e - de + 5) % 5]}` + (e === de ? ' me' : '')), 5, 5]);
+    // 五行一页的生克图：五个圈各是一行五行，圈旁边写着五行能量的分数，圈填多少照分数（最多的填满），日主那一行加粗；箭头方向拿圈的位置另算
+    const ELC5 = ['wood', 'fire', 'earth', 'metal', 'water'], nds = [...$('wxmap').querySelectorAll('.nd')], fillH = n => { const r = n.querySelector('rect.lvl'); return r ? (+r.getAttribute('height')).toFixed(1) : '0.0'; };
+    eq('五行一页的生克图：五个圈各是一行五行，圈旁边写着它的分数，填多少照分数，日主那一行加粗；相生五条实线、相克五条虚线', [nds.map(n => ELC5.find(c => n.classList.contains(c)) + ' ' + txt(n.querySelector('.ch')) + ' ' + txt(n.querySelector('.gp')) + (n.classList.contains('me') ? ' me' : '')), nds.map(fillH), $('wxmap').querySelectorAll('line.sh').length, $('wxmap').querySelectorAll('line.ke').length], [ELC5.map((c, e) => `${c} ${'木火土金水'[e]} ${sum[e]} 分` + (e === de ? '（日主） me' : '')), sum.map(v => (v ? 50 * v / Math.max(...sum) : 0).toFixed(1)), 5, 5]);
     const ctr = nds.map(n => { const c = n.querySelector('circle'); return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }), dist = (x, y, k) => Math.hypot(x - ctr[k][0], y - ctr[k][1]);
     const dirOk = (cls, step) => [...$('wxmap').querySelectorAll('line.' + cls)].every((l, e) => { const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map(a => +l.getAttribute(a)); return dist(x1, y1, e) < dist(x1, y1, (e + step) % 5) && dist(x2, y2, (e + step) % 5) < dist(x2, y2, e); });
     eq('生克图的箭头：相生从每一行指向它生的那一行（木到火），相克指向它克的那一行（木到土）', [dirOk('sh', 1), dirOk('ke', 2)], [true, true]);
-    // 强弱分析卡片：分数、归类、拆开的四块、每一笔、扶抑取的喜用和忌，都拿原局另算一遍
-    const se = (de + 4) % 5, ELN = ['木', '火', '土', '金', '水'], q = JSON.parse(ev('JSON.stringify(qsOf(DM,NATAL))'));
-    const ps4 = JSON.parse(ev('JSON.stringify(NATAL.map(p=>[p.g,p.z]))')), elOf = JSON.parse(ev('JSON.stringify(Object.fromEntries(G.split("").map(g=>[g,gEl(g)])))'));
-    const ok = e => e === de || e === se, part = { yue: 0, zhi: 0, gan: 0 }, items = [];
-    ps4.forEach(([g, z], i) => { if (i !== 2 && ok(elOf[g])) { part.gan += 5; items.push(5); } JSON.parse(ev(`JSON.stringify(nlOf(${JSON.stringify(z)}))`)).forEach(([h, n]) => { if (ok(elOf[h])) { const v = i === 1 ? n * 2 : n; if (i === 1) part.yue += v; else part.zhi += v; items.push(v); } }); });
-    const head = txt($('qs').querySelector('.qs-h')), tiles = [...$('qs').querySelectorAll('.qt b')].map(b => parseInt(txt(b), 10)), lis = [...$('qs').querySelectorAll('.qs-li li')].map(li => (txt(li).match(/(\d+) 分/) || [])[1]).filter(Boolean).map(Number);
-    eq('强弱分析：卡片上的分数就是五行能量里比劫加印绶的分数，归类照书里的线；日主自己、月支、另外三个地支、三个天干四块，和下面列的每一笔，都和另算的一致', [q.help, q.rest, head.includes(`比劫加印绶 ${q.help} 分`), head.includes({ 强: '身强', 弱: '身弱', 间: '强弱未定' }[q.tier]), tiles, tiles.reduce((a, b) => a + b, 0), lis], [sum[de] + sum[se], 60 - sum[de] - sum[se], true, true, [5, part.yue, part.zhi, part.gan], sum[de] + sum[se], items]);
-    const restEls = [(de + 1) % 5, (de + 2) % 5, (de + 3) % 5], xiWant = q.tier === '弱' ? [se, de] : q.tier === '强' ? restEls : null;
-    eq('强弱分析：扶抑取的喜用，身弱是印和比劫，身强是食伤、财、官杀，在两条线之间不定；卡片上的喜用和忌和另算的一致', [JSON.parse(ev('JSON.stringify(xiNow().xi)')), [...$('qs').querySelectorAll('.qx b')].map(txt)], [xiWant, xiWant ? [xiWant.map(e => ELN[e]).join(''), (q.tier === '弱' ? restEls : [se, de]).map(e => ELN[e]).join('')] : ['不定']]);
+    // 十神一页的生克图：外面一圈十个十神，名字、几处、同性异性和十神表一致，圈填多少照几处（最多的填满）；里面一圈五类照两个加起来的数；五类之间的箭头方向和五行的生克一致
+    const cntOf = JSON.parse(ev('JSON.stringify(Object.fromEntries(G.split("").map(g=>[god(g),natalStems().concat(natalHidden()).filter(x=>x===g).length])))'));
+    const NAMES = [['劫财', '比肩'], ['伤官', '食神'], ['正财', '偏财'], ['正官', '七杀'], ['正印', '偏印']], mxG = Math.max(1, ...NAMES.flat().map(nm => cntOf[nm])), sums = NAMES.map(p => cntOf[p[0]] + cntOf[p[1]]), mxC = Math.max(1, ...sums);
+    const gsm = [...$('godmap').querySelectorAll('.nd.sm')], gcat = [...$('godmap').querySelectorAll('.nd:not(.sm):not(.me)')];
+    const gctr = gcat.map(n => { const c = n.querySelector('circle.ring'); return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }), gdist = (x, y, k) => Math.hypot(x - gctr[k][0], y - gctr[k][1]);
+    const gdirOk = (cls, step) => [...$('godmap').querySelectorAll('line.' + cls)].every((l, k) => { const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map(a => +l.getAttribute(a)); return gdist(x1, y1, k) < gdist(x1, y1, (k + step) % 5) && gdist(x2, y2, (k + step) % 5) < gdist(x2, y2, k); });
+    eq('十神一页的生克图：外面一圈十个十神，名字、几处、同性异性和十神表一致，填多少照几处', [gsm.map(n => txt(n.querySelector('.nm')) + ' ' + txt(n.querySelector('.ct')) + ' ' + txt(n.querySelector('.sx'))), gsm.map(fillH)], [NAMES.flatMap(p => p.map((nm, j) => `${nm} ${cntOf[nm]} 处 ${j ? '同性' : '异性'}`)), NAMES.flatMap(p => p.map(nm => (cntOf[nm] ? 38 * cntOf[nm] / mxG : 0).toFixed(1)))]);
+    // 图里的圈都能点：五行图点圈看五行能量的明细，十神图点外圈看十神、点里圈看合称、点中间看日主；键盘按回车也行
+    const clickOpen = el => { ev('closeSheet()'); click(el); return [!$('sheet').hidden, ev('sel.x'), txt($('sheet-t'))]; };
+    const wx0 = clickOpen(nds[0]), god0 = clickOpen(gsm[6]), cat0 = clickOpen(gcat[3]), dm0 = clickOpen($('godmap').querySelector('.nd.me'));
+    ev('closeSheet()'); gsm[0].dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); const kb0 = [!$('sheet').hidden, ev('sel.x')]; ev('closeSheet()');
+    eq('生克图里的圈都能点开解释：五行图看五行能量的明细，十神图看十神、合称和日主；键盘按回车也能打开', [wx0, god0.slice(0, 2), cat0.slice(0, 2), dm0.slice(0, 2), kb0], [[true, 'nl|0', ev("X('nl|0').t")], [true, 'tg|正官'], [true, 'grp|3'], [true, 'kv|日主'], [true, 'tg|劫财']]);
+    eq('十神一页的生克图：里面一圈是比劫、食伤、财才、官杀、印绶和它们对日主的关系，颜色是各自属的五行，填多少照两个加起来的数；相生指向下一类，相克隔一类；中间是日主', [gcat.map(n => ELC5.find(c => n.classList.contains(c)) + ' ' + txt(n.querySelector('.ch2')) + ' ' + txt(n.querySelector('.ct'))), gcat.map(fillH), gdirOk('sh', 1), gdirOk('ke', 2), txt($('godmap').querySelector('.nd.me .ch'))], [GRPS.map((g, k) => `${ELC5[(de + k) % 5]} ${g} ${['同我', '我生', '我克', '克我', '生我'][k]}`), sums.map(v => (v ? 48 * v / mxC : 0).toFixed(1)), true, true, ev('DM')]);
     // 十神表第一列的合称
     const first = [...d.querySelectorAll('#gods tr')].map(tr => txt(tr.cells[0]));
     eq('十神表的第一列在五种关系后面写着合称，点开的标题里有它包含的两个十神', [first, GRPS.map((g, i) => ev(`X('grp|${i}').t`))], [['同我', '我生', '我克', '克我', '生我'].map((r, i) => r + GRPS[i]), ['比劫 · 比肩和劫财', '食伤 · 食神和伤官', '财才 · 正财和偏财', '官杀 · 正官和七杀', '印绶 · 正印和偏印']]);

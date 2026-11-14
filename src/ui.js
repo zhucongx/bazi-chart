@@ -184,7 +184,7 @@ function renderPerson(){
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderHours();renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+  renderHours();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -198,18 +198,56 @@ function renderHours(){
     +`<p class="note">${hoursSay(rows)}</p>`;
 }
 /* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
-   箭头指向被生、被克的一方。每个圈下面是这一类十神对日主的合称，日主所属的那一行圈加粗 */
+   箭头指向被生、被克的一方。每个圈旁边是这一类十神对日主的合称，日主所属的那一行圈加粗 */
+/* 生克图共用的几样。pent(cx,cy,R,top)：五个位置排成一圈，第 top 个在最上面。
+   ringLines：第 k 个生第 k+1 个（实线），克第 k+2 个（虚线），线照每个位置占的横竖半宽 A、B 截短，箭头指向被生、被克的一方。
+   fillCircle：一个从下往上填了 frac（0 到 1）的圈，id 给裁剪用，一页里要唯一。arrowDef：箭头，一页里有两张图，id 不能重复 */
+const f1=v=>v.toFixed(1);
+function pent(cx,cy,R,top){return [0,1,2,3,4].map(k=>{const a=(k-top)*72*Math.PI/180;return [cx+R*Math.sin(a),cy-R*Math.cos(a)];});}
+function ringLines(pos,mk,A,B){
+  const cut=(ux,uy)=>1/Math.sqrt((ux/A)**2+(uy/B)**2);
+  const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
+    return `<line class="${cls}" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+5))}" y2="${f1(y2-uy*(t+5))}" marker-end="url(#${mk})"/>`;};
+  const ks=[0,1,2,3,4];
+  return ks.map(k=>seg(k,(k+1)%5,'sh')).join('')+ks.map(k=>seg(k,(k+2)%5,'ke')).join('');
+}
+const arrowDef=mk=>`<marker id="${mk}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker>`;
+function fillCircle(id,x,y,r,frac){
+  const h=2*r*Math.max(0,Math.min(1,frac||0));
+  return `<clipPath id="${id}"><circle cx="${f1(x)}" cy="${f1(y)}" r="${r}"/></clipPath><circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/>`
+    +(h>0.05?`<rect class="lvl" x="${f1(x-r)}" y="${f1(y+r-h)}" width="${2*r}" height="${f1(h)}" clip-path="url(#${id})"/>`:'')
+    +`<circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/>`;
+}
+/* 五行一页的生克图：只画五行。火在最上面，顺时针是相生的次序。圈填多少照五行能量的分数，最多的一行填满；圈旁边写分数。
+   上半圈三个圈的字写在圈的上方，下面两个写在圈的下方，免得压在线上。日主所属的一行圈加粗 */
 function renderWxMap(){
-  const de=gEl(DM), R=86, cx=150, cy=136, r=25, f=v=>v.toFixed(1);
-  const pos=[0,1,2,3,4].map(e=>{const a=(e-1)*72*Math.PI/180;return [cx+R*Math.sin(a),cy-R*Math.cos(a)];});
-  const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d;
-    return `<line class="${cls}" x1="${f(x1+ux*(r+3))}" y1="${f(y1+uy*(r+3))}" x2="${f(x2-ux*(r+6))}" y2="${f(y2-uy*(r+6))}" marker-end="url(#wxm-a)"/>`;};
-  const node=e=>{const [x,y]=pos[e], me=e===de;
-    return `<g class="nd ${ELC[e]}${me?' me':''}"><circle cx="${f(x)}" cy="${f(y)}" r="${r}"/><text class="ch" x="${f(x)}" y="${f(y+1)}">${EL[e]}</text><text class="gp" x="${f(x)}" y="${f(e===1?y-r-8:y+r+16)}">${me?`日主（${GRP[0]}）`:GRP[(e-de+5)%5]}</text></g>`;};
-  const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，');
-  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="img" aria-label="五行生克图：${say}"><defs><marker id="wxm-a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker></defs>`
-    +[0,1,2,3,4].map(e=>seg(e,(e+1)%5,'sh')).join('')+[0,1,2,3,4].map(e=>seg(e,(e+2)%5,'ke')).join('')+[0,1,2,3,4].map(node).join('')
-    +`</svg><figcaption>实线是相生，虚线是相克，箭头指向被生、被克的一方。圈下面是这一类十神对${DMN}的合称。</figcaption>`;
+  const de=gEl(DM), s=nlNow().sum, mx=Math.max(1,...s), r=25, cy=136, pos=pent(150,cy,86,1);
+  const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，')+'。'+[0,1,2,3,4].map(e=>`${EL[e]} ${s[e]} 分`).join('，');
+  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="img" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3)}`
+    +pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-x="nl|${e}" tabindex="0" role="button" aria-label="${EL[e]} ${s[e]} 分，点开看是怎么加出来的">${fillCircle('wxc'+e,x,y,r,s[e]/mx)}<text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text><text class="gp" x="${f1(x)}" y="${f1(y<cy?y-r-8:y+r+16)}">${s[e]} 分${e===de?'（日主）':''}</text></g>`).join('')
+    +`</svg><figcaption>圈填多少照五行能量的分数，最多的一行填满，其余照比例。实线是相生，虚线是相克，箭头指向被生、被克的一方。加粗的一圈是日主所属的一行。点圈看这一行的分数是怎么加出来的。</figcaption>`;
+}
+/* 十神一页的生克图：中间是日主；里面一圈是五类十神，官杀在最上面，顺时针是相生的次序（官杀生印，印生比劫，比劫生食伤……），
+   相邻的相生是实线，隔一个的相克是虚线，圈里写合称和它对日主的关系。外面一圈是十个十神，每一类两个，顺时针看前一个阴阳和日主不同（异性），
+   后一个相同（同性）。圈填多少照它在盘里出现几处（连地支里藏的天干，不算日主自己），十个里最多的填满；五类的圈照两个加起来的数 */
+function renderGodMap(){
+  const de=gEl(DM), yin=isYin(DM)?1:0, all=natalStems().concat(natalHidden()), cnt=g=>all.filter(x=>x===g).length;
+  const C=195, R1=90, R2=152, r1=24, r2=19, top=3, ks=[0,1,2,3,4], pos=pent(C,C,R1,top), REL=['同我','我生','我克','克我','生我'];
+  const pairs=ks.map(k=>{const e=(de+k)%5;return [G[e*2+1-yin],G[e*2+yin]].map((g,j)=>({n:god(g),c:cnt(g),same:j===1}));});
+  const mxG=Math.max(1,...pairs.flat().map(o=>o.c)), sums=pairs.map(p=>p[0].c+p[1].c), mxC=Math.max(1,...sums);
+  let gods='';
+  pairs.forEach((p,k)=>{const base=(k-top)*72, e=(de+k)%5, [x0,y0]=pos[k];
+    p.forEach((o,j)=>{const a=(base+(j?17:-17))*Math.PI/180, x=C+R2*Math.sin(a), y=C-R2*Math.cos(a), dx=x-x0, dy=y-y0, d=Math.hypot(dx,dy);
+      const lx=C+(R2+r2+11)*Math.sin(a), ly=C-(R2+r2+11)*Math.cos(a);
+      gods+=`<line class="br" x1="${f1(x0+dx/d*(r1+2))}" y1="${f1(y0+dy/d*(r1+2))}" x2="${f1(x-dx/d*(r2+2))}" y2="${f1(y-dy/d*(r2+2))}"/>`
+        +`<g class="nd sm ${ELC[e]}" data-x="tg|${o.n}" tabindex="0" role="button" aria-label="${o.n} ${o.c} 处，点开看解释">${fillCircle(`gdg${k}${j}`,x,y,r2,o.c/mxG)}<text class="nm" x="${f1(x)}" y="${f1(y-4)}">${o.n}</text><text class="ct" x="${f1(x)}" y="${f1(y+8)}">${o.c} 处</text>`
+        +`<text class="sx" x="${f1(lx)}" y="${f1(ly)}">${o.same?'同性':'异性'}</text></g>`;});
+  });
+  const cats=pos.map(([x,y],k)=>`<g class="nd ${ELC[(de+k)%5]}" data-x="grp|${k}" tabindex="0" role="button" aria-label="${GRP[k]}，${REL[k]}，点开看解释">${fillCircle('gdc'+k,x,y,r1,sums[k]/mxC)}<text class="ch2" x="${f1(x)}" y="${f1(y-5)}">${GRP[k]}</text><text class="ct" x="${f1(x)}" y="${f1(y+11)}">${REL[k]}</text></g>`).join('');
+  const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DM}，点开看解释"><circle class="bg" cx="${C}" cy="${C}" r="22"/><circle class="ring" cx="${C}" cy="${C}" r="22"/><text class="ch" x="${C}" y="${C-3}">${DM}</text><text class="ct" x="${C}" y="${C+12}">日主</text></g>`;
+  const say=ks.map(k=>`${GRP[k]}生${GRP[(k+1)%5]}`).join('，')+'；'+ks.map(k=>`${GRP[k]}克${GRP[(k+2)%5]}`).join('，')+'。'+pairs.flat().map(o=>`${o.n} ${o.c} 处`).join('，');
+  $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="img" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`
+    +`<figcaption>中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。圈填多少照它在盘里出现几处（连地支里藏的天干，不算日主自己），最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。</figcaption>`;
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -622,7 +660,7 @@ function exportLocal(){
 
 /* ---------- 事件 ---------- */
 document.addEventListener('click',e=>{
-  const b=e.target.closest('button');
+  const b=e.target.closest('button,[data-x]');      // 生克图里的圈是 SVG 的 g，带着 data-x，也算可点的
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
   if(b.dataset.hour){HOUR_PICK[P.id]=b.dataset.hour;const i=sel.p;rebuildPeople();usePerson(i);return;}      // 时辰不详的人换一个时辰看
@@ -671,6 +709,9 @@ function pickLayer(b){
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&sel.x){closeSheet();return;}
+  // 生克图里的圈：焦点在上面时按回车或空格，和点一下一样
+  const nx=e.target&&e.target.closest?e.target.closest('[data-x]'):null;
+  if(nx&&nx.tagName.toLowerCase()!=='button'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nx.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
   // 焦点在标签上时，左右方向键换页，Home、End 到头尾
   const b=e.target&&e.target.closest?e.target.closest('[data-tab]'):null;
   if(!b||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
