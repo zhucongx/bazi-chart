@@ -98,21 +98,22 @@ function parseDay(text){
   const a=m.slice(1).map(Number), b=fromSec(toSec(...a));
   return a.every((v,i)=>v===b[i])?a:null;
 }
-/* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。 */
+/* 出生信息有没有问题。没有问题返回空字符串，有问题返回一句说明。
+   时辰不详的带 nohour: true，birth 只写日期；排盘时由页面另给一个时辰（shichen），当作「只知道时辰」来排 */
 function checkInfo(info){
-  const sh=info&&info.shichen;
+  const sh=info&&info.shichen, no=!!(info&&info.nohour);
   if(sh&&!(typeof sh==='string'&&sh.length===1&&Z.includes(sh))) return '时辰要选十二个时辰里的一个。';
-  const a=sh?parseDay(info.birth):parseBirth(info&&info.birth);
-  if(!a) return sh?'出生日期没有填，或者不是一个存在的日子。':'出生日期和时间没有填全，或者不是一个存在的时刻。';
+  const a=sh||no?parseDay(info.birth):parseBirth(info&&info.birth);
+  if(!a) return sh||no?'出生日期没有填，或者不是一个存在的日子。':'出生日期和时间没有填全，或者不是一个存在的时刻。';
   if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX) return `只支持 ${BIRTH_MIN} 到 ${BIRTH_MAX} 年出生。`;
   if(info.gender!=='男'&&info.gender!=='女') return '性别要填男或女。';
-  if(!sh&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
+  if(!sh&&!no&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
   return '';
 }
 /* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同。 */
 function chartOf(info){
   const bad=checkInfo(info); if(bad) throw new Error(bad);
-  const sh=info.shichen||'';
+  const sh=info.shichen||(info.nohour?'午':'');            // 时辰不详而没有另给时辰的，先按午时排
   const c=sh?toSec(...parseDay(info.birth),2*Z.indexOf(sh)):toSec(...parseBirth(info.birth))-(info.dst?3600:0), clock=fromSec(c);
   const dlonSec=sh?0:roundHalfUp((info.lon-120)*240);
   const eotSec=sh?0:roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
@@ -135,6 +136,7 @@ function chartOf(info){
   for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
   const p={id:info.id,name:info.name,gender:man?1:0,clock};
   if(sh) p.shichen=sh;
+  if(info.nohour) p.nohour=true;
   if(info.dst&&!sh) p.dst=true;
   if(info.source) p.source=info.source;
   p.place=info.place||'';
@@ -190,7 +192,8 @@ function datesOf(ps){
 function infoFrom(p){
   const c=p.clock, pad=n=>String(n).padStart(2,'0');
   const day=`${c[0]}-${pad(c[1])}-${pad(c[2])}`;
-  const info=p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
+  const info=p.nohour?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,nohour:true,place:p.place||''}
+    :p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
     :{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${day} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
   if(p.source) info.source=p.source;
   if(p.notes) info.notes=p.notes;

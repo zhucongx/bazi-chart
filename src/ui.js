@@ -22,9 +22,11 @@ function writeLocal(){
   try{localStorage.setItem('bz-people',JSON.stringify(LOCAL));STORE_OK=true;}catch(e){STORE_OK=false;}
   return STORE_OK;
 }
+/* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
+const HOUR_PICK={};
 function rebuildPeople(){
   PEOPLE.length=DATA.people.length;
-  LOCAL.forEach(info=>{try{const p=chartOf(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  LOCAL.forEach(info=>{try{const p=chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);p.local=true;PEOPLE.push(p);}catch(e){}});
 }
 
 function jieUTC(y,m){const [mm,dd]=jieMD(y)[m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
@@ -159,7 +161,7 @@ function renderPerson(){
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
-  $('title').innerHTML=NATAL.map(p=>`<span class="pl" data-k="${p.k}柱"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
   const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
@@ -182,7 +184,18 @@ function renderPerson(){
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+  renderHours();renderBars();renderWxMap();renderGods();renderGw();renderQs();renderDynamic();
+}
+/* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
+function renderHours(){
+  const box=$('hours'), info=P.nohour?LOCAL.find(x=>x.id===P.id):null;
+  box.hidden=!info; if(!info){box.innerHTML='';return;}
+  const rows=Z.split('').map(h=>{const c=chartOf(Object.assign({},info,{shichen:h}));
+    const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps), x=xiOf(c.pillars[2][0],ps);
+    return {h,p:c.pillars,help:q.help,tier:q.tier,xi:x.xi,dy:c.dayun.map(d=>d.gz).join()};});
+  box.innerHTML=`<p class="hours-h"><b>时辰不详</b>现在按${P.shichen}时排，点别的时辰换着看</p>`
+    +`<div class="hours-b" role="group" aria-label="选一个时辰">${rows.map(r=>`<button type="button" class="hr" data-hour="${r.h}" aria-pressed="${r.h===P.shichen}"><b>${r.h}时</b><span class="gz">${gzSpan(r.p[3])}</span></button>`).join('')}</div>`
+    +`<p class="note">${hoursSay(rows)}</p>`;
 }
 /* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
    箭头指向被生、被克的一方。每个圈下面是这一类十神对日主的合称，日主所属的那一行圈加粗 */
@@ -456,12 +469,12 @@ function formMsg(s){F('msg').textContent=s||'';F('msg').hidden=!s;}
 const NO_STORE='这个环境不能保存数据，关掉页面以后刚才添加的人会消失。可以先点「导出」把他们存成文件。';
 function openForm(info){
   editing=info?info.id:null;
-  const b=info&&(info.shichen?parseDay(info.birth):parseBirth(info.birth)), p2=n=>String(n).padStart(2,'0');
+  const b=info&&(info.shichen||info.nohour?parseDay(info.birth):parseBirth(info.birth)), p2=n=>String(n).padStart(2,'0');
   F('name').value=info?info.name:'';
   F('gender').value=info?info.gender:'男';
   F('date').value=b?`${b[0]}-${p2(b[1])}-${p2(b[2])}`:'';
   F('time').value=b&&b.length>3?`${p2(b[3])}:${p2(b[4])}`:'';
-  F('shichen').value=info&&info.shichen||'';
+  F('shichen').value=info&&info.nohour?'none':info&&info.shichen||'';
   const pl=placeSel(info&&info.place);
   F('prov').value=pl.p;fillCity(pl.p,pl.c);F('place').value=pl.t||'';
   F('lon').value=info&&typeof info.lon==='number'?info.lon:120;
@@ -537,12 +550,13 @@ function saveForm(){
     if(!r.p){formMsg(r.msg||'先输入八字：年、月、日、时四柱一共八个字。');return;}
     if(!d){formMsg(baziFound.length?'从找到的日子里选一个。':'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。');return;}
     info=Object.assign({},old,base,{birth:d.birth,shichen:d.shichen,place:''});
-    delete info.lon;delete info.dst;
+    delete info.lon;delete info.dst;delete info.nohour;
   }else{
     info=Object.assign({},old,base,{birth:`${F('date').value} ${F('time').value}`,place:placeOf(),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
     if(F('dst').checked) info.dst=true; else delete info.dst;
-    if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;}   // 只知道时辰：时间和经度都不用
-    else delete info.shichen;
+    if(F('shichen').value==='none'){info.nohour=true;info.birth=F('date').value;delete info.shichen;delete info.lon;delete info.dst;}   // 不知道时辰：只存日期
+    else if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;delete info.nohour;}   // 只知道时辰：时间和经度都不用
+    else{delete info.shichen;delete info.nohour;}
   }
   const bad=checkInfo(info);
   if(bad){formMsg(bad);return;}
@@ -611,6 +625,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.dataset.hour){HOUR_PICK[P.id]=b.dataset.hour;const i=sel.p;rebuildPeople();usePerson(i);return;}      // 时辰不详的人换一个时辰看
   if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.id==='sheet-x'){closeSheet();return;}

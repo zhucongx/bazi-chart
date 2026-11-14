@@ -121,6 +121,18 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pform .btn.warn{color:var(--warn)}
 .pform .msg{margin:0;font-size:13px;color:var(--warn)}
 .pform .msg[hidden]{display:none}
+/* 时辰不详的人：标题下面一排十二个时辰（renderHours），点哪个就按哪个排，选中的样子和选择器的卡片一样；标题里的时柱淡一些，标「不详」 */
+.hours{display:flex;flex-direction:column;gap:8px;padding:12px 14px 13px;border-radius:12px;background:var(--wash)}
+.hours[hidden]{display:none}
+.hours-h{font-size:13.5px;color:var(--ink2)}
+.hours-h b{margin-right:8px;color:var(--ink)}
+.hours-b{display:flex;flex-wrap:wrap;gap:6px}
+.hr{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:46px;padding:5px 6px 6px;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.hr:hover{border-color:var(--ink3)}
+.hr b{font-size:12.5px;font-weight:600;color:var(--ink2)}
+.hr .gz{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.3}
+.hr[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+h1 .pl.guess>span{opacity:.45}
 .pform .dates{display:flex;flex-direction:column;gap:6px;font-size:14px}
 .pform .dates .check{color:var(--ink)}
 .pform .dates small{margin-left:8px;font-size:12.5px;color:var(--ink3)}
@@ -718,7 +730,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <label>怎么填<select id="pf-mode"><option value="time">按出生时间</option><option value="bazi">直接输入八字</option></select></label>
     <label class="m-time">出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
     <label class="m-time">出生时间（北京时间）<input type="time" id="pf-time"></label>
-    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
+    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option><option value="none">不知道时辰</option></select></label>
     <label class="m-time">出生的省份<select id="pf-prov"></select></label>
     <label class="m-time">城市<select id="pf-city"></select></label>
     <label class="m-time" id="pf-place-l" hidden>地名<input type="text" id="pf-place" maxlength="30" placeholder="比如：纽约"></label>
@@ -741,6 +753,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </div>
   </form>
   <h1 id="title"></h1>
+  <div class="hours" id="hours" hidden></div>
   <dl class="meta" id="meta"></dl>
 </header>
 
