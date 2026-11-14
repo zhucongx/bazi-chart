@@ -53,7 +53,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
-th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on,.gt-c.on{background-color:var(--accent-soft);text-decoration:none}
 .x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
@@ -112,6 +112,10 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pform .btn.warn{color:var(--warn)}
 .pform .msg{margin:0;font-size:13px;color:var(--warn)}
 .pform .msg[hidden]{display:none}
+.pform .dates{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.pform .dates .check{color:var(--ink)}
+.pform .dates small{margin-left:8px;font-size:12.5px;color:var(--ink3)}
+.pform [hidden]{display:none!important}      /* 两种填法换着显示，label 自己的 display 不能盖过 hidden */
 
 section{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 20px 22px;display:flex;flex-direction:column;gap:14px}
 h2{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;scroll-margin-top:20px}
@@ -126,6 +130,8 @@ p{margin:0}
 .tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
 .tab{display:inline-flex;align-items:center;gap:6px;margin:0 0 -1px;padding:0 1px 9px;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.5;letter-spacing:.03em;color:var(--ink3);background:none;border:0;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;cursor:pointer}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .ic{width:.9em;height:.9em;opacity:.75}
+.tab[aria-selected="true"] .ic{color:var(--accent);opacity:1}
 .panel,.pane{display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel[hidden]{display:none}
 .duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px 40px;align-items:start}      /* 五行一页：五行个数、含藏干数、五行能量三种数法并排，窄了就上下排 */
@@ -261,10 +267,20 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .stk i.gap{margin-left:4px}
 /* 用神一页最上面的强弱分析（renderQs）。.qg 是强弱计分的条：从 0 到这张盘的分数涂上印、比劫的颜色，25 分、30 分两道竖线穿过条，
    分数标在涂色的末端，下面是刻度和身弱、身强两段。.qt 是分数从哪里来的四块，.qx 是扶抑取的喜用和忌 */
-.qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 20px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-.qs-dm{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+/* 日主一页最上面的四项（quadItems）：2×2 的淡底小方块。上面一行小字是名目，点开看解释；中间是大字；下面一行小字是依据 */
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.qd{display:flex;flex-direction:column;gap:4px;min-width:0;padding:12px 15px 13px;border-radius:12px;background:var(--wash)}
+.qd-k{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink3)}
+.qd-k .ic{width:15px;height:15px;color:var(--accent)}
+.qd>b{font-family:var(--display);font-size:22px;font-weight:700;line-height:1.4;color:var(--ink)}
+.qd>b .ln{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}      /* 旺衰参考：两种办法各一行，小字放不下就整体挪到下一行 */
+.qd>b em{font:400 12px/1.6 var(--body);color:var(--ink3);white-space:nowrap}
+.qd small{font-size:12.5px;line-height:1.5;color:var(--ink2)}
+.qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 22px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.qs-dm{display:flex;flex-direction:column;align-items:center;gap:6px}
 .qs-dm span,.qs-dm small{font-size:12px;color:var(--ink3)}
-.qs-dm b{font-family:var(--display);font-size:34px;line-height:1.15}
+.qs-dm b{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:14px;font-family:var(--display);font-size:34px;line-height:1}
+.qs-dm b.wood,.qx b span.wood{background:var(--wood-s)} .qs-dm b.fire,.qx b span.fire{background:var(--fire-s)} .qs-dm b.earth,.qx b span.earth{background:var(--earth-s)} .qs-dm b.metal,.qx b span.metal{background:var(--metal-s)} .qs-dm b.water,.qx b span.water{background:var(--water-s)}
 .qs-main{display:flex;flex-direction:column;gap:12px;min-width:0}
 .qs-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 .qs-t{font-size:24px;font-weight:700;color:var(--ink)}
@@ -282,20 +298,39 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qg-ax span:last-child{transform:translateX(-100%)}
 .qg-zone{display:grid;font-size:12px;color:var(--ink2);text-align:center}
 .qt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:8px}
-.qt{display:flex;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums}
+.qt{display:flex;flex-direction:column;gap:3px;padding:10px 14px 11px;border-radius:10px;background:var(--wash);font-variant-numeric:tabular-nums}
 .qt span,.qt small{font-size:12px;color:var(--ink3)}
-.qt b{font-size:18px;color:var(--ink)}
+.qt b{font-size:20px;font-weight:650;line-height:1.3;color:var(--ink)}
 .qs-li{margin:0;padding-left:1.3em;font-size:13.5px;color:var(--ink2);columns:2 260px;column-gap:28px}
 .qs-li li{break-inside:avoid;margin-bottom:3px}
-.qx-row{display:flex;flex-wrap:wrap;gap:8px}
-.qx{display:flex;flex-direction:column;gap:2px;min-width:130px;padding:8px 14px;border:1px solid var(--line);border-radius:10px}
+.qx-row{display:flex;flex-wrap:wrap;gap:12px 36px;padding-top:14px;border-top:1px solid var(--line)}
+.qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
-.qx b{display:flex;gap:10px;font-size:20px}
-.qx b.no{font-size:16px;color:var(--ink2)}
+.qx b{display:flex;flex-wrap:wrap;gap:8px}
+.qx b span{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:38px;padding:0 12px 0 10px;border-radius:10px;font-family:var(--display);font-size:21px;font-weight:700;line-height:1}
+.qx b span .ic{width:16px;height:16px}
+/* 五行一页的生克图（renderWxMap）：五行排成一圈，相邻的相生是实线，隔一个的相克是虚线，箭头指向被生、被克的一方。
+   圈里的字和淡底是五行自己的颜色，圈下面是这一类十神的合称；日主所属的一行圈加粗。线都是墨色，颜色只留给五行 */
+.wxrow{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:center}
+.wxmap{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.wxmap svg{display:block;width:100%;max-width:320px;height:auto}
+.wxmap line{stroke:var(--ink3);stroke-width:1.3}
+.wxmap line.ke{stroke-dasharray:4 3}
+.wxmap marker path{fill:var(--ink3)}
+.wxmap .nd circle{stroke:currentColor;stroke-width:1.3}
+.wxmap .nd.wood circle{fill:var(--wood-s)} .wxmap .nd.fire circle{fill:var(--fire-s)} .wxmap .nd.earth circle{fill:var(--earth-s)} .wxmap .nd.metal circle{fill:var(--metal-s)} .wxmap .nd.water circle{fill:var(--water-s)}
+.wxmap .nd.me circle{stroke-width:3}
+.wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
+.wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
+.wxmap figcaption{max-width:320px;font-size:12.5px;line-height:1.6;color:var(--ink3);text-align:center}
+.qx b.no{font-size:16px;font-weight:600;color:var(--ink2)}
 @media (max-width:599px){      /* 手机上日主那一小块横过来放在上面，下面的四块排成两列 */
   .qs{grid-template-columns:minmax(0,1fr);padding:14px}
-  .qs-dm{flex-direction:row;align-items:baseline;gap:8px;justify-self:start;padding:6px 12px}
-  .qs-dm b{font-size:26px}
+  .qs-dm{flex-direction:row;gap:10px;justify-self:start}
+  .qs-dm b{width:48px;height:48px;border-radius:12px;font-size:26px}
+  .qd{padding:11px 12px 12px}
+  .qd>b{font-size:19px}
   .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .qx{min-width:0;flex:1 1 120px}
 }
@@ -478,8 +513,16 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gw .gz{font-size:26px}
   .sy thead small{font-size:12.5px}
   .stk{height:16px}
-  .qs{padding:18px 22px;gap:18px 24px}
-  .qs-dm b{font-size:40px}
+  .quad{gap:12px}
+  .qd{padding:14px 18px 15px}
+  .qd-k,.qd small{font-size:13px}
+  .qd>b{font-size:24px}
+  .qd>b em{font-size:12.5px}
+  .qs{padding:22px 26px;gap:18px 28px}
+  .qs-dm b{width:76px;height:76px;border-radius:16px;font-size:40px}
+  .qt b{font-size:22px}
+  .qx b span{height:42px;font-size:23px}
+  .wxrow{grid-template-columns:330px minmax(0,1fr);gap:24px 40px}
   .qs-t{font-size:26px}
   .tbars{gap:6px}
   .tb{flex-basis:48px}
@@ -567,7 +610,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .meta dt{flex:0 0 auto;min-width:4.5em;white-space:nowrap}
   .read{padding:11px 13px 13px}
   /* 八列挤在手机上：每列不到 40 像素。干支的色块缩小，生肖不显示，四个字的神煞折成两行，表头里放不下的小字（.wide）不显示 */
-  .wide{display:none}
+  th .wide{display:none}      /* 只管表头。表单里整行宽的那几项也叫 wide，手机上不能藏 */
   th .x{padding:1px 2px;margin:-1px -2px}
   .pan{--lh:18px;min-width:0}
   .pan thead th{padding:5px 0;font-size:11px}
@@ -630,6 +673,20 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <symbol id="i-earth" viewBox="0 0 24 24"><path d="M2.8 19.5h18.4"/><path d="M4.6 19.5l5.6-9.6 3.3 5.2 2-3.2 3.9 7.6"/></symbol>
   <symbol id="i-metal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><rect x="9.1" y="9.1" width="5.8" height="5.8" rx=".7"/></symbol>
   <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3c3.1 4 6.1 7.2 6.1 10.9a6.1 6.1 0 0 1-12.2 0C5.9 10.2 8.9 7 12 3z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.5 2.6"/></symbol>
+  <!-- 标签栏每一页的图标（i-t-名字），日主一页四个方块名目前的图标（i-q-…） -->
+  <symbol id="i-t-tk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.4"/></symbol>
+  <symbol id="i-t-wx" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2"/><circle cx="19.2" cy="9.8" r="2"/><circle cx="16.4" cy="18.2" r="2"/><circle cx="7.6" cy="18.2" r="2"/><circle cx="4.8" cy="9.8" r="2"/><path d="M13.7 5.8l3.8 2.8M18.6 11.7l-1.5 4.6M14.4 18.2H9.6M6.9 16.3l-1.5-4.6M6.5 8.6l3.8-2.8"/></symbol>
+  <symbol id="i-t-gods" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.2"/><path d="M12 7.8v8.4M7.8 12h8.4"/></symbol>
+  <symbol id="i-t-lq" viewBox="0 0 24 24"><circle cx="9" cy="8.6" r="2.9"/><path d="M3.6 19.4c.5-3.4 2.6-5.3 5.4-5.3s4.9 1.9 5.4 5.3"/><circle cx="16.6" cy="9.8" r="2.3"/><path d="M15.4 14.6c2.7-.3 4.5 1.4 5 4.4"/></symbol>
+  <symbol id="i-t-gw" viewBox="0 0 24 24"><path d="M3.8 9.2L12 4l8.2 5.2z"/><path d="M4.5 20h15M7 11.2v7M10.3 11.2v7M13.7 11.2v7M17 11.2v7"/></symbol>
+  <symbol id="i-t-ys" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1"/></symbol>
+  <symbol id="i-t-pan" viewBox="0 0 24 24"><rect x="3.6" y="5" width="16.8" height="14" rx="2.2"/><path d="M3.6 9.6h16.8M9.2 9.6V19M14.8 9.6V19"/></symbol>
+  <symbol id="i-t-rel" viewBox="0 0 24 24"><circle cx="6.4" cy="14.4" r="2.6"/><circle cx="17.6" cy="14.4" r="2.6"/><path d="M9 14.4h6"/><path d="M6.4 11.8c1.6-4.4 9.6-4.4 11.2 0" stroke-dasharray="2.2 2.2"/></symbol>
+  <symbol id="i-t-gt" viewBox="0 0 24 24"><path d="M12 12V5.6M12 8.2c-2.6-.2-4.1-1.6-4.3-4 2.5.1 4 1.4 4.3 4zM12 7c.3-2.2 1.7-3.4 4.1-3.6-.1 2.3-1.5 3.5-4.1 3.6z"/><path d="M4 12h16M12 12v7.6M12 14.4l-3.6 4.4M12 14.4l3.6 4.4"/></symbol>
+  <symbol id="i-t-sy" viewBox="0 0 24 24"><path d="M4 20.2h16"/><rect x="5.6" y="12.6" width="3.2" height="7.6" rx=".9"/><rect x="10.4" y="6.6" width="3.2" height="13.6" rx=".9"/><rect x="15.2" y="10" width="3.2" height="10.2" rx=".9"/></symbol>
+  <symbol id="i-q-yy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a4.2 4.2 0 0 1 0 8.4a4.2 4.2 0 0 0 0 8.4"/><circle cx="12" cy="7.8" r="1"/><circle cx="12" cy="16.2" r="1"/></symbol>
+  <symbol id="i-q-ga" viewBox="0 0 24 24"><path d="M4.4 16.4a7.6 7.6 0 0 1 15.2 0"/><path d="M12 16.4l3.4-4.6"/><circle cx="12" cy="16.4" r="1.3"/><path d="M6.2 12.6l1.1.6M12 8.8V10M17.8 12.6l-1.1.6"/></symbol>
+  <symbol id="i-q-ge" viewBox="0 0 24 24"><rect x="4.4" y="4.4" width="15.2" height="15.2" rx="1.8"/><rect x="8.6" y="8.6" width="6.8" height="6.8" rx="1"/></symbol>
 </svg>
 <main>
 
@@ -643,15 +700,20 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <form class="pform" id="pform" autocomplete="off" hidden>
     <label>称呼<input type="text" id="pf-name" maxlength="20" placeholder="比如：我"></label>
     <label>性别<select id="pf-gender"><option value="男">男</option><option value="女">女</option></select></label>
-    <label>出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
-    <label>出生时间（北京时间）<input type="time" id="pf-time"></label>
-    <label>只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
-    <label>出生地<input type="text" id="pf-place" maxlength="30" placeholder="输入城市名，从列表里选" list="pf-cities"></label>
-    <datalist id="pf-cities"></datalist>
-    <label>出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
-    <p class="wide hint" id="pf-lonhint" hidden></p>
-    <label class="wide check"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
-    <p class="wide hint">出生地从列表里选城市，经度会自动填上；列表里没有的地方，可以在地图软件里查到经度自己填。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和经度就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <label>怎么填<select id="pf-mode"><option value="time">按出生时间</option><option value="bazi">直接输入八字</option></select></label>
+    <label class="m-time">出生日期<input type="date" id="pf-date" min="1900-01-01" max="2100-12-31"></label>
+    <label class="m-time">出生时间（北京时间）<input type="time" id="pf-time"></label>
+    <label class="m-time">只知道时辰<select id="pf-shichen"><option value="">不用</option><option value="子">子时，23 点到 1 点</option><option value="丑">丑时，1 点到 3 点</option><option value="寅">寅时，3 点到 5 点</option><option value="卯">卯时，5 点到 7 点</option><option value="辰">辰时，7 点到 9 点</option><option value="巳">巳时，9 点到 11 点</option><option value="午">午时，11 点到 13 点</option><option value="未">未时，13 点到 15 点</option><option value="申">申时，15 点到 17 点</option><option value="酉">酉时，17 点到 19 点</option><option value="戌">戌时，19 点到 21 点</option><option value="亥">亥时，21 点到 23 点</option></select></label>
+    <label class="m-time">出生的省份<select id="pf-prov"></select></label>
+    <label class="m-time">城市<select id="pf-city"></select></label>
+    <label class="m-time" id="pf-place-l" hidden>地名<input type="text" id="pf-place" maxlength="30" placeholder="比如：纽约"></label>
+    <label class="m-time">出生地的东经度数<input type="number" id="pf-lon" min="60" max="150" step="0.01" value="120" inputmode="decimal"></label>
+    <p class="wide hint m-time" id="pf-lonhint" hidden></p>
+    <label class="wide check m-time"><input type="checkbox" id="pf-dst">出生时间是夏令时。中国在 1986 到 1991 年的夏天实行过夏令时。</label>
+    <p class="wide hint m-time">出生地先选省份，再选城市，经度会自动填上；列表里没有的地方选「其他地方」，自己写地名，在地图软件里查到经度填上。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和出生地就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
+    <label class="wide m-bazi" hidden>八字：年、月、日、时四柱<input type="text" id="pf-bazi" maxlength="24" placeholder="比如：甲子 丙寅 戊辰 庚申"></label>
+    <div class="wide m-bazi dates" id="pf-dates" hidden></div>
+    <p class="wide hint m-bazi" hidden>页面在 1900 到 2100 年里找出四柱都对得上的日子。排大运要用出生日期，同一副八字隔几十年会重复一次，选你要的那一个。时辰取中点来排，和「只知道时辰」一样，不用填出生地。填的内容只保存在这个浏览器里，不会上传。</p>
     <p class="wide msg" id="pf-msg" hidden></p>
     <div class="wide row">
       <button type="submit" class="btn main" id="pf-save">保存</button>
@@ -669,16 +731,17 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 <section id="card-natal" aria-label="原局">
   <div class="tabbar" role="tablist" aria-label="原局">
-    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true">日主</button>
-    <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1">五行</button>
-    <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1">十神</button>
-    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1">六亲</button>
-    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1">宫位</button>
-    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1">用神</button>
+    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-tk"/></svg>日主</button>
+    <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-wx"/></svg>五行</button>
+    <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
+    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-lq"/></svg>六亲</button>
+    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gw"/></svg>宫位</button>
+    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>用神</button>
   </div>
   <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk">
     <div class="pane">
       <p class="sub">日主是什么，八个字的阴阳，两项参考；下面是它在地支里的根、生它的印、月令透出的字</p>
+      <div class="quad" id="quad"></div>
       <div class="kvs" id="kv"></div>
     </div>
     <div class="read" id="rd-tk"></div>
@@ -701,7 +764,10 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <p class="note" id="note-nl"></p>
       </div>
     </div>
-    <div class="read" id="rd-wx"></div>
+    <div class="wxrow">
+      <figure class="wxmap" id="wxmap"></figure>
+      <div class="read" id="rd-wx"></div>
+    </div>
   </div>
   <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
     <p class="sub" id="h-gods-s"></p>
@@ -750,10 +816,10 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 <section id="card-pan" aria-label="排盘">
   <div class="tabbar" role="tablist" aria-label="排盘">
-    <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true">四柱细盘</button>
-    <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1">干支关系</button>
-    <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1">根和透</button>
-    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1">大运流年</button>
+    <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-pan"/></svg>四柱细盘</button>
+    <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-rel"/></svg>干支关系</button>
+    <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gt"/></svg>根和透</button>
+    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-sy"/></svg>大运流年</button>
   </div>
   <div class="panel" role="tabpanel" id="p-pan" aria-labelledby="h-pan">
     <p class="sub">后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</p>
@@ -808,6 +874,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="lg" id="sy-lg"></p>
     <div class="trend" id="trend"></div>
     <p class="note" id="note-syfig"></p>
+    <div class="read" id="rd-tr"></div>
     <div class="tablewrap">
       <table class="gods sy">
         <thead id="sy-h"></thead>

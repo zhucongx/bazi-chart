@@ -152,6 +152,40 @@ function chartOf(info){
   if(info.notes) p.notes=info.notes;
   return p;
 }
+/* ---------- 直接输入八字：反查出生日期 ---------- */
+/* 从一段字里取出八个干支字，看能不能成一副八字：每一柱阳干配阳支、阴干配阴支，月干由年干推出（年上起月），时干由日干推出（日上起时）。
+   返回 {msg, p}：p 是四柱，有问题时 p 是 null，msg 说明错在哪里；字还没写够时 msg 说还差几个字 */
+function baziCheck(text){
+  const t=String(text||'').replace(/[^甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥]/g,''), K='年月日时';
+  if(t.length<8) return {msg:t.length?`还差 ${8-t.length} 个字：年、月、日、时四柱一共八个字。`:'',p:null};
+  if(t.length>8) return {msg:'多了字：年、月、日、时四柱一共八个字。',p:null};
+  const ps=[0,2,4,6].map(i=>t.slice(i,i+2));
+  for(let i=0;i<4;i++){
+    const g=ps[i][0], z=ps[i][1];
+    if(!G.includes(g)||!Z.includes(z)) return {msg:`${K[i]}柱「${ps[i]}」要先写天干、再写地支。`,p:null};
+    if(G.indexOf(g)%2!==Z.indexOf(z)%2) return {msg:`${K[i]}柱「${ps[i]}」不成一柱：阳干只配阳支，阴干只配阴支。`,p:null};
+  }
+  const mi=(Z.indexOf(ps[1][1])+10)%12, mg=G[((G.indexOf(ps[0][0])%5)*2+2+mi)%10];
+  if(ps[1][0]!==mg) return {msg:`${ps[0][0]}年的${ps[1][1]}月是${mg}${ps[1][1]}，不是${ps[1]}：月干由年干推出。`,p:null};
+  const hz=Z.indexOf(ps[3][1]), hg=G[(G.indexOf(ps[2][0])%5*2+hz)%10];
+  if(ps[3][0]!==hg) return {msg:`${ps[2][0]}日的${ps[3][1]}时是${hg}${ps[3][1]}，不是${ps[3]}：时干由日干推出。`+(hz===0?'晚上 11 点以后出生、时干按第二天推的，请改用「按出生时间」填。':''),p:null};
+  return {msg:'',p:ps};
+}
+/* 四柱都对得上的日子，年份在 BIRTH_MIN 到 BIRTH_MAX 之间。先按年柱、月柱找出那个月的几天，再看日柱；
+   时辰取中点（子时取零点），和「只知道时辰」排盘的办法相同，每一个都拿 pillarsAt 再排一遍核对。返回 [{birth:'YYYY-MM-DD', shichen}]，按日期先后 */
+function datesOf(ps){
+  const out=[], hi=Z.indexOf(ps[3][1]), mi=(Z.indexOf(ps[1][1])+10)%12, pad=n=>String(n).padStart(2,'0');
+  for(let y=BIRTH_MIN-1;y<=BIRTH_MAX;y++){
+    if(yearGZ(y)!==ps[0]||monthGZ(y,mi)!==ps[1]) continue;
+    const i=(y-TABLES.jieFrom)*12+mi; if(i<0||i+1>=JIE_T.length) continue;
+    for(let t=Math.floor(JIE_T[i]/86400)*86400;t<=JIE_T[i+1];t+=86400){
+      const a=fromSec(t);
+      if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX||JZ(dayIndex(a[0],a[1],a[2]))!==ps[2]) continue;
+      if(pillarsAt([a[0],a[1],a[2],2*hi,0,0]).p.join()===ps.join()) out.push({birth:`${a[0]}-${pad(a[1])}-${pad(a[2])}`,shichen:Z[hi]});
+    }
+  }
+  return out;
+}
 /* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
 function infoFrom(p){
   const c=p.clock, pad=n=>String(n).padStart(2,'0');

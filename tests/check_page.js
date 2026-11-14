@@ -404,7 +404,7 @@ people.forEach((id, pi) => {
   eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), E.dayun);
   eq('五行个数（只数盘面八个字）和含藏干数', [[...$('bars0').querySelectorAll('.n')].map(txt), [...$('bars').querySelectorAll('.n')].map(txt)], [E.wuxing.face.map(n => `${n} 个`), E.wuxing.all.map(n => `${n} 个`)]);
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
-  eq('解读方框有 11 个，每一页一个，干支关系两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length)], [11, [1, 1, 1, 1, 1, 1, 1, 2, 1, 1]]);
+  eq('解读方框有 12 个，每一页一个，干支关系和大运流年各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length)], [12, [1, 1, 1, 1, 1, 1, 1, 2, 1, 2]]);
   eq('标题下面四柱都有标注，「日主」只标在日干上', [[...$('title').querySelectorAll('.pl')].map(x => x.dataset.k), [...$('title').querySelectorAll('.dm')].map(txt)], [['年柱', '月柱', '日柱', '时柱'], [E.pillars[2][0]]]);
   const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
   eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
@@ -442,17 +442,17 @@ people.forEach((id, pi) => {
   eq('版块的先后：原局的六个标签、选择器、排盘的四个标签', ['h-tk', 'h-wx', 'h-gods', 'h-lq', 'h-gw', 'h-ys', 'h-yun', 'h-pan', 'h-rel', 'h-gt', 'h-sy'].map(id => $(id)).every((el, i, a) => !!el && (!i || (a[i - 1].compareDocumentPosition(el) & 4) === 4)), true);
   eq('每个标签对着自己的那一页，里面的东西各归各位', [['tk', 'kv'], ['wx', 'bars'], ['gods', 'gods'], ['lq', 'liuqin'], ['gw', 'gwmap'], ['ys', 'kv2'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap'], ['sy', 'sy']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
   // 日主那一页：最上面四项（日主属性、阴阳参考就是「日主」「阴阳」两行；旺衰参考、格局参考是用神那一页的一句话），下面是根、印、月令透干
-  const inBox = (box, k) => !!$(box).querySelector(`[data-x="kv|${k}"]`), kvNames = [...$('kv').querySelectorAll('dt')].map(txt);
-  eq('日主那一页最上面是日主属性、阴阳参考、旺衰参考、格局参考四项，下面有根、印、月令透干；各家的几行在用神那一页，强弱计分画成那一页最上面的卡片', [kvNames.slice(0, 4), ['日主', '阴阳', '强弱参考', '格局参考'].map(k => inBox('kv', k)), ['根', '印', '月令透干'].every(k => kvNames.includes(k)), ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => inBox('kv2', k)), inBox('qs', '强弱计分'), inBox('kv2', '强弱计分'), d.querySelectorAll('#kv dt, #kv2 dt').length], [['日主属性', '阴阳参考', '旺衰参考', '格局参考'], [true, true, true, true], true, [true, true, true, true], true, false, ev('kvRows().length') + 1]);
+  const inBox = (box, k) => !!$(box).querySelector(`[data-x="kv|${k}"]`), kvNames = [...$('kv').querySelectorAll('dt')].map(txt), quadNames = [...$('quad').querySelectorAll('.qd-k')].map(txt);
+  eq('日主那一页最上面是日主属性、阴阳参考、旺衰参考、格局参考四个方块，下面有根、印、月令透干；各家的几行在用神那一页，强弱计分画成那一页最上面的卡片', [quadNames, ['日主', '阴阳', '强弱参考', '格局参考'].map(k => inBox('quad', k)), ['根', '印', '月令透干'].every(k => kvNames.includes(k)), ['日主', '阴阳'].some(k => inBox('kv', k)), ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => inBox('kv2', k)), inBox('qs', '强弱计分'), inBox('kv2', '强弱计分'), d.querySelectorAll('#kv dt, #kv2 dt').length], [['日主属性', '阴阳参考', '旺衰参考', '格局参考'], [true, true, true, true], true, false, [true, true, true, true], true, false, ev('kvRows().length') - 3]);
   {
     // 四项里的话和它们指的那几行一致；阴阳照另算的结果
-    const dds = Object.fromEntries([...$('kv').querySelectorAll('dt')].map(dt => [txt(dt), txt(dt.nextElementSibling)]));
+    const dds = Object.fromEntries([...$('quad').querySelectorAll('.qd')].map(q => [txt(q.querySelector('.qd-k')), txt(q)]));
     const ps4 = JSON.parse(ev('JSON.stringify(NATAL.map(p=>[p.g,p.z]))')), hid = JSON.parse(ev('JSON.stringify(HID)')), G10 = '甲乙丙丁戊己庚辛壬癸', Z12 = '子丑寅卯辰巳午未申酉戌亥';
     const yang = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => G10.indexOf(hid[x[1]][0]) % 2 === 0).length;
     const yang2 = ps4.filter(x => G10.indexOf(x[0]) % 2 === 0).length + ps4.filter(x => Z12.indexOf(x[1]) % 2 === 0).length;
-    eq('阴阳参考：八个字里阳几个、阴几个，地支照本气算；照六十甲子的配法数出来不一样时，另写那一种的数', [dds['阴阳参考'].startsWith(`八个字里阳 ${yang} 个，阴 ${8 - yang} 个`), dds['阴阳参考'].includes('地支换一种分法'), yang2 === yang || dds['阴阳参考'].endsWith(`是阳 ${yang2} 个，阴 ${8 - yang2} 个`)], [true, yang2 !== yang, true]);
-    const q0 = ev('qrName(qrNow())'), qt = ev('qsOf(DM,NATAL).tier'), gj = JSON.parse(ev('JSON.stringify((g=>g.list?gejuNames(g):[g.kind==="阳刃"?"阳刃":"建禄月劫"])(geju()))'));
-    eq('旺衰参考和格局参考：写着照的是哪本书，归的类和用神那一页相同', [dds['旺衰参考'].includes(`照《千里命稿》归${q0}`), dds['旺衰参考'].includes({ 强: '算身强', 弱: '算身弱', 间: '落在强弱两条线之间' }[qt]), dds['格局参考'].startsWith('照《子平真诠》') && gj.every(x => dds['格局参考'].includes(x)), dds['日主属性'] === txt($('kv').querySelector('[data-x="kv|日主"]').closest('dt').nextElementSibling)], [true, true, true, true]);
+    eq('阴阳参考：八个字里阳几个、阴几个，地支照本气算；照六十甲子的配法数出来不一样时，另写那一种的数', [dds['阴阳参考'].includes(`阳 ${yang} · 阴 ${8 - yang}`), dds['阴阳参考'].includes('换一种分法'), yang2 === yang || dds['阴阳参考'].endsWith(`换一种分法是阳 ${yang2} · 阴 ${8 - yang2}`)], [true, yang2 !== yang, true]);
+    const q0 = ev('qrNow().tier==="中"?"中强（中弱）":qrNow().tier'), qt = ev('qsOf(DM,NATAL).tier'), gj = JSON.parse(ev('JSON.stringify((g=>g.list?gejuNames(g):[g.kind==="阳刃"?"阳刃":"建禄月劫"])(geju()))'));
+    eq('旺衰参考和格局参考：写着照的是哪一种办法，归的类和用神那一页相同；日主属性写着日主和它的阴阳五行', [dds['旺衰参考'].includes(`${q0}《千里命稿》`), dds['旺衰参考'].includes({ 强: '身强', 弱: '身弱', 间: '未定' }[qt] + '强弱计分'), dds['格局参考'].includes('照《子平真诠》') && gj.every(x => dds['格局参考'].includes(x)), dds['日主属性'].includes(ev('DMN')) && dds['日主属性'].includes(ev('yy(DM)+EL[gEl(DM)]'))], [true, true, true, true]);
   }
   // 五行能量：页面上的分数、占比、合称，和另算的一致；点开每一行，各笔加起来等于这一行的分数
   {
@@ -462,6 +462,12 @@ people.forEach((id, pi) => {
     eq('五行能量：五行的分数加起来 60 分，页面上的分数、占比和合称都和另算的一致', [nums, nums.reduce((a, b) => a + b, 0), pcs, rowsNl.map(r => r.name + r.grp)], [sum, 60, sum.map(n => Math.round(n / 60 * 100) + '%'), ['木', '火', '土', '金', '水'].map((e, i) => e + GRPS[(i - de + 5) % 5])]);
     const parts = [0, 1, 2, 3, 4].map(i => { const p = JSON.parse(ev(`JSON.stringify(X('nl|${i}').p)`)).find(x => x[0] === '怎么加的')[1]; const ns = (p.match(/ (\d+) 分/g) || []).map(x => parseInt(x, 10)); return sum[i] ? ns.slice(0, -1).reduce((a, b) => a + b, 0) === sum[i] && ns[ns.length - 1] === sum[i] : /0 分/.test(p); });
     eq('五行能量：点开每一行，各笔加起来就是这一行的分数', parts, [true, true, true, true, true]);
+    // 五行一页的生克图：五个圈、合称、日主那一行加粗；箭头方向拿圈的位置另算：相生指向它生的那一行，相克指向它克的那一行
+    const ELC5 = ['wood', 'fire', 'earth', 'metal', 'water'], nds = [...$('wxmap').querySelectorAll('.nd')];
+    eq('五行一页的生克图：五个圈各是一行五行，下面写着这一类十神的合称，日主那一行加粗；相生五条实线、相克五条虚线', [nds.map(n => ELC5.find(c => n.classList.contains(c)) + ' ' + txt(n.querySelector('.ch')) + ' ' + txt(n.querySelector('.gp')) + (n.classList.contains('me') ? ' me' : '')), $('wxmap').querySelectorAll('line.sh').length, $('wxmap').querySelectorAll('line.ke').length], [ELC5.map((c, e) => `${c} ${'木火土金水'[e]} ${e === de ? '日主（比劫）' : GRPS[(e - de + 5) % 5]}` + (e === de ? ' me' : '')), 5, 5]);
+    const ctr = nds.map(n => { const c = n.querySelector('circle'); return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }), dist = (x, y, k) => Math.hypot(x - ctr[k][0], y - ctr[k][1]);
+    const dirOk = (cls, step) => [...$('wxmap').querySelectorAll('line.' + cls)].every((l, e) => { const [x1, y1, x2, y2] = ['x1', 'y1', 'x2', 'y2'].map(a => +l.getAttribute(a)); return dist(x1, y1, e) < dist(x1, y1, (e + step) % 5) && dist(x2, y2, (e + step) % 5) < dist(x2, y2, e); });
+    eq('生克图的箭头：相生从每一行指向它生的那一行（木到火），相克指向它克的那一行（木到土）', [dirOk('sh', 1), dirOk('ke', 2)], [true, true]);
     // 强弱分析卡片：分数、归类、拆开的四块、每一笔、扶抑取的喜用和忌，都拿原局另算一遍
     const se = (de + 4) % 5, ELN = ['木', '火', '土', '金', '水'], q = JSON.parse(ev('JSON.stringify(qsOf(DM,NATAL))'));
     const ps4 = JSON.parse(ev('JSON.stringify(NATAL.map(p=>[p.g,p.z]))')), elOf = JSON.parse(ev('JSON.stringify(Object.fromEntries(G.split("").map(g=>[g,gEl(g)])))'));
@@ -552,12 +558,24 @@ people.forEach((id, pi) => {
     click($('dayun').querySelector(`[data-dy="${sdy}"]`)); click($('liunian').querySelector(`[data-y="${sy0}"]`)); click($('liuyue').querySelector(`[data-m="${sm0}"]`));
     if ($('liuri').querySelector(`[data-d="${sd0}"]`)) click($('liuri').querySelector(`[data-d="${sd0}"]`));
     eq('大运流年的柱子：换回原来选中的那一天以后，四层都和一开始一样', [ev('sel.dy'), ev('sel.y'), ev('sel.m'), ev('sel.d')], [sdy, sy0, sm0, sd0]);
+    // 点柱子就在旁边列出这一柱的明细：标题里是干支和分数，「怎么分」各笔加起来是 13 分，每一笔都写着十神；再点一次收起。柱子不靠鼠标悬停显示内容
+    ev('closeSheet()');
+    const b0 = trRow(0)[sdy], k0 = b0.dataset.x, gz0 = dys[sdy][0], v0 = barWant(gz0, '', false).v;
+    click(b0);
+    const sh0 = JSON.parse(ev(`JSON.stringify(X(${JSON.stringify(k0)}))`)), how0 = sh0.p.find(p => p[0] === '怎么分')[1], ns0 = (how0.match(/ (\d+) 分（/g) || []).map(s => parseInt(s, 10));
+    const rank0 = 1 + dys.filter(([g]) => +barWant(g, '', false).v > +v0).length, pos0 = (sh0.p.find(p => p[0] === '在这一排') || [])[1] || '';
+    eq('大运流年的柱子：点一下，旁边列出这一柱的明细，各笔加起来是 13 分，每一笔都写着十神，写着它在八步里排第几；再点一次收起', [!$('sheet').hidden, ev('sel.x') === k0, sh0.t.startsWith(gz0) && sh0.t.endsWith(` ${v0} 分`), ns0.reduce((a, b) => a + b, 0), ns0.length === (how0.match(/（[^）]+）/g) || []).length, pos0.startsWith(`八步大运里排第${ev(`ordCn(${rank0})`)}`), [...$('trend').querySelectorAll('.tb')].some(b => b.hasAttribute('title'))], [true, true, true, 13, true, true, false]);
+    // 每根柱子的明细只写这一柱自己的东西：八步大运的明细里，没有哪一段话是八根柱子都一字不差的
+    const shs = trRow(0).map(b => JSON.parse(ev(`JSON.stringify(X(${JSON.stringify(b.dataset.x)}))`)).p.map(p => p[1]));
+    eq('柱子的明细里没有每根柱子都一样的段落', shs[0].filter(t => shs.every(s => s.includes(t))), []);
+    click(trRow(0)[sdy]);
+    ok('再点同一根柱子，明细收起', $('sheet').hidden);
     // 强弱计分的条：原局的 60 分，两道竖线在 25 分和 30 分；宫位每一柱的小条照这一柱的分数
     const qg = $('qs').querySelector('.qg'), hp = nat[de] + nat[se], w = (hp / 60 * 100).toFixed(2) + '%';
     eq('强弱计分的条：涂色到这张盘的分数，两段是印和比劫各自的分数；两道竖线在 60 分里的 25 分和 30 分；分数标在涂色的末端', [qg.querySelector('.qg-fill').getAttribute('style'), [...qg.querySelectorAll('.qg-fill i')].map(i => [ELCN.find(c => i.classList.contains(c)), +(i.getAttribute('style').match(/flex:(\d+)/) || [])[1]]), [...qg.querySelectorAll('.qg-tk')].map(t => t.getAttribute('style')), qg.querySelector('.qg-v').getAttribute('style') + ' ' + txt(qg.querySelector('.qg-v'))], [`width:${w}`, [se, de].filter(e => nat[e]).map(e => [ELCN[e], nat[e]]), ['left:41.67%', 'left:50.00%'], `left:${w} ${hp} 分`]);
     eq('宫位里每一柱的小条：各段照这一柱的分数，条的宽度照这一柱的合计（月柱 21 分最宽）', rowOf('五行能量').map(td => [segs(td.querySelector('.stk')), td.querySelector('.stkw').getAttribute('style')]), nlWant.map(s2 => [segWant(s2), `width:${Math.round(s2.reduce((a, b) => a + b, 0) / 21 * 100)}%`]));
   }
-  const fixed = ['meta', 'meta-yun', 'kv', 'kv2', 'qs', 'trend', 'sy-lg', 'note-syfig', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  const fixed = ['meta', 'meta-yun', 'quad', 'kv', 'kv2', 'qs', 'trend', 'sy-lg', 'note-syfig', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-tr', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
@@ -712,25 +730,28 @@ console.log('添加、编辑、删除、导入');
   ok('一开始表单是收起的', $('pform').hidden && !!$('pp-add'));
   click($('pp-add'));
   ok('点「添加」打开表单', !$('pform').hidden);
-  const typePlace = v => { $('pf-place').value = v; $('pf-place').dispatchEvent(new w.Event('input', { bubbles: true })); };
+  // 出生地：先选省份，再选城市
+  const pickPlace = (p, c) => { $('pf-prov').value = p; $('pf-prov').dispatchEvent(new w.Event('change', { bubbles: true })); if (c !== undefined) { $('pf-city').value = c; $('pf-city').dispatchEvent(new w.Event('change', { bubbles: true })); } };
+  const provs = JSON.parse(ev('JSON.stringify([...new Set(CITIES.map(c=>c[1]||c[0]))])'));
+  eq('省份的列表就是城市表里出现的全部省份，一个不多一个不少，前面是「不填」，后面是「其他地方」', [[...$('pf-prov').options].map(o => o.value).filter(v => v && v !== '其他').sort(), $('pf-prov').options[0].value, $('pf-prov').options[$('pf-prov').options.length - 1].value], [provs.slice().sort(), '', '其他']);
   const cd = ev("(CITIES.find(c=>c[0]==='成都市')||[])[2]");
-  typePlace('成都市');
-  ok('出生地填表里的城市，经度自动填上，并说明是按哪个城市取的', typeof cd === 'number' && Number($('pf-lon').value) === cd && !$('pf-lonhint').hidden && txt($('pf-lonhint')).includes('成都市'), [cd, $('pf-lon').value]);
-  $('pf-lon').value = '120'; typePlace('成都');
-  ok('不带「市」字也认得', Number($('pf-lon').value) === cd);
-  $('pf-lon').value = '100'; typePlace('表里没有的一个地方');
-  ok('填表里没有的地方，经度不动，说明收起', $('pf-lon').value === '100' && $('pf-lonhint').hidden);
+  pickPlace('四川省', '成都市');
+  ok('选了四川省，城市里只列四川的；再选成都市，经度自动填上，并说明是按哪个城市取的', [...$('pf-city').options].every(o => ev(`(CITIES.find(c=>c[0]===${JSON.stringify(o.value)})||[])[1]`) === '四川省') && typeof cd === 'number' && Number($('pf-lon').value) === cd && !$('pf-lonhint').hidden && txt($('pf-lonhint')).includes('成都市'), [cd, $('pf-lon').value]);
+  pickPlace('北京市');
+  ok('直辖市只有它自己一项，经度跟着换', $('pf-city').options.length === 1 && $('pf-city').value === '北京市' && Number($('pf-lon').value) === ev("CITIES.find(c=>c[0]==='北京市')[2]"));
+  $('pf-lon').value = '100'; pickPlace('其他');
+  ok('选「其他地方」，可以自己写地名，经度不动，说明收起', !$('pf-place-l').hidden && $('pf-city').disabled && $('pf-lon').value === '100' && $('pf-lonhint').hidden);
   submit();
   ok('日期和时间没填时不保存，并给出提示', ev('PEOPLE.length') === n0 && !$('pform').hidden && !$('pf-msg').hidden && txt($('pf-msg')).length > 0, txt($('pf-msg')));
-  fill({ name: '测试甲', gender: '男', date: '2000-01-01', time: '12:00', place: '北京市', lon: '116.4' });
+  fill({ name: '测试甲', gender: '男', date: '2000-01-01', time: '12:00' }); pickPlace('北京市'); $('pf-lon').value = '116.4';
   submit();
   ok('填好保存后多出一个人并选中，四柱和 lunar_python 排出的相同', ev('PEOPLE.length') === n0 + 1 && txt($('title')) === '己卯丙子戊午戊午' && ev('P.local') === true && $('pform').hidden, [ev('PEOPLE.length'), txt($('title'))]);
-  ok('出生信息存进了浏览器', stored().length === 1 && stored()[0].birth === '2000-01-01 12:00' && stored()[0].lon === 116.4, stored());
+  ok('出生信息存进了浏览器，出生地是选的省份和城市', stored().length === 1 && stored()[0].birth === '2000-01-01 12:00' && stored()[0].lon === 116.4 && stored()[0].place === '北京市', stored());
   const before = checked;
   checkAll('新添加的人');
   ok(`新添加的人，${checked - before} 条解释都有内容`, checked > before && !bad.length, bad.slice(0, 3));
   click($('pp-edit'));
-  ok('点「编辑这一位」，表单里是原来填的内容', !$('pform').hidden && $('pf-name').value === '测试甲' && $('pf-date').value === '2000-01-01' && $('pf-time').value === '12:00' && $('pf-lon').value === '116.4');
+  ok('点「编辑这一位」，表单里是原来填的内容，省份和城市也认回来了', !$('pform').hidden && $('pf-name').value === '测试甲' && $('pf-date').value === '2000-01-01' && $('pf-time').value === '12:00' && $('pf-lon').value === '116.4' && $('pf-prov').value === '北京市' && $('pf-city').value === '北京市');
   fill({ time: '23:30', name: '测试乙' });
   submit();
   ok('改了时间保存，人数不变，时柱跟着变', ev('PEOPLE.length') === n0 + 1 && ev('P.name') === '测试乙' && txt($('title')) !== '己卯丙子戊午戊午' && stored().length === 1, txt($('title')));
@@ -763,6 +784,38 @@ console.log('添加、编辑、删除、导入');
   ok('第二次点才删除', ev('PEOPLE.length') === n0 + 2 && $('pform').hidden && stored().length === 2);
   ev('LOCAL=[];writeLocal();rebuildPeople();usePerson(0)');
   ok('清掉之后回到页面自带的人', ev('PEOPLE.length') === n0 && stored().length === 0 && !$('pp-edit'));
+  // 存过的出生地是旧的写法（只写城市、或者省份加城市），编辑时也认得出省份和城市
+  eq('旧的出生地写法也认得出省份和城市', ['成都市', '四川省成都市', '成都', '台湾台北', '香港', '纽约'].map(s => JSON.stringify(ev(`placeSel(${JSON.stringify(s)})`))), ['{"p":"四川省","c":"成都市"}', '{"p":"四川省","c":"成都市"}', '{"p":"四川省","c":"成都市"}', '{"p":"台湾","c":"台北市"}', '{"p":"香港","c":"香港"}', '{"p":"其他","c":"","t":"纽约"}']);
+  // 直接输入八字：认出四柱，在 1900 到 2100 年里找出四柱都对得上的日子，选一个保存
+  click($('pp-add'));
+  $('pf-mode').value = 'bazi'; $('pf-mode').dispatchEvent(new w.Event('change', { bubbles: true }));
+  const typeBazi = v => { $('pf-bazi').value = v; $('pf-bazi').dispatchEvent(new w.Event('input', { bubbles: true })); };
+  ok('换成「直接输入八字」，出生时间和出生地那几项收起，八字一项露出来', $('pf-date').closest('label').hidden && $('pf-prov').closest('label').hidden && $('pf-lon').closest('label').hidden && !$('pf-bazi').closest('label').hidden);
+  typeBazi('甲丑 丙寅 戊辰 庚申'); const e1 = txt($('pf-dates'));
+  typeBazi('甲子 戊寅 戊辰 庚申'); const e2 = txt($('pf-dates'));
+  typeBazi('甲子 丙寅 戊辰 甲申'); const e3 = txt($('pf-dates'));
+  typeBazi('甲子 丙寅'); const e4 = txt($('pf-dates'));
+  ok('四柱有错时说明错在哪里：不成一柱、月干和年干对不上、时干和日干对不上、字数不够', /不成一柱/.test(e1) && /甲年的寅月是丙寅/.test(e2) && /戊日的申时是庚申/.test(e3) && /还差 4 个字/.test(e4), [e1, e2, e3, e4]);
+  typeBazi('癸酉，壬戌，甲子，戊辰');
+  const found = JSON.parse(ev('JSON.stringify(baziFound)'));
+  ok('输入一副对得上的八字（中间夹着标点也行），列出 1900 到 2100 年里四柱都对得上的日子，里面有 1993 年 10 月 10 日辰时；每一个日子排出来的四柱都相同', found.some(x => x.birth === '1993-10-10' && x.shichen === '辰') && found.every(x => ev(`chartOf({id:'t',name:'t',gender:'女',birth:${JSON.stringify(x.birth)},shichen:${JSON.stringify(x.shichen)}}).pillars.join('')`) === '癸酉壬戌甲子戊辰') && $('pf-dates').querySelectorAll('input[type=radio]').length === found.length, found);
+  $('pf-dates').querySelectorAll('input[type=radio]')[found.findIndex(x => x.birth === '1993-10-10')].checked = true;
+  fill({ name: '输入八字', gender: '女' });
+  submit();
+  ok('选一个日子保存，四柱就是输入的那一副，存下来的是那一天和时辰，没有经度', txt($('title')) === '癸酉壬戌甲子戊辰' && $('pform').hidden && stored().some(x => x.name === '输入八字' && x.birth === '1993-10-10' && x.shichen === '辰' && x.lon === undefined), stored().map(x => x.name));
+  ev('LOCAL=[];writeLocal();rebuildPeople();usePerson(0)');
+  // 反查：随便取 300 个虚构的日子和时辰，排出四柱，再拿四柱反查，原来的日子一定在里面，查出来的每一个日子排出来四柱都相同
+  {
+    let seed = 7; const rnd = n => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+    const miss = [];
+    for (let k = 0; k < 300; k++) {
+      const d0 = new Date(Date.UTC(1900, 0, 1) + rnd(73049) * 86400000), pad = n => String(n).padStart(2, '0');
+      const birth = `${d0.getUTCFullYear()}-${pad(d0.getUTCMonth() + 1)}-${pad(d0.getUTCDate())}`, sh = '子丑寅卯辰巳午未申酉戌亥'[rnd(12)];
+      const res = JSON.parse(ev(`(()=>{const one=(b,s)=>chartOf({id:'r',name:'r',gender:'男',birth:b,shichen:s}).pillars.join(' ');const p=one(${JSON.stringify(birth)},${JSON.stringify(sh)}), c=baziCheck(p), ds=c.p?datesOf(c.p):[];return JSON.stringify({p,msg:c.msg,ds,same:ds.every(x=>one(x.birth,x.shichen)===p)});})()`));
+      if (res.msg || !res.ds.some(x => x.birth === birth && x.shichen === sh) || !res.same) miss.push([birth, sh, res]);
+    }
+    eq('反查：300 个虚构的日子和时辰排出四柱，再拿四柱反查，原来的日子都在里面，查出来的每一个排出来四柱都相同', miss.slice(0, 3), []);
+  }
 }
 
 // ---------- 5. 每一个可点的解释都有内容 ----------
