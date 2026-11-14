@@ -4,9 +4,11 @@
   .venv/bin/python tools/shot.py             截 index.html，存到 shots/
   .venv/bin/python tools/shot.py --private   截 private/build/index.html，存到 private/build/shots/
 
-截六张：桌面整页、桌面打开一条解释、手机顶部、手机打开一条解释、手机上的添加表单、深色。
+页面上有两张带标签栏的卡片，一次只显示一页，所以每个标签页都要点开来截：
+桌面整页（两张卡片都在第一页）、桌面上八个标签页各一张（tab_名字.png）、桌面打开一条解释、
+手机顶部、手机上八个标签页各一张（m_tab_名字.png）、手机打开一条解释、手机上的添加表单、深色。
 页面上不止一个人时，再切到第二个人截一张桌面整页。
-同时报告页面有没有横向溢出、有没有脚本报错。
+同时报告每一页有没有横向溢出、有没有脚本报错。
 
 页面用了 Google 的网络字体。取不到的时候不等它，照样截图，这时图里是系统自带的宋体。
 
@@ -22,7 +24,9 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 os.environ.setdefault('PW_TEST_SCREENSHOT_NO_FONTS_READY', '1')     # 截图时不等网络字体，取不到字体也不会卡住
-NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png']
+TABS = [('card-natal', ['tk', 'wx', 'gods', 'lq', 'ys']), ('card-pan', ['pan', 'rel', 'gt'])]      # 两张卡片各自的标签，和 src/ui.js 的 TABS 相同
+TAB_SHOTS = [f'{pre}tab_{t}.png' for pre in ('', 'm_') for _, ts in TABS for t in ts]
+NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png'] + TAB_SHOTS
 
 
 def launch(p):
@@ -85,11 +89,25 @@ def main():
                 return False
             return True
 
+        def each_tab(pg, pre, where):
+            """把每个标签页点开，截那张卡片，报告有没有横向溢出。最后翻回各自的第一页。"""
+            for card, tabs in TABS:
+                for t in tabs:
+                    if not click_first(pg, f'#h-{t}', f'{where}翻到标签 {t}'):
+                        continue
+                    pg.wait_for_timeout(200)
+                    sw, cw = pg.evaluate('[document.documentElement.scrollWidth, document.documentElement.clientWidth]')
+                    if sw > cw:
+                        print(f'{where}，标签 {t}: 宽 {cw}，内容宽 {sw}  ← 有横向溢出')
+                    pg.locator(f'#{card}').screenshot(path=str(out / f'{pre}tab_{t}.png'))
+                click_first(pg, f'#h-{tabs[0]}', f'{where}翻回第一页')
+
         pg = page(1440, 900, 'light')
         overflow(pg, '桌面')
         pg.screenshot(path=str(out / 'desktop.png'), full_page=True)
         people = pg.locator('#people [data-p]').count()
-        if click_first(pg, '#lkmap [data-x]', '桌面打开一条解释'):
+        each_tab(pg, '', '桌面')
+        if click_first(pg, '#h-rel', '桌面翻到干支关系') and click_first(pg, '#lkmap [data-x]', '桌面打开一条解释'):
             pg.wait_for_timeout(500)
             pg.screenshot(path=str(out / 'desktop_sheet.png'))
         pg.close()
@@ -97,6 +115,7 @@ def main():
         pg = page(390, 800, 'light')
         overflow(pg, '手机')
         pg.screenshot(path=str(out / 'mobile_top.png'))
+        each_tab(pg, 'm_', '手机')
         if click_first(pg, '[data-x="st|日"]', '手机打开一条解释'):
             pg.wait_for_timeout(600)
             pg.screenshot(path=str(out / 'mobile_sheet.png'))

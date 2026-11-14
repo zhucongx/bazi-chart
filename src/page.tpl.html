@@ -9,8 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
 <style>
 :root{
-  /* 版面：一栏排下来的白色卡片。八列的细盘是中心，上面四行选择器控制它的前四列。
-     每个版块带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
+  /* 版面：从上到下三张白色卡片。第一张讲原局，带标签栏：日主、五行、十神、六亲、用神，一次看一页。
+     第二张是四行选择器。第三张跟着选择器走，也带标签栏：四柱细盘、干支关系、根和透，三页都是八列，前四列是选中的流日、流月、流年、大运。
+     每一页带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
      五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。 */
   --paper:#f2f4f8; --card:#ffffff; --wash:#f4f6fb; --ink:#131a2a; --ink2:#48546a; --ink3:#657084; --line:#dfe4ec;
@@ -52,11 +53,13 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
 th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
-.x.on,.hs.on{background-color:var(--accent-soft);text-decoration:none}
-.x.on,.hs.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
+.x.on,.hs.on,.gt-c.on{background-color:var(--accent-soft);text-decoration:none}
+.x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
-  .x:hover,.hs:hover{background-color:var(--tint)}
-  .x.on:hover,.hs.on:hover{background-color:var(--accent-soft)}
+  .x:hover,.hs:hover,.gt-c:hover{background-color:var(--tint)}
+  .x.on:hover,.hs.on:hover,.gt-c.on:hover{background-color:var(--accent-soft)}
+  .tab:hover{color:var(--ink2)}
+  .tab[aria-selected="true"]:hover{color:var(--ink)}
   .glyph:hover,.rel:hover,.lk-t:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
   .glyph.on:hover,.rel.on:hover,.lk-t.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
 }
@@ -116,6 +119,16 @@ h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
 h3 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
+/* 带标签栏的卡片有两张：原局（日主、五行、十神、六亲、用神）和排盘（四柱细盘、干支关系、根和透），各自一次显示一页。
+   标签就是卡片的标题，所以用宋体：选中的是墨色，下面一道钴蓝的线；其余的是淡墨色。换页由 ui.js 的 setTab 完成。
+   每一页开头一行小字（.sub）说这一页讲什么 */
+.tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
+.tab{display:inline-flex;align-items:center;gap:6px;margin:0 0 -1px;padding:0 1px 9px;font-family:var(--display);font-weight:700;font-size:18px;line-height:1.5;letter-spacing:.03em;color:var(--ink3);background:none;border:0;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .tag{font-family:var(--body)}
+.panel,.pane{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel[hidden]{display:none}
+.sub{font-size:12.5px;color:var(--ink3)}
 
 .read{background:var(--wash);border-radius:10px;padding:13px 17px 15px;font-size:14px;display:flex;flex-direction:column;gap:8px}
 .rd-h{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--accent)}
@@ -143,7 +156,7 @@ table{border-collapse:collapse;width:100%}
 .pan thead th:first-child{width:52px}
 .pan thead .x{font-weight:600}
 .pan thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
-.pan thead .nb{white-space:nowrap}
+.pan thead .nb,.gt thead .nb{white-space:nowrap}
 .pan tbody th{padding:8px 0 8px 6px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .pan td{padding:3px 2px}
 .pan td>.x,.pan .ss .x{display:block;width:100%;margin:0}
@@ -199,8 +212,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .relgrid>div{display:flex;flex-direction:column;gap:8px;align-content:start}
 .relgrid .rels{align-items:flex-start}
 
-.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px}
-.two>section{min-width:0}
 .bars{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px 12px;align-items:center;font-variant-numeric:tabular-nums}
 .bars .el{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:18px}
 .bars .el .ic{width:15px;height:15px}
@@ -208,13 +219,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bars .fill{display:block;height:100%;border-radius:5px;background:currentColor}
 .bars .n{font-size:13px;color:var(--ink2);white-space:nowrap}
 .bars .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px}
-/* 日主一栏：前一组是盘面上的事实，后一组是各家照各自的书走出来的几行，中间一个小标题。两组共用同一套列宽；行名和内容按第一行的基线对齐 */
+/* 日主和用神两页的几行：行名一列，内容一列，按第一行的基线对齐。日主那一页是盘面上的事实，用神那一页是各家照各自的书走出来的几行 */
 .kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
 .kv{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;grid-template-columns:subgrid;gap:8px 14px;align-items:baseline;font-size:14px;margin:0}
 .kv dt{color:var(--ink3);font-size:13px;white-space:nowrap}
 .kv dd{margin:0;min-width:0}
-.kv-h{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;border-top:1px solid var(--line);padding-top:13px}
-.kv-h small{flex-basis:100%;font-size:12px;font-weight:400;color:var(--ink3)}
 .tag{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px}
 .gods{font-size:14px;text-align:left}
 .gods th,.gods td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
@@ -226,6 +235,34 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 十神名字后面的个数：几处，加一小段同样长短的条 */
 .gn{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .gn i{display:inline-block;vertical-align:middle;margin-left:6px;width:calc(var(--n)*9px);height:6px;border-radius:3px;background:currentColor;opacity:.4}
+/* 根和透：一行一个天干，一列一个地支，列和细盘的八列对齐。格子里是这个地支里和这个天干同一五行的那个藏干，有它就是有根。
+   这个藏干是地支本气的，垫一块淡底；和这个天干是同一个字的（竖着看就是它透了出来），加一圈边。空着的格子是这个地支里没有它的同类。
+   每一行的高度都由写死的行高和块的高度定下来，不靠字体自己的上下留白：这一页第一次显示时浏览器会换一次字体的度量，行高跟着字体走的话整张表会跳一下 */
+.gt{table-layout:fixed;min-width:640px;text-align:center;font-variant-numeric:tabular-nums}
+.gt th,.gt td{border-bottom:1px solid var(--line);padding:4px 2px;vertical-align:middle}
+.gt thead th{padding:8px 4px;font-size:13px;font-weight:600;line-height:22px;vertical-align:top}
+.gt thead th:first-child{width:52px}
+.gt thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
+.gt .zrow th{vertical-align:middle}
+.gt .zrow small{letter-spacing:.12em;text-indent:.12em}
+.gt .dyn{background:var(--wash)}
+.gt .dyn.last{border-right:1px solid var(--line)}
+.gt th .x{text-decoration:none}
+.gt tbody th,.gt .zrow th:first-child{padding:6px 0 6px 6px;text-align:left;font-weight:400;line-height:1.35;white-space:nowrap}
+.gt .drow th,.gt .drow td{background:var(--wash)}      /* 下面四行是外来的天干，和外来的四列一样垫一层淡底；白底的那一块就是原局的天干对原局的地支 */
+.gt tbody tr:last-child th,.gt tbody tr:last-child td{border-bottom:0}
+.gt-k{display:block;font-size:12px;line-height:17px;color:var(--ink3)}
+.gt-l{display:flex;align-items:center;gap:5px;height:24px}
+.gt-s{font-family:var(--display);font-weight:700;font-size:17px;line-height:22px}
+.gt-g{font-size:12px;line-height:17px;color:var(--ink2)}
+.gt-z{display:block;width:fit-content;margin:0 auto;font-family:var(--display);font-weight:700;font-size:24px;line-height:32px}
+.gt .zrow small{line-height:18px}
+/* 格子里的字居中，一列里上下对齐；「本气」「透」两个小字挂在它的右边，不占位置，每列够宽（页面 1100 以上）才显示 */
+.gt-c{position:relative;display:flex;width:fit-content;margin:0 auto;font:inherit;background:none;border:0;border-radius:999px;padding:2px;cursor:pointer}
+.gt-c i{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:50%;font:700 16px/1 var(--display)}
+.gt-c.tou i{border-color:currentColor}
+.gt-c.ben i.wood{background:var(--wood-s)} .gt-c.ben i.fire{background:var(--fire-s)} .gt-c.ben i.earth{background:var(--earth-s)} .gt-c.ben i.metal{background:var(--metal-s)} .gt-c.ben i.water{background:var(--water-s)}
+.gt-c small{display:none;position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);font-size:13px;line-height:1.25;text-align:left;color:var(--ink2);white-space:nowrap}
 /* 干支关系图只在电脑上显示（样式在下面电脑那一段）；窄屏上仍然用小签 */
 .lkmap,.lk-only{display:none}
 footer{font-size:13px;color:var(--ink2)}
@@ -265,6 +302,27 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   h2 small{font-size:13.5px}
   h3{font-size:14px}
   .note{font-size:14px}
+  .tabbar{gap:0 34px}
+  .tab{font-size:21px;padding-bottom:12px}
+  .sub{font-size:13.5px}
+  .panel,.pane{gap:18px}
+  /* 内容窄的两页（日主、五行）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
+  .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
+  :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
+  .split .read .cols{columns:1}
+  .gt th,.gt td{padding:5px 2px}
+  .gt thead th{padding:10px 4px;font-size:14.5px;line-height:26px}
+  .gt thead th:first-child{width:68px}
+  .gt thead small{font-size:13px}
+  .gt tbody th,.gt .zrow th:first-child{padding:7px 0 7px 8px}
+  .gt-k{font-size:13px;line-height:18px}
+  .gt-l{height:26px}
+  .gt-s{font-size:19px;line-height:24px}
+  .gt-g{font-size:13px;line-height:18px}
+  .gt-z{font-size:30px;line-height:40px}
+  .gt .zrow small{line-height:20px}
+  .gt-c{padding:3px}
+  .gt-c i{width:32px;height:32px;font-size:18px}
   .read{padding:18px 22px 20px;font-size:15px;gap:10px;border-radius:12px}
   .rd-h{font-size:12.5px}
   .read li{margin-bottom:8px}
@@ -308,7 +366,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .relblock{gap:10px}
   .relgrid{gap:22px 40px;padding-top:18px}
   .relgrid>div{gap:10px}
-  .two{gap:28px}
   .bars{gap:14px 16px}
   .bars .el{font-size:20px}
   .bars .el .ic{width:17px;height:17px}
@@ -318,8 +375,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .kvs{gap:18px}
   .kv{gap:11px 20px;font-size:15px}
   .kv dt{font-size:14px}
-  .kv-h{padding-top:17px}
-  .kv-h small{font-size:13px}
   .tag{font-size:12px}
   .gods{font-size:15px}
   .gods th,.gods td{padding:10px 16px 10px 0}
@@ -385,6 +440,9 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .pform .btn{font-size:14px;padding:5px 16px}
   .hint{font-size:13px}
 }
+@media (min-width:1100px){
+  .gt-c small{display:block}
+}
 @media (max-width:560px){
   .layers>div{grid-template-columns:1fr}
   .prow{grid-template-columns:1fr}
@@ -418,6 +476,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .hs{font-size:10.5px;padding:1px 0}
   .hs small{font-size:10px;margin-left:1px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
+  .tabbar{gap:0 16px}
+  .tab{font-size:17px}
+  /* 根和透在手机上：和细盘一样每列不到 40 像素，格子里只留那个字，「本气」「透」两个小字不显示，靠淡底和圈来分 */
+  .gt{min-width:0}
+  .gt th,.gt td{padding:3px 0}
+  .gt thead th{padding:5px 0;font-size:11px;line-height:18px}
+  .gt thead th:first-child{width:28px}
+  .gt thead small{font-size:10px;line-height:1.3}
+  .gt .zrow small{letter-spacing:0;text-indent:0}
+  .gt tbody th,.gt .zrow th:first-child{padding:4px 0}
+  .gt-k{font-size:10px;line-height:13px}
+  .gt-l{height:20px}
+  .gt-s{font-size:14px;line-height:18px}
+  .gt-g{display:none}
+  .gt-z{font-size:18px;line-height:24px}
+  .gt .zrow small{line-height:14px}
+  .gt-c{padding:1px}
+  .gt-c i{width:22px;height:22px;font-size:13px}
 }
 @media (max-width:379px){
   .pan .sm{font-size:10.5px}          /* 每列不到 36 像素：三个字的纳音之间留一点空 */
@@ -428,7 +504,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .hs small{font-size:9px}
 }
 @media (prefers-reduced-motion:no-preference){
-  .pk,.pp,.x,.glyph,.hs,.rel,.lk-t,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,box-shadow .12s,left .12s}
+  .pk,.pp,.x,.glyph,.hs,.rel,.lk-t,.gt-c,.tab,.switch .knob,.switch .knob::after{transition:color .12s,border-color .12s,background-color .12s,box-shadow .12s,left .12s}
   .sheet:not([hidden]){animation:pop .14s ease-out}
   @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 }
@@ -478,41 +554,59 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <dl class="meta" id="meta"></dl>
 </header>
 
-<div class="two">
-  <section aria-labelledby="h-wx">
-    <h2 id="h-wx">五行 <small id="h-wx-s"></small></h2>
-    <div class="bars" id="bars"></div>
-    <p class="note" id="note-wx"></p>
-    <div class="read" id="rd-wx"></div>
-  </section>
-  <section aria-labelledby="h-tk">
-    <h2 id="h-tk">日主 <small>根和印、强弱、格局、调候</small></h2>
-    <div class="kvs" id="kv"></div>
+<section id="card-natal" aria-label="原局">
+  <div class="tabbar" role="tablist" aria-label="原局">
+    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true">日主</button>
+    <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1">五行</button>
+    <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1">十神</button>
+    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1">六亲</button>
+    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1">用神<span class="tag">进阶</span></button>
+  </div>
+  <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk">
+    <div class="pane">
+      <p class="sub">日主是什么；它在地支里的根，生它的印；月令透出了哪些字</p>
+      <div class="kvs" id="kv"></div>
+    </div>
     <div class="read" id="rd-tk"></div>
-  </section>
-</div>
-
-<section aria-labelledby="h-gods">
-  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
-      <tbody id="gods"></tbody>
-    </table>
   </div>
-  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-      <tbody id="liuqin"></tbody>
-    </table>
+  <div class="panel split" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
+    <div class="pane">
+      <p class="sub" id="h-wx-s"></p>
+      <div class="bars" id="bars"></div>
+      <p class="note" id="note-wx"></p>
+    </div>
+    <div class="read" id="rd-wx"></div>
   </div>
-  <p class="note" id="note-lq"></p>
-  <div class="read" id="rd-gods"></div>
+  <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
+    <p class="sub" id="h-gods-s"></p>
+    <div class="tablewrap">
+      <table class="gods">
+        <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+        <tbody id="gods"></tbody>
+      </table>
+    </div>
+    <div class="read" id="rd-gods"></div>
+  </div>
+  <div class="panel" role="tabpanel" id="p-lq" aria-labelledby="h-lq" hidden>
+    <p class="sub">每一位亲属看哪个十神，这个十神在盘里的什么位置</p>
+    <div class="tablewrap">
+      <table class="gods">
+        <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+        <tbody id="liuqin"></tbody>
+      </table>
+    </div>
+    <p class="note" id="note-lq"></p>
+    <div class="read" id="rd-lq"></div>
+  </div>
+  <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
+    <p class="sub">用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论</p>
+    <div class="kvs" id="kv2"></div>
+    <div class="read" id="rd-ys"></div>
+  </div>
 </section>
 
 <section aria-labelledby="h-yun">
-  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面的前四列，细盘、干支关系、根和透三页都跟着变</small></h2>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
   <dl class="meta" id="meta-yun"></dl>
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
@@ -521,50 +615,61 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <p class="note" id="note-yun"></p>
 </section>
 
-<section aria-labelledby="h-pan">
-  <h2 id="h-pan">四柱细盘 <small>后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</small></h2>
-  <div class="tablewrap">
-    <table class="pan">
-      <thead>
-        <tr>
-          <th></th>
-          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流日">流日</button><small id="hd-lr"></small></th>
-          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流月">流月</button><small id="hd-ly"></small></th>
-          <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流年">流年</button><small id="hd-ln"></small></th>
-          <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
-          <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
-          <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
-          <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small><span class="nb">自己</span><span class="wide"> · </span><wbr><span class="nb">配偶</span></small></th>
-          <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
-        </tr>
-      </thead>
-      <tbody id="pan"></tbody>
-    </table>
+<section id="card-pan" aria-label="排盘">
+  <div class="tabbar" role="tablist" aria-label="排盘">
+    <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true">四柱细盘</button>
+    <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1">干支关系</button>
+    <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1">根和透</button>
   </div>
-  <div class="read" id="rd-pan"></div>
-  <div class="read" id="rd-yun"></div>
-</section>
-
-
-<section aria-labelledby="h-rel">
-  <h2 id="h-rel">干支关系 <small>相邻的字谁生谁克；原局和大运、流年、流月、流日之间的合、冲、刑、害</small></h2>
-  <div class="lkmap" id="lkmap"></div>
-  <p class="note lk-only" id="note-sk"></p>
-  <div class="relblock relpills">
-    <h3>原局 · 天干</h3>
-    <div class="rels" id="rel-ng"></div>
-    <h3>原局 · 地支</h3>
-    <div class="rels" id="rel-nz"></div>
+  <div class="panel" role="tabpanel" id="p-pan" aria-labelledby="h-pan">
+    <p class="sub">后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</p>
+    <div class="tablewrap">
+      <table class="pan">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流日">流日</button><small id="hd-lr"></small></th>
+            <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流月">流月</button><small id="hd-ly"></small></th>
+            <th class="dyn" scope="col"><button class="x" type="button" data-x="col|流年">流年</button><small id="hd-ln"></small></th>
+            <th class="dyn last" scope="col"><button class="x" type="button" data-x="col|大运">大运</button><small id="hd-dy"></small></th>
+            <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
+            <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
+            <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small><span class="nb">自己</span><span class="wide"> · </span><wbr><span class="nb">配偶</span></small></th>
+            <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
+          </tr>
+        </thead>
+        <tbody id="pan"></tbody>
+      </table>
+    </div>
+    <div class="read" id="rd-pan"></div>
+    <div class="read" id="rd-yun"></div>
   </div>
-  <p class="note">实线是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），虚线是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
-  <div class="read" id="rd-rel"></div>
-  <div class="relgrid relpills">
-    <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
-    <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
-    <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
-    <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+  <div class="panel" role="tabpanel" id="p-rel" aria-labelledby="h-rel" hidden>
+    <p class="sub">相邻的字谁生谁克；原局和大运、流年、流月、流日之间的合、冲、刑、害</p>
+    <div class="lkmap" id="lkmap"></div>
+    <p class="note lk-only" id="note-sk"></p>
+    <div class="relblock relpills">
+      <h3>原局 · 天干</h3>
+      <div class="rels" id="rel-ng"></div>
+      <h3>原局 · 地支</h3>
+      <div class="rels" id="rel-nz"></div>
+    </div>
+    <p class="note">实线是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），虚线是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
+    <div class="read" id="rd-rel"></div>
+    <div class="relgrid relpills">
+      <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
+      <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
+      <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
+      <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
+    </div>
+    <div class="read" id="rd-rel2"></div>
   </div>
-  <div class="read" id="rd-rel2"></div>
+  <div class="panel" role="tabpanel" id="p-gt" aria-labelledby="h-gt" hidden>
+    <p class="sub">每个天干在哪些地支里有根；地支里藏的字，哪些透到了天干上</p>
+    <div class="tablewrap" id="gtmap"></div>
+    <p class="note" id="note-gt"></p>
+    <div class="read" id="rd-gt"></div>
+  </div>
 </section>
 
 <footer>

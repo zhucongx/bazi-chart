@@ -126,6 +126,20 @@ const kindsUnit = new Set();
   eq('每一种都有解释', bad, []);
 }
 
+console.log('根和透');
+{
+  // gtOf(天干, 地支)：地支里和天干同一五行的那个藏干。拿《子平真诠》「论十干得时不旺失时不弱」举的例子对一遍
+  const gt = (g, z) => JSON.parse(ev(`JSON.stringify(gtOf(${JSON.stringify(g)},${JSON.stringify(z)}))`));
+  eq('书里说的墓库和余气，表里都认作根：甲逢未、丙逢戌、乙逢辰、丁逢未', [gt('甲', '未'), gt('丙', '戌'), gt('乙', '辰'), gt('丁', '未')].map(t => t && t.h), ['乙', '丁', '乙', '丁']);
+  eq('书里说不算的，表里也是空的：乙逢戌、丁逢丑（戌里没有木，丑里没有火）', [gt('乙', '戌'), gt('丁', '丑')], [null, null]);
+  eq('书里算作明根、表里没有标的两处：乙在午、丁在酉是阴干的长生，午里没有木，酉里没有火', [ev(`stage('乙','午')`), ev(`stage('丁','酉')`), gt('乙', '午'), gt('丁', '酉')], ['长生', '长生', null, null]);
+  eq('解读里拿甲木举例：长生在亥，禄（临官）在寅，旺（帝旺）在卯，三处都是根', ['亥', '寅', '卯'].map(z => [ev(`stage('甲','${z}')`), !!gt('甲', z)]), [['长生', true], ['临官', true], ['帝旺', true]]);
+  eq('本气和透：甲在寅是本气又是同一个字，乙在寅是本气但不是同一个字，甲在亥是同一个字但不是本气', [gt('甲', '寅'), gt('乙', '寅'), gt('甲', '亥')].map(t => [t.h, t.ben, t.tou]), [['甲', true, true], ['甲', true, false], ['甲', false, true]]);
+  // 一个地支里同一五行的藏干最多一个，所以一个格子里只会有一个字
+  const hid = JSON.parse(ev('JSON.stringify(HID)')), el = g => ev(`gEl(${JSON.stringify(g)})`);
+  eq('十二个地支里，同一五行的藏干都不超过一个', Object.keys(hid).filter(z => { const es = hid[z].split('').map(el); return new Set(es).size !== es.length; }), []);
+}
+
 console.log('神煞口诀');
 ok('羊刃都落在日干的帝旺位', ev("G.split('').every((g,i)=>stage(g,SS_YANGREN[i])==='帝旺')"));
 eq('由天德合反推出的天德，和歌诀对得上（正丁二申，三壬四辛，五亥六甲，七癸八寅，九丙十乙，子巳丑庚）', ev("'寅卯辰巳午未申酉戌亥子丑'.split('').map(tianDe).join('')"), '丁申壬辛亥甲癸寅丙乙巳庚');
@@ -332,7 +346,7 @@ people.forEach((id, pi) => {
   eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), E.dayun);
   eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), E.wuxing.all.map((n, i) => `${n} 个（${E.wuxing.face[i]}）`));
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
-  eq('解读方框有 7 个，每个版块里的', d.querySelectorAll('.read').length, 7);
+  eq('解读方框有 10 个，每一页一个，细盘和干支关系各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length)], [10, [1, 1, 1, 1, 1, 2, 2, 1]]);
   eq('标题下面四柱都有标注，「日主」只标在日干上', [[...$('title').querySelectorAll('.pl')].map(x => x.dataset.k), [...$('title').querySelectorAll('.dm')].map(txt)], [['年柱', '月柱', '日柱', '时柱'], [E.pillars[2][0]]]);
   const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
   eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
@@ -366,10 +380,24 @@ people.forEach((id, pi) => {
   // 十神的个数、六亲表
   eq('十神对照里的个数加起来，等于三个天干加地支里藏的天干', [...d.querySelectorAll('#gods .gn')].map(el => parseInt(txt(el), 10) || 0).reduce((a, b) => a + b, 0), ev('natalStems().length+natalHidden().length'));
   eq('六亲表有六行，位置一栏和各个十神自己的解释里列的相同', [d.querySelectorAll('#liuqin tr').length, ev("liuqinRows().every(r=>r.at===(whereGod(g=>god(g)===r.god).join('、')||'原局里没有'))"), [...d.querySelectorAll('#liuqin tr')].map(tr => txt(tr.cells[1])).join()], [6, true, ev('P.gender') ? '偏财,正印,比肩,正财,七杀,正官' : '偏财,正印,比肩,正官,食神,伤官']);
-  eq('版块的先后：五行和日主、十神对照、选择器、细盘、干支关系', ['h-wx', 'h-tk', 'h-gods', 'h-yun', 'h-pan', 'h-rel'].map(id => $(id)).every((el, i, a) => !i || (a[i - 1].compareDocumentPosition(el) & 4) === 4), true);
-  const groups = [...d.querySelectorAll('#kv .kv')], last = groups[groups.length - 1];
-  eq('日主一栏分两组，各家的四行（强弱、格局、调候、三行对照）在后一组，前面有小标题', [groups.length, ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => !!byX('kv|' + k) && byX('kv|' + k).closest('.kv') === last), !!d.querySelector('#kv .kv-h')], [2, [true, true, true, true], true]);
-  const fixed = ['meta', 'meta-yun', 'kv', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  // 版面：原局一张卡片（日主、五行、十神、六亲、用神），选择器，排盘一张卡片（四柱细盘、干支关系、根和透）
+  eq('版块的先后：原局的五个标签、选择器、排盘的三个标签', ['h-tk', 'h-wx', 'h-gods', 'h-lq', 'h-ys', 'h-yun', 'h-pan', 'h-rel', 'h-gt'].map(id => $(id)).every((el, i, a) => !!el && (!i || (a[i - 1].compareDocumentPosition(el) & 4) === 4)), true);
+  eq('每个标签对着自己的那一页，里面的东西各归各位', [['tk', 'kv'], ['wx', 'bars'], ['gods', 'gods'], ['lq', 'liuqin'], ['ys', 'kv2'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
+  const inKv = k => !!byX('kv|' + k) && $('kv').contains(byX('kv|' + k)), inKv2 = k => !!byX('kv|' + k) && $('kv2').contains(byX('kv|' + k));
+  eq('日主那一页是日主、根、印、月令透干；各家的四行（强弱、格局、调候、三行对照）在用神那一页', [['日主', '根', '印', '月令透干'].map(inKv), ['强弱参考', '格局参考', '调候参考', '三行对照'].map(inKv2), d.querySelectorAll('#kv dt, #kv2 dt').length], [[true, true, true, true], [true, true, true, true], ev('kvRows().length')]);
+  // 根和透的表：八个天干对八个地支，每一格拿藏干表另算一遍
+  {
+    const cs = JSON.parse(ev('JSON.stringify(cols().map(c=>[c.k,c.g,c.z]))')), rowsWant = cs.slice(DYN).concat(cs.slice(0, DYN).reverse());
+    const hid = JSON.parse(ev('JSON.stringify(HID)')), elOf = JSON.parse(ev('JSON.stringify(Object.fromEntries(G.split("").map(g=>[g,gEl(g)])))'));
+    const want = rowsWant.map(([rk, g]) => cs.map(([ck, , z]) => { const i = hid[z].split('').findIndex(h => elOf[h] === elOf[g]); return i < 0 ? '' : [`gt|${rk}|${ck}`, hid[z][i], i === 0 ? '本气' : '', hid[z][i] === g ? '透' : ''].join(' '); }));
+    const trs = [...d.querySelectorAll('#gtmap tbody tr')];
+    const got = trs.map(tr => [...tr.cells].slice(1).map(td => { const b = td.querySelector('[data-x]'); return b ? [b.dataset.x, txt(b.querySelector('i')), b.classList.contains('ben') ? '本气' : '', b.classList.contains('tou') ? '透' : ''].join(' ') : ''; }));
+    eq('根和透：八行八列，每一格的藏干、是不是本气、是不是透，和另算的一致', got, want);
+    eq('根和透：格子里的小字和淡底、圈说的是同一件事', trs.flatMap(tr => [...tr.querySelectorAll('.gt-c')]).filter(b => { const s = b.querySelector('small'), t = s ? txt(s) : ''; return t.includes('本气') !== b.classList.contains('ben') || t.includes('透') !== b.classList.contains('tou'); }).map(b => b.dataset.x), []);
+    eq('根和透：行名是八个天干，原局的四个在上面；表头是八个地支和它们的藏干', [trs.map(tr => txt(tr.cells[0].querySelector('[data-x]'))), [...d.querySelectorAll('#gtmap .zrow th')].slice(1).map(th => txt(th.querySelector('[data-x]')) + ' ' + txt(th.querySelector('small')))], [rowsWant.map(r => r[1]), cs.map(c => c[2] + ' ' + hid[c[2]])]);
+    eq('根和透：日主那一行在原局四支里的根，和日主一页「根」一行数的相同', got[2].slice(DYN).filter(Boolean).length, ev('roots().length'));
+  }
+  const fixed = ['meta', 'meta-yun', 'kv', 'kv2', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
@@ -456,6 +484,47 @@ pick(0);
     click(chips()[0]);
     ok('换回来', chips()[0].getAttribute('aria-pressed') === 'true' && (!expected[people[0]] || txt($('title')) === expected[people[0]].pillars.join('')));
   } else ok('只有一个人时只有一个切换按钮', d.querySelectorAll('#people [data-p]').length === 1);
+}
+
+// ---------- 4c. 标签栏 ----------
+console.log('标签栏');
+pick(0);
+{
+  const tabs = card => [...d.querySelectorAll(`#card-${card} [role="tab"]`)];
+  const state = card => tabs(card).map(b => (b.getAttribute('aria-selected') === 'true' ? '选中' : '') + ($(b.getAttribute('aria-controls')).hidden ? '藏' : '显'));
+  const key = (el, k) => el.dispatchEvent(new w.KeyboardEvent('keydown', { key: k, bubbles: true }));
+  eq('一开始两张卡片各显示第一页', [state('natal'), state('pan')], [['选中显', '藏', '藏', '藏', '藏'], ['选中显', '藏', '藏']]);
+  click($('h-gods'));
+  eq('点「十神」：只有这一页显示，另一张卡片不受影响', [state('natal'), state('pan')], [['藏', '藏', '选中显', '藏', '藏'], ['选中显', '藏', '藏']]);
+  click($('h-gt'));
+  eq('点「根和透」：排盘那张卡片换到这一页', state('pan'), ['藏', '藏', '选中显']);
+  eq('翻到哪一页记在浏览器里', w.localStorage.getItem('bz-tabs'), 'gods,gt');
+  key($('h-gods'), 'ArrowRight');
+  eq('焦点在标签上按右方向键，换到下一页', state('natal'), ['藏', '藏', '藏', '选中显', '藏']);
+  key($('h-lq'), 'End'); key($('h-ys'), 'ArrowRight');
+  eq('到了最后一页再按右方向键，回到第一页', state('natal'), ['选中显', '藏', '藏', '藏', '藏']);
+  key($('h-tk'), 'ArrowLeft');
+  eq('第一页按左方向键，到最后一页', state('natal'), ['藏', '藏', '藏', '藏', '选中显']);
+  click($('h-tk'));
+  // 打开的解释：所指的字在换下去的那一页里就收起；在另一张卡片里的不受影响
+  const cell = d.querySelector('#gtmap .gt-c');
+  click(cell);
+  ok('点根和透的一个格子，打开解释并高亮', !$('sheet').hidden && cell.classList.contains('on') && /的根 · /.test(txt($('sheet-t'))), txt($('sheet-t')));
+  click($('h-wx'));
+  ok('换原局那张卡片的页，排盘里打开的解释还在', !$('sheet').hidden);
+  click($('h-pan'));
+  ok('换掉它所在的那一页，解释收起', $('sheet').hidden);
+  click($('h-tk')); click(byX('kv|日主')); click($('h-rel'));
+  ok('反过来也一样：原局里打开的解释，不因为排盘换页而收起', !$('sheet').hidden);
+  click($('h-wx')); click($('h-tk')); click($('h-pan'));
+  ok('换回第一页以后解释是收起的', $('sheet').hidden && ev('sel.tab.natal') === 'tk' && ev('sel.tab.pan') === 'pan');
+  if (people.length > 1) {
+    click($('h-ys')); click($('h-rel'));
+    click(d.querySelectorAll('#people [data-p]')[1]);
+    eq('换人以后还停在原来翻到的那一页', [ev('sel.tab.natal'), ev('sel.tab.pan'), $('p-ys').hidden, $('p-rel').hidden], ['ys', 'rel', false, false]);
+    click(d.querySelectorAll('#people [data-p]')[0]);
+    click($('h-tk')); click($('h-pan'));
+  }
 }
 
 // ---------- 4a. 零散的术语、城市经度表 ----------
