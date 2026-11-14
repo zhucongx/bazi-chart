@@ -121,24 +121,30 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
-/* 日主一栏里各家的那几行。读盘顺序里的链接按这些 id 跳过来 */
-const KV_ID={强弱参考:'kv-qr',格局参考:'kv-gj',调候参考:'kv-th',三行对照:'kv-dz'};
+/* 日主一栏里各家的那几行：从其中的第一行起算后一组，前面加小标题 */
+const KV_SCHOOLS=['强弱参考','格局参考','调候参考','三行对照'];
+/* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
+const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
   $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
     +'<button type="button" class="pp add" id="pp-add">＋ 添加</button>'
     +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'');
-  $('eyebrow').textContent=P.gender?'乾造 · 男命':'坤造 · 女命';
+  $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
-  $('title').innerHTML=NATAL.map(p=>`<span>${gzSpan(p.g+p.z)}</span>`).join('');
-  $('meta').innerHTML=metaRows().map(r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`).join('');
-  ['pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl" data-k="${p.k}柱"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
+  const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
+  const top=meta.filter(r=>!META_YUN.includes(r.k));
+  $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
+  $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
+  ['key','pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
-  const kv=kvRows(), cut=kv.findIndex(r=>KV_ID[r.k]);
-  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt${KV_ID[r.k]?` id="${KV_ID[r.k]}"`:''}>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
-  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h">各家的取法<small>各照一本书走一遍，不合成结论</small></h3>'+dl(kv.slice(cut));
+  const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k));
+  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
+  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h"><span class="tag">进阶</span>各家从哪里入手找用神<small>用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论。</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   renderBars();renderGods();renderDynamic();
@@ -147,7 +153,7 @@ function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
   const row=(label,fn,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
-    row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
+    row('十神',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
     row('天干',c=>glyph('g',c),'big')+
     row('地支',c=>glyph('z',c),'big')+
     row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
@@ -184,7 +190,7 @@ function renderLiuyue(){
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)} 周${W[new Date(t).getUTCDay()]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span></button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span></button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
@@ -259,9 +265,18 @@ function openForm(info){
   F('dst').checked=!!(info&&info.dst);
   F('del').hidden=!info;F('del').textContent='删除这一位';F('del').dataset.sure='';
   formMsg('');say('');
+  $('pf-lonhint').hidden=true;
   $('pform').hidden=false;
 }
 function closeForm(){$('pform').hidden=true;editing=null;}
+/* 城市经度表 CITIES 是 [名字, 省份, 经度] 的列表（data/cities.json）。出生地填的是表里的城市时，把经度填上 */
+function cityOf(s){s=String(s||'').trim();return s?CITIES.find(c=>c[0]===s)||CITIES.find(c=>c[0]===s+'市')||null:null;}
+function onPlace(){
+  const c=cityOf(F('place').value), h=$('pf-lonhint');
+  if(c){F('lon').value=c[2];h.textContent=`经度按${c[0]}${c[1]?'（'+c[1]+'）':''}取东经 ${c[2]} 度。出生的地方离市区很远的话，可以自己改。`;}
+  else h.textContent='';
+  h.hidden=!c;
+}
 function newId(){let id;do{id='u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);}while(PEOPLE.some(p=>p.id===id)||LOCAL.some(x=>x.id===id));return id;}
 function saveForm(){
   const old=LOCAL.find(x=>x.id===editing);
@@ -372,6 +387,9 @@ window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn
 
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
+$('pf-cities').innerHTML=CITIES.map(c=>`<option value="${esc(c[0])}"${c[1]?` label="${esc(c[1])}"`:''}></option>`).join('');
+F('place').addEventListener('input',onPlace);
+F('place').addEventListener('change',onPlace);
 $('pform').addEventListener('submit',e=>{e.preventDefault();saveForm();});
 F('file').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;

@@ -68,7 +68,7 @@ const pick = i => { if (ev('sel.p') !== i) click(d.querySelector(`#people [data-
 const rels = id => [...$(id).querySelectorAll('[data-x]')].map(b => b.dataset.x.split('|').slice(1, 3).join(''));
 function tableRows() {
   const rows = {};
-  [...$('pan').rows].forEach(tr => { rows[txt(tr.cells[0])] = [...tr.cells].slice(1); });
+  [...$('pan').rows].forEach(tr => { rows[txt(tr.cells[0].querySelector('[data-x]'))] = [...tr.cells].slice(1); });   // 行名取那个可点的字
   return rows;
 }
 
@@ -309,7 +309,7 @@ people.forEach((id, pi) => {
   if (!E) { ok('data/expected.json 里有这个人的预期', false); return; }
   const rows = tableRows(), natal = label => rows[label].slice(DYN).map(txt);
   eq('标题是四柱', txt($('title')), E.pillars.join(''));
-  eq('主星', natal('主星'), E.zhuxing);
+  eq('十神（天干的）', natal('十神'), E.zhuxing);
   eq('天干', natal('天干'), E.pillars.map(p => p[0]));
   eq('地支', natal('地支'), E.pillars.map(p => p[1]));
   eq('藏干和十神', natal('藏干'), E.canggan.map(c => c.map(x => x[0] + x[1]).join('')));
@@ -321,10 +321,15 @@ people.forEach((id, pi) => {
   eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), E.wuxing.all.map((n, i) => `${n} 个（${E.wuxing.face[i]}）`));
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
   eq('解读方框有 9 个', d.querySelectorAll('.read').length, 9);
+  eq('标题下面四柱都有标注，「日主」只标在日干上', [[...$('title').querySelectorAll('.pl')].map(x => x.dataset.k), [...$('title').querySelectorAll('.dm')].map(txt)], [['年柱', '月柱', '日柱', '时柱'], [E.pillars[2][0]]]);
+  const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
+  eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
+  eq('「这张盘先看什么」列了四件事，五行的个数和五行一栏的相同', [d.querySelectorAll('#rd-key li').length, ev("wxCounts().cnt.every((n,i)=>document.getElementById('rd-key').textContent.includes(EL[i]+' '+n))")], [4, true]);
+  eq('版块的先后：细盘、十神对照、五行和日主、干支关系', ['h-pan', 'h-gods', 'h-wx', 'h-tk', 'h-rel'].map(id => $(id)).every((el, i, a) => !i || (a[i - 1].compareDocumentPosition(el) & 4) === 4), true);
   eq('读盘顺序里的链接都指向页面上有的地方', [...d.querySelectorAll('.guide a')].map(a => a.getAttribute('href')).filter(h => !/^#./.test(h) || !d.getElementById(h.slice(1))), []);
   const groups = [...d.querySelectorAll('#kv .kv')], last = groups[groups.length - 1];
-  eq('日主一栏分两组，各家的四行（强弱、格局、调候、三行对照）在后一组，前面有小标题', [groups.length, ['kv-qr', 'kv-gj', 'kv-th', 'kv-dz'].map(id => !!d.getElementById(id) && d.getElementById(id).closest('.kv') === last), !!d.querySelector('#kv .kv-h')], [2, [true, true, true, true], true]);
-  const fixed = ['meta', 'kv', 'foot', 'note-yun', 'note-wx', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  eq('日主一栏分两组，各家的四行（强弱、格局、调候、三行对照）在后一组，前面有小标题', [groups.length, ['强弱参考', '格局参考', '调候参考', '三行对照'].map(k => !!byX('kv|' + k) && byX('kv|' + k).closest('.kv') === last), !!d.querySelector('#kv .kv-h')], [2, [true, true, true, true], true]);
+  const fixed = ['meta', 'meta-yun', 'kv', 'foot', 'note-yun', 'note-wx', 'rd-key', 'rd-pan', 'rd-yun', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
@@ -336,12 +341,13 @@ Object.keys(facts).forEach(id => {
   console.log(`人工核对过的事实 · ${ev('P.name')}`);
   if (F.title) eq('标题', txt($('title')), F.title);
   const rows = tableRows();
-  Object.keys(F.rows || {}).forEach(label => eq(label, rows[label].slice(DYN).map(txt), F.rows[label]));
+  const ROW_ALIAS = { 主星: '十神' };          // 事实文件是照排盘软件抄的，那里把天干的十神一行叫主星
+  Object.keys(F.rows || {}).forEach(label => eq(label, rows[ROW_ALIAS[label] || label].slice(DYN).map(txt), F.rows[label]));
   if (F.dayun) eq('大运八步', [...$('dayun').children].map(b => txt(b.querySelector('.gz'))), F.dayun);
   if (F.bars) eq('五行个数', [...$('bars').querySelectorAll('.n')].map(txt), F.bars);
   if (F.shensha) eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), F.shensha.map(a => [...a].sort()));
   Object.keys(F.meta || {}).forEach(k => {
-    const dt = [...$('meta').querySelectorAll('dt')].find(x => txt(x) === k);
+    const dt = [...d.querySelectorAll('#meta dt, #meta-yun dt')].find(x => txt(x) === k);
     ok(`顶部信息 · ${k}`, !!dt && txt(dt.nextElementSibling).includes(F.meta[k]), dt ? txt(dt.nextElementSibling) : '没有这一行');
   });
   Object.keys(F.rel || {}).forEach(k => sameSet(`原局关系 ${k}`, rels(k), F.rel[k]));
@@ -412,6 +418,20 @@ pick(0);
   } else ok('只有一个人时只有一个切换按钮', d.querySelectorAll('#people [data-p]').length === 1);
 }
 
+// ---------- 4a. 零散的术语、城市经度表 ----------
+console.log('术语和城市经度表');
+pick(0);
+{
+  ok('点「乾造」或「坤造」有解释', !!byX('term|造') && !!ev("X('term|造')"));
+  const cj = readJSON(path.join(ROOT, 'data', 'cities.json'), null);
+  ok('data/cities.json 在', !!cj);
+  if (cj) {
+    eq('页面里的城市表和 data/cities.json 相同', ev('JSON.stringify(CITIES)'), JSON.stringify(cj.cities.map(c => [c.n, c.p, c.lon])));
+    eq('城市的经度都在东经 73 到 136 度之间，名字没有重复，数目和文件里记的相同', [cj.cities.every(c => c.lon >= 73 && c.lon <= 136), new Set(cj.cities.map(c => c.n)).size === cj.cities.length, cj.cities.length], [true, true, cj.count]);
+    eq('生成这张表时拿时区数据库里的坐标另外对过，相差都不超过 0.3 度', [cj.check.tz_pairs.length >= 3, cj.check.tz_pairs.every(x => x.diff <= 0.3)], [true, true]);
+  }
+}
+
 // ---------- 4b. 在页面上添加、编辑、删除、导入 ----------
 console.log('添加、编辑、删除、导入');
 {
@@ -422,6 +442,14 @@ console.log('添加、编辑、删除、导入');
   ok('一开始表单是收起的', $('pform').hidden && !!$('pp-add'));
   click($('pp-add'));
   ok('点「添加」打开表单', !$('pform').hidden);
+  const typePlace = v => { $('pf-place').value = v; $('pf-place').dispatchEvent(new w.Event('input', { bubbles: true })); };
+  const cd = ev("(CITIES.find(c=>c[0]==='成都市')||[])[2]");
+  typePlace('成都市');
+  ok('出生地填表里的城市，经度自动填上，并说明是按哪个城市取的', typeof cd === 'number' && Number($('pf-lon').value) === cd && !$('pf-lonhint').hidden && txt($('pf-lonhint')).includes('成都市'), [cd, $('pf-lon').value]);
+  $('pf-lon').value = '120'; typePlace('成都');
+  ok('不带「市」字也认得', Number($('pf-lon').value) === cd);
+  $('pf-lon').value = '100'; typePlace('表里没有的一个地方');
+  ok('填表里没有的地方，经度不动，说明收起', $('pf-lon').value === '100' && $('pf-lonhint').hidden);
   submit();
   ok('日期和时间没填时不保存，并给出提示', ev('PEOPLE.length') === n0 && !$('pform').hidden && !$('pf-msg').hidden && txt($('pf-msg')).length > 0, txt($('pf-msg')));
   fill({ name: '测试甲', gender: '男', date: '2000-01-01', time: '12:00', place: '北京市', lon: '116.4' });

@@ -4,9 +4,10 @@
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
   python3 tools/build.py --private   private/build/data/people.json → private/build/index.html
 
-模板 src/page.tpl.html 里有八个占位符，每个必须恰好出现一次：
+模板 src/page.tpl.html 里有九个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
   /*TABLES*/   换成 data/tables.json：节的时刻表和农历表，页面内排盘要用
+  /*CITIES*/   换成 data/cities.json 里的城市经度表，只留 [名字, 省份, 经度]，添加表单里选城市用
   /*ENGINE*/   换成 src/engine.js
   /*CHART*/    换成 src/chart.js
   /*CLASSICS*/ 换成 src/classics.js：从典籍里摘出来的引文
@@ -61,6 +62,10 @@ def make_page(data):
     tables_file = ROOT / 'data' / 'tables.json'
     if not tables_file.exists():
         raise SystemExit('找不到 data/tables.json。先运行 .venv/bin/python tools/gen_tables.py。')
+    cities_file = ROOT / 'data' / 'cities.json'
+    if not cities_file.exists():
+        raise SystemExit('找不到 data/cities.json。先运行 python3 tools/gen_cities.py（要联网）。')
+    cities = [[c['n'], c['p'], c['lon']] for c in json.loads(cities_file.read_text(encoding='utf-8'))['cities']]
     tpl_file = ROOT / 'src' / 'page.tpl.html'
     sources = {mark: ROOT / 'src' / name for mark, name in SCRIPTS.items()}
     missing = [rel(p) for p in [tpl_file, *sources.values()] if not p.exists()]
@@ -71,6 +76,7 @@ def make_page(data):
     fill = {
         '/*DATA*/': json_for_script(json.dumps(shipped, ensure_ascii=False, separators=(',', ':'))),
         '/*TABLES*/': json_for_script(tables_file.read_text(encoding='utf-8').strip()),
+        '/*CITIES*/': json_for_script(json.dumps(cities, ensure_ascii=False, separators=(',', ':'))),
         '{{TITLE}}': html.escape(title),
     }
     for mark, path in sources.items():
