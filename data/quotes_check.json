@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-14",
- "total": 273,
- "hash": 2709669988,
+ "total": 297,
+ "hash": 3703270598,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -84,16 +84,20 @@
   },
   "qlmg": {
    "book": "《千里命稿》",
-   "quotes": 4,
+   "quotes": 24,
    "pages": [
-    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_16.html"
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_4.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_8.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_16.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_21.html"
    ]
   },
   "zpzq": {
    "book": "《子平真诠》",
-   "quotes": 16,
+   "quotes": 20,
    "pages": [
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53623.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53626.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53628.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53629.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53630.html",

@@ -121,6 +121,8 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
+/* 日主一栏里各家的那几行。读盘顺序里的链接按这些 id 跳过来 */
+const KV_ID={强弱参考:'kv-qr',格局参考:'kv-gj',调候参考:'kv-th',三行对照:'kv-dz'};
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
   $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
@@ -134,31 +136,32 @@ function renderPerson(){
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
-  const kv=kvRows();
-  $('kv').innerHTML=kv.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('');
+  const kv=kvRows(), cut=kv.findIndex(r=>KV_ID[r.k]);
+  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt${KV_ID[r.k]?` id="${KV_ID[r.k]}"`:''}>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
+  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h">各家的取法<small>各照一本书走一遍，不合成结论</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   renderBars();renderGods();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
-  const row=(label,fn)=>`<tr><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
+  const row=(label,fn,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
   $('pan').innerHTML=
     row('主星',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
-    row('天干',c=>glyph('g',c))+
-    row('地支',c=>glyph('z',c))+
-    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''))+
+    row('天干',c=>glyph('g',c),'big')+
+    row('地支',c=>glyph('z',c),'big')+
+    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
     row('星运',c=>xb('x sm','st|'+c.k,stage(DM,c.z)))+
     row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
     row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
     row('纳音',c=>xb('x sm','ny|'+c.k,DATA.nayin[c.g+c.z]))+
     row('神煞',(c,i)=>{       // 前四列拿自己的干支去对原局查；四个字的名字在手机上折成两行
       const list=c.dyn?shenshaFor(P.pillars,DATA.nayin,!!P.gender,c.g+c.z,c.k):SHENSHA[i-DYN];
-      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'—'}</span>`;});
+      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'<span class="no">—</span>'}</span>`;},'multi');
   const dy=P.dayun[sel.dy];
   $('hd-lr').textContent=mdText(sel.d);
   $('hd-ly').textContent=jieMD(sel.y)[sel.m]+' 起';
-  $('hd-ln').textContent=sel.y+' 年';
+  $('hd-ln').innerHTML=sel.y+'<span class="wide"> 年</span>';
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
 function renderDayun(){
