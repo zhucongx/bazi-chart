@@ -7,8 +7,8 @@ const TODAY=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
 const REAL_Y=(()=>{const y=now.getFullYear(), lc=jieMD(y)?md(y,jieMD(y)[0]):new Date(y,1,4);return now<lc?y-1:y;})();
 /* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
 let NOW_DY=-1, NOW_M=-1;
-/* 选中的人、大运、流年、流月、流日，以及打开的解释 */
-const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0};     // x 是打开的解释，xn 是点的第几个同名的字
+/* 选中的人、大运、流年、流月、流日，打开的解释，以及两张卡片各自翻到哪一页 */
+const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'tk',pan:'pan'}};     // x 是打开的解释，xn 是点的第几个同名的字
 
 /* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
 const PEOPLE=DATA.people.slice();
@@ -100,6 +100,26 @@ function refreshSheet(){
   if(!sel.x) return;
   if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
 }
+/* ---------- 标签栏 ----------
+   两张卡片各有一排标签，一次显示一页：原局是日主、五行、十神、六亲、用神，排盘是四柱细盘、干支关系、根和透。
+   标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
+const TABS={natal:['tk','wx','gods','lq','ys'],pan:['pan','rel','gt']};
+function setTab(card,id,focus){
+  if(!TABS[card]||!TABS[card].includes(id)) return;
+  sel.tab[card]=id;
+  TABS[card].forEach(t=>{
+    const on=t===id, b=$('h-'+t);
+    b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;
+    $('p-'+t).hidden=!on;
+  });
+  if(focus) $('h-'+id).focus();
+  try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}
+  if(sel.x){                                   // 打开的解释所指的字要是在换下去的那一页里，就收起来；还在的话重新摆位置
+    const el=anchorOf(sel.x,sel.xn);
+    if(!el||el.closest('[role="tabpanel"][hidden]')) closeSheet(); else placeSheet(el);
+  }
+  reveal();
+}
 function setRead(on){
   document.documentElement.dataset.read=on?'on':'off';
   $('rd').setAttribute('aria-pressed',String(on));
@@ -121,7 +141,7 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
-/* 日主一栏里各家的那几行：从其中的第一行起算后一组，前面加小标题 */
+/* 各家的那几行：从其中的第一行起，放在「用神」那一页 */
 const KV_SCHOOLS=['强弱参考','格局参考','调候参考','三行对照'];
 /* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
 const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
@@ -138,16 +158,19 @@ function renderPerson(){
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
-  ['pan','yun','rel','rel2','wx','tk','gods'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  ['pan','yun','rel','rel2','wx','tk','gods','ys','lq','gt'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
+  // 日主一栏的几行分在两页：前面盘面上的事实在「日主」，从各家的第一行起在「用神」
   const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k));
-  const dl=rows=>`<dl class="kv">${rows.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`;
-  $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h"><span class="tag">进阶</span>各家从哪里入手找用神<small>用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论。</small></h3>'+dl(kv.slice(cut));
+  const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x','kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
+  $('kv').innerHTML=dl(cut<0?kv:kv.slice(0,cut));
+  $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
+  $('note-gt').textContent=noteGT();
   renderBars();renderGods();renderDynamic();
 }
 function renderPan(){
@@ -290,6 +313,21 @@ function renderLinks(all){
     +mid
     +z.groups.map(it=>link(it,R+7+it.row,false)).join('');
 }
+/* 根和透：天干和地支上下之间的关系，一张表。一列一个地支，和细盘的八列对齐；一行一个天干，原局的四个在上面，下面是大运、流年、流月、流日的。
+   格子里是这个地支里和这个天干同一五行的藏干（gtOf），有它就是这个天干在这里有根；是本气的标「本气」，和天干同一个字的标「透」。
+   表头的第二行是八个地支和它们的藏干 */
+function gtRows(){const cs=cols();return cs.slice(DYN).concat(cs.slice(0,DYN).reverse());}
+function renderGT(){
+  // 表头的小字和细盘的表头相同；.wide 的部分手机上不显示
+  const cs=cols(), dy=P.dayun[sel.dy], sub=[mdText(sel.d),jieMD(sel.y)[sel.m]+' 起',sel.y+'<span class="wide"> 年</span>',dy.y0+'–'+dy.y1,'祖辈','父母','<span class="nb">自己</span><span class="wide"> · </span><wbr><span class="nb">配偶</span>','子女'];
+  const cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}`;
+  const head=`<tr><th></th>${cs.map((c,i)=>`<th class="${cc(c,i)}" scope="col">${c.dyn?c.k:c.k+'柱'}<small>${sub[i]}</small></th>`).join('')}</tr>`
+    +`<tr class="zrow"><th scope="row"><span class="gt-k">地支</span><span class="gt-k">藏干</span></th>${cs.map((c,i)=>`<th class="${cc(c,i)}" scope="col">${xb('x gt-z '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}<small>${HID[c.z].split('').map(h=>`<span class="${gCls(h)}">${h}</span>`).join('')}</small></th>`).join('')}</tr>`;
+  const body=gtRows().map(r=>`<tr${r.dyn?' class="drow"':''}><th scope="row"><span class="gt-k">${r.dyn?r.k:r.k+'干'}</span><span class="gt-l">${xb('x gt-s '+gCls(r.g),`g|${r.k}|${r.g}`,r.g)}<span class="gt-g">${r.day?'日主':god(r.g)}</span></span></th>`
+    +cs.map((c,i)=>{const t=gtOf(r.g,c.z);
+      return `<td class="${cc(c,i)}">${t?xb(`gt-c${t.ben?' ben':''}${t.tou?' tou':''}`,`gt|${r.k}|${c.k}`,`<i class="${gCls(t.h)}">${t.h}</i>${t.ben||t.tou?`<small>${[t.ben?'本气':'',t.tou?'透':''].filter(Boolean).join('<br>')}</small>`:''}`):''}</td>`;}).join('')+'</tr>').join('');
+  $('gtmap').innerHTML=`<table class="gt"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
   $('bars').innerHTML=cnt.map((n,i)=>`${xb('x el '+ELC[i],'wx|'+i,ic(i)+EL[i])}<span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个（${face[i]}）</span><span class="st">${wxState(i)}</span>`).join('');
@@ -314,7 +352,7 @@ function reveal(){
     if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollLeft=l-(box.clientWidth-b.offsetWidth)/2;
   });
 }
-function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderYunRead();reveal();refreshSheet();}
+function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderGT();renderYunRead();reveal();refreshSheet();}
 
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
@@ -422,6 +460,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
   if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.id==='sheet-x'){closeSheet();return;}
   if(b.id==='pp-add'){openForm(null);return;}
   if(b.id==='pp-edit'){openForm(LOCAL.find(x=>x.id===P.id));return;}
@@ -446,17 +485,26 @@ document.addEventListener('click',e=>{
     renderDynamic();
   }else if(b.dataset.m!==undefined){
     sel.m=Number(b.dataset.m);
-    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderYunRead();reveal();refreshSheet();
+    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderGT();renderYunRead();reveal();refreshSheet();
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
-    renderPan();renderLiuri();renderRelations();renderYunRead();refreshSheet();
+    renderPan();renderLiuri();renderRelations();renderGT();renderYunRead();refreshSheet();
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel.x) closeSheet();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&sel.x){closeSheet();return;}
+  // 焦点在标签上时，左右方向键换页，Home、End 到头尾
+  const b=e.target&&e.target.closest?e.target.closest('[data-tab]'):null;
+  if(!b||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+  const [card,id]=b.dataset.tab.split(':'), list=TABS[card], i=list.indexOf(id);
+  e.preventDefault();
+  setTab(card,e.key==='Home'?list[0]:e.key==='End'?list[list.length-1]:list[(i+(e.key==='ArrowRight'?1:list.length-1))%list.length],true);
+});
 window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
 
 let readOn=true; try{readOn=localStorage.getItem('bz-read')!=='0';}catch(e){}
 setRead(readOn);
+try{const t=(localStorage.getItem('bz-tabs')||'').split(',');if(TABS.natal.includes(t[0])) sel.tab.natal=t[0];if(TABS.pan.includes(t[1])) sel.tab.pan=t[1];}catch(e){}
 $('pf-cities').innerHTML=CITIES.map(c=>`<option value="${esc(c[0])}"${c[1]?` label="${esc(c[1])}"`:''}></option>`).join('');
 F('place').addEventListener('input',onPlace);
 F('place').addEventListener('change',onPlace);
@@ -470,3 +518,4 @@ F('file').addEventListener('change',e=>{
 readLocal();rebuildPeople();
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 usePerson(startAt);
+setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);
