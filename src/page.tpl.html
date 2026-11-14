@@ -118,7 +118,6 @@ p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
 
 .read{background:var(--wash);border-radius:10px;padding:13px 17px 15px;font-size:14px;display:flex;flex-direction:column;gap:8px}
-.top .read{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 .rd-h{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--accent)}
 .read ol,.read ul{margin:0;padding-left:1.4em}
 .read li{margin:0 0 6px;break-inside:avoid}
@@ -126,7 +125,6 @@ p{margin:0}
 .read>p:not(.rd-h){max-width:46em}
 .read b{font-weight:600}
 .read a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
-.guide{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
 :root[data-read="off"] .read{display:none}
 .layers{margin:0;display:flex;flex-direction:column;gap:8px}
 .layers>div{display:grid;grid-template-columns:150px 1fr;gap:2px 14px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px}
@@ -189,8 +187,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk.now::after{content:"当前";position:absolute;top:-8px;right:6px;font-size:10.5px;line-height:1;letter-spacing:.06em;padding:3px 4px 3px 5px;border-radius:4px;background:var(--seal);color:var(--seal-ink)}
 
 .rels{display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
-.rel{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px;border:0;border-radius:999px;font:inherit;font-size:13px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
-.rel.bad{background:var(--warn-soft);color:var(--warn)}
+/* 合冲刑害不占颜色，颜色只留给五行：相合一类是实线，冲、刑、害、破、克是虚线。小签的边、关系图的线都照这个规矩 */
+.rel{display:inline-flex;align-items:baseline;gap:6px;padding:3px 12px;border:1px solid var(--ink3);border-radius:999px;font:inherit;font-size:13px;background:var(--card);color:var(--ink);cursor:pointer}
+.rel.bad{border-style:dashed}
+.rel small{color:var(--ink2)}
 .rel b{font-family:var(--display);font-weight:700;font-size:15px}
 .rel small{font-size:12px}
 .none{font-size:13px;color:var(--ink3)}
@@ -226,17 +226,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 十神名字后面的个数：几处，加一小段同样长短的条 */
 .gn{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .gn i{display:inline-block;vertical-align:middle;margin-left:6px;width:calc(var(--n)*9px);height:6px;border-radius:3px;background:currentColor;opacity:.4}
-/* 生克图：原局四柱，相邻的两个字之间一枚小签，写着生、克或者同类，箭头从生或克的一方指向另一方 */
-.skmap{display:grid;grid-template-columns:repeat(3,auto minmax(54px,1fr)) auto;justify-items:center;align-items:center;gap:6px 0;max-width:620px}
-.sk-h{display:flex;flex-direction:column;align-items:center;font-size:13px;font-weight:600;line-height:1.4}
-.sk-h small{font-size:12px;font-weight:400;color:var(--ink3)}
-.sk-g{font-size:13px;color:var(--ink2)}
-.sk-b{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:1;padding:4px 8px;border-radius:999px;white-space:nowrap;color:var(--ink2);background:var(--wash)}
-.sk-b i{font-style:normal}
-.sk-b.sheng{color:var(--accent);background:var(--accent-soft)}
-.sk-b.ke{color:var(--warn);background:var(--warn-soft)}
-/* 关系图只在电脑上显示（样式在下面电脑那一段）；窄屏上仍然用小签 */
-.lkmap,.lk-title{display:none}
+/* 干支关系图只在电脑上显示（样式在下面电脑那一段）；窄屏上仍然用小签 */
+.lkmap,.lk-only{display:none}
 footer{font-size:13px;color:var(--ink2)}
 footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
 
@@ -349,28 +340,46 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .sheet-b .lb{font-size:13.5px}
   h3 small{font-size:13px}
   .gn{font-size:13px}
-  .skmap{gap:8px 0;max-width:780px}
-  .sk-h{font-size:14.5px}
-  .sk-h small{font-size:13px}
-  .sk-g{font-size:14px}
-  .sk-b{font-size:13px;padding:5px 10px}
-  /* 关系图：九列，第一列是行名，后八列和细盘的八列对齐。每一组有关系的字是一格，横跨它涉及的那几列：上面是关系的名字，下面是一条线和圈出来的字 */
+  /* 干支关系图：九列，第一列是行名，后八列和细盘的八列对齐。中间六行是八柱的干支和相邻的字之间的生克；
+     上面和下面是合冲刑害：每一组有关系的字是一格，横跨它涉及的那几列，上面是关系的名字，下面是一条线和圈出来的字 */
   .relpills{display:none}
-  .lk-title{display:block}
+  .lk-only{display:block}
   .lkmap{display:grid;grid-template-columns:68px repeat(8,minmax(0,1fr));row-gap:3px;text-align:center}
   .lk-bg{grid-column:2/6;background:var(--wash);border-radius:10px}
-  .lk-h{padding-top:8px;font-size:13.5px;font-weight:600;color:var(--ink2)}
-  .lk-c{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.35}
+  .lk-h{padding-top:10px;font-size:13.5px;font-weight:600;line-height:1.45;color:var(--ink)}
+  .lk-h small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
+  .lk-g{font-size:13px;line-height:1.7;color:var(--ink2)}
+  .lk-cell{display:flex;justify-content:center;align-items:center}
+  .lk-c{font-family:var(--display);font-weight:700;font-size:32px;line-height:1.25}
   .lk-n{grid-column:1;align-self:center;text-align:left;padding-left:8px;font-size:13px;color:var(--ink3)}
-  .lk{--lkc:var(--accent);position:relative;padding:2px 0 22px;align-self:end}
-  .lk.bad{--lkc:var(--warn)}
-  .lk.mix{--lkc:var(--ink3)}
+  .lk{position:relative;padding:2px 0 32px;align-self:end}
   .lk-ts{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 5px}
-  .lk-t{font:inherit;font-size:13px;line-height:19px;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:0 9px;margin:0;cursor:pointer}
-  .lk-t.bad{color:var(--warn);background:var(--warn-soft)}
-  .lk-t small{margin-left:5px;font-size:12px}
-  .lk-l{position:absolute;left:calc(50%/var(--k));right:calc(50%/var(--k));bottom:10px;height:1px;background:var(--lkc);opacity:.6}
-  .lk>i{position:absolute;bottom:0;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:21px;height:21px;border:1px solid var(--lkc);border-radius:50%;background:var(--card);font:500 12.5px/1 var(--body)}
+  .lk-t{font:inherit;font-size:13px;line-height:19px;white-space:nowrap;color:var(--ink);background:var(--card);border:1px solid var(--ink3);border-radius:999px;padding:0 9px;margin:0;cursor:pointer}
+  .lk-t.bad{border-style:dashed}
+  .lk-t small{margin-left:5px;font-size:12px;color:var(--ink2)}
+  .lk-l{position:absolute;left:calc(50%/var(--k));right:calc(50%/var(--k));bottom:15px;height:0;border-top:1px solid var(--ink3)}
+  .lk.bad .lk-l{border-top-style:dashed}
+  /* 圈出来的字：和细盘的干支大字一样，字、边和淡底都是它自己五行的颜色 */
+  .lk>i{position:absolute;bottom:0;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid currentColor;border-radius:50%;background:var(--card);font:700 17px/1 var(--display)}
+  .lk>i.wood{background:var(--wood-s)} .lk>i.fire{background:var(--fire-s)} .lk>i.earth{background:var(--earth-s)} .lk>i.metal{background:var(--metal-s)} .lk>i.water{background:var(--water-s)}
+  /* 相邻的字之间的生克：一条细线，中间一个小圈写着生、克或者同，线头的小尖指向被生或被克的一方。相生是实线，相克是虚线，同类是很淡的实线、没有小尖。
+     横的那种跨两列，线从左边那个字的右侧画到右边那个字的左侧；竖的在一列里，夹在天干和地支之间 */
+  .sk-x,.sk-y{--skc:var(--ink3);position:relative;pointer-events:none}
+  .sk-x.tong,.sk-y.tong{--skc:var(--line)}
+  .sk-x{align-self:center;height:22px}
+  .sk-x::before{content:"";position:absolute;left:calc(25% + 27px);right:calc(25% + 27px);top:50%;border-top:1px solid var(--skc)}
+  .sk-x.ke::before{border-top-style:dashed}
+  .sk-x::after{content:"";position:absolute;top:50%;right:calc(25% + 27px);width:6px;height:6px;border-top:1.5px solid var(--skc);border-right:1.5px solid var(--skc);transform:translateY(-50%) rotate(45deg)}
+  .sk-x.rev::after{right:auto;left:calc(25% + 27px);transform:translateY(-50%) rotate(-135deg)}
+  .sk-y{justify-self:center;width:22px;height:38px}
+  .sk-y::before{content:"";position:absolute;left:50%;top:1px;bottom:1px;border-left:1px solid var(--skc)}
+  .sk-y.ke::before{border-left-style:dashed}
+  .sk-y::after{content:"";position:absolute;left:50%;bottom:1px;width:6px;height:6px;border-right:1.5px solid var(--skc);border-bottom:1.5px solid var(--skc);transform:translateX(-50%) rotate(45deg)}
+  .sk-y.rev::after{bottom:auto;top:1px;transform:translateX(-50%) rotate(-135deg)}
+  .sk-x.tong::after,.sk-y.tong::after{display:none}
+  .sk-x b,.sk-y b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border:1px solid var(--skc);border-radius:50%;background:var(--card);color:var(--ink2);font:500 12px/18px var(--body);text-align:center}
+  .sk-x.ke b,.sk-y.ke b{border-style:dashed}
+  .sk-x.tong b,.sk-y.tong b{color:var(--ink3)}
   .pform{padding:20px 22px 22px;gap:14px 16px}
   .pform label{font-size:14px}
   .pform .btn{font-size:14px;padding:5px 16px}
@@ -408,12 +417,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .glyph[data-z]::after{display:none}
   .hs{font-size:10.5px;padding:1px 0}
   .hs small{font-size:10px;margin-left:1px}
-  .skmap{grid-template-columns:repeat(3,auto minmax(40px,1fr)) auto}
-  .skmap .glyph{width:36px}
-  .sk-h{font-size:12px}
-  .sk-h small{font-size:11px}
-  .sk-g{font-size:11.5px}
-  .sk-b{font-size:10.5px;padding:3px 5px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
 }
 @media (max-width:379px){
@@ -472,20 +475,41 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </div>
   </form>
   <h1 id="title"></h1>
-  <div class="read">
-    <p class="rd-h">解读 · 怎么看这一页</p>
-    <ul class="cols">
-      <li>八字是把出生的年、月、日、时各记成一个天干加一个地支，四柱一共八个字。日柱的天干叫日主，代表这张盘的主人；看盘就是看其余的字和它之间的生克关系。</li>
-      <li>每个版块里标着「解读」的方框，是针对这张盘写的白话说明。</li>
-      <li>细盘里的每一格、带虚线的字、每一条合冲刑害都可以点。点开的那一处会套上一圈蓝框，解释出现在它旁边；再点一次或者点一下空白处收起。</li>
-      <li>解读讲的是这套体系内部怎么推演，属于传统说法，没有被验证过。</li>
-      <li>点上面的「＋ 添加」，填上出生时间，可以排一张新的盘。填的内容只保存在这个浏览器里。</li>
-    </ul>
-  </div>
   <dl class="meta" id="meta"></dl>
 </header>
 
-<div class="read guide" id="rd-key"></div>
+<div class="two">
+  <section aria-labelledby="h-wx">
+    <h2 id="h-wx">五行 <small id="h-wx-s"></small></h2>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="note-wx"></p>
+    <div class="read" id="rd-wx"></div>
+  </section>
+  <section aria-labelledby="h-tk">
+    <h2 id="h-tk">日主 <small>根和印、强弱、格局、调候</small></h2>
+    <div class="kvs" id="kv"></div>
+    <div class="read" id="rd-tk"></div>
+  </section>
+</div>
+
+<section aria-labelledby="h-gods">
+  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
+      <tbody id="gods"></tbody>
+    </table>
+  </div>
+  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+      <tbody id="liuqin"></tbody>
+    </table>
+  </div>
+  <p class="note" id="note-lq"></p>
+  <div class="read" id="rd-gods"></div>
+</section>
 
 <section aria-labelledby="h-yun">
   <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面细盘的前四列，也会更新后面的干支关系</small></h2>
@@ -521,53 +545,18 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="read" id="rd-yun"></div>
 </section>
 
-<section aria-labelledby="h-gods">
-  <h2 id="h-gods">十神对照 <small id="h-gods-s"></small></h2>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">关系</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
-      <tbody id="gods"></tbody>
-    </table>
-  </div>
-  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-      <tbody id="liuqin"></tbody>
-    </table>
-  </div>
-  <p class="note" id="note-lq"></p>
-  <div class="read" id="rd-gods"></div>
-</section>
-
-<div class="two">
-  <section aria-labelledby="h-wx">
-    <h2 id="h-wx">五行 <small id="h-wx-s"></small></h2>
-    <div class="bars" id="bars"></div>
-    <p class="note" id="note-wx"></p>
-    <div class="read" id="rd-wx"></div>
-  </section>
-  <section aria-labelledby="h-tk">
-    <h2 id="h-tk">日主 <small>根和印、强弱、格局、调候</small></h2>
-    <div class="kvs" id="kv"></div>
-    <div class="read" id="rd-tk"></div>
-  </section>
-</div>
 
 <section aria-labelledby="h-rel">
   <h2 id="h-rel">干支关系 <small>相邻的字谁生谁克；原局和大运、流年、流月、流日之间的合、冲、刑、害</small></h2>
-  <h3>原局四柱 <small>相邻的两个字，按五行看谁生谁克</small></h3>
-  <div class="skmap" id="skmap"></div>
-  <p class="note" id="note-sk"></p>
-  <h3 class="lk-title">合、冲、刑、害 <small>每条线上圈出来的是有关系的字，天干的在上面，地支的在下面</small></h3>
   <div class="lkmap" id="lkmap"></div>
+  <p class="note lk-only" id="note-sk"></p>
   <div class="relblock relpills">
     <h3>原局 · 天干</h3>
     <div class="rels" id="rel-ng"></div>
     <h3>原局 · 地支</h3>
     <div class="rels" id="rel-nz"></div>
   </div>
-  <p class="note">蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
+  <p class="note">实线是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），虚线是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
   <div class="read" id="rd-rel"></div>
   <div class="relgrid relpills">
     <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
