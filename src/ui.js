@@ -168,7 +168,7 @@ function renderPerson(){
   const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
   $('kv').innerHTML=dl(quad)+dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
   $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut));
-  $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
+  $('h-gods-s').textContent=`以${DMN}为原点；个数连地支里藏的天干一起数，不算日主自己`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
@@ -382,7 +382,7 @@ function renderGods(){
   const all=natalStems().concat(natalHidden()), de=gEl(DM), yin=isYin(DM)?1:0;
   // 每个十神在原局里出现几次：三个天干加地支里藏的天干。个数后面跟一小段同样长短的条
   const cell=g=>{const n=all.filter(x=>x===g).length;
-    return `<td class="${n?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} 处<i style="--n:${n}"></i>`:'没有'}</span></td>`;};
+    return `<td>${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} 处<i style="--n:${n}"></i>`:'没有'}</span></td>`;};
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
     return `<tr><td>${r[1]}<span class="gp">${xb('x','grp|'+i,GRP[i])}</span></td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
   $('liuqin').innerHTML=liuqinRows().map(r=>`<tr><td>${r.who}</td><td>${xb('x','tg|'+r.god,r.god)}</td><td>${r.at}</td><td>${r.gong}</td></tr>`).join('');
