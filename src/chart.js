@@ -188,6 +188,46 @@ function datesOf(ps){
   }
   return out;
 }
+/* 分享链接：出生信息放在网址 # 后面，浏览器不会把这一段发给服务器。参数：
+   n 称呼，g 性别（m 或 f），b 出生日期；按出生时间排的人 b 带时刻（YYYY-MM-DDTHH:MM），另有 lon 经度、dst=1 夏令时；
+   只知道时辰的有 sh（十二地支之一）；时辰不详的有 nh=1；直接给八字的有 bz（四柱八个字），打开时从 datesOf 查出的日子里选，
+   b 可以指定是其中哪一天，没指定就取最早的一天。
+   linkOf(出生信息) 写成参数串。linkInfo(URLSearchParams) 反过来，返回 {info, dates} 或 {err}：每一项都过 checkInfo。 */
+function linkOf(info){
+  const q=new URLSearchParams(), pad=n=>String(n).padStart(2,'0');
+  q.set('n',String(info.name||'')); q.set('g',info.gender==='女'?'f':'m');
+  if(info.nohour){q.set('b',info.birth);q.set('nh','1');}
+  else if(info.shichen){q.set('b',info.birth);q.set('sh',info.shichen);}
+  else{
+    const a=parseBirth(info.birth);
+    q.set('b',`${a[0]}-${pad(a[1])}-${pad(a[2])}T${pad(a[3])}:${pad(a[4])}`+(a[5]?':'+pad(a[5]):''));
+    q.set('lon',String(info.lon)); if(info.dst) q.set('dst','1');
+  }
+  return q.toString();
+}
+function linkInfo(q){
+  const g=q.get('g'), info={id:'link',name:String(q.get('n')||'').trim().slice(0,20)||'来自链接',gender:g==='m'||g==='男'?'男':g==='f'||g==='女'?'女':'',place:''};
+  let dates=null;
+  if(q.has('bz')){
+    const r=baziCheck(q.get('bz')); if(!r.p) return {err:r.msg||'八字认不出来。'};
+    dates=datesOf(r.p); if(!dates.length) return {err:'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。'};
+    const d=dates.find(x=>x.birth===q.get('b'))||dates[0];
+    info.birth=d.birth; info.shichen=d.shichen;
+  }else if(q.get('nh')==='1'){info.birth=String(q.get('b')||''); info.nohour=true;}
+  else if(q.has('sh')){info.birth=String(q.get('b')||''); info.shichen=String(q.get('sh'));}
+  else{
+    info.birth=String(q.get('b')||'').replace('T',' ');
+    info.lon=(q.get('lon')||'').trim()===''?NaN:Number(q.get('lon'));
+    if(q.get('dst')==='1') info.dst=true;
+  }
+  const err=checkInfo(info);
+  return err?{err}:{info,dates};
+}
+/* 两份出生信息是不是同一个人：性别、出生的时刻或日期和时辰、经度、夏令时都相同。称呼不算 */
+function infoKey(x){
+  const a=(x.shichen||x.nohour?parseDay:parseBirth)(x.birth)||[];
+  return [x.gender,a.join('-'),x.shichen||'',x.nohour?1:0,x.shichen||x.nohour?'':Number(x.lon),x.dst?1:0].join('|');
+}
 /* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
 function infoFrom(p){
   const c=p.clock, pad=n=>String(n).padStart(2,'0');

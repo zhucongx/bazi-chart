@@ -5,8 +5,8 @@
   .venv/bin/python tools/shot.py --private   截 private/build/index.html，存到 private/build/shots/
 
 页面上有两张带标签栏的卡片，一次只显示一页，所以每个标签页都要点开来截：
-桌面整页（两张卡片都在第一页）、桌面上十个标签页各一张（tab_名字.png）、桌面打开一条解释、
-手机顶部、手机上十个标签页各一张（m_tab_名字.png）、手机打开一条解释、手机上的添加表单、深色。
+桌面整页（两张卡片都在第一页）、桌面上十个标签页各一张（tab_名字.png）、最下面的六亲宫位（card_lq.png）、桌面打开一条解释、
+手机顶部、手机上十个标签页各一张（m_tab_名字.png）和六亲宫位（m_card_lq.png）、手机打开一条解释、手机上的添加表单、深色。
 页面上不止一个人时，再切到第二个人截一张桌面整页。
 同时报告每一页有没有横向溢出、有没有脚本报错。
 
@@ -24,9 +24,9 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 os.environ.setdefault('PW_TEST_SCREENSHOT_NO_FONTS_READY', '1')     # 截图时不等网络字体，取不到字体也不会卡住
-TABS = [('card-natal', ['tk', 'wx', 'gods', 'lq', 'gw', 'ys']), ('card-pan', ['pan', 'rel', 'gt', 'sy'])]      # 两张卡片各自的标签，和 src/ui.js 的 TABS 相同
+TABS = [('card-natal', ['bz', 'tk', 'wx', 'qr', 'gods', 'ys']), ('card-pan', ['pan', 'rel', 'gt', 'sy'])]      # 两张卡片各自的标签，和 src/ui.js 的 TABS 相同
 TAB_SHOTS = [f'{pre}tab_{t}.png' for pre in ('', 'm_') for _, ts in TABS for t in ts]
-NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png'] + TAB_SHOTS
+NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png', 'card_lq.png', 'm_card_lq.png'] + TAB_SHOTS
 
 
 def launch(p):
@@ -101,6 +101,8 @@ def main():
                         print(f'{where}，标签 {t}: 宽 {cw}，内容宽 {sw}  ← 有横向溢出')
                     pg.locator(f'#{card}').screenshot(path=str(out / f'{pre}tab_{t}.png'))
                 click_first(pg, f'#h-{tabs[0]}', f'{where}翻回第一页')
+            if pg.locator('#card-lq').count():      # 最下面的六亲宫位不在标签里，单独截一张
+                pg.locator('#card-lq').screenshot(path=str(out / f'{pre}card_lq.png'))
 
         pg = page(1440, 900, 'light')
         overflow(pg, '桌面')

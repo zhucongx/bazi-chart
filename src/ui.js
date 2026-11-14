@@ -8,7 +8,7 @@ const REAL_Y=(()=>{const y=now.getFullYear(), lc=jieMD(y)?md(y,jieMD(y)[0]):new 
 /* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
 let NOW_DY=-1, NOW_M=-1;
 /* 选中的人、大运、流年、流月、流日，打开的解释，以及两张卡片各自翻到哪一页 */
-const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'tk',pan:'pan'}};     // x 是打开的解释，xn 是点的第几个同名的字
+const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'bz',pan:'pan'}};     // x 是打开的解释，xn 是点的第几个同名的字
 
 /* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
 const PEOPLE=DATA.people.slice();
@@ -24,9 +24,19 @@ function writeLocal(){
 }
 /* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
 const HOUR_PICK={};
+/* 从链接打开、还没保存的人：{info, dates}。只有一个，排在最后，不写进 localStorage；点「保存」才存 */
+let TEMP=null;
 function rebuildPeople(){
   PEOPLE.length=DATA.people.length;
-  LOCAL.forEach(info=>{try{const p=chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  const one=info=>chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);
+  LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
+}
+/* 任何一个人的出生信息：从链接来的、存在浏览器里的、页面自带的（由排好的结果取回） */
+function infoOf(p){
+  if(p.temp) return TEMP&&TEMP.info;
+  if(p.local) return LOCAL.find(x=>x.id===p.id)||null;
+  try{return infoFrom(p);}catch(e){return null;}
 }
 
 function jieUTC(y,m){const [mm,dd]=jieMD(y)[m].split('/').map(Number);return Date.UTC(m===11?y+1:y,mm-1,dd);}
@@ -99,13 +109,14 @@ function openSheet(key,el){
   placeSheet(el||anchorOf(key,sel.xn));
 }
 function refreshSheet(){
+  refreshShare();
   if(!sel.x) return;
   if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
 }
 /* ---------- 标签栏 ----------
    两张卡片各有一排标签，一次显示一页：原局是日主、五行、十神、六亲、宫位、用神，排盘是四柱细盘、干支关系、根和透、大运流年。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
-const TABS={natal:['tk','wx','gods','lq','gw','ys'],pan:['pan','rel','gt','sy']};
+const TABS={natal:['bz','tk','wx','qr','gods','ys'],pan:['pan','rel','gt','sy']};      // 六亲宫位不在读盘的那条线上，是页面最下面单独的一张卡片（#card-lq），不在标签里
 function setTab(card,id,focus){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   sel.tab[card]=id;
@@ -116,6 +127,7 @@ function setTab(card,id,focus){
   });
   if(focus) $('h-'+id).focus();
   try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}
+  refreshShare();
   if(sel.x){                                   // 打开的解释所指的字要是在换下去的那一页里，就收起来；还在的话重新摆位置
     const el=anchorOf(sel.x,sel.xn);
     if(!el||el.closest('[role="tabpanel"][hidden]')) closeSheet(); else placeSheet(el);
@@ -149,15 +161,20 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
-/* 各家的那几行：从其中的第一行起，放在「用神」那一页 */
-const KV_SCHOOLS=['强弱参考','强弱计分','格局参考','调候参考','三行对照'];
+/* kvRows 的几行按先后分段放到各页：「强弱参考」以前的（月令、根、印、月令透干）在「强弱」一页的最上面，
+   从「强弱参考」起在「强弱」一页的卡片下面，从「格局参考」起在「十神」，从「调候参考」起在「喜忌」。
+   手写解读另加的行插在哪一行后面，就跟着那一行进哪一页；没写插在哪里的排在最后，在「喜忌」。
+   日主、阴阳不在这里列，在「日主」一页的四项里；强弱计分画成「强弱」一页的卡片。 */
+const KV_FROM={'强弱参考':'kv-qr','格局参考':'kv-gj','调候参考':'kv2'}, KV_ELSEWHERE=['日主','阴阳','强弱计分'];
 /* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
 const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
 function renderPerson(){
-  $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}</button>`).join('')
+  $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}${p.temp?'<small class="from">来自链接</small>':''}</button>`).join('')
     +'<button type="button" class="pp add" id="pp-add">＋ 添加</button>'
-    +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'');
+    +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'')
+    +'<button type="button" class="pp add" id="pp-share">分享</button>';
+  renderLinkBar();
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
@@ -166,29 +183,29 @@ function renderPerson(){
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
-  ['pan','yun','rel','rel2','wx','tk','gods','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  ['bz','pan','yun','rel','rel2','wx','tk','qr','gods','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
   $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
-  // 日主一栏的几行分在两页：前面盘面上的事实在「日主」，从各家的第一行起在「用神」
-  // 「日主」那一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「用神」那一页的一句话
-  const kv=kvRows(), cut=kv.findIndex(r=>KV_SCHOOLS.includes(r.k)), quad=quadItems(), inQuad=['日主','阴阳'];
+  // 日主一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「强弱」「十神」两页的结论
+  const kv=kvRows(), quad=quadItems(), part={kv:[],'kv-qr':[],'kv-gj':[],kv2:[]};
+  let at='kv';
+  kv.forEach(r=>{at=KV_FROM[r.k]||at;if(!KV_ELSEWHERE.includes(r.k)) part[at].push(r);});
   const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
-  const QI=['t-tk','q-yy','q-ga','q-ge'];      // 四个方块名目前的图标：日主、阴阳（太极）、旺衰（表盘）、格局（框）
-  $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${QI[i]}"/></svg>${xb('x',r.x,r.k)}</span><b>${r.big}</b><small>${r.sub}</small></div>`).join('');
-  $('kv').innerHTML=dl((cut<0?kv:kv.slice(0,cut)).filter(r=>!inQuad.includes(r.k)));
-  $('kv2').innerHTML=dl(cut<0?[]:kv.slice(cut).filter(r=>r.k!=='强弱计分'));      // 强弱计分画成了这一页最上面的卡片（renderQs）
+  $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${['t-tk','q-yy','q-ga','q-ge'][i]}"/></svg>${xb('x',r.x,r.k)}</span><b>${r.big}</b><small>${r.sub}</small></div>`).join('');
+  Object.keys(part).forEach(id=>{$(id).innerHTML=dl(part[id]);});
+  $('note-qr').textContent=noteQr();
   $('h-gods-s').textContent=`以${DMN}为原点；个数连地支里藏的天干一起数，不算日主自己`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderHours();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
-  const box=$('hours'), info=P.nohour?LOCAL.find(x=>x.id===P.id):null;
+  const box=$('hours'), info=P.nohour?infoOf(P):null;
   box.hidden=!info; if(!info){box.innerHTML='';return;}
   const rows=Z.split('').map(h=>{const c=chartOf(Object.assign({},info,{shichen:h}));
     const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps), x=xiOf(c.pillars[2][0],ps);
@@ -249,11 +266,12 @@ function renderGodMap(){
   $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="img" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`
     +`<figcaption>中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。圈填多少照它在盘里出现几处（连地支里藏的天干，不算日主自己），最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。</figcaption>`;
 }
-function renderPan(){
-  const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
+/* 细盘的各行。cs 是要排的列：四柱细盘一页是 cols() 的八列，八字一页只有原局四列（NATAL）。
+   原局的列就是 NATAL 里的对象，神煞照它在 NATAL 里的位置取 */
+function panRows(cs){
+  const cc=(c,i)=>`${c.dyn?'dyn':''}${c.dyn&&i===DYN-1?' last':''}${c.day?' day':''}`;
   const row=(label,fn,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','row|'+label,label)}</th>${cs.map((c,i)=>`<td class="${cc(c,i)}">${fn(c,i)}</td>`).join('')}</tr>`;
-  $('pan').innerHTML=
-    row('十神',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
+  return row('十神',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
     row('天干',c=>glyph('g',c),'big')+
     row('地支',c=>glyph('z',c),'big')+
     row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
@@ -262,35 +280,45 @@ function renderPan(){
     row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
     row('纳音',c=>xb('x sm','ny|'+c.k,DATA.nayin[c.g+c.z]))+
     row('神煞',(c,i)=>{       // 前四列拿自己的干支去对原局查；四个字的名字在手机上折成两行
-      const list=c.dyn?shenshaFor(P.pillars,DATA.nayin,!!P.gender,c.g+c.z,c.k):SHENSHA[i-DYN];
-      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:i-DYN}`,s.n)).join(''):'<span class="no">—</span>'}</span>`;},'multi');
+      const n=NATAL.indexOf(c), list=c.dyn?shenshaFor(P.pillars,DATA.nayin,!!P.gender,c.g+c.z,c.k):SHENSHA[n];
+      return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:n}`,s.n)).join(''):'<span class="no">—</span>'}</span>`;},'multi');
+}
+/* 八字一页：只有原局四列，换人时画一次 */
+function renderBz(){$('bz').innerHTML=panRows(NATAL);}
+function renderPan(){
+  $('pan').innerHTML=panRows(cols());
   const dy=P.dayun[sel.dy];
   $('hd-lr').textContent=mdText(sel.d);
   $('hd-ly').textContent=jieMD(sel.y)[sel.m]+' 起';
   $('hd-ln').innerHTML=sel.y+'<span class="wide"> 年</span>';
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
+/* 选择器小卡底下的条：这一柱带来的 13 分里喜用占几分（xiPillar），一段一种五行，后面是分数；不定喜用时画比劫加印绶 */
+function mbar(gz){
+  const v=xiPillar(gz), segs=v.want.filter(e=>v.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${v.sum[e]}"></i>`).join('');
+  return `<span class="mb"><span class="mb-bar"><span class="mb-fill" style="width:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><b>${v.score}</b></span>`;
+}
 function renderDayun(){
-  $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])}·${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span></button>`).join('');
+  $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])}·${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span>${mbar(d.gz)}</button>`).join('');
 }
 function renderLiunian(){
   const d=P.dayun[sel.dy]; let h='';
   for(let y=d.y0;y<=d.y1;y++){const gz=yearGZ(y);
-    h+=`<button class="pk${y===REAL_Y?' now':''}" aria-pressed="${y===sel.y}" data-y="${y}"><span class="yr">${y}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">${y-P.clock[0]+1} 岁</span></button>`;}
+    h+=`<button class="pk${y===REAL_Y?' now':''}" aria-pressed="${y===sel.y}" data-y="${y}"><span class="yr">${y}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">${y-P.clock[0]+1} 岁</span>${mbar(gz)}</button>`;}
   $('liunian').innerHTML=h;
   $('h-ln').innerHTML=`流年<small>${d.gz}运</small>`;
 }
 function renderLiuyue(){
   const y=sel.y, j=jieMD(y), cur=y===REAL_Y?NOW_M:-1; let h='';
   for(let m=0;m<12;m++){const gz=monthGZ(y,m);
-    h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span></button>`;}
+    h+=`<button class="pk${m===cur?' now':''}" aria-pressed="${m===sel.m}" data-m="${m}"><span class="yr">${JIE[m]} ${j[m]}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span>${mbar(gz)}</button>`;}
   $('liuyue').innerHTML=h;
   $('h-ly').innerHTML=`流月<small>${y} ${yearGZ(y)}年</small>`;
 }
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span></button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span>${mbar(gz)}</button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
@@ -413,36 +441,24 @@ function renderGw(){
     +row('配谁',c=>c.who)
     +row('干支',c=>`<span class="gz">${xb('x '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}${xb('x '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`)
     +row('十神',c=>`天干${c.g}：${tg(c.god)}<br>地支${c.z}里：${c.hid.map(([h,gd])=>`${h} ${tg(gd)}`).join('、')}`)
-    +row('配的亲属',c=>c.kin.length?c.kin.map(r=>`${r.who}看${tg(r.god)}：${r.at.length?'在这一柱，'+r.at.join('、'):'不在这一柱'}`).join('<br>'):'「六亲」一栏的表里没有配祖上的十神')
+    +row('配的亲属',c=>c.kin.length?c.kin.map(r=>`${r.who}看${tg(r.god)}：${r.at.length?'在这一柱，'+r.at.join('、'):'不在这一柱'}`).join('<br>'):'六亲表里没有配祖上的十神')
     +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
     +row('十二长生',c=>`${c.g}坐${c.z}是${xb('x','zz|'+c.k,c.zz)}`+(c.day?'':`<br>日主到${c.z}是${xb('x','st|'+c.k,c.st)}`))
     +row('空亡',c=>c.xk)
     +row('五行能量',c=>`${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>${GRP[0]}加${GRP[4]} ${c.nl.help} 分，其余 ${c.nl.rest} 分<span class="stkw" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>`)
     +'</tbody></table>';
 }
-/* 大运流年一页。上面四排柱子：八步大运、选中这步大运里的各年、选中这一年的十二个月、选中这个月的每一天。
-   柱子的高低是这一柱带来的 13 分里喜用占几分（xiPillar）；不定喜用时画比劫加印绶。柱子是按钮，点了就换到那一步、那一年、那个月、那一天。
-   下面是选中的四层各带来多少分的表（nlLayers）：一行一层，最后是合计。外来的四层写成加号。总数对谁都一样，所以表里不列每一层的合计 */
+/* 计分一页：一行一层的表（nlLayers），表下面的说明和解读；选择器上方的图例。小卡底下的条由 mbar() 画在选择器里，跟着选择器一起重画 */
 function renderSy(){
   const L=nlLayers(), x=xiNow(), de=gEl(DM), se=(de+4)%5, n=(v,plus)=>(plus?'+':'')+v;
   const want=x.xi||[se,de], mark=g=>x.xi&&g.every(e=>x.xi.includes(e))?' · 喜用':'';
   $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">${GRP[0]}加${GRP[4]}<small>${EL[de]}、${EL[se]}${mark([se,de])}</small></th><th scope="col">${GRP[1]}、${GRP[2]}、${GRP[3]}<small>其余三行${mark([(de+1)%5,(de+2)%5,(de+3)%5])}</small></th><th scope="col">加到这一层<small>${GRP[0]}加${GRP[4]}占</small></th></tr>`;
   const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
-  // 图例：算进柱子的几种五行
-  $('sy-lg').innerHTML=(x.xi?`${xb('x','xi','喜用（扶抑）')}`:`不定喜用，柱子画${GRP[0]}加${GRP[4]}`)+want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span>';
-  const d=P.dayun[sel.dy], ys=[]; for(let y=d.y0;y<=d.y1;y++) ys.push(y);
-  const bar=(gz,attr,on,top,label,key)=>{const v=xiPillar(gz);
-    const segs=want.filter(e=>v.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${v.sum[e]}"></i>`).join('');
-    return `<button type="button" class="tb" ${attr} data-x="${key}" aria-pressed="${on}" aria-label="${label}${gz}，${x.xi?'喜用':GRP[0]+'加'+GRP[4]} ${v.score} 分"><b class="v">${v.score}</b><span class="bar"><span class="fill" style="height:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><span class="gz">${gzSpan(gz)}</span><small>${top}</small></button>`;};
-  const rows=[
-    ['八步大运',P.dayun.map((v,i)=>bar(v.gz,`data-dy="${i}"`,i===sel.dy,String(v.y0),`${v.y0} 年起的大运`,`tb|大运|${v.gz}|${v.y0}`))],
-    [`${d.gz}运的${cn(ys.length)}年`,ys.map(y=>bar(yearGZ(y),`data-y="${y}"`,y===sel.y,String(y),`${y} 年`,`tb|流年|${yearGZ(y)}|${y}`))],
-    [`${sel.y} ${yearGZ(sel.y)}年的十二个月`,[...Array(12).keys()].map(m=>bar(monthGZ(sel.y,m),`data-m="${m}"`,m===sel.m,JIE[m],`${JIE[m]}起的一个月`,`tb|流月|${monthGZ(sel.y,m)}|${sel.y}-${m}`))],
-    [`${monthGZ(sel.y,sel.m)}月的每一天`,monthDays(sel.y,sel.m).map(t=>bar(dayGZ(t),`data-d="${t}"`,t===sel.d,String(new Date(t).getUTCDate()),mdText(t)+' ',`tb|流日|${dayGZ(t)}|${t}`))]];
-  $('trend').innerHTML=rows.map(([h,bs],i)=>`<div class="tr-row"><h3>${h}</h3><div class="tbars${i===3?' many':''}" role="group" aria-label="${h}">${bs.join('')}</div></div>`).join('');
+  // 图例：选择器小卡底下的条里算进去的几种五行
+  $('sy-lg').innerHTML='<span>小卡底下的条</span>'+(x.xi?`${xb('x','xi','喜用（扶抑）')}`:`<span>不定喜用，画${GRP[0]}加${GRP[4]}</span>`)+want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span><span>满分 13</span>';
   $('note-syfig').textContent=noteSyFig();
-  $('rd-tr').innerHTML=readHTML('tr');      // 柱子下面的解读跟着选中的大运和年份变
+  $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }
 /* 用神一页最上面的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
@@ -461,9 +477,14 @@ function renderQs(){
     +gauge
     +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`)}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
     +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
-    +`<div class="qx-row">`+(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>忌</span><b>${els(x.ji)}</b></div>`
-      :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b><small>强弱在两条线之间，扶抑取不了</small></div>`)+`</div>`
     +`</div>`;
+}
+/* 喜忌一页最上面：扶抑取的喜用和忌，照「强弱」一页的强弱计分 */
+function renderXi(){
+  const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
+  $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
+      :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
+    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${GRP[0]}加${GRP[4]} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，书里没有说算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`;
 }
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
@@ -502,6 +523,94 @@ function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();rend
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
 const F=id=>$('pf-'+id);
+/* ---------- 分享链接 ----------
+   链接一律指向公开的页面：本地打开的文件、artifact 里的地址，别人打不开。参数的写法见 chart.js 的 linkOf。
+   打开链接时先当作临时的人（TEMP）显示，标「来自链接」，不自动存；和已有的人是同一份出生信息的，直接换到那一位。 */
+const SHARE_BASE='https://zhucongx.github.io/bazi-chart/';
+const isoDay=t=>new Date(t).toISOString().slice(0,10);
+/* 现在这一位、现在看的位置写成的链接。页面里排不了的古人（1900 年以前）只写编号，链接只在页面自带这一位时打得开 */
+function shareNow(){
+  const info=infoOf(P), ok=info&&!checkInfo(info);
+  const q=new URLSearchParams(ok?linkOf(Object.assign({},info,{name:P.name})):'p='+encodeURIComponent(P.id));
+  q.set('tab',sel.tab.natal+','+sel.tab.pan);q.set('dy',String(sel.dy));q.set('y',String(sel.y));q.set('m',String(sel.m));q.set('d',isoDay(sel.d));
+  return {url:SHARE_BASE+'#'+q.toString(),what:!ok?'这一位在页面里的编号，不含出生信息；只在页面自带这一位时打得开':info.nohour?'出生日期':info.shichen?'出生日期和时辰':'出生日期、时间和出生地的经度'};
+}
+function refreshShare(){
+  if(!$('share')||$('share').hidden||!P) return;
+  const s=shareNow();
+  $('share-url').value=s.url;
+  $('share-t').textContent=`分享${P.name}：链接里有${s.what}，发给谁，谁打开就能看到这张盘，也会停在现在看的这一页和这一年。链接里的内容不经过任何服务器，但收到链接的人都能看到。`;
+}
+function openShare(){
+  $('share').hidden=false;$('share-msg').textContent='';
+  refreshShare();copyShare();
+}
+function copyShare(){
+  const box=$('share-url'), url=box.value, fail=()=>{box.focus();box.select();$('share-msg').textContent='没能自动复制，链接已经选中，请手动复制。';};
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=>{$('share-msg').textContent='链接已经复制。';},fail);
+    else fail();
+  }catch(e){fail();}
+}
+/* 打开链接：hash 是 location.hash，fallback 是链接不对时先显示的人（启动时是上次看的那一位）。不是分享链接的返回 false */
+function openLink(hash,fallback){
+  const s=String(hash||'').replace(/^#/,''); if(!s) return false;
+  const q=new URLSearchParams(s), keys=[...q.keys()];
+  if(!keys.some(k=>['p','b','bz','n','g','sh','nh','lon'].includes(k))){
+    if(!keys.some(k=>['tab','dy','y','m','d'].includes(k))) return false;
+    if(!P) usePerson(fallback||0);
+    applyView(q);return true;
+  }
+  let i=-1;
+  if(q.has('p')&&!q.has('b')&&!q.has('bz')){
+    i=PEOPLE.findIndex(p=>!p.local&&!p.temp&&p.id===q.get('p'));
+    if(i<0){if(!P) usePerson(fallback||0);say('链接里的这一位不在这个页面上。');return true;}
+  }else{
+    const r=linkInfo(q);
+    if(r.err){if(!P) usePerson(fallback||0);say('链接里的出生信息不对，没有打开：'+r.err);return true;}
+    TEMP=null;rebuildPeople();
+    const k=infoKey(r.info);
+    i=PEOPLE.findIndex(p=>{const x=infoOf(p);return x&&!checkInfo(x)&&infoKey(x)===k;});
+    if(i<0){TEMP={info:r.info,dates:r.dates};rebuildPeople();i=PEOPLE.length-1;}
+  }
+  usePerson(i);applyView(q);
+  say(P.temp?'':'链接里的这一位已经在页面上了，换到了这一位。');
+  return true;
+}
+/* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
+function applyView(q){
+  (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
+  const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
+  const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
+  if(dy===null&&y===null&&m===null&&!d) return;
+  if(dy!==null&&dy<P.dayun.length){sel.dy=dy;const r=P.dayun[dy];sel.y=REAL_Y>=r.y0&&REAL_Y<=r.y1?REAL_Y:r.y0;}
+  if(y!==null){const k=P.dayun.findIndex(r=>y>=r.y0&&y<=r.y1);if(k>=0){sel.dy=k;sel.y=y;}}
+  if(m!==null&&m<12) sel.m=m;
+  if(d&&/^\d{4}-\d{2}-\d{2}$/.test(d)){const t=Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));if(monthDays(sel.y,sel.m).includes(t)) sel.d=t;}
+  renderDynamic();
+}
+/* 从链接来的人上面那一条：没有保存；直接给八字的，可以在对得上的几个日子里换一个 */
+function renderLinkBar(){
+  const bar=$('pp-link'); bar.hidden=!P.temp; if(!P.temp){bar.innerHTML='';return;}
+  const ds=TEMP.dates&&TEMP.dates.length>1?TEMP.dates:null;
+  bar.innerHTML=`<p>这一位来自链接，只在这一次打开的页面里，没有存进这个浏览器。</p><div class="row">`
+    +(ds?`<label>这副八字对得上的日子 <select id="pp-dates">${ds.map((x,i)=>`<option value="${i}"${x.birth===TEMP.info.birth?' selected':''}>${x.birth} ${x.shichen}时</option>`).join('')}</select></label>`:'')
+    +'<button type="button" class="pp" id="pp-save">保存到这个浏览器</button></div>';
+}
+function pickTempDate(i){
+  if(!TEMP||!TEMP.dates||!TEMP.dates[i]) return;
+  TEMP.info.birth=TEMP.dates[i].birth;TEMP.info.shichen=TEMP.dates[i].shichen;
+  rebuildPeople();usePerson(PEOPLE.length-1);
+}
+function saveTemp(){
+  if(!TEMP) return;
+  const info=Object.assign({},TEMP.info,{id:newId()}), keep={dy:sel.dy,y:sel.y,m:sel.m,d:sel.d};
+  if(HOUR_PICK.link) HOUR_PICK[info.id]=HOUR_PICK.link;
+  LOCAL.push(info);TEMP=null;writeLocal();rebuildPeople();
+  usePerson(PEOPLE.findIndex(p=>p.id===info.id));
+  Object.assign(sel,keep);renderDynamic();
+  say(STORE_OK?'已经存进这个浏览器。':NO_STORE);
+}
 function say(s){$('pp-hint').textContent=s||'';$('pp-hint').hidden=!s;}
 function formMsg(s){F('msg').textContent=s||'';F('msg').hidden=!s;}
 const NO_STORE='这个环境不能保存数据，关掉页面以后刚才添加的人会消失。可以先点「导出」把他们存成文件。';
@@ -669,16 +778,14 @@ document.addEventListener('click',e=>{
   if(b.id==='sheet-x'){closeSheet();return;}
   if(b.id==='pp-add'){openForm(null);return;}
   if(b.id==='pp-edit'){openForm(LOCAL.find(x=>x.id===P.id));return;}
+  if(b.id==='pp-share'){openShare();return;}
+  if(b.id==='share-copy'){copyShare();return;}
+  if(b.id==='share-x'){$('share').hidden=true;return;}
+  if(b.id==='pp-save'){saveTemp();return;}
   if(b.id==='pf-cancel'){closeForm();return;}
   if(b.id==='pf-del'){deleteEditing();return;}
   if(b.id==='pf-import'){F('file').click();return;}
   if(b.id==='pf-export'){exportLocal();return;}
-  if(b.dataset.x&&b.classList.contains('tb')){      // 大运流年一页的柱子：先换到那一柱，再在旁边列出这一柱的明细；再点一次收起
-    const key=b.dataset.x, again=sel.x===key&&!$('sheet').hidden;
-    pickLayer(b);
-    if(again) closeSheet(); else openSheet(key,anchorOf(key,0));
-    return;
-  }
   if(b.dataset.x){
     if(sel.x===b.dataset.x&&!$('sheet').hidden) closeSheet(); else openSheet(b.dataset.x,b);
     return;
@@ -687,7 +794,7 @@ document.addEventListener('click',e=>{
     if(Number(b.dataset.p)!==sel.p) usePerson(Number(b.dataset.p));
   }else pickLayer(b);
 });
-/* 换大运、流年、流月、流日。选择器的卡片和大运流年一页的柱子都走这里；不是这四样的按钮返回 false */
+/* 换大运、流年、流月、流日。选择器的卡片走这里；不是这四样的按钮返回 false */
 function pickLayer(b){
   if(b.dataset.dy!==undefined){
     sel.dy=Number(b.dataset.dy); const d=P.dayun[sel.dy];
@@ -740,5 +847,7 @@ F('file').addEventListener('change',e=>{
 });
 readLocal();rebuildPeople();
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
-usePerson(startAt);
+if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);
+window.addEventListener('hashchange',()=>{openLink(location.hash);setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);});
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='pp-dates') pickTempDate(Number(e.target.value));});
