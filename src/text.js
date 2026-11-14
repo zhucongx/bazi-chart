@@ -765,6 +765,35 @@ function footItems(){
     '标着「典籍」的引文出自《滴天髓》《穷通宝鉴》《渊海子平》《子平真诠》《三命通会》《协纪辨方书》《神峰通考》，每一句都对着所据的本子逐字核对过。各本常有异文，这里照所据的本子。',
     '八字是一套传统的符号推演体系，没有可靠证据表明它能预测人生。'];
 }
+/* 生克图：原局相邻的十处，按五行看谁生谁克。
+   skOf(a,b)：a、b 是五行的序号。返回 [同、生、克, 方向]：方向 1 是 a 作用于 b，-1 是 b 作用于 a，0 是同类。 */
+function skOf(a,b){const d=(b-a+5)%5;return d===0?['同',0]:d===1?['生',1]:d===2?['克',1]:d===3?['克',-1]:['生',-1];}
+function skPairs(){     // 三对左右相邻的天干、三对左右相邻的地支、四柱各自的干和支
+  const out=[];
+  for(let i=0;i<3;i++){out.push([gEl(NATAL[i].g),gEl(NATAL[i+1].g)]);out.push([zEl(NATAL[i].z),zEl(NATAL[i+1].z)]);}
+  NATAL.forEach(p=>out.push([gEl(p.g),zEl(p.z)]));
+  return out;
+}
+function noteSK(){
+  const ts=skPairs().map(([a,b])=>skOf(a,b)[0]), n=k=>ts.filter(x=>x===k).length;
+  const {face}=wxCounts(), miss=[0,1,2,3,4].filter(i=>!face[i]);
+  const links=[0,1,2,3,4].filter(i=>face[i]&&face[(i+1)%5]).map(i=>`${EL[i]}生${EL[(i+1)%5]}`);
+  return `相邻的十处里，相生 ${n('生')} 处，相克 ${n('克')} 处，同类 ${n('同')} 处。箭头从生或者克的一方指向另一方。`
+    +(miss.length?`只看盘面八个字，缺${miss.map(i=>EL[i]).join('、')}；五行相生的五环里，两头都有字的是${links.length?links.join('、'):'零环'}。`:'只看盘面八个字，五行齐全，相生的五环（木生火、火生土、土生金、金生水、水生木）两头都有字。')
+    +'排盘软件常把这些叫流通，还会打一个分数。打分的权重没有出处，这一页只列事实，不打分。';
+}
+/* 六亲：照《渊海子平》的配法，每一位亲属看哪个十神、这个十神在盘里的什么位置、对应哪一柱。只列位置，不下判断 */
+function liuqinRows(){
+  const male=!!P.gender, mo='月柱，父母的位置', sp='日支，配偶的位置', ch='时柱，子女的位置';
+  const rows=[['父亲','偏财',mo],['母亲','正印',mo],['兄弟姐妹','比肩','月柱，《渊海子平》把兄弟也放在这里']]
+    .concat(male?[['妻子','正财',sp],['儿子','七杀',ch],['女儿','正官',ch]]:[['丈夫','正官',sp],['儿子','食神',ch],['女儿','伤官',ch]]);
+  return rows.map(([who,gd,gong])=>{const w=whereGod(g=>god(g)===gd);return {who,god:gd,at:w.length?w.join('、'):'原局里没有',gong};});
+}
+function noteLq(){
+  return '配法出自《渊海子平》的「六亲总篇」，点十神的名字可以看原文。'
+    +(P.gender?'':'书里讲女命时只另说了丈夫和子女，父亲、母亲和兄弟姐妹这里照男命的配法列。')
+    +'近代的《千里命稿》另有一套配法。表里列的只是这套分类办法下的位置，不能据此说这张盘的主人和哪位亲属怎样。';
+}
 /* 页面最上面的一框：这张盘先看哪几件事。只列机械的事实，顺序和下面版块的顺序相同，每一条指到对应的版块 */
 function readKey(){
   const de=gEl(DM), mz=NATAL[1].z, st=wxState(de), {cnt}=wxCounts();

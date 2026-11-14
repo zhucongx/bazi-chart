@@ -147,7 +147,7 @@ function renderPerson(){
   $('kv').innerHTML=cut<0?dl(kv):(cut?dl(kv.slice(0,cut)):'')+'<h3 class="kv-h"><span class="tag">进阶</span>各家从哪里入手找用神<small>用神是一张盘里拿来作主的字。下面几行各照一本书走一遍，不合成结论。</small></h3>'+dl(kv.slice(cut));
   $('h-gods-s').textContent=`以${DMN}为原点；加粗的是原局里出现的字`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
-  renderBars();renderGods();renderDynamic();
+  renderBars();renderGods();renderSK();renderDynamic();
 }
 function renderPan(){
   const cs=cols(), cc=(c,i)=>`${c.dyn?'dyn':''}${i===DYN-1?' last':''}${c.day?' day':''}`;
@@ -213,16 +213,78 @@ function renderRelations(){
   const stemsFirst=(a,b)=>(a.grp==='g'?0:1)-(b.grp==='g'?0:1);
   const brought=(set,top)=>relations(set).filter(r=>r.top===top).sort(stemsFirst);
   const base=relations(NATAL);
+  const byLayer=[base,brought(NATAL.concat(DY),1),brought(NATAL.concat(DY,LN),2),brought(NATAL.concat(DY,LN,LY),3),brought(NATAL.concat(DY,LN,LY,LR),4)];
   $('rel-ng').innerHTML=relChips(base.filter(r=>r.grp==='g'));
   $('rel-nz').innerHTML=relChips(base.filter(r=>r.grp==='z'));
   $('h-rdy').textContent=`大运 ${d.gz} 带来的`;
-  $('rel-dy').innerHTML=relChips(brought(NATAL.concat(DY),1));
+  $('rel-dy').innerHTML=relChips(byLayer[1]);
   $('h-rln').textContent=`流年 ${sel.y} ${ln} 带来的`;
-  $('rel-ln').innerHTML=relChips(brought(NATAL.concat(DY,LN),2));
+  $('rel-ln').innerHTML=relChips(byLayer[2]);
   $('h-rly').textContent=`流月 ${ly}（${JIE[sel.m]} ${jieMD(sel.y)[sel.m]} 起）带来的`;
-  $('rel-ly').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY),3));
+  $('rel-ly').innerHTML=relChips(byLayer[3]);
   $('h-rlr').textContent=`流日 ${lr}（${mdText(sel.d)}）带来的`;
-  $('rel-lr').innerHTML=relChips(brought(NATAL.concat(DY,LN,LY,LR),4));
+  $('rel-lr').innerHTML=relChips(byLayer[4]);
+  renderLinks(byLayer.flat());
+}
+/* 关系图：八柱横排，和细盘的列对齐。天干的关系画在上面，地支的画在下面。
+   每一组有关系的字是一条横线，各圈一个圈；线上面是关系的名字，同一组字有几种关系的（比如巳申同时是六合、相刑、相破）并排写在同一条线上。
+   互不重叠的几条排在同一行，原局的靠近干支，各层带来的往外排。
+   每个名字和下面对应的小签是同一个解释（data-x 相同）。电脑上显示这张图，窄屏上显示小签。 */
+const LK_COL={流日:0,流月:1,流年:2,大运:3,年:4,月:5,日:6,时:7};
+function renderLinks(all){
+  const cs=cols();
+  const pack=grp=>{
+    const groups=[];
+    all.filter(r=>r.grp===grp).forEach(r=>{
+      const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
+      r.inst.forEach(ks=>{
+        const ix=[...new Set(ks.map(k=>LK_COL[k]))].sort((a,b)=>a-b), id=ix.join(',');
+        let it=groups.find(o=>o.id===id);
+        if(!it){it={id,ix,a:ix[0],b:ix[ix.length-1],top:r.top,rels:[]};groups.push(it);}
+        it.rels.push({r,key});
+      });
+    });
+    groups.sort((x,y)=>x.top-y.top||(x.b-x.a)-(y.b-y.a)||x.a-y.a);
+    const rows=[];
+    groups.forEach(it=>{
+      let i=rows.findIndex(row=>row.every(o=>it.a>o.b||it.b<o.a));
+      if(i<0) i=rows.push([])-1;
+      rows[i].push(it);it.row=i;
+    });
+    return {groups,n:rows.length};
+  };
+  const g=pack('g'), z=pack('z'), head=g.n+1;
+  const link=(it,row,isG)=>{
+    const k=it.b-it.a+1, he=it.rels.map(o=>HE_TYPES.includes(o.r.t));
+    const tone=he.every(Boolean)?'':he.some(Boolean)?' mix':' bad';       // 线的颜色：都是相合一类用蓝，都是冲刑害破克用棕，两样都有用灰
+    return `<span class="lk${tone}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
+      +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}" data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
+      +'</span><span class="lk-l"></span>'
+      +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)}" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';
+  };
+  $('lkmap').innerHTML=
+    `<span class="lk-bg" style="grid-row:1/${g.n+z.n+4}"></span>`
+    +g.groups.map(it=>link(it,g.n-it.row,true)).join('')
+    +cs.map((c,i)=>`<span class="lk-h" style="grid-column:${i+2};grid-row:${head}">${c.dyn?c.k:c.k+'柱'}</span>`).join('')
+    +`<span class="lk-n" style="grid-row:${head+1}">天干</span>`+cs.map((c,i)=>`<b class="lk-c ${gCls(c.g)}" style="grid-column:${i+2};grid-row:${head+1}">${c.g}</b>`).join('')
+    +`<span class="lk-n" style="grid-row:${head+2}">地支</span>`+cs.map((c,i)=>`<b class="lk-c ${zCls(c.z)}" style="grid-column:${i+2};grid-row:${head+2}">${c.z}</b>`).join('')
+    +z.groups.map(it=>link(it,head+3+it.row,false)).join('');
+}
+/* 生克图：原局四柱，相邻的两个字之间标出谁生谁克。每一柱上面是宫位，干支旁边是十神 */
+const SK_GW=['祖辈','父母','自己 · 配偶','子女'];
+function renderSK(){
+  const badge=(a,b,v)=>{const [k,dir]=skOf(a,b), arrow=v?(dir>0?'↓':'↑'):(dir>0?'→':'←');
+    return `<span class="sk-b ${k==='生'?'sheng':k==='克'?'ke':'tong'}">${dir<0?`<i>${arrow}</i>`:''}${k==='同'?'同类':k}${dir>0?`<i>${arrow}</i>`:''}</span>`;};
+  let h='';
+  NATAL.forEach((p,i)=>{
+    const col=i*2+1, at=r=>`style="grid-column:${col};grid-row:${r}"`;
+    h+=`<span class="sk-h" ${at(1)}>${p.k}柱<small>${SK_GW[i]}</small></span><span class="sk-g" ${at(2)}>${p.day?'日主':god(p.g)}</span>`
+      +`<span ${at(3)}>${glyph('g',p)}</span><span ${at(4)}>${badge(gEl(p.g),zEl(p.z),true)}</span><span ${at(5)}>${glyph('z',p)}</span><span class="sk-g" ${at(6)}>${godZ(p.z)}</span>`;
+    if(i<3){const q=NATAL[i+1];
+      h+=`<span style="grid-column:${col+1};grid-row:3">${badge(gEl(p.g),gEl(q.g),false)}</span><span style="grid-column:${col+1};grid-row:5">${badge(zEl(p.z),zEl(q.z),false)}</span>`;}
+  });
+  $('skmap').innerHTML=h;
+  $('note-sk').textContent=noteSK();
 }
 function renderBars(){
   const {cnt,face}=wxCounts(), max=Math.max(...cnt);
@@ -230,10 +292,14 @@ function renderBars(){
 }
 const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
 function renderGods(){
-  const present=new Set(natalStems().concat(natalHidden())), de=gEl(DM), yin=isYin(DM)?1:0;
-  const cell=g=>`<td class="${present.has(g)?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）</td>`;
+  const all=natalStems().concat(natalHidden()), de=gEl(DM), yin=isYin(DM)?1:0;
+  // 每个十神在原局里出现几次：三个天干加地支里藏的天干。个数后面跟一小段同样长短的条
+  const cell=g=>{const n=all.filter(x=>x===g).length;
+    return `<td class="${n?'have':''}">${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} 处<i style="--n:${n}"></i>`:'没有'}</span></td>`;};
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
     return `<tr><td>${r[1]}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
+  $('liuqin').innerHTML=liuqinRows().map(r=>`<tr><td>${r.who}</td><td>${xb('x','tg|'+r.god,r.god)}</td><td>${r.at}</td><td>${r.gong}</td></tr>`).join('');
+  $('note-lq').textContent=noteLq();
 }
 /* 横条里选中的那一格不在看得见的范围里时，把它挪到中间 */
 function reveal(){

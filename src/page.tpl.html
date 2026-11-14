@@ -53,12 +53,12 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
 th .x,dt .x,.gods .x,.bars .x,.eyebrow .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on{background-color:var(--accent-soft);text-decoration:none}
-.x.on,.hs.on,.glyph.on,.rel.on{box-shadow:0 0 0 1.5px var(--accent)}
+.x.on,.hs.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
   .x:hover,.hs:hover{background-color:var(--tint)}
   .x.on:hover,.hs.on:hover{background-color:var(--accent-soft)}
-  .glyph:hover,.rel:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
-  .glyph.on:hover,.rel.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
+  .glyph:hover,.rel:hover,.lk-t:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
+  .glyph.on:hover,.rel.on:hover,.lk-t.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
 }
 .wood{color:var(--wood)} .fire{color:var(--fire)} .earth{color:var(--earth)} .metal{color:var(--metal)} .water{color:var(--water)}
 .defs{position:absolute;width:0;height:0;overflow:hidden}
@@ -113,6 +113,7 @@ section{background:var(--card);border:1px solid var(--line);border-radius:14px;b
 h2{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:.03em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;scroll-margin-top:20px}
 h2 small{font-family:var(--body);font-size:12.5px;font-weight:400;letter-spacing:0;color:var(--ink3)}
 h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
+h3 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
 
@@ -222,6 +223,20 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gods .have{font-weight:600}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .gods .eli .ic{width:14px;height:14px}
+/* 十神名字后面的个数：几处，加一小段同样长短的条 */
+.gn{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.gn i{display:inline-block;vertical-align:middle;margin-left:6px;width:calc(var(--n)*9px);height:6px;border-radius:3px;background:currentColor;opacity:.4}
+/* 生克图：原局四柱，相邻的两个字之间一枚小签，写着生、克或者同类，箭头从生或克的一方指向另一方 */
+.skmap{display:grid;grid-template-columns:repeat(3,auto minmax(54px,1fr)) auto;justify-items:center;align-items:center;gap:6px 0;max-width:620px}
+.sk-h{display:flex;flex-direction:column;align-items:center;font-size:13px;font-weight:600;line-height:1.4}
+.sk-h small{font-size:12px;font-weight:400;color:var(--ink3)}
+.sk-g{font-size:13px;color:var(--ink2)}
+.sk-b{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:1;padding:4px 8px;border-radius:999px;white-space:nowrap;color:var(--ink2);background:var(--wash)}
+.sk-b i{font-style:normal}
+.sk-b.sheng{color:var(--accent);background:var(--accent-soft)}
+.sk-b.ke{color:var(--warn);background:var(--warn-soft)}
+/* 关系图只在电脑上显示（样式在下面电脑那一段）；窄屏上仍然用小签 */
+.lkmap,.lk-title{display:none}
 footer{font-size:13px;color:var(--ink2)}
 footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px}
 
@@ -332,6 +347,30 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .sheet-x{font-size:13px}
   .sheet-b{gap:11px}
   .sheet-b .lb{font-size:13.5px}
+  h3 small{font-size:13px}
+  .gn{font-size:13px}
+  .skmap{gap:8px 0;max-width:780px}
+  .sk-h{font-size:14.5px}
+  .sk-h small{font-size:13px}
+  .sk-g{font-size:14px}
+  .sk-b{font-size:13px;padding:5px 10px}
+  /* 关系图：九列，第一列是行名，后八列和细盘的八列对齐。每一组有关系的字是一格，横跨它涉及的那几列：上面是关系的名字，下面是一条线和圈出来的字 */
+  .relpills{display:none}
+  .lk-title{display:block}
+  .lkmap{display:grid;grid-template-columns:68px repeat(8,minmax(0,1fr));row-gap:3px;text-align:center}
+  .lk-bg{grid-column:2/6;background:var(--wash);border-radius:10px}
+  .lk-h{padding-top:8px;font-size:13.5px;font-weight:600;color:var(--ink2)}
+  .lk-c{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.35}
+  .lk-n{grid-column:1;align-self:center;text-align:left;padding-left:8px;font-size:13px;color:var(--ink3)}
+  .lk{--lkc:var(--accent);position:relative;padding:2px 0 22px;align-self:end}
+  .lk.bad{--lkc:var(--warn)}
+  .lk.mix{--lkc:var(--ink3)}
+  .lk-ts{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 5px}
+  .lk-t{font:inherit;font-size:13px;line-height:19px;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border:0;border-radius:999px;padding:0 9px;margin:0;cursor:pointer}
+  .lk-t.bad{color:var(--warn);background:var(--warn-soft)}
+  .lk-t small{margin-left:5px;font-size:12px}
+  .lk-l{position:absolute;left:calc(50%/var(--k));right:calc(50%/var(--k));bottom:10px;height:1px;background:var(--lkc);opacity:.6}
+  .lk>i{position:absolute;bottom:0;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:21px;height:21px;border:1px solid var(--lkc);border-radius:50%;background:var(--card);font:500 12.5px/1 var(--body)}
   .pform{padding:20px 22px 22px;gap:14px 16px}
   .pform label{font-size:14px}
   .pform .btn{font-size:14px;padding:5px 16px}
@@ -369,6 +408,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .glyph[data-z]::after{display:none}
   .hs{font-size:10.5px;padding:1px 0}
   .hs small{font-size:10px;margin-left:1px}
+  .skmap{grid-template-columns:repeat(3,auto minmax(40px,1fr)) auto}
+  .skmap .glyph{width:36px}
+  .sk-h{font-size:12px}
+  .sk-h small{font-size:11px}
+  .sk-g{font-size:11.5px}
+  .sk-b{font-size:10.5px;padding:3px 5px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
 }
 @media (max-width:379px){
@@ -380,7 +425,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .hs small{font-size:9px}
 }
 @media (prefers-reduced-motion:no-preference){
-  .pk,.pp,.x,.glyph,.hs,.rel,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,box-shadow .12s,left .12s}
+  .pk,.pp,.x,.glyph,.hs,.rel,.lk-t,.switch .knob,.switch .knob::after{transition:border-color .12s,background-color .12s,box-shadow .12s,left .12s}
   .sheet:not([hidden]){animation:pop .14s ease-out}
   @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 }
@@ -484,6 +529,14 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <tbody id="gods"></tbody>
     </table>
   </div>
+  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+      <tbody id="liuqin"></tbody>
+    </table>
+  </div>
+  <p class="note" id="note-lq"></p>
   <div class="read" id="rd-gods"></div>
 </section>
 
@@ -502,22 +555,26 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </div>
 
 <section aria-labelledby="h-rel">
-  <h2 id="h-rel">干支关系 <small>原局一组，大运、流年、流月、流日各自带来的各一组</small></h2>
-  <div class="relblock">
+  <h2 id="h-rel">干支关系 <small>相邻的字谁生谁克；原局和大运、流年、流月、流日之间的合、冲、刑、害</small></h2>
+  <h3>原局四柱 <small>相邻的两个字，按五行看谁生谁克</small></h3>
+  <div class="skmap" id="skmap"></div>
+  <p class="note" id="note-sk"></p>
+  <h3 class="lk-title">合、冲、刑、害 <small>每条线上圈出来的是有关系的字，天干的在上面，地支的在下面</small></h3>
+  <div class="lkmap" id="lkmap"></div>
+  <div class="relblock relpills">
     <h3>原局 · 天干</h3>
     <div class="rels" id="rel-ng"></div>
     <h3>原局 · 地支</h3>
     <div class="rels" id="rel-nz"></div>
   </div>
-  <p class="note">蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</p>
+  <p class="note">蓝色是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），棕色是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
   <div class="read" id="rd-rel"></div>
-  <div class="relgrid">
+  <div class="relgrid relpills">
     <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
     <div><h3 id="h-rln"></h3><div class="rels" id="rel-ln"></div></div>
     <div><h3 id="h-rly"></h3><div class="rels" id="rel-ly"></div></div>
     <div><h3 id="h-rlr"></h3><div class="rels" id="rel-lr"></div></div>
   </div>
-  <p class="note">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</p>
   <div class="read" id="rd-rel2"></div>
 </section>
 
