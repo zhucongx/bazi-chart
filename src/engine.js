@@ -62,9 +62,13 @@ function relations(cols){
   };
   const zs=cols.map(c=>c.z), has=z=>zs.includes(z);
   const full=tri=>tri.slice(0,3).every(has);
-  SANHE.forEach(t=>{if(full(t)) add('z','支','三合',t.slice(0,3).join(''),t[3],cols.filter(c=>t.slice(0,3).includes(c.z)));});
-  SANHUI.forEach(t=>{if(full(t)) add('z','支','三会',t.slice(0,3).join(''),t[3],cols.filter(c=>t.slice(0,3).includes(c.z)));});
-  SANXING.forEach(t=>{if(full(t)) add('z','支','三刑',t.join(''),'',cols.filter(c=>t.includes(c.z)));});
+  /* 三个字凑成的关系算在凑齐它的那一层：每个字取最早带来它的一层，三个里最晚的那一层就是凑齐的一层。
+     下面一层已经凑齐的，上面一层再来一个同样的字，不算新带来的关系，不再列一遍 */
+  const trio=tri=>{const lay=c=>c.layer||0, top=Math.max(...tri.map(z=>Math.min(...cols.filter(c=>c.z===z).map(lay))));
+    return cols.filter(c=>tri.includes(c.z)&&lay(c)<=top);};
+  SANHE.forEach(t=>{if(full(t)) add('z','支','三合',t.slice(0,3).join(''),t[3],trio(t.slice(0,3)));});
+  SANHUI.forEach(t=>{if(full(t)) add('z','支','三会',t.slice(0,3).join(''),t[3],trio(t.slice(0,3)));});
+  SANXING.forEach(t=>{if(full(t)) add('z','支','三刑',t.join(''),'',trio(t));});
   for(let i=0;i<cols.length;i++) for(let j=i+1;j<cols.length;j++){
     const A=cols[i],B=cols[j],ps=[A,B];
     const gk=A.g+B.g;
