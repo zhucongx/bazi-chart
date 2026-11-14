@@ -104,6 +104,15 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pp:hover{border-color:var(--ink3)}
 .pp[aria-pressed="true"]{color:var(--accent);font-weight:600;border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .pp.add{border-style:dashed;background:none}
+.pp small.from{margin-left:6px;font-size:11px;font-weight:400;color:var(--ink3)}
+/* 分享框，和从链接打开、还没保存的人上面那一条 */
+.share,.pp-link{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.share[hidden],.pp-link[hidden]{display:none}
+.share-t,.pp-link p{margin:0;font-size:13px;color:var(--ink2)}
+.share-row,.pp-link .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.share-row input{flex:1 1 240px;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.pp-link label{font-size:13px;color:var(--ink2)}
+.pp-link select{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px 6px}
 .hint{margin:0;font-size:12px;color:var(--ink3)}
 .hint[hidden]{display:none}
 .pform{margin:0;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px;align-items:end}
@@ -145,7 +154,7 @@ h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
 h3 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
-/* 带标签栏的卡片有两张：原局（日主、五行、十神、六亲、用神）和排盘（四柱细盘、干支关系、根和透），各自一次显示一页。
+/* 带标签栏的卡片有两张：原局（日主、五行、强弱、十神、喜忌）和排盘（四柱细盘、干支关系、根和透、大运流年），各自一次显示一页。
    标签就是卡片的标题，所以用宋体：选中的是墨色，下面一道钴蓝的线；其余的是淡墨色。换页由 ui.js 的 setTab 完成。
    每一页开头一行小字（.sub）说这一页讲什么 */
 .tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
@@ -193,13 +202,13 @@ table{border-collapse:collapse;width:100%}
 .pan .big td{padding:8px 2px}
 .pan .multi td{padding:6px 2px}
 .pan .dyn{background:var(--wash)}
-.pan .dyn.last{border-right:1px solid var(--line)}
-.pan .day{box-shadow:inset 1px 0 0 var(--line),inset -1px 0 0 var(--line)}
+.pan tr>*+*+*{box-shadow:inset 1px 0 0 var(--line)}      /* 每两列之间一条细线。原来只在日柱两边画线，年柱和月柱之间看着像没分开（用户问过「年月之间为啥没有分格」） */
 .pan tr:last-child th,.pan tr:last-child td{border-bottom:0}
 .pan .sm{font-size:13px;color:var(--ink2)}
 .pan .ss{display:block;padding:2px 0;font-size:12px;color:var(--ink2)}
 .pan .ss .x{padding:0 2px}
 .pan .ss .no{color:var(--ink3)}
+.pan.bz{min-width:0}      /* 八字一页只有原局四列，不用撑到八列的宽度 */
 /* 干支大字：一块淡色的底，右上角是五行的小图标，地支的右下角是生肖 */
 .glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;border:0;border-radius:12px;padding:0;cursor:pointer}
 .glyph.wood{background:var(--wood-s)} .glyph.fire{background:var(--fire-s)} .glyph.earth{background:var(--earth-s)} .glyph.metal{background:var(--metal-s)} .glyph.water{background:var(--water-s)}
@@ -224,6 +233,13 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
 .pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
+/* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
+.pk .mb{display:flex;align-items:center;gap:4px;align-self:stretch;margin:4px 6px 0}
+.pk .mb-bar{flex:1;display:flex;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.pk .mb-fill{display:flex;gap:1px;height:100%}
+.pk .mb-fill i{display:block;height:100%;background:currentColor}
+.pk .mb b{min-width:1.3em;font-size:11px;font-weight:600;line-height:1;color:var(--ink2);text-align:right}
+#card-pan .tabbar{margin-top:8px}
 #liuri .pk.now::after{content:"今天"}
 .pk.now::after{content:"当前";position:absolute;top:-8px;right:6px;font-size:10.5px;line-height:1;letter-spacing:.06em;padding:3px 4px 3px 5px;border-radius:4px;background:var(--seal);color:var(--seal-ink)}
 
@@ -324,7 +340,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qt b{font-size:20px;font-weight:650;line-height:1.3;color:var(--ink)}
 .qs-li{margin:0;padding-left:1.3em;font-size:13.5px;color:var(--ink2);columns:2 260px;column-gap:28px}
 .qs-li li{break-inside:avoid;margin-bottom:3px}
-.qx-row{display:flex;flex-wrap:wrap;gap:12px 36px;padding-top:14px;border-top:1px solid var(--line)}
+.xi{display:flex;flex-wrap:wrap;gap:10px 36px;align-items:flex-end;padding:16px 18px;border:1px solid var(--line);border-radius:14px}      /* 喜忌一页最上面：扶抑取的喜用和忌 */
+.xi .sub{flex-basis:100%}
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
 .qx b{display:flex;flex-wrap:wrap;gap:8px}
@@ -365,26 +382,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .qx{min-width:0;flex:1 1 120px}
 }
-/* 大运流年一页的四排柱子（renderSy）。.tb 一根柱子是一个按钮：上面是分数，柱子的高低照这一柱的喜用分（满分 13），下面是干支和时间；
-   选中的样子和选择器的卡片一样。流日一排柱子多，.many 收窄，干支竖着排 */
-.trend{display:flex;flex-direction:column;gap:16px}
-.tr-row{display:flex;flex-direction:column;gap:6px;min-width:0}
-.tbars{display:flex;gap:4px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
-.tb{flex:1 0 40px;display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;color:var(--ink);background:none;border:1px solid transparent;border-radius:8px;padding:4px 2px 5px;cursor:pointer;font-variant-numeric:tabular-nums}
-.tb:hover{border-color:var(--line)}
-.tb[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
-.tb .v{font-size:12.5px;font-weight:600;line-height:1.2}
-.tb .bar{position:relative;display:block;width:18px;height:84px;border-radius:4px;background:var(--line);overflow:hidden}
-.tb .fill{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column-reverse}
-.tb .fill i{display:block;min-height:0;background:currentColor}
-.tb .fill i+i{margin-bottom:1px}
-.tb .gz{font-family:var(--display);font-weight:700;font-size:14px;line-height:1.15;white-space:nowrap}
-.tb small{font-size:11px;line-height:1.2;color:var(--ink3);white-space:nowrap}
-.tbars.many{gap:2px}
-.tbars.many .tb{flex:1 0 26px;padding:3px 1px 4px}
-.tbars.many .bar{width:12px;height:70px}
-.tbars.many .gz{display:flex;flex-direction:column;font-size:12.5px}
-.tbars.many .v{font-size:11px}
 .lg .x{font-size:inherit}
 .lg .rest i{background:var(--line)}
 .stkw{display:block;max-width:220px;margin-top:6px}
@@ -555,16 +552,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .qx b span{height:42px;font-size:23px}
   .wxrow{grid-template-columns:400px minmax(0,1fr);gap:24px 40px}
   .qs-t{font-size:26px}
-  .tbars{gap:6px}
-  .tb{flex-basis:48px}
-  .tb .bar{width:22px;height:110px}
-  .tb .gz{font-size:16px}
-  .tb .v{font-size:13.5px}
-  .tb small{font-size:12px}
-  .tbars.many{gap:3px}
-  .tbars.many .tb{flex-basis:30px}
-  .tbars.many .bar{width:14px;height:90px}
-  .tbars.many .gz{font-size:13.5px}
   .lg{font-size:13.5px}
   .sy .gz{font-size:19px}
   .layers{gap:10px}
@@ -631,6 +618,9 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gt-c small{display:block}
 }
 @media (max-width:560px){
+  .tabbar{gap:0 12px}      /* 窄屏上标签不带图标：原局六个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行 */
+  .tab{font-size:16px}
+  .tab .ic{display:none}
   .layers>div{grid-template-columns:1fr}
   .prow{grid-template-columns:1fr}
   .prow h3{flex-direction:row;align-items:baseline;gap:8px}
@@ -662,9 +652,20 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .glyph[data-z]::after{display:none}
   .hs{font-size:10.5px;padding:1px 0}
   .hs small{font-size:10px;margin-left:1px}
+  /* 八字一页只有原局四列，手机上每列有七十多像素：字块和字号放回接近电脑的样子，生肖照常显示，四个字的神煞不折行 */
+  .pan.bz thead th{font-size:12.5px}
+  .pan.bz thead th:first-child{width:34px}
+  .pan.bz thead small{font-size:11px}
+  .pan.bz tbody th{font-size:11.5px}
+  .pan.bz .sm{font-size:13px}
+  .pan.bz .ss{font-size:12px}
+  .pan.bz .ss .w4{padding:2px 0}
+  .pan.bz .glyph{max-width:54px;height:54px;font-size:28px;border-radius:11px}
+  .pan.bz .glyph .ic{top:4px;right:4px;width:11px;height:11px}
+  .pan.bz .glyph[data-z]::after{display:block;right:5px;bottom:4px;font-size:9.5px}
+  .pan.bz .hs{font-size:12.5px;padding:2px 0}
+  .pan.bz .hs small{font-size:11px;margin-left:2px}
   .sheet-b p{grid-template-columns:4.6em minmax(0,1fr);gap:0 10px}
-  .tabbar{gap:0 16px}
-  .tab{font-size:17px}
   /* 根和透在手机上：和细盘一样每列不到 40 像素，格子里只留那个字，「本气」「透」两个小字不显示，靠淡底和圈来分 */
   .gt{min-width:0}
   .gt th,.gt td{padding:3px 0}
@@ -705,6 +706,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <symbol id="i-metal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><rect x="9.1" y="9.1" width="5.8" height="5.8" rx=".7"/></symbol>
   <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3c3.1 4 6.1 7.2 6.1 10.9a6.1 6.1 0 0 1-12.2 0C5.9 10.2 8.9 7 12 3z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.5 2.6"/></symbol>
   <!-- 标签栏每一页的图标（i-t-名字），日主一页四个方块名目前的图标（i-q-…） -->
+  <symbol id="i-t-bz" viewBox="0 0 24 24"><rect x="3.6" y="4.4" width="16.8" height="15.2" rx="2.2"/><path d="M3.6 12h16.8M7.8 4.4v15.2M12 4.4v15.2M16.2 4.4v15.2"/></symbol>
   <symbol id="i-t-tk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="2.4"/></symbol>
   <symbol id="i-t-wx" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2"/><circle cx="19.2" cy="9.8" r="2"/><circle cx="16.4" cy="18.2" r="2"/><circle cx="7.6" cy="18.2" r="2"/><circle cx="4.8" cy="9.8" r="2"/><path d="M13.7 5.8l3.8 2.8M18.6 11.7l-1.5 4.6M14.4 18.2H9.6M6.9 16.3l-1.5-4.6M6.5 8.6l3.8-2.8"/></symbol>
   <symbol id="i-t-gods" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.2"/><path d="M12 7.8v8.4M7.8 12h8.4"/></symbol>
@@ -734,6 +736,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="people" id="people" role="group" aria-label="选择命盘"></div>
   <p class="hint" id="pp-hint" hidden></p>
+  <div class="pp-link" id="pp-link" hidden></div>
+  <div class="share" id="share" hidden>
+    <p class="share-t" id="share-t"></p>
+    <div class="share-row"><input id="share-url" type="text" readonly aria-label="分享链接"><button type="button" class="pp" id="share-copy">复制</button><button type="button" class="pp add" id="share-x">关闭</button></div>
+    <p class="hint" id="share-msg" aria-live="polite"></p>
+  </div>
   <form class="pform" id="pform" autocomplete="off" hidden>
     <label>称呼<input type="text" id="pf-name" maxlength="20" placeholder="比如：我"></label>
     <label>性别<select id="pf-gender"><option value="男">男</option><option value="女">女</option></select></label>
@@ -769,18 +777,37 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 
 <section id="card-natal" aria-label="原局">
   <div class="tabbar" role="tablist" aria-label="原局">
-    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-tk"/></svg>日主</button>
+    <button class="tab" type="button" role="tab" id="h-bz" data-tab="natal:bz" aria-controls="p-bz" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-bz"/></svg>八字</button>
+    <button class="tab" type="button" role="tab" id="h-tk" data-tab="natal:tk" aria-controls="p-tk" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-tk"/></svg>日主</button>
     <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-wx"/></svg>五行</button>
+    <button class="tab" type="button" role="tab" id="h-qr" data-tab="natal:qr" aria-controls="p-qr" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-q-ga"/></svg>强弱</button>
     <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
-    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-lq"/></svg>六亲</button>
-    <button class="tab" type="button" role="tab" id="h-gw" data-tab="natal:gw" aria-controls="p-gw" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gw"/></svg>宫位</button>
-    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>用神</button>
+    <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>喜忌</button>
   </div>
-  <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk">
+  <div class="panel split" role="tabpanel" id="p-bz" aria-labelledby="h-bz">
     <div class="pane">
-      <p class="sub">日主是什么，八个字的阴阳，两项参考；下面是它在地支里的根、生它的印、月令透出的字</p>
+      <p class="sub">出生时的四柱，也叫原局，读盘从这里开始。每一格都可以点开看解释</p>
+      <div class="tablewrap">
+        <table class="pan bz">
+          <thead>
+            <tr>
+              <th></th>
+              <th scope="col"><button class="x" type="button" data-x="col|年">年柱</button><small>祖辈</small></th>
+              <th scope="col"><button class="x" type="button" data-x="col|月">月柱</button><small>父母</small></th>
+              <th class="day" scope="col"><button class="x" type="button" data-x="col|日">日柱</button><small><span class="nb">自己</span><span class="wide"> · </span><wbr><span class="nb">配偶</span></small></th>
+              <th scope="col"><button class="x" type="button" data-x="col|时">时柱</button><small>子女</small></th>
+            </tr>
+          </thead>
+          <tbody id="bz"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="read" id="rd-bz"></div>
+  </div>
+  <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk" hidden>
+    <div class="pane">
+      <p class="sub">日主是什么，八个字的阴阳；旺衰和格局是后面「强弱」「十神」两页的结论，先在这里列出来</p>
       <div class="quad" id="quad"></div>
-      <div class="kvs" id="kv"></div>
     </div>
     <div class="read" id="rd-tk"></div>
   </div>
@@ -807,8 +834,17 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <div class="read" id="rd-wx"></div>
     </div>
   </div>
+  <div class="panel" role="tabpanel" id="p-qr" aria-labelledby="h-qr" hidden>
+    <p class="sub">日主是强是弱：先看月令和季节，再看根、印和月令透出的字，最后是两种看强弱的办法</p>
+    <div class="kvs" id="kv"></div>
+    <div class="qs" id="qs"></div>
+    <div class="kvs" id="kv-qr"></div>
+    <p class="note" id="note-qr"></p>
+    <div class="read" id="rd-qr"></div>
+  </div>
   <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
     <p class="sub" id="h-gods-s"></p>
+    <div class="kvs" id="kv-gj"></div>
     <div class="tablewrap">
       <table class="gods">
         <thead><tr><th scope="col">关系和合称</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
@@ -820,47 +856,28 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <div class="read" id="rd-gods"></div>
     </div>
   </div>
-  <div class="panel" role="tabpanel" id="p-lq" aria-labelledby="h-lq" hidden>
-    <p class="sub">每一位亲属看哪个十神，这个十神在盘里的什么位置</p>
-    <div class="tablewrap">
-      <table class="gods">
-        <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-        <tbody id="liuqin"></tbody>
-      </table>
-    </div>
-    <p class="note" id="note-lq"></p>
-    <div class="read" id="rd-lq"></div>
-  </div>
-  <div class="panel" role="tabpanel" id="p-gw" aria-labelledby="h-gw" hidden>
-    <p class="sub">四柱各配一类亲属。每一柱里有哪些十神，和别的柱有什么关系，在五行能量里占几分</p>
-    <div class="tablewrap" id="gwmap"></div>
-    <p class="note" id="note-gw"></p>
-    <div class="read" id="rd-gw"></div>
-  </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
-    <p class="sub">用神是一张盘里拿来作主的字。最上面是强弱和照扶抑取的喜用，下面几行各照一本书走一遍，不合成结论</p>
-    <div class="qs" id="qs"></div>
+    <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，下面几行各照一本书走一遍，不合成结论</p>
+    <div class="xi" id="xi"></div>
     <div class="kvs" id="kv2"></div>
     <div class="read" id="rd-ys"></div>
   </div>
 </section>
 
-<section aria-labelledby="h-yun">
-  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选；选中的四层排在下面的前四列，下面那张卡片的四页都跟着变</small></h2>
+<section id="card-pan" aria-labelledby="h-yun">
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选，选中的四层排在下面各页的前四列；每张小卡底下的条是那一柱的喜用分</small></h2>
+  <p class="lg" id="sy-lg"></p>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
   <dl class="meta" id="meta-yun"></dl>
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
   <div class="prow"><h3 id="h-ly"></h3><div class="picker" id="liuyue" role="group" aria-label="流月"></div></div>
   <div class="prow"><h3 id="h-lr"></h3><div class="picker" id="liuri" role="group" aria-label="流日"></div></div>
   <p class="note" id="note-yun"></p>
-</section>
-
-<section id="card-pan" aria-label="排盘">
   <div class="tabbar" role="tablist" aria-label="排盘">
     <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-pan"/></svg>四柱细盘</button>
     <button class="tab" type="button" role="tab" id="h-rel" data-tab="pan:rel" aria-controls="p-rel" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-rel"/></svg>干支关系</button>
     <button class="tab" type="button" role="tab" id="h-gt" data-tab="pan:gt" aria-controls="p-gt" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gt"/></svg>根和透</button>
-    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-sy"/></svg>大运流年</button>
+    <button class="tab" type="button" role="tab" id="h-sy" data-tab="pan:sy" aria-controls="p-sy" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-sy"/></svg>计分</button>
   </div>
   <div class="panel" role="tabpanel" id="p-pan" aria-labelledby="h-pan">
     <p class="sub">后四列是出生时的四柱，也叫原局；前四列是上面选中的流日、流月、流年和大运</p>
@@ -911,11 +928,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-gt"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
-    <p class="sub">每一柱带来的 13 分里，喜用的五行占几分。下面的表是选中的四层各带来的分数，最后是它们各是日主的什么十神</p>
-    <p class="lg" id="sy-lg"></p>
-    <div class="trend" id="trend"></div>
-    <p class="note" id="note-syfig"></p>
-    <div class="read" id="rd-tr"></div>
+    <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条，就是那一柱的 13 分里喜用占几分</p>
     <div class="tablewrap">
       <table class="gods sy">
         <thead id="sy-h"></thead>
@@ -923,8 +936,27 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </table>
     </div>
     <p class="note" id="note-sy"></p>
+    <p class="note" id="note-syfig"></p>
+    <div class="read" id="rd-tr"></div>
     <div class="read" id="rd-yun"></div>
   </div>
+</section>
+
+<section id="card-lq" aria-labelledby="h-lq">
+  <h2 id="h-lq">六亲 · 宫位 <small>典籍里给人事分类的两种办法：十神配亲属叫六亲，四柱配亲属叫宫位。它们不在强弱、格局、喜忌这条读盘的线上，所以单独放在最后；页面只列位置，不下断语</small></h2>
+  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
+  <div class="tablewrap">
+    <table class="gods">
+      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+      <tbody id="liuqin"></tbody>
+    </table>
+  </div>
+  <p class="note" id="note-lq"></p>
+  <h3>宫位 <small>四柱各配一类亲属；每一柱里有哪些十神，和别的柱有什么关系</small></h3>
+  <div class="tablewrap" id="gwmap"></div>
+  <p class="note" id="note-gw"></p>
+  <div class="read" id="rd-lq"></div>
+  <div class="read" id="rd-gw"></div>
 </section>
 
 <footer>
