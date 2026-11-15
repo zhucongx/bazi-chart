@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-15",
- "total": 322,
- "hash": 2532889665,
+ "total": 345,
+ "hash": 2514843044,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -87,12 +87,28 @@
   },
   "qlmg": {
    "book": "《千里命稿》",
-   "quotes": 24,
+   "quotes": 34,
    "pages": [
     "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_4.html",
     "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_8.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_12.html",
     "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_16.html",
     "https://www.iwzbz.com/artical/pcbook/v2/3_1_3_21.html"
+   ]
+  },
+  "zpjz": {
+   "book": "《子平真诠评注》",
+   "quotes": 3,
+   "pages": [
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_2_3.html"
+   ]
+  },
+  "dtcw": {
+   "book": "《滴天髓阐微》",
+   "quotes": 10,
+   "pages": [
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_7_15.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_7_47.html"
    ]
   },
   "zpzq": {
