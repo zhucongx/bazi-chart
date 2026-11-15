@@ -236,8 +236,8 @@ function fillCircle(id,x,y,r,frac){
 }
 /* 两张生克图的圈照什么数：图上方三个按钮，记在 MAPBY 里，也存进浏览器（bz-map），读写都包在 try/catch 里。
    五行图默认五行能量；十神图默认含藏干数，和十神表的个数一样。2026-11-15 用户要的：照五行一页三种数法的样子，给图加几个按钮换着看 */
-const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']]};
-const MAPBY={wx:'nl',gods:'cnt'};
+const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神']]};
+const MAPBY={wx:'nl',gods:'cnt',yun:'fy'};      // yun：选择器小卡底下的条照哪一种看法（text.js 的 yunBasis）
 try{const m=JSON.parse(localStorage.getItem('bz-map')||'{}');Object.keys(MAPBY).forEach(k=>{if(MAP_OPTS[k].some(o=>o[0]===m[k])) MAPBY[k]=m[k];});}catch(e){}
 const mapSeg=(k,sub)=>`<div class="seg" role="group" aria-label="圈照什么数">${MAP_OPTS[k].map(([v,l])=>`<button type="button" data-map="${k}:${v}" aria-pressed="${MAPBY[k]===v}">${l}</button>`).join('')}</div><p class="seg-s">${sub}</p>`;
 /* 五行一页的生克图：只画五行。火在最上面，顺时针是相生的次序。圈填多少照选中的数法（五行个数、含藏干数、五行能量），最多的一行填满；圈旁边写数。
@@ -348,7 +348,7 @@ function renderYunRead(){
   const x=xiNow(), say=gz=>{
     const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h), v=xiPillar(gz).score;
     return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`)
-      +(x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
+      +(yunBasis().mode==='ys'?`这一柱的 13 分里${yunBasis().short}占 ${v} 分。`:x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
   };
   $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
 }
@@ -472,7 +472,9 @@ function renderSy(){
   const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
   // 图例：选择器小卡底下的条里算进去的几种五行
-  $('sy-lg').innerHTML='<span>小卡底下的条</span>'+(x.xi?`${xb('x','xi','喜用（扶抑）')}`:`<span>不定喜用，画帮日主的</span>`)+want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span><span>满分 13</span>';
+  // 图例：选择器小卡底下的条照哪一种看法（两个按钮，用神不定的盘不能点用神），算进去的几种五行
+  const yb=yunBasis(), seg=`<span class="seg inl" role="group" aria-label="小卡底下的条照哪一种看法">${MAP_OPTS.yun.map(([v,l])=>`<button type="button" data-map="yun:${v}" aria-pressed="${yb.mode===v}"${v==='ys'&&!yb.canYs?' disabled title="这张盘的用神不定"':''}>${l}</button>`).join('')}</span>`;
+  $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+(yb.mode==='ys'?xb('x','ys|用神','用神和喜神'):x.xi?xb('x','xi','喜用（扶抑）'):'<span>不定喜用，画帮日主的</span>')+yb.want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span><span>满分 13</span>';
   $('note-syfig').textContent=noteSyFig();
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }
@@ -862,10 +864,11 @@ document.addEventListener('click',e=>{
   }
   if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
-  if(b.dataset.map){        // 生克图上方的按钮：换圈照的数法，图重画，焦点放回同一个按钮
+  if(b.dataset.map){        // 生克图、选择器图例里的按钮：换数法或者看法，重画，焦点放回同一个按钮
+    if(b.disabled) return;
     const [k,v]=b.dataset.map.split(':');
     if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
-      if(k==='wx'){renderBars();renderWxMap();} else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换
+      if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
       refreshSheet();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
