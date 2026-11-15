@@ -164,7 +164,18 @@ p{margin:0}
 .tab[aria-selected="true"] .ic{color:var(--accent);opacity:1}
 .panel,.pane{display:flex;flex-direction:column;gap:14px;min-width:0}
 .panel[hidden]{display:none}
-.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:22px 40px;align-items:start}      /* 五行一页：五行个数、含藏干数、五行能量三种数法并排，窄了就上下排 */
+/* 说明的小字（.note）和解读（.read）放在哪里：紧跟着它讲的那一块，先是说明，再是解读。
+   那一块窄（图、六亲表）就放在它右边，顶端对齐（.beside 里的 .side）；那一块占满整行（八列的表、关系图）就放在它下面。
+   几栏并排的地方，说明不放进某一栏里把这一栏撑高，免得下一行之前空出一块 */
+.beside{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 40px;align-items:start}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* 五行一页：三种数法、生克图和解读在同一张网格里。一栏时从上往下排；两栏时五行能量和生克图并排，解读占满一行；
+   三栏（电脑那一段）时生克图接在五行个数下面，另外两栏的说明接在各自的条下面，解读接在说明下面 */
+.wxgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px 40px;align-items:start}
+.wxgrid>.read{grid-column:1/-1}
+@media (min-width:720px){
+  .wxgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 .sub{font-size:12.5px;color:var(--ink3)}
 
 .read{background:var(--wash);border-radius:10px;padding:13px 17px 15px;font-size:14px;display:flex;flex-direction:column;gap:8px}
@@ -172,6 +183,9 @@ p{margin:0}
 .read ol,.read ul{margin:0;padding-left:1.4em}
 .read li{margin:0 0 6px;break-inside:avoid}
 .read li:last-child{margin-bottom:0}
+.read .cols{columns:2 280px;column-gap:40px}      /* 框够宽（两栏各有 280 像素）才分两栏：占满整行的框分两栏，放在右边一栏里的框不分 */
+.read .cols>p{margin:0 0 8px;break-inside:avoid}
+.read .cols>p:last-child{margin-bottom:0}
 .read>p:not(.rd-h){max-width:46em}
 .read b{font-weight:600}
 .read a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
@@ -235,7 +249,15 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
 .pk[aria-pressed="true"] .ag{color:var(--ink2)}      /* 选中的卡是淡蓝底，浅灰字对比度不够 */
 /* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
-.pk .mb{display:flex;align-items:center;gap:4px;align-self:stretch;margin:4px 6px 0}
+/* 小卡底下的条能点开明细：和别处夹在文字里的可点词一样，分数带虚线下划线，悬停垫淡钴蓝，点开淡蓝底加一圈钴蓝。
+   上下左右各留一点，手指好点；外边距扣回来，卡片的高度不变 */
+.pk .mb{display:flex;align-items:center;gap:4px;align-self:stretch;margin:0 2px -5px;padding:4px 4px 5px;border-radius:6px;cursor:pointer}
+.pk .mb b{text-decoration:underline dotted var(--ink3);text-underline-offset:2px}
+.pk .mb.on{background-color:var(--accent-soft);box-shadow:0 0 0 1.5px var(--accent)}
+@media (hover:hover){
+  .pk .mb:hover{background-color:var(--tint)}
+  .pk .mb.on:hover{background-color:var(--accent-soft)}
+}
 .pk .mb-bar{flex:1;display:flex;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
 .pk .mb-fill{display:flex;gap:1px;height:100%}
 .pk .mb-fill i{display:block;height:100%;background:currentColor}
@@ -344,6 +366,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qs-li li{break-inside:avoid;margin-bottom:3px}
 .xi{display:flex;flex-wrap:wrap;gap:10px 36px;align-items:flex-end;padding:16px 18px;border:1px solid var(--line);border-radius:14px}      /* 喜忌一页最上面：扶抑取的喜用和忌 */
 .xi .sub{flex-basis:100%}
+.xi-sep{flex-basis:100%;border-top:1px dashed var(--line)}      /* 上面一排是扶抑的两组，下面一排是用神和四个名目 */
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
 .qx b{display:flex;flex-wrap:wrap;gap:8px}
@@ -351,7 +374,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qx b span .ic{width:16px;height:16px}
 /* 五行一页的生克图（renderWxMap）：五行排成一圈，相邻的相生是实线，隔一个的相克是虚线，箭头指向被生、被克的一方。
    圈里的字和淡底是五行自己的颜色，圈下面是这一类十神的合称；日主所属的一行圈加粗。线都是墨色，颜色只留给五行 */
-.wxrow{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:center}
 .wxmap{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
 .wxmap svg{display:block;width:100%;max-width:320px;height:auto}
 .wxmap line{stroke:var(--ink3);stroke-width:1.3}
@@ -377,6 +399,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
 .wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
 .wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
+/* 生克图上方的按钮：圈照什么数。选中的和人物、大运这些「选中」一样，是钴蓝的边框和淡蓝底；下面一行小字说这种数法数的是什么 */
+.seg{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.seg button{font:inherit;font-size:12.5px;line-height:1.4;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+@media (hover:hover){.seg button:hover{border-color:var(--ink3)} .seg button[aria-pressed="true"]:hover{border-color:var(--accent)}}
+.seg-s{font-size:12px;color:var(--ink3);text-align:center}
 .wxmap figcaption{max-width:320px;font-size:12.5px;line-height:1.6;color:var(--ink3);text-align:center}
 .qx b.no{font-size:16px;font-weight:600;color:var(--ink2)}
 @media (max-width:599px){      /* 手机上日主那一小块横过来放在上面，下面的四块排成两列 */
@@ -445,9 +473,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 .sheet-b .lb{font-size:12.5px;font-weight:600;line-height:1.85;color:var(--accent)}
 .sheet-b .tx{min-width:0;overflow-wrap:anywhere}
 
-@media (min-width:760px){
-  .read .cols{columns:2;column-gap:40px}
-}
 /* 电脑上：页面放宽到 1280，字和间距都大一档。细盘里行名和内容仍然从同一条线起头：行名上面留 10，格子是 3 加 7、8 加 2 */
 @media (min-width:900px){
   body{font-size:16px}
@@ -468,10 +493,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .tab{font-size:21px;padding-bottom:12px}
   .sub{font-size:13.5px}
   .panel,.pane{gap:18px}
-  /* 内容窄的一页（日主）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
+  /* 内容窄的两页（八字、日主）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
   .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
   :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
-  .split .read .cols{columns:1}
+  /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面 */
+  .beside.fig{grid-template-columns:400px minmax(0,1fr)}
+  .side{gap:18px}
   .gt th,.gt td{padding:5px 2px}
   .gt thead th{padding:10px 4px;font-size:14.5px;line-height:26px}
   .gt thead th:first-child{width:68px}
@@ -557,7 +584,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .qs-dm b{width:76px;height:76px;border-radius:16px;font-size:40px}
   .qt b{font-size:22px}
   .qx b span{height:42px;font-size:23px}
-  .wxrow{grid-template-columns:400px minmax(0,1fr);gap:24px 40px}
   .qs-t{font-size:26px}
   .lg{font-size:13.5px}
   .sy .gz{font-size:19px}
@@ -627,6 +653,21 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 }
 @media (min-width:1100px){
   .gt-c small{display:block}
+  /* 表和右边一栏并排：右边一栏 340 像素，表占剩下的七百来像素。再窄，表里的字就挤得折行，所以上下排 */
+  .beside{grid-template-columns:minmax(0,1fr) minmax(0,340px)}
+  .beside .gods th:nth-child(-n+2),.beside .gods td:nth-child(-n+2){white-space:nowrap}
+}
+@media (min-width:1200px){
+  /* 五行一页三栏，每栏三百三十像素以上才分，再窄说明太长、解读也分不成两栏。三栏用 subgrid 共用四行：
+     第一行标题，第二行条，第三行另外两栏的说明，第四行解读。生克图接在五行个数的条下面，跨第三、四行；
+     第四行是 1fr，图比说明加解读高的时候，多出来的只加在第四行，说明和解读之间不空 */
+  .wxgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto 1fr;row-gap:18px}
+  .wxgrid>.pane{display:grid;grid-template-rows:subgrid;grid-row:1/span 3;row-gap:18px}
+  .wxgrid>.pane:nth-child(1){grid-column:1;grid-row:1/span 2}
+  .wxgrid>.pane:nth-child(2){grid-column:2}
+  .wxgrid>.pane:nth-child(3){grid-column:3}
+  .wxgrid>.wxmap{grid-column:1;grid-row:3/span 2}
+  .wxgrid>.read{grid-column:2/span 2;grid-row:4}
 }
 @media (max-width:560px){
   .tabbar{gap:0 12px}      /* 窄屏上标签不带图标：原局六个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行 */
@@ -838,7 +879,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
     <p class="sub">五行各有多少，三种数法：只数盘面的八个字，连地支里藏的天干一起数，照一种算法换成分数</p>
-    <div class="duo">
+    <div class="wxgrid">
       <div class="pane">
         <h3>五行个数 <small>只数盘面的八个字</small></h3>
         <div class="bars c3" id="bars0"></div>
@@ -853,8 +894,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <div class="bars nl" id="bars2"></div>
         <p class="note" id="note-nl"></p>
       </div>
-    </div>
-    <div class="wxrow">
       <figure class="wxmap" id="wxmap"></figure>
       <div class="read" id="rd-wx"></div>
     </div>
@@ -876,13 +915,16 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <tbody id="gods"></tbody>
       </table>
     </div>
-    <div class="wxrow">
+    <div class="beside fig">
       <figure class="wxmap" id="godmap"></figure>
-      <div class="read" id="rd-gods"></div>
+      <div class="side">
+        <p class="note" id="note-godmap"></p>
+        <div class="read" id="rd-gods"></div>
+      </div>
     </div>
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
-    <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，下面几行各照一本书走一遍，不合成结论</p>
+    <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
     <div class="xi" id="xi"></div>
     <div class="kvs" id="kv2"></div>
     <div class="read" id="rd-ys"></div>
@@ -970,17 +1012,21 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 <section id="card-lq" aria-labelledby="h-lq">
   <h2 id="h-lq">六亲 · 宫位 <small>典籍里给人事分类的两种办法：十神配亲属叫六亲，四柱配亲属叫宫位。它们不在强弱、格局、喜忌这条读盘的线上，所以单独放在最后；页面只列位置，不下断语</small></h2>
   <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
-  <div class="tablewrap">
-    <table class="gods">
-      <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-      <tbody id="liuqin"></tbody>
-    </table>
+  <div class="beside">
+    <div class="tablewrap">
+      <table class="gods">
+        <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+        <tbody id="liuqin"></tbody>
+      </table>
+    </div>
+    <div class="side">
+      <p class="note" id="note-lq"></p>
+      <div class="read" id="rd-lq"></div>
+    </div>
   </div>
-  <p class="note" id="note-lq"></p>
   <h3>宫位 <small>四柱各配一类亲属；每一柱里有哪些十神，和别的柱有什么关系</small></h3>
   <div class="tablewrap" id="gwmap"></div>
   <p class="note" id="note-gw"></p>
-  <div class="read" id="rd-lq"></div>
   <div class="read" id="rd-gw"></div>
 </section>
 
