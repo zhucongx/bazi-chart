@@ -431,7 +431,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 @media (hover:hover){.seg button:hover{border-color:var(--ink3)} .seg button[aria-pressed="true"]:hover{border-color:var(--accent)}}
 .seg-s{font-size:12px;color:var(--ink3);text-align:center}
-.seg-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}      /* 十神一页表上面：按钮靠左，说明跟在后面 */
+.seg-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.seg.inl{display:inline-flex;vertical-align:middle;margin:0 4px}      /* 选择器图例里的两个按钮：扶抑的喜用、用神和喜神 */
+.seg button:disabled{opacity:.45;cursor:not-allowed}      /* 十神一页表上面：按钮靠左，说明跟在后面 */
 .seg-top .seg{justify-content:flex-start}
 .seg-top .seg-s{text-align:left}
 .wxmap figcaption{max-width:320px;font-size:12.5px;line-height:1.6;color:var(--ink3);text-align:center}

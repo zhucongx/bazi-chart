@@ -576,7 +576,7 @@ people.forEach((id, pi) => {
     eq('十神一页点「十神个数」：三个天干加四个地支的本气，不算日主；生克图和上面的表一起换', [gBy('face'), godTable()], [gWant(faceOf, '处', 0), tableWant(faceOf, '处')]);
     eq('十神一页点「能量」：照五行能量的分法分给十个十神，加起来 55 分；表里写分数，解读里按能量排', [gBy('nl'), NAMES.flat().reduce((a, nm) => a + ptsOf[nm], 0), txt($('note-godmap')).includes('五行能量'), godTable(), ev("note('read','gods')!==undefined") || txt($('rd-gods')).includes('按能量')], [gWant(ptsOf, '分', 2), 55, true, tableWant(ptsOf, '分'), true]);      // 手写的解读不跟着换
     eq('十神一页点回「含藏干数」：表和图都回到含藏干的个数', [gBy('cnt'), godTable()], [gWant(cntOf, '处', 1), tableWant(cntOf, '处')]);
-    eq('选的数法记在浏览器里', JSON.parse(ev("localStorage.getItem('bz-map')")), { wx: 'nl', gods: 'cnt' });
+    eq('选的数法记在浏览器里', JSON.parse(ev("localStorage.getItem('bz-map')")), { wx: 'nl', gods: 'cnt', yun: 'fy' });
     eq('十神一页的生克图：里面一圈是比劫、食伤、财才、官杀、印绶和它们对日主的关系，颜色是各自属的五行，填多少照两个加起来的数；相生指向下一类，相克隔一类；中间是日主', [gcat.map(n => ELC5.find(c => n.classList.contains(c)) + ' ' + txt(n.querySelector('.ch2')) + ' ' + txt(n.querySelector('.ct'))), gcat.map(fillH), gdirOk('sh', 1), gdirOk('ke', 2), txt($('godmap').querySelector('.nd.me .ch'))], [GRPS.map((g, k) => `${ELC5[(de + k) % 5]} ${g} ${['同我', '我生', '我克', '克我', '生我'][k]}`), sums.map(v => (v ? 48 * v / mxC : 0).toFixed(1)), true, true, ev('DM')]);
     // 强弱分析卡片：分数、归类、拆开的四块、每一笔、扶抑取的喜用和忌，都拿原局另算一遍
     const se = (de + 4) % 5, ELN = ['木', '火', '土', '金', '水'], q = JSON.parse(ev('JSON.stringify(qsNow())'));
@@ -704,12 +704,27 @@ people.forEach((id, pi) => {
     const pkSh = () => txt($('sheet-t')), pkP = l => { const n = [...$('sheet-b').querySelectorAll('p')].find(p => txt(p.querySelector('.lb')) === l); return n ? txt(n.querySelector('.tx')) : ''; };
     const pkHow = (pkP('怎么分').match(/ (\d+) 分（/g) || []).map(s => parseInt(s, 10)), pkWant = mbWant(ygz);
     eq('点流年小卡底下的条：打开这一柱的明细，选择不变；各笔加起来 13 分，标题和「喜用」里的分数就是条上的数，五行、十神、和原局各有一段', [!$('sheet').hidden, pkSh().startsWith(ygz + '年'), pkSh().endsWith(` ${pkWant.v} 分`), [ev('sel.dy'), ev('sel.y'), ev('sel.m'), ev('sel.d')], pkHow.reduce((a, b) => a + b, 0), pkP(tier === '间' ? '帮日主的' : '喜用').includes(`占 ${pkWant.v} 分`) || (pkWant.v === '0' && pkP(tier === '间' ? '帮日主的' : '喜用').includes('一分也没有')), !!pkP('五行') && !!pkP('十神'), pkP('和原局').includes('这些都不改分数'), yb2.querySelector('.mb').classList.contains('on')], [true, true, true, selBefore, 13, true, true, true, true]);
+    // 明细里「照用神」一行：用神、喜神、忌神、仇神、闲神五项加起来 13 分，「合起来」是用神加喜神；用神不定的盘没有这一行
+    const ysLine = pkP('照用神'), ysN = [...ysLine.matchAll(/(用神|喜神|忌神|仇神|闲神)(.) (\d+) 分/g)].map(m => [m[1], +m[3]]), ysSum = (ysLine.match(/合起来 (\d+) 分/) || [])[1];
+    eq('小卡的明细里「照用神」一行：五项加起来 13 分，用神和喜神合起来的数对得上；用神不定时没有这一行', ev('yongNow().yong===null') ? ysLine : [ysN.map(x => x[0]), ysN.reduce((a, x) => a + x[1], 0), +ysSum === ysN[0][1] + ysN[1][1]], ev('yongNow().yong===null') ? '' : [['用神', '喜神', '忌神', '仇神', '闲神'], 13, true]);
     click(yb2.querySelector('.mb'));
     ok('再点一次同一条，明细收起', $('sheet').hidden);
     click(pkRow('liunian').find(b => b.dataset.y === yb2.dataset.y).querySelector('.gz'));
     eq('点小卡上面的干支：换到这一年', ev('sel.y'), +yb2.dataset.y);
     click($('liunian').querySelector(`[data-y="${sy0}"]`)); click($('liuyue').querySelector(`[data-m="${sm0}"]`));
     if ($('liuri').querySelector(`[data-d="${sd0}"]`)) click($('liuri').querySelector(`[data-d="${sd0}"]`));
+    // 选择器图例里的两个按钮：扶抑的喜用（默认）、用神和喜神。换成用神，小卡底下的条只算用神和喜神那两行；用神不定的盘，按钮不能点。试完换回扶抑
+    const ysBtn = $('sy-lg').querySelector('[data-map="yun:ys"]'), yN = JSON.parse(ev('JSON.stringify(yongNow())'));
+    if (yN.yong === null) ok('用神不定的盘，「用神和喜神」按钮不能点', ysBtn.disabled);
+    else {
+      click(ysBtn);
+      const uW = (de + yN.yong) % 5, sW = (de + yN.shen.xi) % 5, ysWant = gz => { const s2 = pillarSum(gz), v = s2[uW] + s2[sW]; return { v: String(v), seg: [uW, sW].filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), w: `width:${(v / 13 * 100).toFixed(1)}%` }; };
+      eq('按「用神和喜神」：八步大运的条只算用神和喜神那两行，按钮按下，图例换成这两行', [pkRow('dayun').map(mbOf), [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed')), txt($('sy-lg')).includes('用神和喜神')], [dys.map(([gz]) => ysWant(gz)), ['false', 'true'], true]);
+      click(pkRow('dayun')[0].querySelector('.mb'));
+      eq('照用神时点小卡的条：明细头一段讲用神和喜神，另一段对照扶抑', [txt($('sheet-t')).includes('用神和喜神'), !!pkP('用神和喜神'), !!pkP('照扶抑')], [true, true, true]);
+      ev('closeSheet()'); click($('sy-lg').querySelector('[data-map="yun:fy"]'));
+      eq('按回「扶抑的喜用」：条回到扶抑', pkRow('dayun').map(mbOf), dys.map(([gz]) => mbWant(gz)));
+    }
     eq('选择器在排盘那张卡片里，就在标签栏上面；四排柱子已经去掉', [$('card-pan').contains($('dayun')), ($('liuri').compareDocumentPosition($('h-pan')) & 4) === 4, !!$('trend'), d.querySelectorAll('.tb').length], [true, true, false, 0]);
     // 计分表里大运、流年、流月、流日每一行的名字点开是这一柱的明细：各笔加起来 13 分、每一笔写着十神、在这一排里排第几；四层之间没有一字不差的段落
     const dynK = ['大运', '流年', '流月', '流日'], shs = dynK.map(k => JSON.parse(ev(`JSON.stringify(X('nly|${k}'))`)));
