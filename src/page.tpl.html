@@ -169,13 +169,6 @@ p{margin:0}
    几栏并排的地方，说明不放进某一栏里把这一栏撑高，免得下一行之前空出一块 */
 .beside{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 40px;align-items:start}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
-/* 五行一页：三种数法、生克图和解读在同一张网格里。一栏时从上往下排；两栏时五行能量和生克图并排，解读占满一行；
-   三栏（电脑那一段）时生克图接在五行个数下面，另外两栏的说明接在各自的条下面，解读接在说明下面 */
-.wxgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px 40px;align-items:start}
-.wxgrid>.read{grid-column:1/-1}
-@media (min-width:720px){
-  .wxgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
 .sub{font-size:12.5px;color:var(--ink3)}
 
 .read{background:var(--wash);border-radius:10px;padding:13px 17px 15px;font-size:14px;display:flex;flex-direction:column;gap:8px}
@@ -275,6 +268,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rel small{font-size:12px}
 .none{font-size:13px;color:var(--ink3)}
 .relblock{display:flex;flex-direction:column;gap:8px}
+.relblock h4{margin:0;font-size:12.5px;font-weight:600;color:var(--ink3)}      /* 八字一页右边一栏：天干、地支两小段 */
 .relgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px 28px;border-top:1px solid var(--line);padding-top:14px}
 .relgrid>div{display:flex;flex-direction:column;gap:8px;align-content:start}
 .relgrid .rels{align-items:flex-start}
@@ -291,8 +285,21 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 五行能量的条：五行名字后面是这一类十神的合称；条上一道竖线是平均数（12 分）的位置；右边是分数和占比 */
 .gp{margin-left:8px;font-family:var(--body);font-size:12px;font-weight:400;letter-spacing:0;color:var(--ink2);white-space:nowrap}
 .bars .el .gp{margin-left:2px}
-.bars.nl .track{position:relative}
-.bars.nl .track::after{content:"";position:absolute;top:0;bottom:0;left:var(--avg);width:1px;background:var(--ink3)}
+.bars.nl .track,.wxt .track{position:relative}
+.bars.nl .track::after,.wxt .track.avg::after{content:"";position:absolute;top:0;bottom:0;left:var(--avg);width:1px;background:var(--ink3)}
+/* 五行一页的表：一行一种五行。数法照表上面的按钮（MAPBY.wx），条的长短照这一种数法，最多的一行满格；五行能量的条上一道竖线是五行平均的 12 分 */
+.wxt td{vertical-align:middle}
+.wxt .el{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:18px}
+.wxt .el .ic{width:15px;height:15px}
+.wxt .wn{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wxt .wn b{min-width:3.2em;font-weight:500;color:var(--ink2)}
+.wxt .track{display:block;width:clamp(70px,14vw,170px);height:10px;border-radius:5px;background:var(--wash);overflow:hidden}
+.wxt .fill{display:block;height:100%;border-radius:5px;background:currentColor}
+.wxt .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px;white-space:nowrap}
+.wxt .wh{font-size:13px;color:var(--ink2)}
+@media (max-width:600px){
+  .wxt th:nth-child(6),.wxt td:nth-child(6){display:none}      /* 手机上「在哪里」一列挤不下，藏起来；点五行的名字照样看得到每一笔在哪里 */
+}
 .bars .pc{min-width:2.8em;text-align:right;font-size:12px;color:var(--ink3)}
 /* 日主和用神两页的几行：行名一列，内容一列，按第一行的基线对齐。日主那一页是盘面上的事实，用神那一页是各家照各自的书走出来的几行 */
 .kvs{display:grid;grid-template-columns:auto 1fr;gap:14px}
@@ -364,6 +371,25 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qt b{font-size:20px;font-weight:650;line-height:1.3;color:var(--ink)}
 .qs-li{margin:0;padding-left:1.3em;font-size:13.5px;color:var(--ink2);columns:2 260px;column-gap:28px}
 .qs-li li{break-inside:avoid;margin-bottom:3px}
+/* 「强弱」一页最上面四张卡片：得令、得地、得势、得气。够宽就一排四张，窄了两张一排，手机上一张一排。
+   卡片里一排小格子：帮日主的那几格（有根、帮扶、气盛，得令一张是日主落在的那一格）垫日主那一行五行的淡底，颜色只留给五行 */
+.sd{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
+.sd-c{display:flex;flex-direction:column;gap:10px;padding:12px 14px 13px;border:1px solid var(--line);border-radius:12px;min-width:0}
+.sd-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sd-h .x{font-family:var(--display);font-weight:700;font-size:17px;color:var(--ink)}
+.sd-v{font-size:14px;font-weight:600;color:var(--ink3);white-space:nowrap}
+.sd-c.ok .sd-v{color:var(--ink);font-weight:700}
+.sd-b{display:flex;gap:6px}
+.sd-t{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px 6px;border-radius:8px;background:var(--wash)}
+.sd-t small{font-size:11px;color:var(--ink3)}
+.sd-t b{font-family:var(--display);font-size:21px;font-weight:700;line-height:1.25}
+.sd-t em{font-style:normal;font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.sd-st{display:flex;gap:5px;width:100%}
+.sd-st i{flex:1 1 0;text-align:center;font-style:normal;font-family:var(--display);font-size:17px;font-weight:700;padding:14px 0;border-radius:8px;background:var(--wash);color:var(--ink3)}
+.sd-t.on.wood,.sd-st i.on.wood{background:var(--wood-s)} .sd-t.on.fire,.sd-st i.on.fire{background:var(--fire-s)} .sd-t.on.earth,.sd-st i.on.earth{background:var(--earth-s)} .sd-t.on.metal,.sd-st i.on.metal{background:var(--metal-s)} .sd-t.on.water,.sd-st i.on.water{background:var(--water-s)}
+.sd-st i.on{color:currentColor}
+.sd-t.on small,.sd-t.on em{color:var(--ink2)}
+.sd-s{font-size:12.5px;color:var(--ink2)}
 .xi{display:flex;flex-wrap:wrap;gap:10px 36px;align-items:flex-end;padding:16px 18px;border:1px solid var(--line);border-radius:14px}      /* 喜忌一页最上面：扶抑取的喜用和忌 */
 .xi .sub{flex-basis:100%}
 .xi-sep{flex-basis:100%;border-top:1px dashed var(--line)}      /* 上面一排是扶抑的两组，下面一排是用神和四个名目 */
@@ -405,6 +431,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .seg button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 @media (hover:hover){.seg button:hover{border-color:var(--ink3)} .seg button[aria-pressed="true"]:hover{border-color:var(--accent)}}
 .seg-s{font-size:12px;color:var(--ink3);text-align:center}
+.seg-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}      /* 十神一页表上面：按钮靠左，说明跟在后面 */
+.seg-top .seg{justify-content:flex-start}
+.seg-top .seg-s{text-align:left}
 .wxmap figcaption{max-width:320px;font-size:12.5px;line-height:1.6;color:var(--ink3);text-align:center}
 .qx b.no{font-size:16px;font-weight:600;color:var(--ink2)}
 @media (max-width:599px){      /* 手机上日主那一小块横过来放在上面，下面的四块排成两列 */
@@ -496,6 +525,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 内容窄的两页（八字、日主）：左边是内容，右边是解读，并排放。关掉解读以后只剩左边，不拉满整张卡片 */
   .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
   :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
+  :root[data-read="off"] .split.keep{grid-template-columns:minmax(0,11fr) minmax(0,10fr)}      /* 八字一页右边还有四柱之间的关系，关掉解读也并排 */
   /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面 */
   .beside.fig{grid-template-columns:400px minmax(0,1fr)}
   .side{gap:18px}
@@ -656,18 +686,9 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 表和右边一栏并排：右边一栏 340 像素，表占剩下的七百来像素。再窄，表里的字就挤得折行，所以上下排 */
   .beside{grid-template-columns:minmax(0,1fr) minmax(0,340px)}
   .beside .gods th:nth-child(-n+2),.beside .gods td:nth-child(-n+2){white-space:nowrap}
-}
-@media (min-width:1200px){
-  /* 五行一页三栏，每栏三百三十像素以上才分，再窄说明太长、解读也分不成两栏。三栏用 subgrid 共用四行：
-     第一行标题，第二行条，第三行另外两栏的说明，第四行解读。生克图接在五行个数的条下面，跨第三、四行；
-     第四行是 1fr，图比说明加解读高的时候，多出来的只加在第四行，说明和解读之间不空 */
-  .wxgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto 1fr;row-gap:18px}
-  .wxgrid>.pane{display:grid;grid-template-rows:subgrid;grid-row:1/span 3;row-gap:18px}
-  .wxgrid>.pane:nth-child(1){grid-column:1;grid-row:1/span 2}
-  .wxgrid>.pane:nth-child(2){grid-column:2}
-  .wxgrid>.pane:nth-child(3){grid-column:3}
-  .wxgrid>.wxmap{grid-column:1;grid-row:3/span 2}
-  .wxgrid>.read{grid-column:2/span 2;grid-row:4}
+  /* 强弱一页下半：左边强弱计分的卡片，右边解读。卡片里四块排成两行两列 */
+  .beside.qsrow{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+  .qsrow .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:560px){
   .tabbar{gap:0 12px}      /* 窄屏上标签不带图标：原局六个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行 */
@@ -850,7 +871,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
     <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>喜忌</button>
   </div>
-  <div class="panel split" role="tabpanel" id="p-bz" aria-labelledby="h-bz">
+  <div class="panel split keep" role="tabpanel" id="p-bz" aria-labelledby="h-bz">
     <div class="pane">
       <p class="sub">出生时的四柱，也叫原局，读盘从这里开始。每一格都可以点开看解释</p>
       <div class="tablewrap">
@@ -868,7 +889,17 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         </table>
       </div>
     </div>
-    <div class="read" id="rd-bz"></div>
+    <div class="side">
+      <div class="read" id="rd-bz"></div>
+      <div class="relblock">
+        <h3>四柱之间的关系 <small>天干的五合、相冲、相克，地支的合、冲、刑、害、破</small></h3>
+        <h4>天干</h4>
+        <div class="rels" id="bz-rel-g"></div>
+        <h4>地支</h4>
+        <div class="rels" id="bz-rel-z"></div>
+        <p class="note">实线框是相合一类，虚线框是冲、刑、害、破、克。点每一条看它是怎么来的、隔着几柱；和大运、流年之间的关系见下面「干支关系」一页。</p>
+      </div>
+    </div>
   </div>
   <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk" hidden>
     <div class="pane">
@@ -878,37 +909,39 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-tk"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
-    <p class="sub">五行各有多少，三种数法：只数盘面的八个字，连地支里藏的天干一起数，照一种算法换成分数</p>
-    <div class="wxgrid">
-      <div class="pane">
-        <h3>五行个数 <small>只数盘面的八个字</small></h3>
-        <div class="bars c3" id="bars0"></div>
-      </div>
-      <div class="pane">
-        <h3>含藏干数 <small id="h-wx-s"></small></h3>
-        <div class="bars" id="bars"></div>
-        <p class="note" id="note-wx"></p>
-      </div>
-      <div class="pane">
-        <h3>五行能量 <small>藏干分主次，月支加倍，一共 60 分</small></h3>
-        <div class="bars nl" id="bars2"></div>
-        <p class="note" id="note-nl"></p>
-      </div>
+    <p class="sub">五行各有多少。按钮换三种数法：只数盘面的八个字，连地支里藏的天干一起数，照一种算法换成分数；下面的表和五行生克图一起换</p>
+    <div class="seg-top" id="wx-seg"></div>
+    <div class="tablewrap">
+      <table class="gods wxt">
+        <thead><tr><th scope="col">五行</th><th scope="col">关系和合称</th><th scope="col" id="wxt-h">个数</th><th scope="col">占比</th><th scope="col">月令</th><th scope="col">在哪里</th></tr></thead>
+        <tbody id="wxt"></tbody>
+      </table>
+    </div>
+    <p class="note" id="note-nl"></p>
+    <p class="note" id="note-wx"></p>
+    <div class="beside fig">
       <figure class="wxmap" id="wxmap"></figure>
-      <div class="read" id="rd-wx"></div>
+      <div class="side">
+        <p class="note" id="note-wxmap"></p>
+        <div class="read" id="rd-wx"></div>
+      </div>
     </div>
   </div>
   <div class="panel" role="tabpanel" id="p-qr" aria-labelledby="h-qr" hidden>
-    <p class="sub">日主是强是弱：先看月令和季节，再看根、印和月令透出的字，最后是两种看强弱的办法</p>
-    <div class="kvs" id="kv"></div>
-    <div class="qs" id="qs"></div>
+    <p class="sub">日主是强是弱：先看常说的得令、得地、得势、得气四项，再是两种看强弱的办法</p>
+    <div class="sd" id="sd"></div>
     <div class="kvs" id="kv-qr"></div>
+    <div class="beside qsrow">
+      <div class="qs" id="qs"></div>
+      <div class="read" id="rd-qr"></div>
+    </div>
+    <div class="kvs" id="kv"></div>
     <p class="note" id="note-qr"></p>
-    <div class="read" id="rd-qr"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
     <p class="sub" id="h-gods-s"></p>
     <div class="kvs" id="kv-gj"></div>
+    <div class="seg-top" id="gods-seg"></div>
     <div class="tablewrap">
       <table class="gods">
         <thead><tr><th scope="col">关系和合称</th><th scope="col">五行</th><th scope="col">阴阳与日主相同</th><th scope="col">阴阳与日主不同</th><th scope="col">含义</th></tr></thead>
@@ -969,7 +1002,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-pan"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-rel" aria-labelledby="h-rel" hidden>
-    <p class="sub">原局和大运、流年、流月、流日之间的合、冲、刑、害；电脑上的图里还标着相邻的字谁生谁克</p>
+    <p class="sub">原局和大运、流年、流月、流日之间的合、冲、刑、害</p>
     <div class="lkmap" id="lkmap"></div>
     <p class="note lk-only" id="note-sk"></p>
     <div class="relblock relpills">

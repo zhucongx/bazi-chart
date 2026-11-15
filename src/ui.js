@@ -166,7 +166,7 @@ function relChips(list){
    从「强弱参考」起在「强弱」一页的卡片下面，从「格局参考」起在「十神」，从「调候参考」起在「喜忌」。
    手写解读另加的行插在哪一行后面，就跟着那一行进哪一页；没写插在哪里的排在最后，在「喜忌」。
    日主、阴阳不在这里列，在「日主」一页的四项里；强弱计分画成「强弱」一页的卡片。 */
-const KV_FROM={'强弱参考':'kv-qr','格局参考':'kv-gj','调候参考':'kv2'}, KV_ELSEWHERE=['日主','阴阳','强弱计分'];
+const KV_FROM={'强弱参考':'kv-qr','格局参考':'kv-gj','调候参考':'kv2'}, KV_ELSEWHERE=['日主','阴阳','强弱计分','月令','根','印'];      // 月令、根、印三行并进了「强弱」一页最上面的四张卡片
 /* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
 const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
@@ -187,7 +187,6 @@ function renderPerson(){
   ['bz','pan','yun','rel','rel2','wx','tk','qr','gods','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
-  $('h-wx-s').textContent=`四个天干加${cn(natalHidden().length)}个藏干`;
   // 日主一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「强弱」「十神」两页的结论
   const kv=kvRows(), quad=quadItems(), part={kv:[],'kv-qr':[],'kv-gj':[],kv2:[]};
   let at='kv';
@@ -196,20 +195,19 @@ function renderPerson(){
   $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${['t-tk','q-yy','q-ga','q-ge'][i]}"/></svg>${xb('x',r.x,r.k)}</span><b>${r.big}</b><small>${r.sub}</small></div>`).join('');
   Object.keys(part).forEach(id=>{$(id).innerHTML=dl(part[id]);});
   $('note-qr').textContent=noteQr();
-  $('h-gods-s').textContent=`以${DMN}为原点；个数连地支里藏的天干一起数，不算日主自己`;
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
   $('note-sy').textContent=noteSy();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
   const box=$('hours'), info=P.nohour?infoOf(P):null;
   box.hidden=!info; if(!info){box.innerHTML='';return;}
   const rows=Z.split('').map(h=>{const c=chartOf(Object.assign({},info,{shichen:h}));
-    const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps), x=xiOf(c.pillars[2][0],ps);
+    const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps,true), x=xiOf(c.pillars[2][0],ps,true);
     return {h,p:c.pillars,help:q.help,tier:q.tier,xi:x.xi,dy:c.dayun.map(d=>d.gz).join(),fw:c.yun.forward,st:c.yun.start};});
   box.innerHTML=`<p class="hours-h"><b>时辰不详</b>现在按${P.shichen}时排，点别的时辰换着看</p>`
     +`<div class="hours-b" role="group" aria-label="选一个时辰">${rows.map(r=>`<button type="button" class="hr" data-hour="${r.h}" aria-pressed="${r.h===P.shichen}"><b>${r.h}时</b><span class="gz">${gzSpan(r.p[3])}</span></button>`).join('')}</div>`
@@ -247,20 +245,17 @@ const mapSeg=(k,sub)=>`<div class="seg" role="group" aria-label="圈照什么数
 function renderWxMap(){
   const de=gEl(DM), by=MAPBY.wx, wc=wxCounts(), s=by==='nl'?nlNow().sum:by==='cnt'?wc.cnt:wc.face, u=by==='nl'?'分':'个', mx=Math.max(1,...s), r=25, cy=136, pos=pent(150,cy,86,1);
   const key=e=>(by==='nl'?'nl|':by==='cnt'?'wx|':'wxf|')+e, open=by==='nl'?'点开看是怎么加出来的':'点开看在哪里';
-  const sub=by==='nl'?'藏干分主次，月支加倍，一共 60 分':by==='cnt'?`四个天干加${cn(natalHidden().length)}个藏干`:'只数盘面的八个字';
   const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，')+'。'+[0,1,2,3,4].map(e=>`${EL[e]} ${s[e]} ${u}`).join('，');
-  $('wxmap').innerHTML=mapSeg('wx',sub)+`<svg viewBox="0 0 300 258" role="group" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3)}`
+  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="group" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3)}`
     +pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-x="${key(e)}" tabindex="0" role="button" aria-label="${EL[e]} ${s[e]} ${u}，${open}">${fillCircle('wxc'+e,x,y,r,s[e]/mx)}<text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text><text class="gp" x="${f1(x)}" y="${f1(y<cy?y-r-8:y+r+16)}">${s[e]} ${u}${e===de?'（日主）':''}</text></g>`).join('')
-    +`</svg><figcaption>圈填多少照上面选的数法，最多的一行填满，其余照比例。实线是相生，虚线是相克，箭头指向被生、被克的一方。加粗的一圈是日主所属的一行。点圈看这一行${by==='nl'?'的分数是怎么加出来的':'的字在哪里'}。</figcaption>`;
+    +`</svg>`;
+  $('note-wxmap').textContent=`圈填多少照表上面选的数法，最多的一行填满，其余照比例。实线是相生，虚线是相克，箭头指向被生、被克的一方。加粗的一圈是日主所属的一行。点圈看这一行${by==='nl'?'的分数是怎么加出来的':'的字在哪里'}。`;
 }
 /* 十神一页的生克图：中间是日主；里面一圈是五类十神，官杀在最上面，顺时针是相生的次序（官杀生印，印生比劫，比劫生食伤……），
    相邻的相生是实线，隔一个的相克是虚线，圈里写合称和它对日主的关系。外面一圈是十个十神，每一类两个，顺时针看前一个阴阳和日主不同（异性），
    后一个相同（同性）。圈填多少照它在盘里出现几处（连地支里藏的天干，不算日主自己），十个里最多的填满；五类的圈照两个加起来的数 */
 function renderGodMap(){
-  const de=gEl(DM), yin=isYin(DM)?1:0, by=MAPBY.gods, u=by==='nl'?'分':'处', pts={};
-  // 十神个数：三个天干加四个地支的本气；含藏干数：三个天干加全部藏干；能量：照五行能量的分法，天干 5 分，藏干分主次，月支加倍。都不算日主自己
-  if(by==='nl') NATAL.forEach((p,i)=>{if(!p.day) pts[p.g]=(pts[p.g]||0)+5;nlOf(p.z).forEach(([h,n])=>{pts[h]=(pts[h]||0)+(i===1?n*2:n);});});
-  else natalStems().concat(by==='cnt'?natalHidden():NATAL.map(p=>HID[p.z][0])).forEach(g=>{pts[g]=(pts[g]||0)+1;});
+  const de=gEl(DM), yin=isYin(DM)?1:0, by=MAPBY.gods, u=by==='nl'?'分':'处', pts=godVals(by);      // 数法和上面的十神表相同，按钮在表上面
   const cnt=g=>pts[g]||0;
   const C=195, R1=90, R2=152, r1=24, r2=19, top=3, ks=[0,1,2,3,4], pos=pent(C,C,R1,top), REL=['同我','我生','我克','克我','生我'];
   const pairs=ks.map(k=>{const e=(de+k)%5;return [G[e*2+1-yin],G[e*2+yin]].map((g,j)=>({n:god(g),c:cnt(g),same:j===1}));});
@@ -276,10 +271,9 @@ function renderGodMap(){
   const cats=pos.map(([x,y],k)=>`<g class="nd ${ELC[(de+k)%5]}" data-x="grp|${k}" tabindex="0" role="button" aria-label="${GRP[k]}，${REL[k]}，点开看解释">${fillCircle('gdc'+k,x,y,r1,sums[k]/mxC)}<text class="ch2" x="${f1(x)}" y="${f1(y-5)}">${GRP[k]}</text><text class="ct" x="${f1(x)}" y="${f1(y+11)}">${REL[k]}</text></g>`).join('');
   const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DM}，点开看解释"><circle class="bg" cx="${C}" cy="${C}" r="22"/><circle class="ring" cx="${C}" cy="${C}" r="22"/><circle class="halo" cx="${C}" cy="${C}" r="26.5"/><text class="ch" x="${C}" y="${C-3}">${DM}</text><text class="ct" x="${C}" y="${C+12}">日主</text></g>`;
   const say=ks.map(k=>`${GRP[k]}生${GRP[(k+1)%5]}`).join('，')+'；'+ks.map(k=>`${GRP[k]}克${GRP[(k+2)%5]}`).join('，')+'。'+pairs.flat().map(o=>`${o.n} ${o.c} ${u}`).join('，');
-  const sub=by==='nl'?'照五行能量的分法，不算日主自己的 5 分，一共 55 分':by==='cnt'?`三个天干加${cn(natalHidden().length)}个藏干，不算日主自己`:'三个天干加四个地支的本气，不算日主自己';
   $('note-godmap').textContent='中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。'
-    +`圈填多少照图上面选的数法，${by==='nl'?'这里是每个十神分到的五行能量':by==='cnt'?'这里是它在盘里出现几处，连地支里藏的天干一起数':'这里是它在盘面上出现几处，地支只算本气'}，最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。`;
-  $('godmap').innerHTML=mapSeg('gods',sub)+`<svg viewBox="0 0 390 390" role="group" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`;      // 怎么看这张图写在模板里图右边的一栏，和解读放在一起
+    +`圈填多少照十神表上面选的数法，${by==='nl'?'这里是每个十神分到的五行能量':by==='cnt'?'这里是它在盘里出现几处，连地支里藏的天干一起数':'这里是它在盘面上出现几处，地支只算本气'}，最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。`;
+  $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="group" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`;      // 怎么看这张图写在模板里图右边的一栏，和解读放在一起
 }
 /* 细盘的各行。cs 是要排的列：四柱细盘一页是 cols() 的八列，八字一页只有原局四列（NATAL）。
    原局的列就是 NATAL 里的对象，神煞照它在 NATAL 里的位置取 */
@@ -299,7 +293,13 @@ function panRows(cs){
       return `<span class="ss">${list.length?list.map(s=>xb(s.n.length===4?'x w4':'x',`ss|${s.n}|${c.dyn?c.k:n}`,s.n)).join(''):'<span class="no">—</span>'}</span>`;},'multi');
 }
 /* 八字一页：只有原局四列，换人时画一次 */
-function renderBz(){$('bz').innerHTML=panRows(NATAL);}
+/* 八字一页：左边是原局四列（行和四柱细盘相同），右边解读下面是四柱之间的合冲刑害，小签和干支关系一页的原局小签相同（data-x 一样） */
+function renderBz(){
+  $('bz').innerHTML=panRows(NATAL);
+  const base=relations(NATAL);
+  $('bz-rel-g').innerHTML=relChips(base.filter(r=>r.grp==='g'));
+  $('bz-rel-z').innerHTML=relChips(base.filter(r=>r.grp==='z'));
+}
 function renderPan(){
   $('pan').innerHTML=panRows(cols());
   const dy=P.dayun[sel.dy];
@@ -478,7 +478,7 @@ function renderSy(){
 }
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
-  const r=qsOf(DM,NATAL), pt=qsParts(DM,NATAL), x=xiNow(), de=gEl(DM), se=(de+4)%5, W=r.total, pos=v=>(v/W*100).toFixed(2)+'%';
+  const r=qsNow(), pt=qsParts(DM,NATAL,true), x=xiNow(), de=gEl(DM), se=(de+4)%5, W=r.total, pos=v=>(v/W*100).toFixed(2)+'%';
   const fill=[se,de].filter(e=>r.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${r.sum[e]}"></i>`).join('');
   const gauge=`<div class="qg" role="img" aria-label="${HELP} ${r.help} 分，满分 ${W} 分；25 分以下身弱，30 分以上身强">`
     +`<span class="qg-v" style="left:${pos(r.help)}">${r.help} 分</span>`
@@ -491,7 +491,7 @@ function renderQs(){
     +`<div class="qs-main">`
     +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱未定'})[r.tier]}</b><span>${HELP} ${r.help} 分，满分 ${W} 分</span></div>`
     +gauge
-    +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`)}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
+    +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`+(pt.meFrom!==undefined?`，合化改记${EL[(nlNow().items.find(x=>x.i===2&&x.j===0)||{}).e]}`:''))}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
     +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
     +`</div>`;
 }
@@ -500,30 +500,44 @@ function renderXi(){
   const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
   $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
       :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
-    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
+    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
     // 用神那一排：用神、喜神、忌神、仇神、闲神各一块，字块是五行，底下写是哪两个十神
     +(()=>{const y=yongNow(), de=gEl(DM), blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
       return '<div class="xi-sep" aria-hidden="true"></div>'+(y.yong===null?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`
         :YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join(''))+`<p class="sub">${yongSay()}</p>`;})();
 }
+/* 「强弱」一页最上面的四张卡片：得令、得地、得势、得气（数据在 text.js 的 sideFour）。每张是标题（点开看解释）、判语、一排小格子、一句话。
+   小格子帮日主的（有根、帮扶、气盛）垫日主那一行五行的淡底，得令一张是旺相休囚死五格，日主落在哪一格就垫哪一格 */
+function renderSd(){
+  const f=sideFour(), r=f.r, de=gEl(DM), me=ELC[de], ST=['旺','相','休','囚','死'];
+  const tile=(top,ch,cls,sub,on)=>`<span class="sd-t${on?' on '+me:''}"><small>${top}</small><b class="${cls}">${ch}</b><em>${sub}</em></span>`;
+  const card=(nm,o,body)=>`<div class="sd-c${o.ok?' ok':''}"><div class="sd-h">${xb('x','sd|'+nm,nm)}<span class="sd-v">${o.v}</span></div><div class="sd-b">${body}</div><p class="sd-s">${sdSay(nm)}</p></div>`;
+  $('sd').innerHTML=card('得令',f.ling,`<span class="sd-st">${ST.map(s=>`<i class="${s===r.st?'on '+me:''}">${s}</i>`).join('')}</span>`)
+    +card('得地',f.di,f.di.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.root?'根 '+x.root:x.seal?'印 '+x.seal:'·',!!x.root)).join(''))
+    +card('得势',f.shi,r.gan.map(x=>tile(x.k+'干',x.g,gCls(x.g),god(x.g),x.r===0||x.r===4)).join(''))
+    +card('得气',f.qi,r.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.s,STAGES.indexOf(x.s)<5)).join(''));
+}
 function renderBars(){
-  const {cnt,face}=wxCounts(), max=Math.max(...cnt);
-  // 三种数法并排，每行都是五行的名字、这一类十神的合称、一段条、数字。
-  // 五行个数只数盘面八个字；含藏干数连地支里藏的天干一起数，点名字看每一个在哪里，右边是月令状态
-  const de=gEl(DM), gp=i=>`<span class="gp">${xb('x','grp|'+(i-de+5)%5,GRP[(i-de+5)%5])}</span>`, fmax=Math.max(...face);
-  $('bars0').innerHTML=face.map((n,i)=>`<span class="el ${ELC[i]}">${ic(i)}${EL[i]}${gp(i)}</span><span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/fmax*100)}%"></span></span><span class="n">${n} 个</span>`).join('');
-  $('bars').innerHTML=cnt.map((n,i)=>`<span class="el ${ELC[i]}">${xb('x','wx|'+i,ic(i)+EL[i])}${gp(i)}</span><span class="track ${ELC[i]}"><span class="fill" style="width:${Math.round(n/max*100)}%"></span></span><span class="n">${n} 个</span><span class="st">${wxState(i)}</span>`).join('');
-  // 五行能量：一种公开的计分法（nlScore）。条上的竖线是平均数的位置，右边是分数和占比
-  const s=nlNow(), top=Math.max(...s.sum);
-  $('bars2').innerHTML=s.sum.map((n,i)=>`<span class="el ${ELC[i]}">${ic(i)}${EL[i]}${gp(i)}</span><span class="track ${ELC[i]}" style="--avg:${(s.total/5/top*100).toFixed(2)}%"><span class="fill" style="width:${Math.round(n/top*100)}%"></span></span><span class="n">${xb('x','nl|'+i,n+' 分')}</span><span class="pc">${pct(n,s.total)}</span>`).join('');
-  $('note-nl').textContent=noteNl();
+  // 五行一页的表：一行一种五行，数法照表上面的按钮（MAPBY.wx），和下面的五行生克图相同。名字点开的解释跟着数法：五行能量是 nl|，含藏干数是 wx|，五行个数是 wxf|
+  const by=MAPBY.wx, wc=wxCounts(), v=by==='nl'?nlNow().sum:by==='cnt'?wc.cnt:wc.face, u=by==='nl'?'分':'个', tot=v.reduce((a,b)=>a+b,0), mx=Math.max(1,...v), de=gEl(DM);
+  const key=e=>(by==='nl'?'nl|':by==='cnt'?'wx|':'wxf|')+e;
+  $('wx-seg').innerHTML=mapSeg('wx',(by==='nl'?'五行能量：藏干分主次，月支加倍，一共 60 分':by==='cnt'?`含藏干数：四个天干加${cn(natalHidden().length)}个藏干`:'五行个数：只数盘面的八个字')+'。下面的表和五行生克图都照它');
+  $('wxt-h').textContent=by==='nl'?'分数':'个数';
+  $('wxt').innerHTML=[0,1,2,3,4].map(i=>{const k=(i-de+5)%5;
+    return `<tr><td class="${ELC[i]}">${xb('x',key(i),`<span class="el">${ic(i)}${EL[i]}</span>`)}</td><td>${CAT[k][1]}<span class="gp">${xb('x','grp|'+k,GRP[k])}</span></td>`
+      +`<td class="${ELC[i]}"><span class="wn"><b>${v[i]} ${u}</b><span class="track${by==='nl'?' avg':''}"${by==='nl'?` style="--avg:${(tot/5/mx*100).toFixed(2)}%"`:''}><span class="fill" style="width:${Math.round(v[i]/mx*100)}%"></span></span></span></td>`
+      +`<td>${pct(v[i],tot)}</td><td><span class="st">${wxState(i)}</span></td><td class="wh">${wxWhere(i,by)}</td></tr>`;}).join('');
+  $('note-nl').textContent=by==='nl'?noteNl():by==='cnt'?'含藏干数：四个天干，加上地支里藏的每一个天干各算一个，不分主次，月支也不加倍。':'五行个数：四个天干，加上四个地支各按自己的五行算一个，不看地支里藏的天干。';
+  $('note-wx').textContent=noteWx();
 }
 const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
 function renderGods(){
-  const all=natalStems().concat(natalHidden()), de=gEl(DM), yin=isYin(DM)?1:0;
-  // 每个十神在原局里出现几次：三个天干加地支里藏的天干。个数后面跟一小段同样长短的条
-  const cell=g=>{const n=all.filter(x=>x===g).length;
-    return `<td>${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} 处<i style="--n:${n}"></i>`:'没有'}</span></td>`;};
+  const by=MAPBY.gods, v=godVals(by), u=by==='nl'?'分':'处', de=gEl(DM), yin=isYin(DM)?1:0;
+  // 每个十神的数照表上面按钮选的数法（godVals），和下面的十神生克图相同。数后面跟一小段条：个数一处 9 像素，能量 5 分算一处
+  $('gods-seg').innerHTML=mapSeg('gods',GOD_BY[by]+'。下面的表和十神生克图都照它');
+  $('h-gods-s').textContent=`以${DMN}为原点；不算日主自己`;
+  const cell=g=>{const n=v[g]||0;
+    return `<td>${xb('x','tg|'+god(g),god(g))}（<span class="${gCls(g)}">${g}</span>）<span class="gn">${n?`${n} ${u}<i style="--n:${by==='nl'?+(n/5).toFixed(2):n}"></i>`:'没有'}</span></td>`;};
   $('gods').innerHTML=CAT.map((r,i)=>{const e=(de+i)%5;
     return `<tr><td>${r[1]}<span class="gp">${xb('x','grp|'+i,GRP[i])}</span></td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span></td>${cell(G[e*2+yin])}${cell(G[e*2+1-yin])}<td>${GOD_MEAN[i]}</td></tr>`;}).join('');
   $('liuqin').innerHTML=liuqinRows().map(r=>`<tr><td>${r.who}</td><td>${xb('x','tg|'+r.god,r.god)}</td><td>${r.at}</td><td>${r.gong}</td></tr>`).join('');
@@ -850,7 +864,9 @@ document.addEventListener('click',e=>{
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.dataset.map){        // 生克图上方的按钮：换圈照的数法，图重画，焦点放回同一个按钮
     const [k,v]=b.dataset.map.split(':');
-    if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}(k==='wx'?renderWxMap:renderGodMap)();refreshSheet();}
+    if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
+      if(k==='wx'){renderBars();renderWxMap();} else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换
+      refreshSheet();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
   }
