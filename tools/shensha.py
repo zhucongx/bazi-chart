@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""五十五个神煞的口诀。名单和查法照排盘软件问真八字的《神煞大全》。
+"""五十八个神煞的口诀。前五十五个的名单和查法照排盘软件问真八字的《神煞大全》；
+最后三个（六厄、病符、隔角）问真没有，2026-11-16 用户要加，查法照典籍（《三命通会》卷三、《神峰通考》）。
 
 页面的脚本里有一份同样的口诀（src/engine.js），这里是用来对照的 Python 版本：
 - tools/gen_data.py 用它算出每个人四柱上的神煞，写进 expected.json；
@@ -22,8 +23,8 @@ NAMES = ['天乙贵人', '天德贵人', '月德贵人', '天德合', '月德合
          '国印贵人', '三奇贵人', '文昌贵人', '华盖', '天医', '金舆', '空亡', '灾煞', '劫煞', '亡神', '羊刃', '飞刃', '血刃', '流霞',
          '四废日', '天罗地网', '桃花', '孤辰', '寡宿', '阴差阳错', '魁罡', '孤鸾煞', '红鸾', '天喜', '勾绞煞', '红艳煞', '十恶大败',
          '元辰', '金神', '天转', '地转', '丧门', '吊客', '披麻', '十灵日', '六秀日', '八专', '九丑', '童子煞', '天厨贵人',
-         '福星贵人', '德秀贵人', '拱禄']
-assert len(NAMES) == len(set(NAMES)) == 55
+         '福星贵人', '德秀贵人', '拱禄', '六厄', '病符', '隔角']
+assert len(NAMES) == len(set(NAMES)) == 58
 
 
 def step(z, n):
@@ -61,6 +62,9 @@ TAOHUA = dict(zip(SANHE, '酉子卯午'))                        # 桃花：三�
 JIESHA = dict(zip(SANHE, '巳申亥寅'))
 WANGSHEN = dict(zip(SANHE, '亥寅巳申'))
 ZAISHA = {s: step(JIANGXING[s], 6) for s in SANHE}          # 灾煞：将星的对冲
+LIUE = {s: step(s[0], 7) for s in SANHE}                    # 六厄：三合局五行的死地。局的头一个字是长生，死在长生后面第七位
+for s in SANHE:                                             # 《三命通会》「论六厄」：常居马前一辰，劫后二辰
+    assert LIUE[s] == step(YIMA[s], 1) == step(JIESHA[s], -2), s
 DEXIU = dict(zip(SANHE, ['壬癸戊己丙辛甲', '甲乙丁壬', '丙丁戊癸', '庚辛乙']))
 YUEDE = dict(zip(SANHE, '壬甲丙庚'))
 TIANDE = dict(zip('寅卯辰巳午未申酉戌亥子丑', ['丁', '申', '壬', '辛', '亥', '甲', '癸', '寅', '丙', '乙', '巳', '庚']))
@@ -103,6 +107,9 @@ SANQI = {'甲戊庚', '乙丙丁', '壬癸辛'}                        # 年月�
 GONGLU = {('癸亥', '癸丑'), ('癸丑', '癸亥'), ('丁巳', '丁未'), ('己未', '己巳'), ('戊辰', '戊午')}
 for d, h in GONGLU:
     assert d[0] == h[0] and {step(d[1], 1), step(d[1], -1)} & {step(h[1], 1), step(h[1], -1)} == {LU[d[0]]}, (d, h)
+# 隔角：日支和时支中间正好隔着寅、申、巳、亥四个角里的一个（《神峰通考》），反过来也算（《三命通会》「互换看之」）
+GEJIAO = {(step(c, -1), step(c, 1)) for c in '寅巳申亥'}
+GEJIAO |= {(b, a) for a, b in GEJIAO}
 # 按年柱纳音的五行。学堂是长生位，词馆是临官位，土跟着水
 XUETANG = {'金': '巳', '木': '亥', '水': '申', '土': '申', '火': '寅'}
 CIGUAN = {e: step(z, 3) for e, z in XUETANG.items()}        # 临官在长生后面第三位
@@ -152,6 +159,7 @@ def one(p, nayin_el, i, gz=None, male=True):
         if z == JIESHA[k]: out.add('劫煞')
         if z == WANGSHEN[k]: out.add('亡神')
         if {s, z} in ({'戌', '亥'}, {'辰', '巳'}): out.add('天罗地网')
+        if z == LIUE[k]: out.add('六厄')
     # 只用年支
     if i != 0:
         fang = next(f for f in FANG if yz in f)
@@ -167,6 +175,7 @@ def one(p, nayin_el, i, gz=None, male=True):
         if z == step(yz, 2): out.add('丧门')
         if z == step(yz, -2): out.add('吊客')
         if z == step(yz, -3): out.add('披麻')
+        if z == step(yz, -1): out.add('病符')                # 太岁后一辰
         if z == XUETANG[nel]: out.add('学堂')
         if z == CIGUAN[nel]: out.add('词馆')
     # 用月支
@@ -200,6 +209,7 @@ def one(p, nayin_el, i, gz=None, male=True):
     if i in (2, 3):
         if p[i] in JINSHEN: out.add('金神')
         if (p[2], p[3]) in GONGLU: out.add('拱禄')
+        if (p[2][1], p[3][1]) in GEJIAO: out.add('隔角')
         if z in ('寅子' if season in ('寅卯辰', '申酉戌') else '卯未辰'): out.add('童子煞')   # 春秋看寅、子，冬夏看卯、未、辰
         if z in TONGZI[nel]: out.add('童子煞')
     # 三奇：年月日或月日时三个天干照顺序紧挨着

@@ -132,7 +132,7 @@ def do_check(nayin_el):
     if never:
         raise SystemExit(f'这些神煞在全部 {res["total"]} 张盘里一次都没出现，口诀或名单有问题：{never}')
     only_self = {'天赦日', '三奇贵人', '四废日', '阴差阳错', '魁罡', '孤鸾煞', '十恶大败', '金神', '天转', '地转',
-                 '十灵日', '六秀日', '八专', '九丑', '童子煞', '拱禄'}      # 只看原局自己的，外来的一柱不会有
+                 '十灵日', '六秀日', '八专', '九丑', '童子煞', '拱禄', '隔角'}      # 只看原局自己的，外来的一柱不会有
     wrong = [n for n in NAMES if (res['extra']['counts'][n] == 0) != (n in only_self)]
     if wrong:
         raise SystemExit(f'外来的一柱上，这些神煞该有的没有、不该有的有了：{wrong}')

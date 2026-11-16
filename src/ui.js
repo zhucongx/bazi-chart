@@ -199,7 +199,7 @@ function renderPerson(){
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -482,6 +482,19 @@ function renderSy(){
   $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+what+`<span class="rest"><i></i>其余</span><span>满分 ${yb.max}</span>`;
   $('note-syfig').textContent=noteSyFig(); $('note-sy').textContent=noteSy();      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
+}
+/* 十神一页最下面的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
+   两边的分数和一条分段的条、《子平真诠》在哪几格下面讲（这张盘的格加粗）；没有的并成一行，名字照样能点开。最后一行指向强弱一页的从格 */
+function renderGjz(){
+  const r=gjzNow(), ge=gjzGe();
+  const bar=o=>o.sides?`<span class="gjz-sc"><span class="gjz-bar">${o.sides.map(x=>`<i class="${ELC[x.e]}" style="flex:${x.n}"></i>`).join('')}</span><span class="gjz-n">${o.sides.map(x=>`${x.say} ${x.n}`).join(' · ')}</span></span>`:'<span class="gjz-n">不比分数</span>';
+  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.gl}</small></th><td><span class="gjz-st${o.st==='透'?' t':''}">${o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着'}</span><span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
+    +`<td class="gjz-ge">${o.ge.length?o.ge.map(g=>ge.includes(g)?`<b>${g}</b>`:g).join('、'):'不分格局'}</td></tr>`;
+  const grp=(c,title)=>{const yes=r.list.filter(o=>o.c===c&&o.st!=='无'), no=r.list.filter(o=>o.c===c&&o.st==='无');
+    return `<tr class="gjz-h"><th colspan="4" scope="colgroup">${title}</th></tr>`+yes.map(row).join('')+(no.length?`<tr class="gjz-no"><td colspan="4">这张盘没有：${no.map(o=>xb('x','gjz|'+o.n,o.n)).join('、')}</td></tr>`:'');};
+  $('gjz').innerHTML=grp('成','书里算成格的')+grp('败','书里算败格的')
+    +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
+  $('note-gjz').textContent=noteGjz();
 }
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
