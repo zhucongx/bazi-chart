@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-16",
- "total": 365,
- "hash": 2339722940,
+ "total": 406,
+ "hash": 1880988529,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -18,28 +18,28 @@
   },
   "qtbj": {
    "book": "《穷通宝鉴》",
-   "quotes": 125,
+   "quotes": 126,
    "pages": [
     "穷通宝鉴（版本 2294674）"
    ]
   },
   "yhzp": {
    "book": "《渊海子平》",
-   "quotes": 38,
+   "quotes": 41,
    "pages": [
     "淵海子平（版本 2593607）"
    ]
   },
   "sftk": {
    "book": "《神峰通考》",
-   "quotes": 8,
+   "quotes": 10,
    "pages": [
     "神峰通考（版本 1378606）"
    ]
   },
   "smth": {
    "book": "《三命通会》",
-   "quotes": 48,
+   "quotes": 54,
    "pages": [
     "三命通會 (四庫全書本)/卷02（版本 761691）",
     "三命通會 (四庫全書本)/卷03（版本 657369）",
@@ -49,7 +49,7 @@
   },
   "xjbf": {
    "book": "《协纪辨方书》",
-   "quotes": 11,
+   "quotes": 13,
    "pages": [
     "欽定協紀辨方書 (四庫全書本)/卷03（版本 787338）",
     "欽定協紀辨方書 (四庫全書本)/卷04（版本 787340）",
@@ -116,7 +116,7 @@
   },
   "zpzq": {
    "book": "《子平真诠》",
-   "quotes": 27,
+   "quotes": 54,
    "pages": [
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53623.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53626.html",
@@ -130,7 +130,10 @@
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53643.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53655.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53663.html",
-    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53665.html"
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53665.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53625.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53651.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53659.html"
    ]
   }
  }

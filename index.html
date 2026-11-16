@@ -312,6 +312,26 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods tr:last-child td,.gods tbody tr:last-child th{border-bottom:0}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+/* 十神一页最下面的格局组合（ui.js 的 renderGjz）：成格、败格两组，有的组合一行一个，没有的并成一行。
+   「透出」「藏着」两枚小签，分数是一条两三段的条，颜色照五行；加粗的格是这张盘照格局参考归的那一格 */
+.gjzblock{display:grid;gap:10px;margin-top:22px}
+.gjz th[scope=row] .x{font-weight:600}
+.gjz th[scope=row] small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--ink3)}
+.gjz .gjz-h th{padding-top:14px;font-size:12px;font-weight:600;color:var(--ink2)}
+.gjz .gjz-st{display:inline-block;margin-right:6px;padding:0 7px;border:1px solid var(--line);border-radius:999px;font-size:12px;white-space:nowrap;color:var(--ink2)}
+.gjz .gjz-st.t{border-color:var(--accent);color:var(--accent)}
+.gjz .gjz-w{font-size:13px;color:var(--ink2)}
+.gjz .gjz-v{margin:0 4px;font-weight:600;color:var(--accent)}
+.gjz .gjz-sc{display:grid;gap:4px;min-width:9em}
+.gjz .gjz-bar{display:flex;gap:1px;width:clamp(80px,12vw,150px);height:8px;border-radius:4px;background:var(--wash);overflow:hidden}
+.gjz .gjz-bar i{display:block;height:100%;background:currentColor}
+.gjz .gjz-n{font-size:12px;color:var(--ink2)}
+.gjz .gjz-ge{font-size:12.5px;color:var(--ink3)}
+.gjz .gjz-ge b{font-weight:600;color:var(--ink)}
+.gjz .gjz-no td{font-size:13px;color:var(--ink3)}
+@media (max-width:600px){
+  .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
+}
 .gods .eli .ic{width:14px;height:14px}
 /* 宫位表（最下面的六亲宫位卡片）：一列一柱的表，格子里是几行短句。计分一页：一行一层的计分表，数字靠右 */
 .gw{table-layout:fixed;min-width:640px}
@@ -959,6 +979,16 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <div class="read" id="rd-gods"></div>
       </div>
     </div>
+    <div class="gjzblock">
+      <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
+      <div class="tablewrap">
+        <table class="gods gjz">
+          <thead><tr><th scope="col">组合</th><th scope="col">这张盘</th><th scope="col">分数</th><th scope="col">《子平真诠》在哪一格讲</th></tr></thead>
+          <tbody id="gjz"></tbody>
+        </table>
+      </div>
+      <p class="note" id="note-gjz"></p>
+    </div>
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
     <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
@@ -1081,7 +1111,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </aside>
 
 <script>
-const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"freq":{"三奇贵人":0.6,"丧门":23.0,"九丑":15.0,"亡神":38.5,"元辰":23.0,"八专":13.3,"六秀日":10.0,"劫煞":38.5,"勾绞煞":23.0,"十恶大败":16.7,"十灵日":16.7,"华盖":38.6,"吊客":23.0,"四废日":3.3,"国印贵人":47.2,"地转":1.7,"天乙贵人":67.6,"天医":23.0,"天厨贵人":47.3,"天喜":23.0,"天德合":30.5,"天德贵人":31.1,"天罗地网":12.0,"天赦日":1.7,"天转":1.7,"太极贵人":80.0,"孤辰":23.0,"孤鸾煞":13.3,"学堂":23.0,"寡宿":23.0,"将星":38.6,"德秀贵人":88.0,"披麻":23.0,"拱禄":0.7,"文昌贵人":50.4,"月德合":34.6,"月德贵人":34.5,"桃花":38.5,"流霞":25.6,"灾煞":23.0,"禄神":28.2,"福星贵人":69.2,"空亡":64.7,"童子煞":57.6,"红艳煞":32.0,"红鸾":23.0,"羊刃":30.7,"血刃":23.0,"词馆":22.9,"金神":9.6,"金舆":47.3,"阴差阳错":20.0,"飞刃":30.6,"驿马":36.5,"魁罡":6.7},"people":[{"id":"jensen-huang","name":"黄仁勋","gender":1,"clock":[1963,2,17,16,0,0],"shichen":"申","source":"出生日期见中文维基百科。时辰没有公开的记录，申时是网上流传的几种说法之一，另有子时、丑时、辰时","place":"台湾台北","dlonSec":0,"eotSec":0,"tst":[1963,2,17,16,0,0],"lunar":{"year":"癸卯","month":"正","day":"廿四","leap":false},"xingzuo":"水瓶","pillars":["癸卯","甲寅","辛卯","丙申"],"pillarsClock":["癸卯","甲寅","辛卯","丙申"],"prevJie":{"name":"立春","at":[1963,2,4,21,7,44],"min":18412},"nextJie":{"name":"惊蛰","at":[1963,3,6,15,17,9],"min":24437},"taiyuan":"乙巳","minggong":"己未","shengong":"癸亥","taixi":"丙戌","yun":{"forward":false,"y":4,"m":3,"d":4,"h":10,"start":[1967,5,22],"jie":"立春","gapMin":18413},"dayun":[{"gz":"癸丑","y0":1967,"y1":1976,"a0":5,"a1":14},{"gz":"壬子","y0":1977,"y1":1986,"a0":15,"a1":24},{"gz":"辛亥","y0":1987,"y1":1996,"a0":25,"a1":34},{"gz":"庚戌","y0":1997,"y1":2006,"a0":35,"a1":44},{"gz":"己酉","y0":2007,"y1":2016,"a0":45,"a1":54},{"gz":"戊申","y0":2017,"y1":2026,"a0":55,"a1":64},{"gz":"丁未","y0":2027,"y1":2036,"a0":65,"a1":74},{"gz":"丙午","y0":2037,"y1":2046,"a0":75,"a1":84}]},{"id":"justin-sun","name":"孙宇晨","gender":1,"clock":[1990,7,30,8,0,0],"shichen":"辰","source":"出生日期见中文维基百科。时辰没有公开的记录，辰时是网上一篇命理文章按生平倒推出来的","place":"青海西宁","dlonSec":0,"eotSec":0,"tst":[1990,7,30,8,0,0],"lunar":{"year":"庚午","month":"六","day":"初九","leap":false},"xingzuo":"狮子","pillars":["庚午","癸未","丙申","壬辰"],"pillarsClock":["庚午","癸未","丙申","壬辰"],"prevJie":{"name":"小暑","at":[1990,7,7,17,0,28],"min":32579},"nextJie":{"name":"立秋","at":[1990,8,8,2,45,32],"min":12645},"taiyuan":"甲戌","minggong":"壬午","shengong":"戊子","taixi":"辛巳","yun":{"forward":true,"y":2,"m":11,"d":3,"h":18,"start":[1993,7,4],"jie":"立秋","gapMin":12645},"dayun":[{"gz":"甲申","y0":1993,"y1":2002,"a0":4,"a1":13},{"gz":"乙酉","y0":2003,"y1":2012,"a0":14,"a1":23},{"gz":"丙戌","y0":2013,"y1":2022,"a0":24,"a1":33},{"gz":"丁亥","y0":2023,"y1":2032,"a0":34,"a1":43},{"gz":"戊子","y0":2033,"y1":2042,"a0":44,"a1":53},{"gz":"己丑","y0":2043,"y1":2052,"a0":54,"a1":63},{"gz":"庚寅","y0":2053,"y1":2062,"a0":64,"a1":73},{"gz":"辛卯","y0":2063,"y1":2072,"a0":74,"a1":83}]},{"id":"chiang-kai-shek","name":"蒋介石","gender":1,"clock":[1887,10,31,12,0,0],"shichen":"午","source":"陈布雷编、秦孝仪续编《蒋介石先生年表》：「公以九月十五日（阳历十月三十一日）午时生于武岭溪口镇玉泰盐铺楼上」","place":"浙江奉化溪口镇玉泰盐铺","dlonSec":0,"eotSec":0,"tst":[1887,10,31,12,0,0],"lunar":{"year":"丁亥","month":"九","day":"十五","leap":false},"xingzuo":"天蝎","pillars":["丁亥","庚戌","己巳","庚午"],"pillarsClock":["丁亥","庚戌","己巳","庚午"],"prevJie":{"name":"寒露","at":[1887,10,8,22,49,31],"min":32470},"nextJie":{"name":"立冬","at":[1887,11,8,1,10,45],"min":10870},"taiyuan":"辛丑","minggong":"癸丑","shengong":"乙巳","taixi":"甲申","yun":{"forward":false,"y":7,"m":6,"d":5,"h":22,"start":[1895,5,6],"jie":"寒露","gapMin":32471},"dayun":[{"gz":"己酉","y0":1895,"y1":1904,"a0":9,"a1":18},{"gz":"戊申","y0":1905,"y1":1914,"a0":19,"a1":28},{"gz":"丁未","y0":1915,"y1":1924,"a0":29,"a1":38},{"gz":"丙午","y0":1925,"y1":1934,"a0":39,"a1":48},{"gz":"乙巳","y0":1935,"y1":1944,"a0":49,"a1":58},{"gz":"甲辰","y0":1945,"y1":1954,"a0":59,"a1":68},{"gz":"癸卯","y0":1955,"y1":1964,"a0":69,"a1":78},{"gz":"壬寅","y0":1965,"y1":1974,"a0":79,"a1":88}]},{"id":"jack-ma","name":"马云","gender":1,"clock":[1964,10,15,6,0,0],"shichen":"卯","source":"中文维基百科记的出生日期是 1964 年 9 月 10 日。报道说 2018 年、2019 年的 9 月 10 日分别是他 54 岁、55 岁生日，可见这是公历的日子，照它排是甲辰、癸酉、壬戌。这里用的八字甲辰、甲戌、丁酉、癸卯不是照这个日子排的，相当于把 9 月 10 日当成农历九月初十（公历 10 月 15 日），时辰取卯时。时辰没有公开的记录","place":"浙江杭州","dlonSec":0,"eotSec":0,"tst":[1964,10,15,6,0,0],"lunar":{"year":"甲辰","month":"九","day":"初十","leap":false},"xingzuo":"天秤","pillars":["甲辰","甲戌","丁酉","癸卯"],"pillarsClock":["甲辰","甲戌","丁酉","癸卯"],"prevJie":{"name":"寒露","at":[1964,10,8,14,21,30],"min":9578},"nextJie":{"name":"立冬","at":[1964,11,7,17,15,6],"min":33795},"taiyuan":"乙丑","minggong":"戊辰","shengong":"丙寅","taixi":"壬辰","yun":{"forward":true,"y":7,"m":9,"d":26,"h":6,"start":[1972,8,10],"jie":"立冬","gapMin":33795},"dayun":[{"gz":"乙亥","y0":1972,"y1":1981,"a0":9,"a1":18},{"gz":"丙子","y0":1982,"y1":1991,"a0":19,"a1":28},{"gz":"丁丑","y0":1992,"y1":2001,"a0":29,"a1":38},{"gz":"戊寅","y0":2002,"y1":2011,"a0":39,"a1":48},{"gz":"己卯","y0":2012,"y1":2021,"a0":49,"a1":58},{"gz":"庚辰","y0":2022,"y1":2031,"a0":59,"a1":68},{"gz":"辛巳","y0":2032,"y1":2041,"a0":69,"a1":78},{"gz":"壬午","y0":2042,"y1":2051,"a0":79,"a1":88}]}]};
+const DATA={"title":"八字命盘","nayin":{"甲子":"海中金","乙丑":"海中金","丙寅":"炉中火","丁卯":"炉中火","戊辰":"大林木","己巳":"大林木","庚午":"路旁土","辛未":"路旁土","壬申":"剑锋金","癸酉":"剑锋金","甲戌":"山头火","乙亥":"山头火","丙子":"涧下水","丁丑":"涧下水","戊寅":"城头土","己卯":"城头土","庚辰":"白蜡金","辛巳":"白蜡金","壬午":"杨柳木","癸未":"杨柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土","戊子":"霹雳火","己丑":"霹雳火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"长流水","癸巳":"长流水","甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木","庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆灯火","乙巳":"覆灯火","丙午":"天河水","丁未":"天河水","戊申":"大驿土","己酉":"大驿土","庚戌":"钗钏金","辛亥":"钗钏金","壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土","戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"},"freq":{"三奇贵人":0.6,"丧门":23.0,"九丑":15.0,"亡神":38.5,"元辰":23.0,"八专":13.3,"六厄":38.5,"六秀日":10.0,"劫煞":38.5,"勾绞煞":23.0,"十恶大败":16.7,"十灵日":16.7,"华盖":38.6,"吊客":23.0,"四废日":3.3,"国印贵人":47.2,"地转":1.7,"天乙贵人":67.6,"天医":23.0,"天厨贵人":47.3,"天喜":23.0,"天德合":30.5,"天德贵人":31.1,"天罗地网":12.0,"天赦日":1.7,"天转":1.7,"太极贵人":80.0,"孤辰":23.0,"孤鸾煞":13.3,"学堂":23.0,"寡宿":23.0,"将星":38.6,"德秀贵人":88.0,"披麻":23.0,"拱禄":0.7,"文昌贵人":50.4,"月德合":34.6,"月德贵人":34.5,"桃花":38.5,"流霞":25.6,"灾煞":23.0,"病符":23.0,"禄神":28.2,"福星贵人":69.2,"空亡":64.7,"童子煞":57.6,"红艳煞":32.0,"红鸾":23.0,"羊刃":30.7,"血刃":23.0,"词馆":22.9,"金神":9.6,"金舆":47.3,"阴差阳错":20.0,"隔角":5.6,"飞刃":30.6,"驿马":36.5,"魁罡":6.7},"people":[{"id":"jensen-huang","name":"黄仁勋","gender":1,"clock":[1963,2,17,16,0,0],"shichen":"申","source":"出生日期见中文维基百科。时辰没有公开的记录，申时是网上流传的几种说法之一，另有子时、丑时、辰时","place":"台湾台北","dlonSec":0,"eotSec":0,"tst":[1963,2,17,16,0,0],"lunar":{"year":"癸卯","month":"正","day":"廿四","leap":false},"xingzuo":"水瓶","pillars":["癸卯","甲寅","辛卯","丙申"],"pillarsClock":["癸卯","甲寅","辛卯","丙申"],"prevJie":{"name":"立春","at":[1963,2,4,21,7,44],"min":18412},"nextJie":{"name":"惊蛰","at":[1963,3,6,15,17,9],"min":24437},"taiyuan":"乙巳","minggong":"己未","shengong":"癸亥","taixi":"丙戌","yun":{"forward":false,"y":4,"m":3,"d":4,"h":10,"start":[1967,5,22],"jie":"立春","gapMin":18413},"dayun":[{"gz":"癸丑","y0":1967,"y1":1976,"a0":5,"a1":14},{"gz":"壬子","y0":1977,"y1":1986,"a0":15,"a1":24},{"gz":"辛亥","y0":1987,"y1":1996,"a0":25,"a1":34},{"gz":"庚戌","y0":1997,"y1":2006,"a0":35,"a1":44},{"gz":"己酉","y0":2007,"y1":2016,"a0":45,"a1":54},{"gz":"戊申","y0":2017,"y1":2026,"a0":55,"a1":64},{"gz":"丁未","y0":2027,"y1":2036,"a0":65,"a1":74},{"gz":"丙午","y0":2037,"y1":2046,"a0":75,"a1":84}]},{"id":"justin-sun","name":"孙宇晨","gender":1,"clock":[1990,7,30,8,0,0],"shichen":"辰","source":"出生日期见中文维基百科。时辰没有公开的记录，辰时是网上一篇命理文章按生平倒推出来的","place":"青海西宁","dlonSec":0,"eotSec":0,"tst":[1990,7,30,8,0,0],"lunar":{"year":"庚午","month":"六","day":"初九","leap":false},"xingzuo":"狮子","pillars":["庚午","癸未","丙申","壬辰"],"pillarsClock":["庚午","癸未","丙申","壬辰"],"prevJie":{"name":"小暑","at":[1990,7,7,17,0,28],"min":32579},"nextJie":{"name":"立秋","at":[1990,8,8,2,45,32],"min":12645},"taiyuan":"甲戌","minggong":"壬午","shengong":"戊子","taixi":"辛巳","yun":{"forward":true,"y":2,"m":11,"d":3,"h":18,"start":[1993,7,4],"jie":"立秋","gapMin":12645},"dayun":[{"gz":"甲申","y0":1993,"y1":2002,"a0":4,"a1":13},{"gz":"乙酉","y0":2003,"y1":2012,"a0":14,"a1":23},{"gz":"丙戌","y0":2013,"y1":2022,"a0":24,"a1":33},{"gz":"丁亥","y0":2023,"y1":2032,"a0":34,"a1":43},{"gz":"戊子","y0":2033,"y1":2042,"a0":44,"a1":53},{"gz":"己丑","y0":2043,"y1":2052,"a0":54,"a1":63},{"gz":"庚寅","y0":2053,"y1":2062,"a0":64,"a1":73},{"gz":"辛卯","y0":2063,"y1":2072,"a0":74,"a1":83}]},{"id":"chiang-kai-shek","name":"蒋介石","gender":1,"clock":[1887,10,31,12,0,0],"shichen":"午","source":"陈布雷编、秦孝仪续编《蒋介石先生年表》：「公以九月十五日（阳历十月三十一日）午时生于武岭溪口镇玉泰盐铺楼上」","place":"浙江奉化溪口镇玉泰盐铺","dlonSec":0,"eotSec":0,"tst":[1887,10,31,12,0,0],"lunar":{"year":"丁亥","month":"九","day":"十五","leap":false},"xingzuo":"天蝎","pillars":["丁亥","庚戌","己巳","庚午"],"pillarsClock":["丁亥","庚戌","己巳","庚午"],"prevJie":{"name":"寒露","at":[1887,10,8,22,49,31],"min":32470},"nextJie":{"name":"立冬","at":[1887,11,8,1,10,45],"min":10870},"taiyuan":"辛丑","minggong":"癸丑","shengong":"乙巳","taixi":"甲申","yun":{"forward":false,"y":7,"m":6,"d":5,"h":22,"start":[1895,5,6],"jie":"寒露","gapMin":32471},"dayun":[{"gz":"己酉","y0":1895,"y1":1904,"a0":9,"a1":18},{"gz":"戊申","y0":1905,"y1":1914,"a0":19,"a1":28},{"gz":"丁未","y0":1915,"y1":1924,"a0":29,"a1":38},{"gz":"丙午","y0":1925,"y1":1934,"a0":39,"a1":48},{"gz":"乙巳","y0":1935,"y1":1944,"a0":49,"a1":58},{"gz":"甲辰","y0":1945,"y1":1954,"a0":59,"a1":68},{"gz":"癸卯","y0":1955,"y1":1964,"a0":69,"a1":78},{"gz":"壬寅","y0":1965,"y1":1974,"a0":79,"a1":88}]},{"id":"jack-ma","name":"马云","gender":1,"clock":[1964,10,15,6,0,0],"shichen":"卯","source":"中文维基百科记的出生日期是 1964 年 9 月 10 日。报道说 2018 年、2019 年的 9 月 10 日分别是他 54 岁、55 岁生日，可见这是公历的日子，照它排是甲辰、癸酉、壬戌。这里用的八字甲辰、甲戌、丁酉、癸卯不是照这个日子排的，相当于把 9 月 10 日当成农历九月初十（公历 10 月 15 日），时辰取卯时。时辰没有公开的记录","place":"浙江杭州","dlonSec":0,"eotSec":0,"tst":[1964,10,15,6,0,0],"lunar":{"year":"甲辰","month":"九","day":"初十","leap":false},"xingzuo":"天秤","pillars":["甲辰","甲戌","丁酉","癸卯"],"pillarsClock":["甲辰","甲戌","丁酉","癸卯"],"prevJie":{"name":"寒露","at":[1964,10,8,14,21,30],"min":9578},"nextJie":{"name":"立冬","at":[1964,11,7,17,15,6],"min":33795},"taiyuan":"乙丑","minggong":"戊辰","shengong":"丙寅","taixi":"壬辰","yun":{"forward":true,"y":7,"m":9,"d":26,"h":6,"start":[1972,8,10],"jie":"立冬","gapMin":33795},"dayun":[{"gz":"乙亥","y0":1972,"y1":1981,"a0":9,"a1":18},{"gz":"丙子","y0":1982,"y1":1991,"a0":19,"a1":28},{"gz":"丁丑","y0":1992,"y1":2001,"a0":29,"a1":38},{"gz":"戊寅","y0":2002,"y1":2011,"a0":39,"a1":48},{"gz":"己卯","y0":2012,"y1":2021,"a0":49,"a1":58},{"gz":"庚辰","y0":2022,"y1":2031,"a0":59,"a1":68},{"gz":"辛巳","y0":2032,"y1":2041,"a0":69,"a1":78},{"gz":"壬午","y0":2042,"y1":2051,"a0":79,"a1":88}]}]};
 const TABLES={"jieFrom":1644,"jieBase":-10286984342,"jie":"00003sjt4ocd5n3h6fd16t0o6nys61o054ni466l3fdz32wz37or3sjm4og25na66fl96t7l6o2n61pl54ny466v3fdg32vc37nb3skc4oj75ndn6fln6t366ntq61fl54hi465r3fgn330137qz3sly4oiz5nbs6fj26t1t6nu961g954hu466o3fi7330b37o53sg64ocu5n9c6fm76t8i6o2a61nf54lv46733fgb32yd37nh3sfv4obp5n7m6fli6t8x6o1h61ki54h346113fan32v837nw3sjf4oga5nan6fmo6ta76o3y61ns54jy462e3fa732tv37mv3siz4off5n8h6fij6t5s6o2761pg54on468m3ffc32vp37kp3se94oax5n5a6ffq6t2i6o0v61ru54se46ae3fe432rn37f23s924o8f5n7i6fnc6tbz6o7961ui54to46cb3fgh32tk37fq3s8k4o7b5n676fl16t8v6o2061n354nn46az3fki331337ni3sd64o6m5n076fcr6t316o2061qi54qm46cj3flf331437m53sa84o2n5mx66fcl6t5m6o7r61yy54yd46fz3fjv32xs37kb3sb04o505mz66fd16t3v6o2q61sl54tk46da3fig32x037kr3sdo4o9q5n3o6ff56t3h6o1561r154t646eq3fl532zf37ls3scs4o7e5n1i6fdk6t256o0b61qn54u246hw3fq2334837nx3sbe4o3z5my16fbb6t0y6o0861rg54te46e63fkq32ze37l03sag4o4i5n0i6fh56t9o6o8a61w254ua46ci3fhs32wy37kj3scj4o8a5n3k6fgy6t6t6o4961rr54re46br3fir32yy37n03sej4o8k5n0y6fbo6t196o2i61ug54vw46fr3fke32wd37gc3s6b4o1u5myo6fex6t7m6o9u622v554746lg3fm632v237db3s2v4nzk5my56fg06t8w6o7g61wm54y746ij3fmi32xd37fx3s4k4nzr5mx16fdv6t766o7n61wu54xd46ie3fog331a37ka3s6j4nx95mrf6f816t376o7g6209551p46ly3fri334737mj3s7p4nwy5mop6f3j6syb6o3y620f553i46ky3fmj32xd37h63s5z4nz55mtb6f8y6t3l6o7h621f554446mf3fnf32wo37fn3s5t4o1v5mxx6fbd6t1t6o2c61uo54z446m33frk332f37js3s6j4nze5mtt6f786sxu6nzv61u254z246mi3fsj332b37h53s114nso5mph6f996t5t6o9q6233555446ob3fr4330p37gx3s234ntw5mq36f9p6t796o9r61zp54zs46ip3fmn32yj37hw3s5k4nxx5ms16f7v6t3p6o8u621k552146k63fmy32y937hp3s504nw35mpf6f5c6t1k6o956263559f46rt3fsg32zz37fh3s124nt05mno6f4b6szz6o6x625l55aw46sn3fre32ws37aw3rwl4nqm5moo6f8l6t666obk626k55aj46tx3fu632zx37d63rxh4nqr5mop6f7u6t4l6o9b622m556146sb3fxd336w37l23s2w4nqz5mjn6f096sxb6o5i6235557w46su3fwk334x37ik3s064nnz5mgw6ezt6t0p6obq62b455fo46wx3fvd331637fo3s0c4nrg5mly6f3s6t206o8z624s559a46t33fty330v37g43s234nup5mp86f4f6sym6o4m621o557e46t33fvx333p37hr3s0o4nq65mkm6f2n6szn6o6n624l55ay46wt3fzj336937i73rz64no65miv6f216t0m6o7w624q559246sc3ftr331137ev3rxv4noc5mk96f4m6t526odh628g559u46r13fr432yd37di3ryi4nqj5mmm6f596t3s6oc0627u559y46rx3fss330c37fh3rzz4nqf5mjz6f0v6syg6o81628855e746x43fvk32yb378r3rqv4nhz5mep6f0f6t2x6of262g055m547363fy932y7376j3rnr4ng15mfl6f3l6t6e6off62bh55fy46zs3fzc332g37br3rro4nh75mdx6ezd6t0h6ob9629s55ee46ys3g0k336g37gq3ru04ne65m6i6es36swx6oc362f055lg47453g3d337l37hf3rvl4ngu5m856era6suu6oa362dx55l8472p3fzd331w37cl3rtz4nix5mcp6ev86swm6oa662ci55jt47303g0d332437by3rts4nks5mgg6eyr6sxb6o7o628n55gr472u3g3u337m37gt3rw44nk55me36ewn6svg6o59626j55fr472t3g3y336e37dc3rqd4nde5m926ewa6t186oeo62f755kz473h3g1f333o37c83rqy4nfa5mc16f096t5m6oho62er55h546yf3fx9331s37da3ruk4njg5me36eyg6t0i6odg62e955iq46zr3fxg331337c03rs24nf65m8k6etk6syf6oez62jw55rm478x3g3m332d378w3rnm4ncq5m926evg6t056oft62k255ro478p3g2n32zz37533rj84n9f5m8g6exd6t2g6ogs62ip55pf478b3g4q333l378h3rky4n8w5m666euv6t126og362i555on478f3g7k339c37fb3rq44n9y5m2d6eof6sv06ocg62hj55q5479l3g6p336937b73rlz4n675lza6em86sv86ogc62np55wf47dg3g6s334337933rlu4n8t5m496ern6sy96of962jn55re47a43g60334s37al3roc4nc55m716es26sum6o9062e655oe479m3g7v337z37cu3rmz4n6t5lzx6emj6stj6ob962ho55ss47e73gbo33a837d23rlz4n635m0k6eon6swu6ofc62jz55r347983g5k335337ab3rlt4n7h5m2r6eqz6sy96og562kg55qg477b3g303331379t3rn44n9l5m3j6epz6sx16ofc62l755sz47ad3g5l334q37as3rnx4nae5m3u6ep16sv16odl62l255vo47ep3g81332g373v3rek4n1y5lz36eoh6sxp6oil62qv561647iw3gak333e372w3rc14mze5lz46esj6t3e6olh62pd55wq47fc3gai336v378a3rh74n295lyk6ep46sym6oh962mq55uz47e63gb833a337ci3rip4mym5lq26ef16ssb6ohd62s2562p47kj3ge333a237bg3riw4n0v5lth6ehr6stk6oig62tc562v47iz3gai335237773rhp4n3b5lya6em86sue6ofd62p2560347if3gbc335r376u3rgw4n355ly46ell6stt6odm62mc55yg47je3gf233ax37b73riw4n325lxt6elz6suk6oe962lz55xr47jg3gf4339i377x3rdh4mw75ls36ejr6swh6ojt62si561g47ir3gbu336l376r3rdy4mx95lth6emz6t1a6one62ts560547ff3g89334o377u3ri94n365lxe6em86sx56oj462rm560s47hf3g9r334u37653rdv4mwk5lps6eee6sre6oii62w8568z47qh3ggc336n373a3r9a4mth5lqe6eid6svq6olo62yb569b47pr3gff335d371h3r7b4ms05lqf6ekb6sxg6ok362tz565b47o43ggq338t375e3r9u4mrt5lm96edq6ssx6oij62ti565447op3gj633dq37bm3rf84mun5lmi6ebt6sq86ohm62ur567d47qa3gi1339o376l3ras4mrd5lkr6eb86spu6oik62xy56b247s03gh7337837403r9u4msn5lo06eg86suj6ojc62vg567o47pp3ggw338a375q3rcj4mww5lsj6eio6su16ogk62r3564947ot3gik33bc377d3r9m4mpm5ljq6eb16sq36ohj62v0568s47t03glr33cy377d3r8r4moe5ljr6ee26svp6oof630w569u47p23gfd337037473r964mr85ln46eh76sxp6oo262z9568s47nv3gdn335b373e3r9r4msf5llv6ec26ssc6olh62zw56ca47sy3gic338c374h3r994mrh5lm66ed76ssk6om2632256g647xl3gkt336d36y83r0s4mjn5lhu6eda6suq6oo2634e56iu48003gn6338m36z93qzx4mhb5lfi6edf6sxv6oq7632t56ex47wv3gn933c3374t3r5u4mlu5lhc6ebt6suk6oo3631f56dc47vh3gne33em378b3r6q4mi35l956e1b6sl96ok9634956jv481j3gq733e5376o3r6c4mjb5lbe6e486so46omj636h56kv480g3gmt3395372d3r5o4mn95li66eal6sr06ojq630056fq47yr3gnu33ay37373r574mmd5lg66e6g6sm46ofs62wl56dk47zc3grg33gc377u3r6v4mlb5lft6e8u6spp6ojg62zh56eh47yn3gpc33cw373u3r2k4mgw5lck6e906st36onr633k56gi47wz3glk339j37243r2p4mhp5lcn6e946svb6oqn634r56fr47ur3gin337c37233r5o4mn65lic6ebh6sue6oq0635f56hn47xc3gkq337x37063r0c4mff5la46e416sny6on8638n56p7485u3gqv339g36x73qvb4mam5l7v6e646sta6osb63c656qr485w3gq8338g36w53quq4mbe5la46e9i6swr6ot6639056mw48483grp33c9370a3qx14ma85l446dzd6smz6onz637y56nc485e3gue33gy37633r1s4mca5l4a6dz26smd6oop63bi56sd48913gu033cx37133qyc4mb15l4p6e0g6snm6oon63bg56td48a03gu033bj36yu3qwv4mbe5l6a6e256son6onk637o56ov487e3gua33dz37243r0f4mfr5lbp6e6o6sql6oni635z56mi486a3gvi33gx37423qy04m8u5l2x6dze6sm16om9638156q5489c3gx633h4373f3qxd4m7n5l1h6dzv6sqi6ot063dm56rf48613gr433b437043qy74mcc5l7y6e5k6sua6ouh63cs56q4484u3gpq339n36z03qxy4mca5l5i6dyz6sld6onu63ay56s648913gub33cw37043qwu4m9y5l4i6e0j6snr6oq063el56xn48eg3gwi33ae36tu3qp64m3v5l256e2o6ssr6otn63f956xg48et3gy233ck36uv3qo24m0v5kye6dzk6srb6otg63d956sw48au3gxn33g837183qui4m5b5l0e6dze6sq36otq63fc56ua48ae3gwz33h1372v3quj4m215ktk6dqt6sia6ooz63gc570948gp3gzr33fq37003qt34m2a5ku76dr86sjt6orp63ik571148g53gxb33bf36vk3qrf4m5m5l236e016spe6osb63ex56ww48ee3gyf33dt36x63qrf4m465kyp6dul6si76oli63al56v948fp3h2p33jt372b3qsy4m1h5kv56du26slb6oq063fb56yy48gy3h0l33fe36xm3qpa4lzg5kv56dwt6sr46owe63jc570148f93gxx33db36ws3qps4m0f5kv36dus6snz6oud63i356yd48dg3gwe33cq36xu3qsn4m4o5kzk6dxn6soq6ov563ks572a48h63gz133dk36vx3qns4ly85kt56dsi6sks6osb63ld577l48ov3h5e33fs36tw3qjd4lt95kpc6dr66smw6ow563nc576v48nc3h4c33fg36u53qk54lv25kt76dwt6ssa6oz663mp573m48k93h4233ih36z03qoh4lw35koh6dn96sh56oqi63j5573n48li3h6133lw373e3qs14lx55kn96dl96sg86orf63mf578w48pf3h4z33g536wf3qnf4lwz5kr96dr36slp6ov363nh578c48ov3h4z33fh36ul3qlh4lw65krs6drg6sjg6oqf63hp572g48kz3h4i33hx36y33qoj4lyk5ku76dui6smp6osm63is572t48l03h5733jl36yu3qm44lt05kn86dp16sl16otu63la576648nx3h6933ih36wt3qk54lqo5kkf6dmk6slb6oy763pv576u48kh3h0g33cu36tn3qkt4luw5kr36dtv6sqw6p1m63sf578q48l63h0033bi36s83qk34lu95knx6dn76shq6ot063oj57ao48qi3h5q33fe36sz3qhm4lpz5kkd6dli6sia6ouz63rv57g948wu3h9633ee36o23qax4lky5kjw6dpz6spl6p1o63um57fq48w93has33he36qh3qb84lin5kfz6dlp6skr6ox563qf57ak48rp3h9y33lb36xt3qix4lnh5kgj6djl6sj36ox963t157e348tp3ha833lk36y83qik4llu5kcz6deh6ses6ov963u357iv48zp3hdi33km36v93qgi4llh5kdi6de56sdb6oun63te57gq48x53hb333i336t33qgb4lot5kkv6dns6skv6ox363s657ec48ve3hbd33jz36v53qhl4lov5kik6djk6sff6oqo63mg57bc48vo3heh33or36zb3qin4lm75kel6dgr6sg06ouk63r257ep48wd3hbi33jh36u03qev4lkv5kgo6dmq6sov6p4263y057gr48u83h7v33g136s03qeu4llz5kh46dl96skl6oyt63ua57ej48sn3h6q33fs36sy3qgw4loc5kig6dky6skc6ozp63x957jm48y13hab33ge36pi3qa64lh75kde6die6sjt6p0u63zu57oq49523hgi33iz36o63q5z4lbl5k8c6df96sij6p1c63zu57mb49213heu33j036pd3q7b4lck5k9q6dio6sna6p4s641e57lx49093he033ks36tf3qc94lfg5k746dan6sdl6owm63x057m6493b3hhs33on36x03qe64lf25k4o6d5w6s8f6oug63yi57q6496w3hh833jm36q53q934le35k8y6de96sh56p0v641t57qg49633hh933jr36pp3q8l4lel5kae6dfd6seu6oty63ta57ja49233hha33n536u63qby4lfw5k9s6de46sfj6ovx63um57k3492t3hid33oo36ub3q994lb45k5b6dc06sh26p0z640c57og495g3hiy33ng36sx3q8d4l9u5k346d9j6sf76p1g641x57nm49193hd233i436qd3q9i4ldx5k8f6df86ske6p4s644q57ql49313hcw33gn36oy3q9o4lfa5k886dbm6sec6oyo641657rx498j3hjk33le36pt3q6d4l9w5k3w6d8m6sc66oy2642p57vc49cf3hla33jw36le3q0c4l4w5k3b6dej6smf6p7v648d57w349b63hlk33lz36o23q274l555k1o6dbr6sif6p2q642s57qk496m3hk233os36tz3q8p4l925k0s6d6i6sdf6p1a644v57ub499m3hl233oe36sk3q6e4l6j5jyp6d556sd76p3f649k580p49fs3ho033mr36or3q3e4l5c5jys6d576sbi6p09645v57wo49c53hle33ky36nh3q3c4l7f5k336db06sh46p2l645957vq49c23hmm33n736pl3q4g4l735k0z6d7b6scy6oyx641y57tp49cr3hq033rw36tf3q4t4l3n5jw56d336sa46oyy644i57w349cj3hml33mx36ow3q204l2o5jxd6d8a6sj56p8o64c757zn49br3hjh33j836md3q214l565k026d8i6sg76p3j646x57wb49aq3hjs33k636nl3q3b4l685jzs6d5h6sc36p1h6480580249fw3hof33m136ks3pw94kxt5ju56d4u6sf26p6a64dv586n49mk3htk33oa36ka3ptm4ktu5jq46d2j6see6p5c64b1581u49hr3hr033ou36n23px04kw55jql6d286sfh6p7a64ci582849gu3hqa33q036ql3q1v4kzr5jqb6cxf6s8e6p2364au583q49k83hts33sw36sw3q2y4kzj5jp56cuf6s346oxb649t585v49me3hsp33o536mg3pxz4ky75js66d1y6scy6p5364du586r49ls3hsb33nk36ld3pxg4kzw5jw06d5g6sde6p16646d57zf49hq3hsl33rd36q73q0q4l0c5ju26d246saq6p0p647757zy49hy3ht233rv36p73pww4kua5joj6d0y6sf06p9064gs587k49lp3hst33p836mu3pw94kuk5joc6d0a6ser6p9864gl586349ic3ho133kj36jx3pw24kwt5jr56d1k6sf56p9w64ic588v49l03hpe33k936iq3pv84kwf5jqm6czs6sbd6p6c64hn58c649rx3hxl33qk36kt3psj4kr05jlf6cw36s7x6p2l64fp58d849u33hyn33pn36ho3pnr4km55jip6cyd6sg06pbt64kw58dh49si3hyg33rj36kx3pr84kp05jke6cxp6scs6p7r64g4588549o33hx533uf36r33pxr4ksp5jj46crl6s4n6p1v64f658ad49qg3hxw33tf36ok3pug4kp65jg86cqz6s6w6p6664lc58hn49wl3i0d33rj36kv3ps24kpn5jiq6ctk6s886p4n64ga58bi49ru3hxn33qc36k73prx4kr15jln6cwd6s9m6p4j64eq589749q93hxu33s936mr3ptk4kqd5jjg6cuj6s8c6p4b64fo58aj49s73i0u33vu36pk3pu24ko65jfy6crl6s6m6p3h64gl58c449r73hw733ph36jv3pqj4kn25jgf6cua6sdh6pcn64ny58fu49rh3hu233m336h03ppz4kpr5jld6cxn6sct6pa564ld58e049re3hvc33nr36ic3pql4kpg5jjw6cuh6s7p6p5764k258go49w83i0933q236fm3pj74kfy5jc26csb6sc36pck64s158os4a3e3i4w33rk36eu3pgw4kd85ja06crv6sdr6pec64py58ja49xx3i2733sf36i83pku4kfv5ja76cpd6s9y6pby64q458jy49xr3i2433u036ly3ppb4kht5j806ck86s406p8964qx58om4a3k3i6o33wi36my3ppl4ki85j8b6cja6s126p3o64nr58on4a4q3i6133t236hr3pl64kgt5ja76cnk6s6v6p8z64pp58nj4a3f3i6233tq36hy3pl14ki45jeb6csg6s8q6p7664kz58hn49zc3i6033xm36no3ppn4kjh5jcc6cp06s596p3r64iu58gj49ym3i5u33xj36m73ply4kdd5j5e6cla6s8f6pcf64su58oq4a2l3i4t33tj36iq3pky4kf15j8f6cnv6sar6peu64t358m849yc3hzx33pc36gi3plb4khm5jbf6coo6s7u6pb064s758nr4a0h3i1b33pd36fi3pjs4kf15j826clt6s5k6p9i64tp58t94a8b3i9033uf36g73pgj4kam5j4w6ckj6s5l6p8m64rr58sp4a913i9k33tq36do3pca4k5z5j1m6ck16s966pf564vz58ry4a6g3i8h33v136gn3pfl4k8j5j3i6ckq6s7g6pcr64ug58q64a4a3i7n33xb36m23pm84kd35j3b6cg96s0s6p5u64r558ri4a783i9733vx36hv3pgt4k7u5iyn6cde6s1z6pao64xd58yh4add3ic133un36eh3pe14k885j2y6cj86s6k6pcn64v458tb4a8o3i9u33ur36fd3peq4k915j4d6ckh6s5c6p9464rn58qa4a6l3i9m33wq36ig3pgn4k765izb6cfv6s3v6pab64uu58uh4aas3idh340436ku3phk4k725iyk6cez6s466pbq64wb58vj4a9j3i9633u536fa3pe04k605iz36cg86s6s6pgh651058xl4a993i7f33ro36dc3pdx4k885j3a6cju6s6z6pej64zr58xx4aay3ia033u936fg3pf94k8q5j2e6chv6s3q6p9h64w058yh4af23iez33wo36cq3p7r4jyx5itj6ccz6s556pfq652r59484ajx3iie33yl36de3p734jxj5itc6cey6s8q6pjf653558zu4adl3ie733yi36h23pci4k235iuv6cd06s3p6pdi650058yu4acc3icl33yb36ja3pfy4k3b5irl6c6b6rxh6pag6516594d4ajj3ihv340036i93ped4k3r5iua6c916ryg6p9w64zy593m4aj13ig833w836cp3p954k1a5ivk6ccw6s256pc264zt59134agh3ifg33wv36df3p974k1a5ix36cfy6s4i6pby64xt58ye4aef3ifm33zt36i13pd94k2y5ivw6cdq6s3b6paq64w558xf4aec3ifw33z736fb3p8b4jw55iod6c7w6s306phj6561595l4aib3if233vg36bn3p664jw75iqm6cbq6s786pll658p595i4afn3ib833s0369y3p7a4jzn5iua6cd66s4j6pfz655759664aip3ieh33u036a83p5k4jv65ing6c5r6rz86pds656f59bs4arl3inf33zw36b93p284jqy5ilm6c6z6s246pgr657k59bc4aqq3in133zx36au3p0t4jol5ijh6c6c6s326pip658o599a4an73il3340z36ef3p524jrk5ik36c4k6rzy6pft657q599t4anf3il5342o36is3pbf4jxk5imv6c3e6rwg6pbe6549599q4aq83inq341z36eg3p5f4jrw5iig6c076rv56pdg658n59eh4au43ipf341636c23p324jrk5ilq6c6q6s1z6ph2657q59a94ap23im6340r36dt3p5z4jv55ipf6c9l6s276pdo652r595y4amf3ilk342736gf3p784jsc5iim6c1l6rx86pdn655v59a04aqb3iol343z36gs3p6j4jrs5ijc6c3z6s0t6pif65as59cp4aoq3ijf33xb36ay3p3d4jrp5il36c6c6s306pk165c459d44ao43ihj33uh36843p1q4jrz5img6c6g6s1a6pho65az59eo4ars3ilo33xq369s3p234jrp5ima6c6p6s1a6pgo659i59f84avl3iqv3409366v3otu4jgj5ic16c0m6s0c6pk865ev59ji4ayf3iss3422368i3ou54jez5i9z6c0v6s3t6pof65h159i84aub3ip7341u36c83p0c4jl55id26bzl6rzc6piu65cz59gw4au53iot341x36ds3p2b4jkp5i8i6bqp6rpk6pdc65d059lh4b1f3ivc345436dh3p0n4jkj5ib56bva6rt56pf565ea59m14b0l3ita341r36943ox54jjw5idt6c086rxo6pfy65be59hl4ax43is0342h36ak3oy14jk85idw6bzi6rwp6peo659159f84aw23it4345v36fb3p294jmd5ie86bzz6ry86ph265as59fp4aw23iss344736bt3oxf4jge5i836bvm6rxd6pku65i159m84ayj3iqw340c368m3ovx4jgp5i9j6by76s1d6poq65ks59nj4axn3io633x9366t3ox14jl45iff6c236s176plk65hl59n14b013irk33zk36713oua4jf65i7m6btn6rtk6ph965hl59r94b7o3j03345u368m3orb4jad5i4h6bux6ryh6pmq65lj59sb4b633ixw3447367t3or84jao5i4v6bw06s0j6poa65kv59pc4b2c3iva344a36aj3ouz4jdg5i4o6br56rte6piy65ip59pq4b3m3iwd345s36df3oz04jha5i7d6bsp6rta6phu65ie59r54b6p3iyv344o368c3osg4jbi5i3c6bqx6rt26pio65ks59ug4b9b3izx344536663op94j905i2y6bt76rxl6plu65jy59qz4b5a3ixc344036863osg4jd25i7p6bx66rzd6plj65hj59nl4b373ixm346k36bp3otw4j9d5hzd6bn06rqi6phi65j259rj4b763j0i347z36bo3osy4j865hya6bny6ruf6pn665pf59w44b6s3ivm341736623or44jas5i3c6bsq6ry16pos65ot59v34b6k3iv333zp363w3op84ja55i3c6bpx6rrs6piv65lp59vg4ba23j07344e366p3opk4j8q5i2d6brt6rus6pkn65mr59x94bdq3j4s346n364m3oje4j0b5huh6bnn6rve6pnw65qc59zn4bem3j53347u366b3okb4izg5hrw6bl66rvu6pqa65rg59y44bao3j16346u369h3oqs4j765hyc6bns6ruf6pnu65q259xz4bba3j1h347036ai3orq4j5t5htn6bfy6rkm6pg565o25a1f4bhn3j7d349n36973oou4j435hu46bj06rp66pjv65qo5a2v4bgy3j55346c365f3omc4j545hzb6bqh6rwe6pne65oi59xo4bcy3j3m3470366w3omx4j4k5hy06bn86rr96pir65l259ux4bbi3j4j34ai36bt3or14j5n5hwq6bnp6rum6pnj65pz59yi4bcz3j3q346y366h3oll4j0x5hsr6blg6rvt6pru65vs5a3p4bey3j1p3430362n3oj44j075hsw6bl46rvt6psq65ws5a4f4bf23j10341r361v3ojt4j315hxo6bpj6rww6prn65w85a5l4bi33j4s344o362n3oh14iwc5hor6bgt6rpb6plo65u35a8c4bor3jcx34ba36513of24irq5hjm6be56rra6pqg65y25a9g4bn13jac349h364n3og44iu55hmy6bhg6rui6ptf65yf5a6u4bjf3j7m349936763ok24ixg5hn76bc36rk36pj365st5a5s4bkp3j9l34bk36ab3onq4j015ho16bd36rle6pji65to5a8i4bok3jc1349m364f3oh44ivw5hn96bey6rp16pmu65vb5a9c4bp03jc0349c36353oen4ito5hmp6bfn6rq86pn965t45a4m4bk23j96349m365w3oi84ix55hqs6bkm6rua6pq165uk5a434bih3j8734aa367y3oj74iu75hjt6bcd6rns6pmp65vi5a834bmu3jb234b0366m3oh54isb5hhh6bal6rp96prs661s5aco4bn33j6v344b360f3oee4iuq5hoa6bia6rve6pw4663p5ad24bnp3j7b343v35z13ocr4itm5hnd6bf16rnv6pn165y35acj4br93jd1349g362e3oco4iq55hiu6bds6rqk6pq8660f5afg4bvj3jhf34b5360b3o7l4ik15he26bcc6rtu6pwj665m5ahn4bvi3jh634cg362g3o8q4ij05hau6b7m6rpb6pts66495af94brb3jd534bf365q3of84iq35hg76baa6rp46pso664k5ahc4btr3jej34bw366g3ofy4ipi5hd06b456rhf6plk66115ajb4bzp3jks34er364q3oc24img5hbn6b406rih6png662e5aix4bxq3ji734c136243oaj4inw5hhl6bda6rr96psp662h5afb4btw3jgb34co36483ocd4iob5hg16b9d6rky6pl565wg5abo4bsg3jh434fs368m3ofx4ioi5hcx6b6p6rm66ppb66125afm4bum3jge34bl362p3oan4ilo5hcp6b8f6rqc6pwf668c5ake4bvt3jed348235yz3o7t4ikf5hct6b866rnx6psp665u5ait4bug3jd5347735yt3o8r4img5hfq6bbr6rqm6ptl666p5alh4byk3jhe34a735zf3o5s4igd5h8e6b576rmh6pr6665g5anc4c443jol34fu36143o3e4iba5h2d6b056rkv6ptz66985anp4c113jku34dr36193o5c4ie85h6b6b556rpw6pyj66cl5aoj4bz93jhz34c5362f3o8x4iia5h7i6b0y6rgq6pnh664w5amu4c1k3jle34f636503ob34ij25h6c6az36rfx6pnu665z5apr4c643joj34dn35yw3o3l4ieb5h6q6b3r6rmr6puy66aw5ara4c5p3jo134dv35yq3o284ici5h616b4d6rmc6prp665w5all4c0p3jlo34f736303o764ifu5h796b596roe6pui66885amz4c0r3jl734fc36433o7h4idt5h2p6azp6rkq6pu966ar5ar74c593jo634fv362g3o5d4ic35h0s6awx6rid6pv066ee5atu4c4f3jk1349z35x63o2x4idr5h6c6b4p6rph6pzt66he5aw54c6a3jkv349g35vq3o1p4ids5h6l6b2k6rjn6pqw669h5atk4c9f3jrj34ge36003o1l4i995h026axn6rie6psb66as5aux4ccd3jux34hn35y63nx14i3u5gwu6ayt6rnz6q0z66iq5ay04cat3jsh34hk360b3nzs4i595gvt6avu6rjc6puq66dh5au44c6o3jol34g6362x3o5k4ibh5gzd6avm6rhg6pte66de5aw54c9p3jqc34g0361s3o3x4i9w5gxx6atb6rea6pr966d55ayi4cew3jw634iy36063nzs4i605gvx6ass6rdp6pqk66cr5awh4cb03js534fu35y13nym4i6k5gzi6b066rmw6pxa66f15avn4c8u3jqa34fl35zg3o0u4i8h5gzk6axi6riq6psb66a75asr4c8g3jry34il362r3o2l4i6t5gur6as26rfu6ptz66eb5awr4caz3jrc34eb35wj3nwv4i3g5guw6avv6rmg6q3566oo5b4m4ce33jqh34bk35tb3nuf4i2m5gv86aw16rk66pxc66j15b1r4cde3jqv34cd35u53nvc4i3h5gvi6avf6rjj6px366j05b3r4chz3jwl34h835wa3nt14hxu5gpg6aqz6rhr6py466l65b6n4cmv3k3334mt35yu3nsb4hu75gk56am26reb6px566m05b5b4ci83jxx34k135zi3nvq4hyl5gnx6apd6ri16q0j66of5b734ci73jvy34i735zy3nz84i3z5grs6ao16rbr6pry66h35b4f4ckh3k0c34lz36293o024i395gq06all6r8g6pp766fw5b4u4cmj3k2034kk35x93ntk4hyj5gq16ard6rhq6pyg66ms5b7t4clx3k0d34jt35wz3nt14hyd5gqy6atg6rj06pvm66g95b0b4cfn3jx234kb360l3nxk4i175gqx6ar46rhd6pwt66i45b174cfl3jwm34k8360t3nwi4hy75gmu6anu6rgi6pzy66om5b824ckl3jyn34j135xo3ntu4hwn5glg6am36rej6pyo66pe5b914cj83jug34db35sh3nr74hxh5gp16aqs6rjh6q2n66rx5bbx4cm93jw734d235qi3noy4hwq5gpl6aqc6rgf6pxh66ml5b9w4cpk3k3g34kt35vg3noq4hrb5gi56akb6rcm6pw366n15baw4crg3k5j34lg35ts3nkl4hlj5gd36ajn6ri56q5m66wu5bgl4crc3k2w34k635uv3nnj4how5gf36aja6rfd6q0966qs5bcb4cop3k1934kf35y23nsz4hua5ghd6ag66r906pvf66op5bd24crp3k4d34lt35xa3nq64hqq5geu6afg6r8y6pwg66rw5bhx4cxh3k9s34ol35wh3nnr4hor5geb6agc6r9u6pv466ou5bdm4csj3k5m34m735vm3nnr4hpo5ggk6ak36rf86pzx66q85bcl4cql3k3y34lv35x23nqb4hsf5gi86aju6rdd6pxw66od5bb34cqj3k5s34p6360p3nsm4hri5geh6afb6r9i6pwc66px5bdy4cs73k4534k035ty3nmp4ho25gdx6ai16rg86q5w67025blq4cvb3k3434go35q33nk94hom5ghd6alx6rhd6q2p66uo5bht4cuf3k4f34is35rt3nky4ho95gfy6aj56rdg6pzj66sv5bhx4cx43k9234nh35tv3nhz4hgu5g7p6aec6rdr6q3p66yt5bnq4d2e3ke034ra35vu3nif4hfj5g4n6aav6rbs6q3766yh5bla4cx63k8034nf35vi3nl44hji5g7o6abc6ray6q3366yz5bmf4cxr3k6y34lq35v93nnf4hnu5gbg6abx6r776pxf66v25bm24d133kc134pp35wz3nn44hlw5g916a9s6r4d6pt766rk5bl44d273kcp34nt35s13ngk4hgp5g7c6acq6rbw6q2f66yk5boj4d2e3kby34no35s43ngd4hgt5g996ag66rei6q1w66u75bhz4cwr3k9c34oq35w33nkw4hj75g896ace6r9u6pzb66u75bie4cwk3k9334p435wj3njo4hff5g2k6a7w6r9g6q3k672e5bry4d3s3kby34nl35sq3ngz4hf45g3l6a8g6r9s6q3v672e5brc4d283k8s34j935om3neo4hfs5g6m6ab66rah6q3l671y5bs64d4k3kbk34l235os3ndj4heg5g5r6ab26r9d6q0s66zg5bs34d8c3kim34sx35ug3nev4haw5fzw6a6a6r6z6pz866xy5br04d813kih34se35t73ncf4h7c5fw26a476r9s6q72676o5bw44d7q3kfg34q735th3nf34hbm5g0s6a7p6ra16q4e672s5bsi4d523kdn34pu35vn3njq4hgo5g3j6a5x6r456pxm66yi5brq4d6z3kgf34rf35uh3nfo4hbc5fym6a3c6r4w6q0u673l5by54dda3kl134sr35sj3ncp4h9r5fzt6a6m6r8t6q39672a5btf4d7o3kgk34qe35s43nd64ham5g1a6a8d6ra36q4467245bru4d563kee34pq35t73nf34hbo5g076a6m6r8u6q3j67315btv4d7g3kgq34s635vl3ngt4hbo5fyb6a3n6r6k6q2n673q5bwd4d9q3kfm34n335ob3n9p4h6u5fw86a3e6r8v6q8w67bp5c2m4dck3kfi34ko35kp3n6l4h655fze6a936rc26q7j678f5c024dcf3khz34ok35oa3n8u4h6d5fxg6a5j6r7n6q25673m5by74de83kmj34tm35qj3n5m4gy55fmv69x46r5o6q6j67am5c4y4djq3kqm34wb35s63n6t4gyq5fmu69wn6r5w6q8c67bq5c2r4dep3kkw34sr35s93na24h385fqc69x16r296q3d678s5c2d4dev3kkb34rk35s53nc24h665frp69w76qzf6pz0675y5c3g4djf3kq934w935ua3nc44h5o5frw69wp6qzo6pxm672x5c1d4djc3kq334ue35pw3n634h0m5fq569yc6r436q4767865c2e4dh53knu34tm35qa3n6m4h175fsi6a3o6r966q65676z5byl4dcl3kl134u235u43nc24h5b5fsy6a106r616q3l675m5bye4dce3kke34ta35si3n8q4h075fm569uc6r3n6q7r67ei5c8r4dkf3knh34r835ny3n584gzl5foo69y66r796qbh67hf5c9c4dj53kkp34ne35k43n2s4gzl5fr46a0v6r6v6q7q67dz5c8u4dl43knr34pz35l53n1y4gwz5fmq69ws6r4i6q6167d05can4dqk3kvr34xz35qf3n2q4gtr5fi769t76r3m6q7467dg5c9w4dpl3kul34wu35p43n0s4gr15ff569qh6r2l6q9y67ix5cdc4doy3ks434vc35q13n3u4guq5fij69td6r2x6q6z67ff5cbc4do53krm34ve35ry3n8a4h0f5fmd69sz6qz56q16679k5c8g4dp33kup34xu35qz3n3i4gtz5fg869o26qwu6q2n67dm5cdi4du53kyj34z535pr3n0w4grw5fhb69sw6r346q7w67f95ca24do13ksz34w935pt3n2w4guh5fjq69v56r406q6167c35c724dky3kql34vh35r13n554gva5fgj69pf6qzv6q5067dh5cac4dow3ktu34xk35s73n5l4gvf5fh069pm6r0f6q7867gh5cd64dqg3krz34s735l13mz04gri5fgd69qs6r1i6q9j67l15ch84ds73krw34qm35ib3mw64gpu5fhb69uw6r576q9567ij5cfz4dt53kup34u735ln3myk4gr45fh169t66r3r6q7b67f05cdc4du03kyv34ze35nt3mv74gin5f6769j96qyq6q9r67lz5cjv4dy93l17350h35oq3mw54gj05f6f69kk6r1d6qdn67pu5ckj4dur3kvh34vz35o33mzu4gpa5fc069n06qzi6q8467kq5cj24dvi3kvz34v535n33mzy4gps5faf69ii6qtt6q3667i15ckh4e0z3l32350s35p63myw4go75fb969lf6qx36q5p67iy5cki4e163l2v34zc35lw3mtw4gje5f9269mo6qzw6q8n67l55cjx4dy43l0634yj35mp3muz4gjn5f9369og6r2w6qa467k65chg4dvf3kyp34zq35qv3n134gpc5fbs69nh6r166q9g67jp5ch24dvh3kyv34zd35oq3mwo4gj95f4n69g26qvu6q9z67qc5cpr4e243l1734xa35kq3mte4ghz5f6269k26r0w6qed67ti5cr64e1i3kyw34u035hs3msb4gjr5fa069nx6r216qav67o25coc4e2e3l1z34x835jf3mri4gg05f3e69g46qvk6q7567ma5cos4e6e3l93355635pa3msz4gdh5f0169el6qwn6qaw67ql5cqp4e563l5y352535na3mrz4gcu5ez869du6qw96qb667sf5cs34e3r3l2k34z335mj3mtv4gg35f1s69el6quu6q7t67og5cq64e4a3l3t350535o53mx74gl85f6v69gw6quf6q5x67lj5cny4e4x3l6v352j35mk3mra4gde5f0069c86qrf6q5i67oi5cs84e8m3l99353935lw3mpe4gav5ez069fg6qyh6qce67rr5cqy4e3z3l3r34zj35la3mrl4gez5f3m69jc6r156qcj67pe5co14e1g3l2234z335m73mt54geo5ez569ba6qt36q8r67qg5cry4e6g3l6h351v35mx3mry4gcq5ey869c06qvd6qd267wo5cxv4e9c3l4q34wb35fr3mm04ga55ezb69f96qyd6qek67y15czr4eb63l6a34wp35eo3mjt4g805ey469ey6qxj6qbs67tu5cxe4eck3lam352735jk3mmw4g925exv69ed6qy26qd367tq5cvy4ecr3le4357c35mg3ml14g2a5eoc695e6qs36qc867y05d194efo3leo357a35nj3mmx4g3d5enp694k6qte6qfa680o5d214ed83l9h352a35m33mqk4gb95ewp69ae6qu26qbm67vo5cyw4ecy3lad352n35lu3mqm4gay5eu7694s6qln6q3n67r55cym4egp3lgj358335o03mp24g825ete697j6qqu6q8f67uf5d094eg53ldv354e35jx3ml94g635euh69bo6qwn6qcu67va5cxu4eca3lar353035k13mlq4g5q5ete69ab6qv26qbm67tf5cv44e9o3l9d353n35n23mq84g9t5evk69au6qvu6qe267x45cy24eb43l9n352k35jn3mkw4g3o5ep869586qs26qdl681u5d5x4ehn3lbn34zw35eu3mgc4g0p5eo669616qv06qhe68485d794ei43lav34xy35cm3mfc4g2l5et969bw6qyf6qh4681k5d564ej73leo352a35f63meo4fxj5ekj69216qp96qaj67yn5d594emd3ll035a135lc3mgl4fuz5efp68yp6qq86qf1684s5da84en93li6356c35j03mgg4fws5ei7690l6qrs6qgc685g5dab4emd3lg6354135i03mhf4fz05ek568zn6qml6q9h67zc5d6t4emi3liq357835la3ml24g315env692l6qo86q9v67ze5d6z4eny3llr359o35jx3mfs4fw85ei668zk6qnp6qaa68105d9q4eqe3lmz359t35jp3meo4fu85egc68zn6qr46qf9682r5d794elh3lhw356w35k43mi54fzm5emk695h6qv96qhf683a5d5y4ej93lg1356735l13mk14fzm5eid68xs6qmc6qal681l5d8l4ene3ljl358935lb3miq4fxu5egu68x36qo16qf0687s5df54eqy3lhw352735dg3mcj4fwd5ekw69406quc6qiz68995dfb4eri3lj0352g35c33m9o4ft95eiu692g6qqo6qd468315db24erd3lmz358n35hx3md14ft25eg5690h6qs16qgh68605dci4esa3lp735bi35is3man4fnn5e8u68tr6qoq6qhd68a35dhe4ev13loz35a835iq3mbk4fo55e7p68qu6qmc6qhe68ap5dh14esz3lkx355w35gv3mdw4fu95efw68xx6qoz6qg1688n5dfz4etj3lmk357335h63mdw4ft85ecl68sj6qhg6q77682m5dfe4exm3lt635d435jm3mbp4fos5e8o68qu6qjm6qbn68695dhf4ex83lqe359a35fp3m8k4fo15ec268xu6qrv6qiv68995dfd4etg3lnp358p35h13mag4for5eb868vb6qmv6qd3684p5dbv4eqt3lmp359w35ke3mex4frz5eb668tt6qnk6qgc689v5dh84eue3lnp358235fr3m9c4fng5e8968rx6qnc6qil68em5dnz4f0g3lq5356e35bu3m4s4fju5e6g68r76qmv6qiq68e65dn24ezu3lps355x35bc3m4r4fld5eah68xb6qrt6qka68dy5dmj4f0v3lt535ak35fb3m6b4fig5e3768oe6qjy6qe168a45dlx4f3f3lyi35h935ko3m824fgh5dyc68iq6qhg6qgm68fc5dq74f3e3lu835bt35h43m7s4fjq5e4c68pe6qmu6qkl68hp5dqn4f2p3lsl359j35fs3m8j4fm45e6v68pb6qhb6qb0688m5dlc4f1r3luq35cp35im3may4fo05e7g68pg6qir6qcr689x5dms4f403lxl35e435g33m4x4fhj5e3w68pq6qm76qhq68e75dpl4f5f3lxj35dc35f83m334feg5e0u68o76qmg6qj068dw5dm04ezp3ls535ai35fw3m6l4fiw5e5068sg6qqh6qm868h55doc4f043lr6359c35fn3m7a4fib5e0t68l26qiv6qgq68f85dqw4f573lvv35br35f23m4c4fez5dxv68hn6qge6qi168jr5dwg4f8p3lvf357n35903lyz4fd55e1g68ph6qo46qn468ml5dxk4f9t3lx7358z35913lxk4fav5dzb68ne6qk26qfd68dn5dri4f8s3m1335g035gd3m2b4fb35duu68hk6qi16qho68gr5dtg4fa53m3335i235gk3m014f755dqr68eq6qhw6qlq68ne5dz94fcn3m1x35ft35fz3m154f8i5dr068d16qe66qhk68k05dwg4f9m3lyd35ck35f33m3z4feb5dxn68im6qgy6qh068j05dwz4fbk3m0p35dw35f63m3n4fdl5dvx68fh6qcu6qbx68e95dvm4fen3m6m35jn35hl3m1j4f9d5ds668d16qc76qdv68gq5dwd4fcq3m2w35fp35ed3lzd4f8x5dvi68l26qme6qms68m35dwm4f9q3lzh35dq35en3m1f4fb65dwe68ju6qiv6qh368g45dsi4f7l3lz335f635hl3m4w4fda5duy68fn6qgc6qiy68kt5dxq4fbo3m0k35ct35bj3lxk4f7o5dt968he6qk46qow68sp5e5o4fhj3m2n35ba35813ltd4f475drg68h76qjl6qmb68oz5e2p4ffw3m2835bi358c3lti4f4a5drv68iu6qm96qo668pi5e324fhp3m5s35g135cb3lv54f1s5dlv68be6qg86ql968os5e414fks3mb635mi35hc3lwl4ezi5dga683x6q9h6qix68r95e754fk13m6d35go35dj3lw94f2a5dle68af6qfo6qn268tv5e8u4fkx3m5y35f135ch3lxl4f665dpo68bf6qbh6qe168j85e1o4fjn3m9435jo35g23lzc4f6d5do5688h6q8x6qdd68jc5e1x4fku3mbc35kr35dp3ltp4f025dla68b96qfh6qlc68qo5e6b4flt3ma235jd35de3lth4eyz5djm68aq6qg46qkk68ne5e194ffj3m4a35g635dv3lx34f3h5dml68bn6qh36qms68qc5e3s4fgp3m3v35f035d83lx84f335dkn687t6qcu6ql368s15e864fml3m8y35hb35bw3ltc4ez75dht68556q9h6qjb68tz5ebv4foc3m7g35cw355y3lo34ewr5dju68c16qic6qpp68xa5ee14fqv3ma435er356f3lne4evv5dje68b46qga6ql168po5e7h4fpc3me435m535dy3lrt4ev85ddr68366qad6qk868s25e9b4fq73mf735n535do3lpp4erj5da8682f6qd26qql691f5eht4ftw3mdk35jn35bu3lqh4etv5dc9682v6qbl6qm568v95ecy4fqo3maz35hg35b73lso4eyk5dh468556qau6qkd68u15ed54fsw3me935k035bs3lr64evj5de768346q996qj768tn5ee64fw83mjk35p335e03lph4erq5dah680t6q806qio68ts5edk4ft53mf535lb35bv3lot4es05dc168556qfd6qq468yc5eel4fru3mcn35j635bh3lqm4ev65deu68586qcw6qmi68u05eb04fqb3md535lb35em3ltr4ewl5dcv68056q6w6qjk68vm5ees4ftu3mes35j6358q3lm54eq15d9v681x6qc76qqk694e5enx4g073mgn35hj355c3lim4eo15da1683o6qdy6qoq68ya5eht4fx53mgn35jb357d3ljx4eod5d9g681z6qbs6qnt68xo5egs4fxg3mjf35nt35bu3llp4elg5d3c67w36q886qnv690y5ekj4g0m3mmt35rq35f63lni4elf5d0q67rm6q3g6qk9690n5em24fze3mhr35la35al3lmm4enx5d5267w36q7s6qno69255en34g0y3mi935jv358m3lmc4eqv5daa67zk6q6t6qiw68vb5ehj4fzx3mlv35pf35d03lo34epy5d7m67wg6q396qfy68u25eh44g063mmx35pj35ac3li94eis5d2r67xm6qao6qps693c5enl4g293mlf35ne359i3lio4ejr5d3r67z66qdi6qri69105eih4fwk3mgm35kv359y3llm4en85d5e67xf6q9q6qpw692h5ekj4fxr3mgq35ka359j3ll14el85d2767u76q7l6qqh697e5esh4g613mmy35mw35883lhn4eid5d0e67ss6q5l6qo3696q5eu24g753mlt35jc35323lcn4efl5d1067wc6qaq6qs869845eug4g923mp135mj35543ld74efc5d1767wg6q9u6qpy693u5epn4g7h3msm35tz35d93lil4efh5cvv67op6q2o6qlu693i5eqm4g7k3ms735t235bu3lgf4ecd5cs767mn6q4n6qrl69bo5eys4gc03mr535ph359c3lgw4efu5cx267qa6q5r6qpc695y5eso4g823mp935oi359b3liq4eji5d0x67ri6q276qjt691u5eqd4g7y3mr935r735aw3lhk4efg5cw967p26q2h6ql469485etz4gc83mvo35up35by3lg44ed95cum67os6q3w6qmn69445err4g7o3mpx35pl358n3ler4eda5cvw67r56q7l6qrj697i5es44g633mni35ni35813lfx4efo5cya67s76q726qqm69735ery4g6d3moh35p435a13lhv4egd5cwg67oc6q2c6qmt696u5ev74gad3mqe35mr353k3l9j4e8u5crs67no6q676qtv69ff5f474ghb3mt935lz350e3l5g4e655cse67r76qaa6qv769c15eyu4ge83mtw35p735493l874e6s5cr067o16q5d6qqw699x5exj4ge43mwh35u8359o3lad4e2x5ci767f26q0l6qrd69ez5f4k4gjs3n0135wl35bd3lc44e525cj567ds6pyi6qpw69el5f4r4gij3mw535rf357k3lbp4e825cnw67hb6pz06qoo69cn5f3e4gj13mx935rh356q3lbk4e9w5crk67kl6pzo6qlz698l5f094giw3n0t35x135bo3le84ea85cqb67jb6py96qje695g5eya4gih3n1935wk358v3l8t4e3f5ckw67hz6q2j6qro69dq5f3k4gjm3mz835u6357w3l964e4p5cnc67m06q7h6qvb69dq5ezl4gdx3mue35ry35903ld44e9e5cpv67kr6q2q6qqk69c65f084gem3mu935ra35853lbd4e5p5ckc67ey6pzl6qrj69hb5f8r4gni3n0935sl35573l734e3i5cl767h56q1b6qsn69i05f944gn93mz235px35163l2q4e0h5cl067jk6q3n6qsy69gc5f704gn13n1035sv353p3l3l4dzf5cip67hc6q2t6qse69f55f5f4gmr3n3v35z035b03l9b4e135cfl67bt6pxy6qpu69es5f6c4gn83n2u35wa357d3l5d4dx55cby678o6pwy6qt569lc5fd74gr53n2935t4354i3l4r4dze5cgj67e76q0s6qtg69iw5f9n4gol3n1h35t5354w3l6c4e2b5cjg67ez6pxn6qn769d25f6i4go93n3i35w7","lunarFrom":1899,"lunar":"34fkl2dt5e3tp3m2yu1x27nt63l9hn2nkpn1w8ra3ctwq2hyl51nh3m34evm2ao853qwpx2t6x71z82z3fmi52kqjv1q7vt3799l2ghaq3wjo22ytr924vgt3laae2qcae1tfp13cu6s2hz8p1qbo234gb62algm3o2ej2t6xj1z7p23fo7u2njys1t809378092dms33tpqr2ys6j225i33ih7x2qctm1w9xx3cv502hykp1nhqr34fit2808d3o2eu2t6zx221ey3fn3m2ks6d1tave3a2bu2dqqd3qwlz2ys7q24yph3ih912qd3m1w7fp3cvqd2hxl61ks5z31me32atei3o2ga2t755221qq3ihci2krol1qmob378ln2dsq33qv1p2vz3h24yuh3lay12qefm1waat3cvfp2jsr13wity31kty27qut3o2qd2t7s92236a3ihzm2nl7q1qdzq34fh32dsra3tobe2vzdh24urt3l9op2qd1v1tfl73a0q32f5971ngpm31ld6281g53qwtg2w0951z98z3fo2d2kqi51qkdp34fjp2dz8q3tosy2ytut252dm3lave2qe8l1w8q63a0ra2f5bp1ngs234es227smd3o2sl2t64r1z6hj3cvcb2kqje1qe3a378tl2ec7m3tpw22ytd1251sb3ih572njjf1tisb3a0tp2f5gq1nhw234g422auxx3o3z92t6xh1z8313fmwm2hxh11qene379hl2gnte3tqj62ytra24ymu3ih5j2njkm1tcr93a15h2hxs91ksk331llf2808b3o2ej2qdsr1z87u3fn1m2krqd1qmve378sq2dtw53tpqt2vz1p225kd3ih852qcve1tdph3a2ed2hyyy1nogl31ms62811q3o2fq2t7051z8aa3fnbm2ksdh1te8a34eq32axzr3qvfv2vz2z225li3ihd62qd761w9453a1xh2f5aj1knff31l7v27xwb"};
 const CITIES=[["上海市","",121.47],["北京市","",116.41],["天津市","",117.21],["澳门","",113.54],["重庆市","",106.51],["香港","",114.16],["临沧市","云南省",100.09],["丽江市","云南省",100.22],["保山市","云南省",99.17],["大理白族自治州","云南省",100.27],["德宏傣族景颇族自治州","云南省",98.58],["怒江傈僳族自治州","云南省",98.85],["文山壮族苗族自治州","云南省",104.23],["昆明市","云南省",102.71],["昭通市","云南省",103.71],["普洱市","云南省",100.97],["曲靖市","云南省",103.8],["楚雄彝族自治州","云南省",101.55],["玉溪市","云南省",102.54],["红河哈尼族彝族自治州","云南省",103.38],["西双版纳傣族自治州","云南省",100.8],["迪庆藏族自治州","云南省",99.71],["乌兰察布市","内蒙古自治区",113.12],["乌海市","内蒙古自治区",106.82],["兴安盟","内蒙古自治区",122.07],["包头市","内蒙古自治区",109.83],["呼伦贝尔市","内蒙古自治区",119.75],["呼和浩特市","内蒙古自治区",111.66],["巴彦淖尔市","内蒙古自治区",107.41],["赤峰市","内蒙古自治区",118.88],["通辽市","内蒙古自治区",122.26],["鄂尔多斯市","内蒙古自治区",110.0],["锡林郭勒盟","内蒙古自治区",116.09],["阿拉善盟","内蒙古自治区",105.7],["台中市","台湾",120.68],["台北市","台湾",121.56],["台南市","台湾",120.19],["新北市","台湾",121.47],["桃园市","台湾",121.31],["高雄市","台湾",120.3],["吉林市","吉林省",126.56],["四平市","吉林省",124.36],["延边朝鲜族自治州","吉林省",129.5],["松原市","吉林省",124.81],["白城市","吉林省",122.83],["白山市","吉林省",126.42],["辽源市","吉林省",125.14],["通化市","吉林省",125.95],["长春市","吉林省",125.32],["乐山市","四川省",103.76],["内江市","四川省",105.06],["凉山彝族自治州","四川省",102.26],["南充市","四川省",106.08],["宜宾市","四川省",104.64],["巴中市","四川省",106.76],["广元市","四川省",105.84],["广安市","四川省",106.63],["德阳市","四川省",104.39],["成都市","四川省",104.06],["攀枝花市","四川省",101.71],["泸州市","四川省",105.44],["甘孜藏族自治州","四川省",101.96],["眉山市","四川省",103.84],["绵阳市","四川省",104.74],["自贡市","四川省",104.76],["资阳市","四川省",104.64],["达州市","四川省",107.49],["遂宁市","四川省",105.57],["阿坝藏族羌族自治州","四川省",102.22],["雅安市","四川省",103.0],["中卫市","宁夏回族自治区",105.19],["吴忠市","宁夏回族自治区",106.19],["固原市","宁夏回族自治区",106.28],["石嘴山市","宁夏回族自治区",106.37],["银川市","宁夏回族自治区",106.22],["亳州市","安徽省",115.77],["六安市","安徽省",116.51],["合肥市","安徽省",117.28],["安庆市","安徽省",117.03],["宣城市","安徽省",118.75],["宿州市","安徽省",116.97],["池州市","安徽省",117.48],["淮北市","安徽省",116.79],["淮南市","安徽省",117.02],["滁州市","安徽省",118.31],["芜湖市","安徽省",118.36],["蚌埠市","安徽省",117.35],["铜陵市","安徽省",117.81],["阜阳市","安徽省",115.8],["马鞍山市","安徽省",118.51],["黄山市","安徽省",118.32],["东营市","山东省",118.47],["临沂市","山东省",118.35],["威海市","山东省",122.1],["德州市","山东省",116.31],["日照市","山东省",119.43],["枣庄市","山东省",117.55],["泰安市","山东省",117.08],["济南市","山东省",116.98],["济宁市","山东省",116.57],["淄博市","山东省",118.05],["滨州市","山东省",118.01],["潍坊市","山东省",119.1],["烟台市","山东省",121.45],["聊城市","山东省",115.98],["菏泽市","山东省",115.43],["青岛市","山东省",120.4],["临汾市","山西省",111.51],["吕梁市","山西省",111.14],["大同市","山西省",113.29],["太原市","山西省",112.54],["忻州市","山西省",112.72],["晋中市","山西省",112.74],["晋城市","山西省",112.85],["朔州市","山西省",112.43],["运城市","山西省",111.0],["长治市","山西省",113.11],["阳泉市","山西省",113.58],["东莞市","广东省",113.75],["中山市","广东省",113.35],["云浮市","广东省",112.04],["佛山市","广东省",113.11],["广州市","广东省",113.26],["惠州市","广东省",114.42],["揭阳市","广东省",116.36],["梅州市","广东省",116.12],["汕头市","广东省",116.68],["汕尾市","广东省",115.33],["江门市","广东省",113.08],["河源市","广东省",114.69],["深圳市","广东省",114.05],["清远市","广东省",113.05],["湛江市","广东省",110.4],["潮州市","广东省",116.63],["珠海市","广东省",113.57],["肇庆市","广东省",112.47],["茂名市","广东省",110.92],["阳江市","广东省",111.96],["韶关市","广东省",113.59],["北海市","广西壮族自治区",109.1],["南宁市","广西壮族自治区",108.32],["崇左市","广西壮族自治区",107.37],["来宾市","广西壮族自治区",109.23],["柳州市","广西壮族自治区",109.43],["桂林市","广西壮族自治区",110.29],["梧州市","广西壮族自治区",111.32],["河池市","广西壮族自治区",108.08],["玉林市","广西壮族自治区",110.15],["百色市","广西壮族自治区",106.62],["贵港市","广西壮族自治区",109.59],["贺州市","广西壮族自治区",111.55],["钦州市","广西壮族自治区",108.62],["防城港市","广西壮族自治区",108.3],["乌鲁木齐市","新疆维吾尔自治区",87.61],["伊犁哈萨克自治州","新疆维吾尔自治区",81.32],["克孜勒苏柯尔克孜自治州","新疆维吾尔自治区",76.17],["克拉玛依市","新疆维吾尔自治区",84.87],["博尔塔拉蒙古自治州","新疆维吾尔自治区",82.07],["吐鲁番市","新疆维吾尔自治区",89.18],["和田地区","新疆维吾尔自治区",79.92],["哈密市","新疆维吾尔自治区",93.52],["喀什地区","新疆维吾尔自治区",75.99],["塔城地区","新疆维吾尔自治区",82.98],["巴音郭楞蒙古自治州","新疆维吾尔自治区",86.17],["昌吉回族自治州","新疆维吾尔自治区",87.32],["阿克苏地区","新疆维吾尔自治区",80.27],["阿勒泰地区","新疆维吾尔自治区",88.13],["南京市","江苏省",118.78],["南通市","江苏省",120.89],["宿迁市","江苏省",118.28],["常州市","江苏省",119.97],["徐州市","江苏省",117.19],["扬州市","江苏省",119.44],["无锡市","江苏省",120.28],["泰州市","江苏省",119.9],["淮安市","江苏省",119.02],["盐城市","江苏省",120.16],["苏州市","江苏省",120.62],["连云港市","江苏省",119.18],["镇江市","江苏省",119.46],["上饶市","江西省",117.96],["九江市","江西省",116.0],["南昌市","江西省",115.89],["吉安市","江西省",114.98],["宜春市","江西省",114.38],["抚州市","江西省",116.36],["新余市","江西省",114.92],["景德镇市","江西省",117.2],["萍乡市","江西省",113.85],["赣州市","江西省",114.93],["鹰潭市","江西省",117],["保定市","河北省",115.48],["唐山市","河北省",118.17],["廊坊市","河北省",116.7],["张家口市","河北省",114.88],["承德市","河北省",117.93],["沧州市","河北省",116.85],["石家庄市","河北省",114.51],["秦皇岛市","河北省",119.59],["衡水市","河北省",115.69],["邢台市","河北省",114.48],["邯郸市","河北省",114.49],["三门峡市","河南省",111.19],["信阳市","河南省",114.07],["南阳市","河南省",112.53],["周口市","河南省",114.64],["商丘市","河南省",115.65],["安阳市","河南省",114.35],["平顶山市","河南省",113.3],["开封市","河南省",114.34],["新乡市","河南省",113.89],["洛阳市","河南省",112.42],["漯河市","河南省",114.01],["濮阳市","河南省",115.03],["焦作市","河南省",113.23],["许昌市","河南省",113.82],["郑州市","河南省",113.66],["驻马店市","河南省",114.03],["鹤壁市","河南省",114.29],["丽水市","浙江省",119.92],["台州市","浙江省",121.42],["嘉兴市","浙江省",120.75],["宁波市","浙江省",121.55],["杭州市","浙江省",120.17],["温州市","浙江省",120.66],["湖州市","浙江省",120.09],["绍兴市","浙江省",120.58],["舟山市","浙江省",122.2],["衢州市","浙江省",118.88],["金华市","浙江省",119.65],["三亚市","海南省",109.5],["三沙市","海南省",112.34],["儋州市","海南省",109.58],["海口市","海南省",110.32],["十堰市","湖北省",110.78],["咸宁市","湖北省",114.33],["孝感市","湖北省",113.91],["宜昌市","湖北省",111.28],["恩施土家族苗族自治州","湖北省",109.48],["武汉市","湖北省",114.3],["荆州市","湖北省",112.24],["荆门市","湖北省",112.21],["襄阳市","湖北省",112.15],["鄂州市","湖北省",114.88],["随州市","湖北省",113.37],["黄冈市","湖北省",114.88],["黄石市","湖北省",115.03],["娄底市","湖南省",112.0],["岳阳市","湖南省",113.13],["常德市","湖南省",111.68],["张家界市","湖南省",110.48],["怀化市","湖南省",109.96],["株洲市","湖南省",113.15],["永州市","湖南省",111.6],["湘潭市","湖南省",112.92],["湘西土家族苗族自治州","湖南省",109.74],["益阳市","湖南省",112.33],["衡阳市","湖南省",112.59],["邵阳市","湖南省",111.47],["郴州市","湖南省",113.03],["长沙市","湖南省",112.97],["临夏回族自治州","甘肃省",103.21],["兰州市","甘肃省",103.83],["嘉峪关市","甘肃省",98.29],["天水市","甘肃省",105.73],["定西市","甘肃省",104.63],["平凉市","甘肃省",106.68],["庆阳市","甘肃省",107.64],["张掖市","甘肃省",100.46],["武威市","甘肃省",102.63],["甘南藏族自治州","甘肃省",102.91],["白银市","甘肃省",104.18],["酒泉市","甘肃省",98.5],["金昌市","甘肃省",102.19],["陇南市","甘肃省",105.35],["三明市","福建省",117.63],["南平市","福建省",118.17],["厦门市","福建省",118.08],["宁德市","福建省",119.52],["泉州市","福建省",118.59],["漳州市","福建省",117.66],["福州市","福建省",119.29],["莆田市","福建省",119.01],["龙岩市","福建省",117.02],["山南市","西藏自治区",92.56],["拉萨市","西藏自治区",91.14],["日喀则市","西藏自治区",88.88],["昌都市","西藏自治区",97.18],["林芝市","西藏自治区",94.36],["那曲市","西藏自治区",92.06],["阿里地区","西藏自治区",80.1],["六盘水市","贵州省",104.83],["安顺市","贵州省",105.93],["毕节市","贵州省",105.29],["贵阳市","贵州省",106.71],["遵义市","贵州省",106.93],["铜仁市","贵州省",109.19],["黔东南苗族侗族自治州","贵州省",107.97],["黔南布依族苗族自治州","贵州省",107.51],["黔西南布依族苗族自治州","贵州省",104.9],["丹东市","辽宁省",124.38],["大连市","辽宁省",121.6],["抚顺市","辽宁省",123.89],["朝阳市","辽宁省",120.45],["本溪市","辽宁省",123.76],["沈阳市","辽宁省",123.43],["盘锦市","辽宁省",122.06],["营口市","辽宁省",122.23],["葫芦岛市","辽宁省",120.84],["辽阳市","辽宁省",123.18],["铁岭市","辽宁省",123.84],["锦州市","辽宁省",121.13],["阜新市","辽宁省",121.65],["鞍山市","辽宁省",122.99],["咸阳市","陕西省",108.71],["商洛市","陕西省",109.92],["安康市","陕西省",109.02],["宝鸡市","陕西省",107.18],["延安市","陕西省",109.49],["榆林市","陕西省",109.74],["汉中市","陕西省",107.03],["渭南市","陕西省",109.47],["西安市","陕西省",108.94],["铜川市","陕西省",108.94],["果洛藏族自治州","青海省",100.24],["海东市","青海省",102.1],["海北藏族自治州","青海省",100.9],["海南藏族自治州","青海省",100.62],["海西蒙古族藏族自治州","青海省",97.37],["玉树藏族自治州","青海省",97.01],["西宁市","青海省",101.78],["黄南藏族自治州","青海省",102.02],["七台河市","黑龙江省",131.01],["伊春市","黑龙江省",128.89],["佳木斯市","黑龙江省",130.37],["双鸭山市","黑龙江省",131.15],["哈尔滨市","黑龙江省",126.63],["大兴安岭地区","黑龙江省",123.9],["大庆市","黑龙江省",125.01],["牡丹江市","黑龙江省",129.6],["绥化市","黑龙江省",126.98],["鸡西市","黑龙江省",130.96],["鹤岗市","黑龙江省",130.28],["黑河市","黑龙江省",127.49],["齐齐哈尔市","黑龙江省",123.95]];
 /* 干支换算、干支关系、神煞口诀。
@@ -1185,13 +1215,15 @@ function relations(cols){
 }
 
 /* ---------- 神煞 ----------
-   这一页查下面 55 个，名单和查法照排盘软件问真八字的《神煞大全》，出处和各书的异文见 docs/取法约定.md。
+   这一页查下面 58 个。前 55 个的名单和查法照排盘软件问真八字的《神煞大全》；最后三个（六厄、病符、隔角）问真没有，
+   2026-11-16 用户要加，查法照典籍（SS_EXTRA）。出处和各书的异文见 docs/取法约定.md。
    口诀和 tools/shensha.py 逐条对应，两份实现的结果由 tests/check_page.js 对照 data/shensha_check.json：
    原局四柱在全部 518400 种组合上逐柱对照；外来的一柱（大运、流年、流月、流日）在年柱、月支、日柱和它自己的 2592000 种组合上对照。
    名字在这个列表里的下标，就是它在对照掩码里的二进制位，也是一柱里几个神煞的显示顺序。不要调整顺序。 */
 const SS_NAMES=['天乙贵人','天德贵人','月德贵人','天德合','月德合','天赦日','禄神','驿马','太极贵人','将星','学堂','词馆','国印贵人','三奇贵人','文昌贵人','华盖','天医','金舆','空亡',
   '灾煞','劫煞','亡神','羊刃','飞刃','血刃','流霞','四废日','天罗地网','桃花','孤辰','寡宿','阴差阳错','魁罡','孤鸾煞','红鸾','天喜','勾绞煞','红艳煞','十恶大败','元辰','金神','天转','地转',
-  '丧门','吊客','披麻','十灵日','六秀日','八专','九丑','童子煞','天厨贵人','福星贵人','德秀贵人','拱禄'];
+  '丧门','吊客','披麻','十灵日','六秀日','八专','九丑','童子煞','天厨贵人','福星贵人','德秀贵人','拱禄','六厄','病符','隔角'];
+const SS_EXTRA=['六厄','病符','隔角'];      // 问真的《神煞大全》里没有的三个。拿照问真抄下来的事实对照时，不算它们
 const SS_TIANYI={甲:'丑未',戊:'丑未',庚:'丑未',乙:'子申',己:'子申',丙:'亥酉',丁:'亥酉',壬:'卯巳',癸:'卯巳',辛:'午寅'};
 const SS_TAIJI={甲:'子午',乙:'子午',丙:'卯酉',丁:'卯酉',戊:'辰戌丑未',己:'辰戌丑未',庚:'寅亥',辛:'寅亥',壬:'巳申',癸:'巳申'};
 const SS_FUXING={甲:'寅子',丙:'寅子',乙:'丑卯',癸:'丑卯',丁:'亥',戊:'申',己:'未',庚:'午',辛:'巳',壬:'辰'};
@@ -1207,6 +1239,7 @@ const SS_HONGYAN='午午寅未辰辰戌酉子申';
 const SS_GRP=['申子辰','亥卯未','寅午戌','巳酉丑']; // 四个三合局；下面几行的下标是局的序号
 const SS_YIMA='寅巳申亥', SS_HUAGAI='辰未戌丑', SS_JIESHA='巳申亥寅', SS_WANGSHEN='亥寅巳申';
 const SS_JIANGXING='子卯午酉', SS_TAOHUA='酉子卯午', SS_ZAISHA='午酉子卯';
+const SS_LIUE='卯午酉子';                       // 六厄：三合局五行的死地，也是驿马的前一位、劫煞的后两位
 const SS_DEXIU=['壬癸戊己丙辛甲','甲乙丁壬','丙丁戊癸','庚辛乙'];
 const SS_YUEDEHE='丁己辛乙';
 const SS_TIANDEHE={寅:'壬',卯:'巳',辰:'丁',巳:'丙',午:'寅',未:'己',申:'戊',酉:'亥',戌:'辛',亥:'庚',子:'申',丑:'乙'};
@@ -1229,6 +1262,7 @@ const SS_SIFEI=[['庚申','辛酉'],['壬子','癸亥'],['甲寅','乙卯'],['�
 const SS_TIANSHE=['戊寅','甲午','戊申','甲子'], SS_TIANZHUAN=['乙卯','丙午','辛酉','壬子'], SS_DIZHUAN=['辛卯','戊午','癸酉','丙子'];
 const SS_SANQI=['甲戊庚','乙丙丁','壬癸辛'];                   // 年月日或月日时三个天干，照这个顺序紧挨着
 const SS_GONGLU=['癸亥癸丑','癸丑癸亥','丁巳丁未','己未己巳','戊辰戊午'];   // 日柱加时柱
+const SS_GEJIAO=['丑卯','卯丑','辰午','午辰','未酉','酉未','戌子','子戌'];         // 隔角：日支加时支，中间隔着寅、巳、申、亥里的一个
 // 按年柱纳音的五行。学堂是长生位，词馆是临官位，土跟着水
 const SS_XUETANG={金:'巳',木:'亥',水:'申',土:'申',火:'寅'}, SS_CIGUAN={金:'申',木:'寅',水:'亥',土:'亥',火:'巳'};
 const SS_TONGZI={金:'午卯',木:'午卯',水:'酉戌',火:'酉戌',土:'辰巳'};
@@ -1283,6 +1317,7 @@ function ssOne(p,nayin,male,i,gz,lab){
     if(z===SS_WANGSHEN[gi]) add('亡神',say);
     if(s+z==='戌亥'||s+z==='亥戌') add('天罗地网',`${l}支${s}见${z}，戌和亥凑在一起叫天罗，落在${atZ}。`);
     if(s+z==='辰巳'||s+z==='巳辰') add('天罗地网',`${l}支${s}见${z}，辰和巳凑在一起叫地网，落在${atZ}。`);
+    if(z===SS_LIUE[gi]){const E='水木火金'[gi]; add('六厄',`${l}支${s}属${SS_GRP[gi]}${E}局，${E}死在${z}，落在${atZ}。`);}
   });
   // 只用年支查别的地支
   if(i!==0){
@@ -1297,6 +1332,7 @@ function ssOne(p,nayin,male,i,gz,lab){
     if(z===Z[(yi+2)%12]) add('丧门',`年支${yz}往下数：${Z[(yi+1)%12]}、${z}。${atZ}是${z}。`);
     if(z===Z[(yi+10)%12]) add('吊客',`年支${yz}往回数：${Z[(yi+11)%12]}、${z}。${atZ}是${z}。`);
     if(z===Z[(yi+9)%12]) add('披麻',`年支${yz}往回数：${Z[(yi+11)%12]}、${Z[(yi+10)%12]}、${z}。${atZ}是${z}。`);
+    if(z===Z[(yi+11)%12]) add('病符',`年支${yz}往回数一位是${z}，落在${atZ}。`);
     if(z===SS_XUETANG[nel]) add('学堂',`年柱纳音${ny}属${nel}，${nel==='土'?'土跟着水取，长生':nel+'的长生'}在${z}，落在${atZ}。`);
     if(z===SS_CIGUAN[nel]) add('词馆',`年柱纳音${ny}属${nel}，${nel==='土'?'土跟着水取，临官':nel+'的临官'}在${z}，落在${atZ}。`);
   }
@@ -1337,6 +1373,8 @@ function ssOne(p,nayin,male,i,gz,lab){
   if(i===2||i===3){
     if(SS_JINSHEN.includes(p[i])) add('金神',`${K[i]}柱是${p[i]}。`);
     if(SS_GONGLU.includes(p[2]+p[3])) add('拱禄',`日柱${p[2]}、时柱${p[3]}，两个地支中间隔着的那一支是日干${dg}的禄${SS_LU[di]}，叫拱禄。`);
+    if(SS_GEJIAO.includes(dz+zs[3])){const a=Z.indexOf(dz), mid=Z[(a+((Z.indexOf(zs[3])-a+12)%12===2?1:11))%12];
+      add('隔角',`日支${dz}、时支${zs[3]}，中间隔着${mid}一个字，${mid}是寅、申、巳、亥四个角之一。`);}
     const want=si%2===0?'寅子':'卯未辰';      // 童子煞：春天和秋天看寅、子，夏天和冬天看卯、未、辰
     if(want.includes(z)) add('童子煞',`生在${mz}月，算${S}天，口诀要看${want.split('').join('、')}。${atZ}是${z}。`);
     if(SS_TONGZI[nel].includes(z)) add('童子煞',`年柱纳音${ny}属${nel}，口诀要看${SS_TONGZI[nel].split('').join('、')}。${atZ}是${z}。`);
@@ -1633,7 +1671,7 @@ const SOURCES={
   dtcw:{book:'《滴天髓阐微》',note:'任铁樵注，问真八字学习课堂里的录文「体用」「闲神」两节。维基文库「滴天髓闡微」是同一个本子，「体用」这一段有两处录错的字，所以照问真的',
         url:[10,15,47].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_7_${n}.html`)},
   zpzq:{book:'《子平真诠》',note:'中华典藏网的《子平真诠》，题沈孝瞻著，页面没有写所据的本子',
-        url:[53623,53626,53628,53629,53630,53634,53635,53636,53641,53643,53655,53663,53665].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
+        url:[53623,53626,53628,53629,53630,53634,53635,53636,53641,53643,53655,53663,53665,53625,53651,53659].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
 };
 
 /* 《滴天髓》论十干，各取开头两句，后面是这两句里头一句的白话大意。出处 dts。 */
@@ -1856,6 +1894,40 @@ const Q={
   zp_gen6:['zpzq','得三比肩，不如得一长生禄刃'],
   zp_gen7:['zpzq','阴长生不作此论，如乙逢午、丁逢酉之类，然亦为明根，比得一余气。'],
   zp_gen8:['zpzq','盖比劫如朋友之相扶，通根如室家之可住'],
+  // 格局组合（2026-11-16）：「论用神成败救应」讲成格、败格、救应的句子，「论偏官」「论正官」「论十干合而不合」「论阳刃」各一两句。
+  // 后面跟着富贵一类断语的，只引前面讲条件的部分（页面拿这张盘去对条件，引了断语就等于套到盘上）
+  zp_c_guan:['zpzq','如官逢财印，又无刑冲破害，官格成也。'],
+  zp_c_cai:['zpzq','财生官旺，或财逢食生而身强带比，或财格透印而位置妥贴，两不相克，财格成也。'],
+  zp_c_yin:['zpzq','印轻逢煞，或官印双全，或身印两旺而用食伤泄气，或印多逢财而财透根轻，印格成也。'],
+  zp_c_shi:['zpzq','食神生财，或食带煞而无财，弃食就煞而透印，食格成也。'],
+  zp_c_sha:['zpzq','身强七煞逢制，煞格成也。'],
+  zp_c_shang:['zpzq','伤官生财，或伤官佩印而伤官旺，印有根，或伤官旺、身主弱而透煞印，或伤官带煞而无财，伤官格成也。'],
+  zp_c_ren:['zpzq','阳刃透官煞而露财印，不见伤官，阳刃格成也。'],
+  zp_c_jl:['zpzq','建禄月劫，透官而逢财印，透财而逢食伤，透煞而遇制伏，建禄月劫之格成也。'],
+  zp_b_guan:['zpzq','官逢伤克刑冲，官格败也'],
+  zp_b_cai:['zpzq','财轻比重，财透七煞，财格败也'],
+  zp_b_yin:['zpzq','印轻逢财，或身强印重而透煞，印格败也'],
+  zp_b_shi:['zpzq','食神逢枭，或生财露煞，食神格败也'],
+  zp_b_sha:['zpzq','七煞逢财无制，七煞格败也'],
+  zp_b_shang:['zpzq','伤官非金水而见官，或生财生带煞，或佩印而伤轻身旺，伤官格败也'],
+  zp_j_cai:['zpzq','财逢劫而透食以化之，生官以制之'],
+  zp_j_yin:['zpzq','印逢财而劫财以解之，或合财而存印'],
+  zp_j_shi:['zpzq','食逢枭而就煞以成格，或生财以护食'],
+  zp_sha_shi:['zpzq','煞用食制，不要露财透印，以财能转食生煞，而印能去食护煞也。'],
+  zp_sha_yin:['zpzq','有七煞用印者，印能护煞，本非所宜，而印有情'],
+  zp_guan_shang:['zpzq','然而遇伤在于佩印，混煞贵乎取清。'],
+  zp_guan_he:['zpzq','甲用酉官，庚金混杂，乙以合之，合煞留官，是杂煞而取清也。'],
+  // 下面三句是「论正官」举的命例，只给检查脚本用：拿书里的四柱去跑格局组合，结果要和书里的说法对得上
+  zp_ex_jin:['zpzq','如金状元命，乙卯、丁亥、丁未、庚戌，此并用财印，无伤官而不杂煞'],
+  zp_ex_xuan:['zpzq','如宣参国命，己卯、辛未、壬寅、辛亥，未中己官透干用清，支会水局，两辛解之，是遇伤而佩印也。'],
+  zp_ex_li:['zpzq','李参政命，庚寅、乙酉、甲子、戊辰，甲用酉官，庚金混杂，乙以合之，合煞留官，是杂煞而取清也。'],
+  zp_he1:['zpzq','盖五阳逢财，五阴遇官，俱是作合，惟是本身十干合之，不为合去。'],
+  zp_he2:['zpzq','若庚在年上，乙在月上，则月上之乙，先去合庚，而日干反不能合，是为合去也。'],
+  zp_ren_sha:['zpzq','阳刃用之，则赖以制刃，不怕伤身，故反喜财印，忌制伏也。'],
+  qt_jiasha:['qtbj','庚金得所，名阳刃驾杀'],
+  sf_xiexiu:['sftk','喜身强泄秀气精英于火矣'],
+  yh_hunza:['yhzp','官星要纯，不要杂。'],
+  yh_hunza2:['yhzp','假如甲木用辛金为官，若年是辛，月是酉，时上亦是死官，虽多儘不妨，盖纯一儘好；若有金或庚申，则混杂为杀'],
   // 《神峰通考》
   sf_bing:['sftk','何以为之病？原八字中原所害之神也'],
   sf_shi:['sftk','有病方为贵，无伤不是奇；格中如去病，财禄两相随。'],
@@ -1899,6 +1971,17 @@ const Q={
   sm_taiji2:['smth','戊己土也，喜生乎申，得辰戌丑未为正库'],
   sm_wenchang:['smth','有文昌贵，甲人蛇口乙猪头，丙狗丁龙戊向猴，己午庚寅辛未贵，六壬卯位癸逢牛'],
   sm_gugua:['smth','如亥子丑逐方三位，进前一辰见寅为孤，退后一辰见戌为寡'],
+  // 六厄、病符、隔角：问真八字的《神煞大全》里没有，2026-11-16 加的
+  sm_liue:['smth','厄者遭乎难者也，常居马前一辰，劫后二辰，死而不生，谓之厄'],
+  sm_liue2:['smth','申子辰水局水死在卯，寅午戌火局火死在酉，亥卯未木局木死在午，巳酉丑金局金死在子'],
+  sm_bingfu:['smth','病符煞，取太岁后一辰是，犯者多疾病，行年遇之亦然'],
+  sm_gejiao:['smth','若戌日子时、丑日卯时、辰日午时、未日酉时，互换看之'],
+  sm_gejiao2:['smth','寅申巳亥为角，辰戌丑未为隔'],
+  sm_chouchang:['smth','或以寅日丑时、巳日辰时、申日未时、亥日戌时，名惆怅煞'],
+  xj_bingfu:['xjbf','病符主灾病，常居岁后一辰'],
+  xj_bingfu2:['xjbf','居岁后一辰，是言旧岁也。新岁将旺，旧岁必衰，衰则病也'],
+  sf_gejiao:['sftk','以日时上起，日与时隔一字，即为隔角。如丑日卯时，辰日午时，未日酉时，戌日子时之类。'],
+  yh_gejiao:['yhzp','骨肉中道分离，孤宿犹嫌于隔角'],
   sm_luowang:['smth','戌亥为天罗，辰巳为地网'],
   sm_luowang2:['smth','戌人得亥、亥人得戌，皆曰猪犬侵凌'],
   sm_luowang3:['smth','火命人有天罗，水土命人有地网，余金木二命无之'],
@@ -2127,7 +2210,11 @@ const SS={
   六秀日:{k:'吉',w:'秀是秀气。旧说日柱落在这六个干支上的人聪明、相貌清秀。',q:'日柱是丙午、丁未、戊子、戊午、己丑、己未六个之一。',c:'只凭日柱一刀切。'},
   八专:{k:'凶',w:'专是专一，指日柱的天干和地支气类相同。旧书把它归在淫欲一类。',q:'日柱是甲寅、乙卯、丁未、戊戌、己未、庚申、辛酉、癸丑八个之一。',c:'只凭日柱一刀切。旧书拿它对人的私德下判断，这类话没有任何依据。'},
   九丑:{k:'凶',w:'丑是丑事。旧书把它归在妨害一类，说和酒色、是非有关。',q:'日柱是丁酉、戊子、戊午、己卯、己酉、辛卯、辛酉、壬子、壬午九个之一。',c:'只凭日柱一刀切。旧书拿它对人的私德下判断，这类话没有任何依据。'},
-  拱禄:{k:'吉',w:'拱是两边夹着。日柱和时柱天干相同，两个地支中间正好空着日干的禄，叫拱禄。旧说读作暗中有禄、衣食有靠。',q:'日柱和时柱是这五组之一：癸亥日癸丑时，癸丑日癸亥时，丁巳日丁未时，己未日己巳时，戊辰日戊午时。'}
+  拱禄:{k:'吉',w:'拱是两边夹着。日柱和时柱天干相同，两个地支中间正好空着日干的禄，叫拱禄。旧说读作暗中有禄、衣食有靠。',q:'日柱和时柱是这五组之一：癸亥日癸丑时，癸丑日癸亥时，丁巳日丁未时，己未日己巳时，戊辰日戊午时。'},
+  // 下面三个问真八字的《神煞大全》里没有，2026-11-16 用户要加，查法照典籍
+  六厄:{k:'凶',w:'厄是困厄。它在驿马的前一位、劫煞的后两位，正是三合局五行的死地。旧说归入凶星，读作遭难、不顺。',q:'用年支或日支查：申子辰见卯，亥卯未见午，寅午戌见酉，巳酉丑见子。',c:'口诀只看年支或日支和另一个地支，和这个人实际的遭遇、哪一年出什么事都没有联系。'},
+  病符:{k:'凶',w:'围着年支排的十二个神煞之一，在年支的后一位，也就是上一年的太岁。旧书解释说新的一年将旺，旧的一年必衰，衰就是病，所以叫病符。旧说归入凶星，读作疾病。',q:'从年支倒着数一位。',c:'旧说拿它来讲疾病。口诀只看年支和另一个地支隔了几位，和这个人实际的健康没有联系。'},
+  隔角:{k:'凶',w:'角指寅、申、巳、亥四个地支。日支和时支中间正好隔着其中一个，叫隔角。旧书常把它和孤辰、寡宿放在一起说，读作和亲人隔阂。',q:'看日支和时支：丑和卯，辰和午，未和酉，戌和子。哪个在日支、哪个在时支都算。',c:'口诀只看日支和时支中间隔着哪个字，和这个人、这个家庭的具体情况没有任何联系。'}
 };
 /* 十神在《渊海子平》里的定义，和它配的六亲。只介绍书里怎么配，不对任何人下判断。 */
 const DF={正官:'df_正官',七杀:'df_七杀',正财:'df_正财',偏财:'df_偏财',正印:'df_正印',偏印:'df_偏印',食神:'df_食神',比肩:'df_比肩'};
@@ -2245,11 +2332,18 @@ const SSD={
   丧门:{d:()=>`《协纪辨方书》卷三引《纪岁历》：${q('xj_sangmen')}。岁前二辰就是从年支往下数两位。原书讲的是每一年哪个方位不宜动工，是选日子、定方向用的。`},
   吊客:{d:()=>`《协纪辨方书》卷三引《纪岁历》：${q('xj_diaoke')}。岁后二辰就是从年支往回数两位。原书讲的是每一年哪个方位不宜动工，是选日子、定方向用的。`},
   披麻:{m:true,d:()=>`这一条在读到的典籍里没有找到。查法照现在通行的说法。问真八字的表里，和年支子、丑、寅依次相对的是${q('wz_pima')}，也就是年支往回数三位。`},
+  六厄:{d:()=>`《三命通会》卷三「论六厄」：${q('sm_liue')}，${q('sm_liue2')}。马是驿马，劫是劫煞。书里没有说拿哪一支来查，这一页照驿马、劫煞的查法，年支、日支都查。问真八字的《神煞大全》里没有这一条。`},
+  病符:{d:()=>`《三命通会》卷三「总论诸神煞」：${q('sm_bingfu')}。太岁指出生那一年的地支，就是年支。《协纪辨方书》卷三引《乾坤宝典》：${q('xj_bingfu')}。曹震圭解释说${q('xj_bingfu2')}。《协纪辨方书》讲的是每一年哪个方位有什么忌讳，是选日子、定方向用的。问真八字的《神煞大全》里没有这一条。`},
+  隔角:{d:()=>`《神峰通考》：${q('sf_gejiao')}《三命通会》卷三「论孤辰寡宿」，题下注着「及隔角煞」，列的也是这四对：${q('sm_gejiao')}，所以反过来，比如卯日丑时，也算。旧书常把它和孤辰、寡宿并提，《渊海子平》里的赋文说${q('yh_gejiao')}。问真八字的《神煞大全》里没有这一条。`,
+    v:()=>`《三命通会》同一节引《玉门集》：${q('sm_gejiao2')}。孤辰总在寅、申、巳、亥，寡宿总在辰、戌、丑、未，这一说讲的是孤辰、寡宿本身。同一节又说${q('sm_chouchang')}，那是日支和时支紧挨着、分在两方的四对，另有名字，这一页不算隔角。`},
 };
 function howCommon(name){
   const v=DATA.freq&&DATA.freq[name]; if(v===undefined) return null;
   const p=v>=10?Math.round(v):v;
-  const tail=p>=80?'几乎人人都有':p>=60?'大多数人都有':p>=52?'一半以上的人有':p>=42?'将近一半的人有':p>=36?'大约每五个人里有两个':p>=28?'大约每三个人里有一个':p>=20?'大约每四个人里有一个':p>=8?'大约每十个人里有一个':'大约每三十个人里有一个';
+  // 22% 以下照频率算「每几个人里有一个」：二十以内取整，再多取整十。原来 8% 以下一律写每三十个人、8% 到 20% 一律写每十个人，
+  // 魁罡 6.7%、十恶大败 16.7%、拱禄 0.7% 这些都写错了；2026-11-16 补隔角（5.6%）时发现
+  const n=Math.round(100/v), per=n<20?n:Math.round(n/10)*10, big=k=>k<100?cn(k):CN[Math.floor(k/100)]+'百'+(k%100?cn(k%100):'');
+  const tail=p>=80?'几乎人人都有':p>=60?'大多数人都有':p>=52?'一半以上的人有':p>=42?'将近一半的人有':p>=36?'大约每五个人里有两个':p>=28?'大约每三个人里有一个':p>=22?'大约每四个人里有一个':`大约每${big(per)}个人里有一个`;
   return `约 ${p}% 的命盘带这个标签，${tail}。`;
 }
 const RT={
@@ -2776,7 +2870,7 @@ function gejuRow(){
   const g=geju(), mz=g.mz, E=EL[gEl(DM)], hs=HID[mz].split('');
   const head=`格局是从月令出发给一张盘归类的办法。清代沈孝瞻的《子平真诠》说${q('zp_ys')}用神指一张盘里拿来作主的字。这句话的意思是拿日干去比月支，看月支是日主的什么十神，就归到哪一类。书里分八类来讲：正官、财、印绶、食神、偏官（就是七杀）、伤官、阳刃、建禄月劫。`;
   const tail=[
-    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}还要找相神，也就是辅佐用神的字：${q('zp_xs')}这两步要把全盘的字放在一起权衡，这一页不做。`],
+    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}成和败的条件，这一页最下面的「格局组合」表照原文逐条核对了常说的十几个。书里还要找相神，也就是辅佐用神的字：${q('zp_xs')}相神要把全盘的字放在一起权衡，这一页不做。`],
     ['注意',`这只是照书里的规则走的第一步。原文还讲到地支会合成局会让用神变化，这里没有算。别的书有别的办法：《穷通宝鉴》先看调候；《神峰通考》先找盘里的病和药，它说${q('sf_bing')}，又引旧诗${q('sf_shi')}几家的结论常常不同，这一页不替它们裁决。`]];
   if(g.kind==='建禄'||g.kind==='阳刃'||g.kind==='月劫'){
     const out=g.out.map(p=>`${p.k}干${p.g}（${god(p.g)}）`), cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
@@ -2798,6 +2892,160 @@ function gejuRow(){
     ['是什么',head],
     ['怎么走的',how+(god(g.list[0].h)==='七杀'?'七杀在书里叫偏官，也叫煞。':'')+(names.some(x=>x==='财格'||x==='印格')?'书里正财和偏财合称财，正印和偏印合称印绶。':'')],
     ['顺用和逆用',`书里把八类分成两组：${q('zp_shun')}`+names.map(x=>`${x}在${shun(x)?'顺':'逆'}用的一组`).join('，')+'。']].concat(tail)};
+}
+
+/* ---------- 格局组合 ----------
+   2026-11-16 用户拿一份常说的格局组合（食伤制杀、伤官见官……）问页面判断不判断得出来，说「不好分辨的可以给个分数啥的」，看了办法以后说「照这个做」。
+   这些组合大多是《子平真诠》「论用神成败救应」讲成格、败格的条件，每一个照书里的原文落成能逐条核对的条件。纯计算，书里举的命例是它的测试。
+   dm 是日干，ps 是四柱 [{k,g,z}]。只数年、月、时三个天干（日干是日主自己，不算）和四个地支的本气，中气、余气不算，和十神一页「十神个数」的数法相同。
+   两边的组合（a 作用于 b）：两边都透在天干上记「透」（透出）；一边透在天干上、另一边只在地支的本气里记「藏」（藏着）；
+   两边都只在地支里、或者缺一边，记「无」。几个特别的单独写。
+   最早的写法连中气、余气都算，几乎每张盘都标出一大串；两边都只在地支里也不算，是照「论正官」的金状元命：
+   乙卯、丁亥、丁未、庚戌，戌的本气戊对丁火是伤官，亥的本气壬是正官，书里却说「无伤官而不杂煞」，可见要透出来才算见。
+   分数是五行能量分给十个十神的分，和十神一页「能量」那一种相同：天干 5 分（日干不算），地支 8 分按藏干分，月支加倍，一共 55 分。
+   书里没有给多少分算制得住、算混杂得厉害，页面只列两边的分数，不替盘下结论。
+   印禄相随、食伤混杂两个，在读到的典籍里没有找到原文，没有做，记在 docs/取法约定.md 的最后一节。 */
+const GJZ_GRP={食伤:['食神','伤官'],财:['正财','偏财'],印:['正印','偏印'],比劫:['比肩','劫财'],帮身:['比肩','劫财','正印','偏印'],
+  正官:['正官'],七杀:['七杀'],伤官:['伤官'],食神:['食神'],偏印:['偏印'],劫财:['劫财']};
+const GJZ_SAY={食伤:'食神、伤官',财:'正财、偏财',印:'正印、偏印',比劫:'比肩、劫财',帮身:'比肩、劫财、正印、偏印'};      // 页面上照全称写
+const GJZ_EL={帮身:0,比劫:0,劫财:0,食伤:1,食神:1,伤官:1,财:2,正官:3,七杀:3,印:4,偏印:4};                              // 对日主的关系，算五行的颜色用
+const gjzSay=k=>GJZ_SAY[k]||k;
+/* 名单和先后。c 是书里算成格还是败格的条件；gl 是用全称说的一句；v 是两边之间的关系；ge 是《子平真诠》在哪几格下面讲这一条；
+   w 是这一格「是什么」的白话；q 是引的原文。合称写在组合的名字里，是这些组合通行的叫法，旁边的 gl 用全称再说一遍 */
+const GJZ=[
+  {n:'食伤制杀',c:'成',a:'食伤',b:'七杀',v:'制',gl:'食神、伤官制七杀',ge:['七杀格','食神格','伤官格','建禄月劫'],q:['zp_c_sha','zp_c_shi','zp_c_shang','zp_sha_shi'],
+    w:'食伤指食神和伤官，杀是七杀。七杀克日主，食神、伤官克七杀，等于替日主挡住七杀，叫制杀。'},
+  {n:'杀印相生',c:'成',a:'七杀',b:'印',v:'生',gl:'七杀生印，印再生日主',ge:['印格','伤官格','七杀格'],q:['zp_c_yin','zp_c_shang','zp_sha_yin'],
+    w:'七杀生印，印再生日主，七杀的力量绕一圈转到日主身上，叫杀印相生。'},
+  {n:'伤官配印',c:'成',a:'印',b:'伤官',v:'制',gl:'印克伤官，又生日主',ge:['伤官格','正官格'],q:['zp_c_shang','zp_b_shang','zp_guan_shang'],
+    w:'印克伤官，同时生日主。伤官旁边有印，伤官被管住，日主也得了生，书里叫伤官佩印。'},
+  {n:'官印相生',c:'成',a:'正官',b:'印',v:'生',gl:'正官生印，印再生日主',ge:['印格','正官格'],q:['zp_c_yin','zp_c_guan'],
+    w:'正官生印，印再生日主，三者顺着生下来，叫官印相生。'},
+  {n:'羊刃驾杀',c:'成',a:'七杀',b:'劫财',v:'制',gl:'日主有阳刃，又有七杀来制',ge:['阳刃格'],q:['qt_jiasha','zp_yr','zp_c_ren','zp_ren_sha'],
+    w:'阳刃是日干的帝旺，比禄还进一步，《子平真诠》说只有五个阳干有。阳刃很旺，七杀正好制它，叫羊刃驾杀，也写作阳刃驾杀。'},
+  {n:'食伤生财',c:'成',a:'食伤',b:'财',v:'生',gl:'食神、伤官生财',ge:['食神格','伤官格','财格','建禄月劫'],q:['zp_c_shi','zp_c_shang','zp_c_cai'],
+    w:'日主生食神、伤官，食神、伤官再生财，顺着生下来，叫食伤生财。'},
+  {n:'食伤泄秀',c:'成',a:'食伤',b:'帮身',v:'泄',gl:'日主强，由食神、伤官泄出去',ge:['印格'],q:['zp_c_yin','sf_xiexiu'],
+    w:'日主强的时候，由它生出的食神、伤官把多出来的力量泄出去，叫泄秀。'},
+  {n:'合财合官',c:'成',v:'合',gl:'日干和挨着它的正财或正官相合',ge:[],q:['zp_he1','zp_he2'],
+    w:'天干五合里，阳干日主合的是自己的正财，阴干日主合的是自己的正官。日干和挨着的正财或正官相合，《子平真诠》说这是「我合之」，不算被合去。'},
+  {n:'财官印全',c:'成',gl:'正财或偏财、正官、正印或偏印三样都有',ge:['正官格','建禄月劫'],q:['zp_c_guan','zp_c_jl'],
+    w:'财生正官，正官生印，印生日主，三样都有，一路生下来，叫财官印全。'},
+  {n:'比劫制财',c:'败',a:'比劫',b:'财',v:'克',gl:'比肩、劫财克财',ge:['财格'],q:['zp_b_cai','zp_j_cai'],
+    w:'比肩、劫财克财。财少而比肩、劫财多，书里叫「财轻比重」，现在也常说比劫夺财。'},
+  {n:'贪财坏印',c:'败',a:'财',b:'印',v:'克',gl:'财克印',ge:['印格'],q:['zp_b_yin','zp_j_yin'],
+    w:'财克印，印被财克坏，叫贪财坏印。书里讲的是印格的「印轻逢财」。'},
+  {n:'官杀混杂',c:'败',v:'混',gl:'正官和七杀同时出现',ge:['正官格'],q:['yh_hunza','yh_hunza2','zp_guan_shang','zp_guan_he'],
+    w:'正官和七杀都是克日主的一行。正官的阴阳和日主不同，七杀相同。两样同时出现，叫官杀混杂，书里说正官要纯。'},
+  {n:'伤官见官',c:'败',a:'伤官',b:'正官',v:'克',gl:'伤官克正官',ge:['正官格','伤官格'],q:['zp_b_guan','zp_b_shang'],
+    w:'伤官克正官。盘里有正官，又有伤官来克它，叫伤官见官。'},
+  {n:'枭神夺食',c:'败',a:'偏印',b:'食神',v:'克',gl:'偏印克食神',ge:['食神格'],q:['zp_b_shi','zp_j_shi'],
+    w:'偏印也叫枭神。偏印克食神，叫枭神夺食，书里叫「食神逢枭」。'},
+  {n:'七杀无制',c:'败',v:'无制',gl:'七杀透出，没有食神、伤官来制',ge:['七杀格'],q:['zp_b_sha'],
+    w:'七杀透出，盘里又没有食神、伤官来制它，叫七杀无制。'}];
+function gjzOf(dm,ps){
+  const de=gEl(dm), T={}, C={}, E={};
+  GODS.forEach(g=>{T[g]=[];C[g]=[];E[g]=0;});
+  ps.forEach((p,i)=>{
+    if(i!==2){const gn=godOf(dm,p.g);T[gn].push({k:p.k,i,h:p.g});E[gn]+=5;}
+    nlOf(p.z).forEach(([h,n],j)=>{const gn=godOf(dm,h);if(j===0) C[gn].push({k:p.k,i,z:p.z,h});E[gn]+=i===1?n*2:n;});   // 分数算全部藏干，位置只记本气
+  });
+  const t=k=>GJZ_GRP[k].flatMap(g=>T[g]), c=k=>GJZ_GRP[k].flatMap(g=>C[g]), has=k=>t(k).length+c(k).length>0;
+  const en=k=>GJZ_GRP[k].reduce((a,g)=>a+E[g],0), side=k=>({k,say:gjzSay(k),n:en(k),e:(de+GJZ_EL[k])%5});
+  const tier=qsOf(dm,ps,true).tier, out=GJZ.map(o=>Object.assign({},o)), get=n=>out.find(o=>o.n===n);
+  const two=(a,b)=>t(a).length&&t(b).length?'透':has(a)&&has(b)&&t(a).length+t(b).length>0?'藏':'无';
+  out.filter(o=>o.a&&o.b&&o.n!=='羊刃驾杀'&&o.n!=='食伤泄秀').forEach(o=>Object.assign(o,{st:two(o.a,o.b),sides:[side(o.a),side(o.b)],pa:t(o.a).concat(c(o.a)),pb:t(o.b).concat(c(o.b))}));
+  // 羊刃驾杀：阳刃是禄前一位，只有阳干有（zp_yr）。地支里有阳刃时，七杀透出记「透」，只在地支本气里记「藏」。
+  // 阳刃本来就在地支里，七杀藏着也算，依据是《穷通宝鉴》「丙杀藏支，名为羊刃驾杀」
+  {const o=get('羊刃驾杀'), yr=isYin(dm)?'':Z[(Z.indexOf(SS_LU[G.indexOf(dm)])+1)%12], rp=ps.filter(p=>yr&&p.z===yr).map(p=>({k:p.k,z:p.z}));
+    Object.assign(o,{yr,rp,st:!rp.length?'无':t('七杀').length?'透':c('七杀').length?'藏':'无',sides:[side('劫财'),side('七杀')],pa:t('七杀').concat(c('七杀'))});}
+  // 食伤泄秀：日主强（强弱计分归身强），食神、伤官透出记「透」，只在地支本气里记「藏」
+  {const o=get('食伤泄秀');Object.assign(o,{tier,st:tier!=='强'?'无':t('食伤').length?'透':c('食伤').length?'藏':'无',sides:[side('帮身'),side('食伤')],pa:t('食伤').concat(c('食伤'))});}
+  // 合财合官：和日干相合的那个天干透在月干或时干，紧挨着日干。年干上的隔着月干，页面不算
+  {const o=get('合财合官'), h=gHe(dm), near=ps.filter((p,i)=>(i===1||i===3)&&p.g===h).map(p=>({k:p.k,h})), gn=godOf(dm,h);
+    Object.assign(o,{h,gn,near,far:ps[0].g===h,zheng:ps[1].g===h&&ps[0].g===dm,st:near.length?'透':'无',sides:null});}
+  // 财官印全：三样都透出记「透」，三样都有、至少一样透出、其余只在地支本气里记「藏」
+  {const o=get('财官印全'), ks=['财','正官','印'];Object.assign(o,{st:ks.every(k=>t(k).length)?'透':ks.every(has)&&ks.some(k=>t(k).length)?'藏':'无',sides:ks.map(side),parts:ks.map(k=>({k,p:t(k).concat(c(k))}))});}
+  // 官杀混杂：正官和七杀都透出记「透」，一样透出、另一样只在地支本气里记「藏」
+  {const o=get('官杀混杂');Object.assign(o,{st:t('正官').length&&t('七杀').length?'透':has('正官')&&has('七杀')&&t('正官').length+t('七杀').length>0?'藏':'无',sides:[side('正官'),side('七杀')],parts:['正官','七杀'].map(k=>({k,p:t(k).concat(c(k))}))});}
+  // 七杀无制：七杀透出，天干和地支本气里都没有食神、伤官，记「透」。食神、伤官在地支本气里就算有制，归「食伤制杀」，免得两条同时出现
+  {const o=get('七杀无制');Object.assign(o,{st:t('七杀').length&&!has('食伤')?'透':'无',sides:[side('七杀'),side('食伤')],pa:t('七杀').concat(c('七杀')),pb:t('食伤').concat(c('食伤'))});}
+  // 书里另外的条件，各落成一条能核对的：[说法, 合不合]
+  const heSha=t('七杀').some(x=>[x.i-1,x.i+1].some(j=>j>=0&&j<4&&ps[j].g===gHe(x.h)));      // 七杀旁边的天干和它相合（合煞留官）
+  const ext={
+    食伤制杀:[['身强（七杀格「身强七煞逢制」）',tier==='强'],['天干不透财（「煞用食制，不要露财透印」）',!t('财').length],['天干不透印（同上）',!t('印').length],['盘里没有财（食神格、伤官格的「无财」）',!has('财')]],
+    杀印相生:[['身弱（伤官格「伤官旺、身主弱而透煞印」）',tier==='弱']],
+    伤官配印:[['印透出又有根（「伤官佩印而伤官旺，印有根」）',t('印').length>0&&c('印').length>0],['身不强（败格的条件是「佩印而伤轻身旺」）',tier!=='强']],
+    羊刃驾杀:[['天干露财或印（「阳刃透官煞而露财印」）',t('财').length+t('印').length>0],['盘里不见伤官（同上「不见伤官」）',!has('伤官')]],
+    食伤生财:[['身强（财格「财逢食生而身强带比」）',tier==='强']],
+    合财合官:[['没有别的字来争合（「两辛合丙，两丁合壬」一类）',!get('合财合官').zheng]],
+    比劫制财:[['财比比肩、劫财轻（「财轻比重」，轻重照分数比）',en('财')<en('比劫')]],
+    贪财坏印:[['印比财轻（「印轻逢财」，轻重照分数比）',en('印')<en('财')]],
+    官杀混杂:[['有字合住七杀（「合煞留官，是杂煞而取清也」）',heSha]],
+    伤官见官:[['日主不属金（书里说「伤官非金水而见官」才算败）',de!==3]],
+    枭神夺食:[['天干有七杀或财来救（「食逢枭而就煞以成格，或生财以护食」）',t('七杀').length+t('财').length>0]],
+    七杀无制:[['盘里有财（「七煞逢财无制」）',has('财')]]};
+  out.forEach(o=>{o.ext=ext[o.n]||[];});
+  return {list:out,E,tier};
+}
+const gjzNow=()=>memo('gjz',()=>gjzOf(DM,NATAL));
+/* 这张盘照格局参考归的格，换成 GJZ 里 ge 用的名字 */
+function gjzGe(){const g=geju();return g.kind==='建禄'||g.kind==='月劫'?['建禄月劫']:g.kind==='阳刃'?['阳刃格']:gejuNames(g);}
+const gjzWhere=xs=>xs.map(x=>x.z?`${x.k}支${x.z}（本气${x.h}，${god(x.h)}）`:`${x.k}干${x.h}（${god(x.h)}）`).join('、');
+/* 表里「这张盘」一格的短句：谁在哪里 */
+function gjzBrief(o){
+  const p=xs=>xs.map(x=>x.z?`${x.k}支${x.z}`:`${x.k}干${x.h}`).slice(0,3).join('、');
+  if(o.n==='合财合官') return o.near.length?`日干${DM}<span class="gjz-v">合</span>${o.near.map(x=>`${x.k}干${x.h}`).join('、')}（${o.gn}）`:'';
+  if(o.n==='财官印全'||o.n==='官杀混杂') return o.parts.map(x=>`${gjzSay(x.k)}：${p(x.p)}`).join('；');
+  if(o.n==='羊刃驾杀') return o.rp.length?`${p(o.pa)}<span class="gjz-v">制</span>${o.rp.map(x=>`${x.k}支${x.z}`).join('、')}的阳刃`:'';
+  if(o.n==='食伤泄秀') return `身强，${p(o.pa)}`;
+  if(o.n==='七杀无制') return `${p(o.pa.filter(x=>!x.z))}，没有食神、伤官`;
+  return `${p(o.pa)}<span class="gjz-v">${o.v}</span>${p(o.pb)}`;
+}
+/* 点组合名字的解释 */
+function xGjz(n){
+  const r=gjzNow(), o=r.list.find(x=>x.n===n); if(!o) return null;
+  const ge=gjzGe(), inGe=o.ge.filter(g=>ge.includes(g));
+  const STS={透:'有，都透在天干上',藏:'有，有一边只在地支的本气里，没有透出来',无:'没有'};
+  let now;
+  if(o.n==='合财合官') now=o.near.length?`日干${DMN}和${o.near.map(x=>`${x.k}干${gN(x.h)}`).join('、')}相合，${gN(o.h)}是${DMN}的${o.gn}。`+(o.zheng?`年干也是${DM}，和日干一起合月干的${o.h}，是争合。`:'')
+    :`和${DMN}相合的是${gN(o.h)}（${o.gn}），`+(o.far?`它在年干，隔着月干，页面不算日干合它。`:'月干、时干上都没有。');
+  else if(o.n==='财官印全'||o.n==='官杀混杂') now=o.parts.map(x=>x.p.length?`${gjzSay(x.k)}在${gjzWhere(x.p)}`:`天干和地支的本气里没有${gjzSay(x.k)}`).join('；')+'。';
+  else if(o.n==='羊刃驾杀') now=isYin(DM)?`日主${DMN}是阴干。《子平真诠》说阳刃只有五个阳干有，所以没有这一条。`
+    :`${DMN}的阳刃是${o.yr}，`+(o.rp.length?`在${o.rp.map(x=>`${x.k}支`).join('、')}。`:'四个地支里都没有。')+(o.pa.length?`七杀在${gjzWhere(o.pa)}。`:'天干和地支的本气里没有七杀。');
+  else if(o.n==='食伤泄秀') now=(o.tier==='间'?'强弱计分在 25 分和 30 分之间，强弱未定，不合「身强」这一条。':`强弱计分归身${o.tier}${o.tier==='强'?'':'，不合「身强」这一条'}。`)+(o.pa.length?`食神、伤官在${gjzWhere(o.pa)}。`:'天干和地支的本气里没有食神、伤官。');
+  else if(o.n==='七杀无制') now=(o.pa.some(x=>!x.z)?`七杀透在${gjzWhere(o.pa.filter(x=>!x.z))}。`:o.pa.length?`七杀只在${gjzWhere(o.pa)}，没有透出来。`:'天干和地支的本气里都没有七杀。')
+    +(o.pb.length?`食神、伤官在${gjzWhere(o.pb)}，算有制，见「食伤制杀」。`:'天干和地支的本气里都没有食神、伤官。');
+  else now=(o.pa.length?`${gjzSay(o.a)}在${gjzWhere(o.pa)}`:`天干和地支的本气里没有${gjzSay(o.a)}`)+'；'+(o.pb.length?`${gjzSay(o.b)}在${gjzWhere(o.pb)}`:`天干和地支的本气里没有${gjzSay(o.b)}`)+'。';
+  const how=(o.a&&o.b&&!['羊刃驾杀','食伤泄秀'].includes(o.n)?`${gjzSay(o.a)}和${gjzSay(o.b)}都透在年、月、时的天干上，记作透出；一边透出、另一边只在地支的本气里，记作藏着；两边都只在地支里不算，书里「论正官」举的金状元命就是这样，戌里有伤官，书里说它「无伤官」。`
+    :({羊刃驾杀:'日主是阳干，地支里有它的阳刃（禄前一位）。七杀透出记作透出，只在地支的本气里记作藏着。',
+      食伤泄秀:'强弱计分归身强。食神、伤官透出记作透出，只在地支的本气里记作藏着。',
+      合财合官:'和日干相合的那个天干透在月干或时干，紧挨着日干，记作有。在年干的隔着月干，不算。',
+      财官印全:'正财或偏财、正官、正印或偏印三样都透出，记作透出；三样都有、至少一样透出、其余只在地支的本气里，记作藏着。',
+      官杀混杂:'正官和七杀都透出，记作透出；一样透出、另一样只在地支的本气里，记作藏着。',
+      七杀无制:'七杀透出，天干和地支的本气里都没有食神、伤官，记作透出。食神、伤官在地支的本气里就算有制，归「食伤制杀」。'})[o.n])
+    +'只数三个天干（日干不算）和四个地支的本气，中气、余气不算，和十神表「十神个数」的数法相同。';
+  const sc=o.sides?o.sides.map(x=>`${x.say} ${x.n} 分`).join('，')+'。':'';
+  return {t:`${o.n} · ${STS[o.st].split('，')[0]}`,p:[
+    ['是什么',o.w],
+    ['怎么查',how+'这是页面照原文定的查法，原文里没有逐字写。'],
+    ['这张盘',`${STS[o.st]}。`+now],
+    sc?['分数',sc+'分数是五行能量分给十个十神的分，和这一页十神表「能量」那一种相同，一共 55 分，不算日主自己。书里没有说多少分算'+({制:'制得住',生:'生得动',克:'克得动',泄:'泄得动',混:'混杂得厉害',无制:'七杀太旺'})[o.v||'生']+'，页面只列分数。']:null,
+    o.ext.length?['书里的条件',o.ext.map(([l,ok])=>`${l}：${ok?'合':'不合'}`).join('；')+'。书里的这些条件是分格局说的，这里照这张盘逐条看一遍，不合成结论。']:null,
+    ['和格局',o.ge.length?`《子平真诠》是在${o.ge.join('、')}下面讲这一条的。这张盘照「格局参考」一行归${ge.join('和')}，`+(inGe.length?'正是其中之一。':'不在其中，书里没有在这一格下面讲它。')
+      :'这一条出自《子平真诠》「论十干合而不合」，不分格局。'],
+    ['典籍',o.q.map(k=>{const s=({zp:'《子平真诠》',yh:'《渊海子平》',qt:'《穷通宝鉴》',sf:'《神峰通考》'})[k.slice(0,2)]+GJZ_CH[k]+q(k);return Q[k][1].endsWith('。')?s:s+'。';}).join('')],
+    ['注意','这些组合是书里给格局分成格、败格的说法，讲的是盘里各字之间的生克，不是对人的判断。旧书里跟着这些组合的富贵贫贱一类断语，页面一概不引。各家对同一个组合的条件说法不一，页面照的是上面引的那几句。']]};
+}
+/* 引文出自哪一章，写在书名后面 */
+const GJZ_CH={zp_c_sha:'「论用神成败救应」：',zp_c_shi:'同一章：',zp_c_shang:'同一章：',zp_c_yin:'「论用神成败救应」：',zp_c_guan:'「论用神成败救应」：',zp_c_cai:'同一章：',zp_c_ren:'「论用神成败救应」：',zp_c_jl:'同一章：',
+  zp_b_cai:'「论用神成败救应」讲败格：',zp_b_yin:'「论用神成败救应」讲败格：',zp_b_guan:'「论用神成败救应」讲败格：',zp_b_shang:'同一章讲败格：',zp_b_shi:'「论用神成败救应」讲败格：',zp_b_sha:'「论用神成败救应」讲败格：',
+  zp_j_cai:'同一章讲救应：',zp_j_yin:'同一章讲救应：',zp_j_shi:'同一章讲救应：',zp_sha_shi:'「论偏官」：',zp_sha_yin:'「论偏官」：',zp_guan_shang:'「论正官」：',zp_guan_he:'同一章举例：',
+  zp_he1:'「论十干合而不合」：',zp_he2:'同一章：',zp_yr:'「论阳刃」：',zp_ren_sha:'同一章讲阳刃用煞：',qt_jiasha:'讲二月甲木：',sf_xiexiu:'讲甲木见丁火：',yh_hunza:'「论官杀混杂要制伏」：',yh_hunza2:'同一节：'};
+/* 十神一页最下面那张表下面的一句话 */
+function noteGjz(){
+  return '条件照书里的原文定成能逐条核对的几条，只数三个天干和四个地支的本气：两边都透在天干上记「透出」，一边透出、另一边只在地支的本气里记「藏着」，两边都只在地支里不算。分数是五行能量分给十个十神的分，一共 55 分，不算日主自己；书里没有给多少分算制得住、算混杂，页面只列两边的分数。'
+    +'最后一列是《子平真诠》在哪几格下面讲这一条，加粗的是这张盘照「格局参考」归的那一格。印禄相随、食伤混杂两个，在读到的典籍里没有找到原文，没有列。';
 }
 
 /* ---------- 顶部信息 ---------- */
@@ -3593,6 +3841,7 @@ function X0(key){
   if(k==='gt') return xGT(a[1],a[2]);
   if(k==='nly') return xNly(a[1]);
   if(k==='pk') return xPk(a[1],a[2],a[3]);
+  if(k==='gjz') return xGjz(a[1]);
   if(k==='xi') return xXi();
   if(k==='sd') return xSd(a[1]);
   if(k==='ys') return xYong(a[1]);
@@ -3908,7 +4157,7 @@ function renderPerson(){
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -4191,6 +4440,19 @@ function renderSy(){
   $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+what+`<span class="rest"><i></i>其余</span><span>满分 ${yb.max}</span>`;
   $('note-syfig').textContent=noteSyFig(); $('note-sy').textContent=noteSy();      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
+}
+/* 十神一页最下面的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
+   两边的分数和一条分段的条、《子平真诠》在哪几格下面讲（这张盘的格加粗）；没有的并成一行，名字照样能点开。最后一行指向强弱一页的从格 */
+function renderGjz(){
+  const r=gjzNow(), ge=gjzGe();
+  const bar=o=>o.sides?`<span class="gjz-sc"><span class="gjz-bar">${o.sides.map(x=>`<i class="${ELC[x.e]}" style="flex:${x.n}"></i>`).join('')}</span><span class="gjz-n">${o.sides.map(x=>`${x.say} ${x.n}`).join(' · ')}</span></span>`:'<span class="gjz-n">不比分数</span>';
+  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.gl}</small></th><td><span class="gjz-st${o.st==='透'?' t':''}">${o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着'}</span><span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
+    +`<td class="gjz-ge">${o.ge.length?o.ge.map(g=>ge.includes(g)?`<b>${g}</b>`:g).join('、'):'不分格局'}</td></tr>`;
+  const grp=(c,title)=>{const yes=r.list.filter(o=>o.c===c&&o.st!=='无'), no=r.list.filter(o=>o.c===c&&o.st==='无');
+    return `<tr class="gjz-h"><th colspan="4" scope="colgroup">${title}</th></tr>`+yes.map(row).join('')+(no.length?`<tr class="gjz-no"><td colspan="4">这张盘没有：${no.map(o=>xb('x','gjz|'+o.n,o.n)).join('、')}</td></tr>`:'');};
+  $('gjz').innerHTML=grp('成','书里算成格的')+grp('败','书里算败格的')
+    +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
+  $('note-gjz').textContent=noteGjz();
 }
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){

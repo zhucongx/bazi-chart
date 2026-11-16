@@ -312,6 +312,26 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods tr:last-child td,.gods tbody tr:last-child th{border-bottom:0}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+/* 十神一页最下面的格局组合（ui.js 的 renderGjz）：成格、败格两组，有的组合一行一个，没有的并成一行。
+   「透出」「藏着」两枚小签，分数是一条两三段的条，颜色照五行；加粗的格是这张盘照格局参考归的那一格 */
+.gjzblock{display:grid;gap:10px;margin-top:22px}
+.gjz th[scope=row] .x{font-weight:600}
+.gjz th[scope=row] small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--ink3)}
+.gjz .gjz-h th{padding-top:14px;font-size:12px;font-weight:600;color:var(--ink2)}
+.gjz .gjz-st{display:inline-block;margin-right:6px;padding:0 7px;border:1px solid var(--line);border-radius:999px;font-size:12px;white-space:nowrap;color:var(--ink2)}
+.gjz .gjz-st.t{border-color:var(--accent);color:var(--accent)}
+.gjz .gjz-w{font-size:13px;color:var(--ink2)}
+.gjz .gjz-v{margin:0 4px;font-weight:600;color:var(--accent)}
+.gjz .gjz-sc{display:grid;gap:4px;min-width:9em}
+.gjz .gjz-bar{display:flex;gap:1px;width:clamp(80px,12vw,150px);height:8px;border-radius:4px;background:var(--wash);overflow:hidden}
+.gjz .gjz-bar i{display:block;height:100%;background:currentColor}
+.gjz .gjz-n{font-size:12px;color:var(--ink2)}
+.gjz .gjz-ge{font-size:12.5px;color:var(--ink3)}
+.gjz .gjz-ge b{font-weight:600;color:var(--ink)}
+.gjz .gjz-no td{font-size:13px;color:var(--ink3)}
+@media (max-width:600px){
+  .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
+}
 .gods .eli .ic{width:14px;height:14px}
 /* 宫位表（最下面的六亲宫位卡片）：一列一柱的表，格子里是几行短句。计分一页：一行一层的计分表，数字靠右 */
 .gw{table-layout:fixed;min-width:640px}
@@ -958,6 +978,16 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <p class="note" id="note-godmap"></p>
         <div class="read" id="rd-gods"></div>
       </div>
+    </div>
+    <div class="gjzblock">
+      <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
+      <div class="tablewrap">
+        <table class="gods gjz">
+          <thead><tr><th scope="col">组合</th><th scope="col">这张盘</th><th scope="col">分数</th><th scope="col">《子平真诠》在哪一格讲</th></tr></thead>
+          <tbody id="gjz"></tbody>
+        </table>
+      </div>
+      <p class="note" id="note-gjz"></p>
     </div>
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
