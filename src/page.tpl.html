@@ -241,7 +241,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
 .pk[aria-pressed="true"] .ag{color:var(--ink2)}      /* 选中的卡是淡蓝底，浅灰字对比度不够 */
-/* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
+/* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数；两种相加时满分 26，两种之间空一道缝（.cut）。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
 /* 小卡底下的条能点开明细：和别处夹在文字里的可点词一样，分数带虚线下划线，悬停垫淡钴蓝，点开淡蓝底加一圈钴蓝。
    上下左右各留一点，手指好点；外边距扣回来，卡片的高度不变 */
 .pk .mb{display:flex;align-items:center;gap:4px;align-self:stretch;margin:0 2px -5px;padding:4px 4px 5px;border-radius:6px;cursor:pointer}
@@ -254,6 +254,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .mb-bar{flex:1;display:flex;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
 .pk .mb-fill{display:flex;gap:1px;height:100%}
 .pk .mb-fill i{display:block;height:100%;background:currentColor}
+.pk .mb-fill i.cut{margin-left:2px}
 .pk .mb b{min-width:1.3em;font-size:11px;font-weight:600;line-height:1;color:var(--ink2);text-align:right}
 #card-pan .tabbar{margin-top:8px}
 #liuri .pk.now::after{content:"今天"}
@@ -453,6 +454,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
 .lg span{display:inline-flex;align-items:center;gap:5px}
 .lg i{width:10px;height:10px;border-radius:2px;background:currentColor}
+.lg .lg-g{gap:4px 12px}
 /* 十神名字后面的个数：几处，加一小段同样长短的条 */
 .gn{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .gn i{display:inline-block;vertical-align:middle;margin-left:6px;width:calc(var(--n)*9px);height:6px;border-radius:3px;background:currentColor;opacity:.4}
@@ -1030,7 +1032,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-gt"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
-    <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条，就是那一柱的 13 分里喜用占几分；不定喜用的盘，画的是帮日主的占几分</p>
+    <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条照哪一种看法算，见选择器上面的按钮和表下面的说明</p>
     <div class="tablewrap">
       <table class="gods sy">
         <thead id="sy-h"></thead>

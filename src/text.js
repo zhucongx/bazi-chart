@@ -508,17 +508,26 @@ function xYong(nm){
 }
 const elNames=a=>a.map(e=>EL[e]).join('、');
 /* 选择器小卡底下的条照哪一种看法，按钮在选择器上面的图例里（ui.js 的 MAPBY.yun）：
-   fy 是扶抑的喜用（默认，2026-11-14 用户选的「扶抑喜用分」），不定喜用时画帮日主的两行；ys 是「喜忌」一页照任铁樵的注取的用神和喜神。
-   2026-11-16 用户问一步大运「怎么算了半天是三分」，两种看法差得多，用户说「我不知道，你看着改」，就做成两个按钮。用神不定的盘只能照扶抑 */
+   fy 是扶抑的喜用（默认，2026-11-14 用户选的「扶抑喜用分」），不定喜用时画帮日主的两行；ys 是「喜忌」一页照任铁樵的注取的用神和喜神；
+   sum 是这两种分数直接相加，满分 26，同一种五行两种都算的算两遍。
+   2026-11-16 用户问一步大运「怎么算了半天是三分」，两种看法差得多，用户说「我不知道，你看着改」，就做成两个按钮；
+   同一天用户要再加一个「把这两个结合起来的」，说「我的意思是分数相加」，加了 sum。相加是页面自己的做法，哪本书里都没有，页面上照实写。
+   parts 是相加的几种看法，fy、ys 各一种，sum 两种；max 是条的满分。用神不定的盘只能照扶抑（用神定了，强弱就定了，扶抑一定取得了喜用） */
 function yunBasis(){
   const x=xiNow(), de=gEl(DM), y=yongNow(), canYs=y.yong!==null;
-  if(MAPBY.yun==='ys'&&canYs){const u=(de+y.yong)%5, s=(de+y.shen.xi)%5;return {mode:'ys',want:[u,s],name:'用神和喜神',short:`用神${EL[u]}和喜神${EL[s]}`,canYs};}
-  return {mode:'fy',want:x.xi||[(de+4)%5,de],name:x.xi?'喜用':'帮日主的',short:x.xi?`喜用的${elNames(x.xi)}`:`帮日主的${elNames([(de+4)%5,de])}`,canYs};
+  const fy={want:x.xi||[(de+4)%5,de],name:x.xi?'喜用':'帮日主的',short:x.xi?`喜用的${elNames(x.xi)}`:`帮日主的${elNames([(de+4)%5,de])}`};
+  if(!canYs||!['ys','sum'].includes(MAPBY.yun)) return {mode:'fy',...fy,parts:[fy],max:13,canYs};
+  const u=(de+y.yong)%5, s=(de+y.shen.xi)%5, ys={want:[u,s],name:'用神和喜神',short:`用神${EL[u]}和喜神${EL[s]}`};
+  if(MAPBY.yun==='ys') return {mode:'ys',...ys,parts:[ys],max:13,canYs};
+  const same=fy.want.length===2&&fy.want.every(e=>ys.want.includes(e));      // 两种取的是同样两行：相加就是翻一倍
+  fy.both=`扶抑的喜用（${elNames(fy.want)}）`; ys.both=`用神、喜神（${EL[u]}、${EL[s]}）`;
+  return {mode:'sum',want:[0,1,2,3,4].filter(e=>fy.want.includes(e)||ys.want.includes(e)),name:'两种相加',short:`${fy.both}加上${ys.both}`,parts:[fy,ys],max:26,same,canYs};
 }
-/* 外来的一柱（大运、流年、流月、流日）带来的 13 分里，照上面那种看法算进去的五行占几分（score）。want 是算进 score 的五行 */
+/* 外来的一柱（大运、流年、流月、流日）带来的 13 分里，照上面那种看法算进去的五行占几分。parts 是每一种看法各几分，score 是它们的和；
+   want 是至少有一种看法算进去的五行 */
 function xiPillar(gz){
-  const sum=nlSum(nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false)), b=yunBasis();
-  return {gz,sum,score:b.want.reduce((a,e)=>a+sum[e],0),want:b.want,basis:b};
+  const sum=nlSum(nlPillar({k:'',g:gz[0],z:gz[1],dyn:true},false)), b=yunBasis(), parts=b.parts.map(p=>p.want.reduce((a,e)=>a+sum[e],0));
+  return {gz,sum,parts,score:parts.reduce((a,n)=>a+n,0),want:b.want,basis:b};
 }
 /* 阴阳：盘面八个字各算阴还是阳。天干甲丙戊庚壬是阳，乙丁己辛癸是阴。地支照六十甲子的配法：子、寅、辰、午、申、戌只和阳干相配，算阳。
    另一种分法照本气的阴阳算（yang2），和定十神的办法一致。两种分法在子、午、巳、亥四支上相反（diff）。
@@ -1095,7 +1104,7 @@ function readPan(){
 function readYun(){
   return box('解读 · 现在选中的四层',
     `<div class="cols"><p>大运从月柱推出来，十年一步。${yunWhy(3)}。流年、流月、流日是那一年、那个月、那一天本身的干支，所有人都一样。读法相同：把选中的干支当成临时加进盘里的一柱，先看它是${DMN}的什么十神，再看它和原局的字有什么合冲。</p>`+
-    `<p>下面每一层后面都说它对${DMN}是加力还是减力：生身、帮身是加力，泄身、耗身、克身是减力。加力减力本身不分好坏。`+(xiNow().xi?`照扶抑，这张盘喜${elNames(xiNow().xi)}，每一层后面也写了它的 13 分里喜用占几分，选择器里小卡底下的条画的就是这个。`:'这张盘的强弱计分在 25 分和 30 分之间，不定喜用。')+'</p></div>'+
+    `<p>下面每一层后面都说它对${DMN}是加力还是减力：生身、帮身是加力，泄身、耗身、克身是减力。加力减力本身不分好坏。`+(xiNow().xi?`照扶抑，这张盘喜${elNames(xiNow().xi)}。`:'这张盘的强弱计分在 25 分和 30 分之间，不定喜用。')+'每一层后面也写了它的 13 分里算进选择器小卡底下那条的有几分，照哪一种看法算见选择器上面的按钮。'+'</p></div>'+
     '<dl class="layers" id="layers"></dl>'+
     '<p>传统上说大运是十年的背景，流年是当年的主题，流月和流日一层比一层细，分量也一层比一层轻。大运的天干和地支，有的流派说各管五年，有的说十年合看、以地支为重。</p>');
 }
@@ -1176,11 +1185,14 @@ function noteGw(){return '表里只列位置和关系。宫位是分类的办法
 function noteSy(){
   const x=xiNow();
   return '表里是原局和选中的四层各带来的分数。原局 60 分；外来的一柱天干 5 分，地支 8 分、按藏干分，不加倍，每层 13 分。'
-    +(yunBasis().mode==='ys'?`选择器里小卡底下的条现在照用神和喜神算，见表上面的按钮；表里分的两组是扶抑的分法。`:x.xi?'标着「喜用」的那一组，就是选择器里小卡底下的条画的分数。':'这张盘不定喜用，小卡底下的条画的是帮日主的一组：比肩、劫财、正印、偏印。')
+    +(yunBasis().mode==='sum'?`选择器里小卡底下的条现在是扶抑的喜用和用神、喜神两种分数相加，见选择器上面的按钮；表里分的两组是扶抑的分法。`
+      :yunBasis().mode==='ys'?`选择器里小卡底下的条现在照用神和喜神算，见选择器上面的按钮；表里分的两组是扶抑的分法。`:x.xi?'标着「喜用」的那一组，就是选择器里小卡底下的条画的分数。':'这张盘不定喜用，小卡底下的条画的是帮日主的一组：比肩、劫财、正印、偏印。')
     +'最后一列是从原局加到这一层为止，帮日主的一组占累计总分的多少。点每一行的名字看它是怎么加出来的。';
 }
 function noteSyFig(){
   const x=xiNow(), b=yunBasis();
+  if(b.mode==='sum') return `选择器里每张小卡底下的条，是那一柱带来的 13 分里${b.parts[0].both}占的分数，加上${b.parts[1].both}占的分数，满分 26。条的前一段是扶抑，后一段是用神和喜神，中间空一道缝；同一种五行两种都算的，两段里各画一次，分数也算两遍。`
+    +(b.same?'这张盘两种取的是同样两行，相加就是每一柱的分数翻一倍，高低的次序和单看一种一样。':'')+`两种分数直接相加是页面自己的做法，书里没有这样算的；按选择器上面另外两个按钮，看单独的一种。这套计分本来只算原局，用到大运流年上是页面自己的延伸。`;
   if(b.mode==='ys') return `选择器里每张小卡底下的条，是那一柱带来的 13 分里${b.short}占几分，满分 13。用神照任铁樵《滴天髓阐微》「体用」一节的注取，喜神照同书「闲神」一节分，见「喜忌」一页；按选择器上面的「扶抑的喜用」换回扶抑。条里一段是一种五行。这套计分本来只算原局，用到大运流年上是页面自己的延伸。`;
   return (x.xi?`选择器里每张小卡底下的条，是那一柱带来的 13 分里喜用的${elNames(x.xi)}占几分，满分 13。喜用照扶抑取：这张盘照强弱计分算身${x.tier}，${x.tier==='弱'?'喜生它的和同它一类的':'喜它所生、它所克和克它的'}，依据见「喜忌」一页。`
       :`这张盘照强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。选择器里每张小卡底下的条，先画那一柱带来的 13 分里帮日主的${HELP}占几分，满分 13。`)
@@ -1336,7 +1348,10 @@ function readTr(){
     hiLo(dys,'八步大运')+`选中的${cur.n} ${cur.v} 分，在八步里排第${ord(rank)}${tie?'，有同分的':''}。`,
     hiLo(lns,`${d.gz}运的${cn(ys.length)}年`)+`选中的 ${sel.y} 年 ${xiPillar(yearGZ(sel.y)).score} 分。`,
     hiLo(lys,`${sel.y} 年的十二个月`),
-    `条越长，这一柱带来的 13 分里${what}越多。`+(b.mode==='ys'?`用神照任铁樵《滴天髓阐微》「体用」一节的注取，喜神照同书「闲神」一节分，见「喜忌」一页；这里只比较分数高低，不说哪一柱好、哪一柱坏。`:x.xi?`照扶抑的说法，这张盘身${x.tier}，喜用的五行来得多，就是在${x.tier==='弱'?'扶':'抑'}它。《渊海子平》讲行运：${q(x.tier==='弱'?'yh_yun1':'yh_yun2')}。这里只比较分数高低，不说哪一柱好、哪一柱坏。`:'这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用，这里的长短只说帮日主的字多少，不分顺逆。'),
+    b.mode==='sum'?`条越长，这一柱带来的 13 分里，${b.parts[0].both}和${b.parts[1].both}两种分数加起来越多，满分 26。`
+      +(b.same?'这张盘两种取的是同样两行，相加就是每一柱的分数翻一倍，高低的次序和单看一种一样。':'同一种五行两种都算的，算两遍。')
+      +'两种分数直接相加是页面自己的做法，书里没有这样算的；这里只比较分数高低，不说哪一柱好、哪一柱坏。'
+    :`条越长，这一柱带来的 13 分里${what}越多。`+(b.mode==='ys'?`用神照任铁樵《滴天髓阐微》「体用」一节的注取，喜神照同书「闲神」一节分，见「喜忌」一页；这里只比较分数高低，不说哪一柱好、哪一柱坏。`:x.xi?`照扶抑的说法，这张盘身${x.tier}，喜用的五行来得多，就是在${x.tier==='弱'?'扶':'抑'}它。《渊海子平》讲行运：${q(x.tier==='弱'?'yh_yun1':'yh_yun2')}。这里只比较分数高低，不说哪一柱好、哪一柱坏。`:'这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用，这里的长短只说帮日主的字多少，不分顺逆。'),
     '每一层是怎么加出来的、各是什么十神、在它那一排里排第几，点上面表里那一行的名字。扶抑只看是哪一类十神，正和偏不分；也没有算这一柱和原局的合冲，没有分大运的天干、地支各管几年。这些只是这套体系内部的推演，没有证据表明它能预测人生，页面也不说哪一年会怎样；换成从格、格局、调候的取法，高低可能整个反过来。'])}</ul>`);
 }
 const READS={bz:readBz,pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,qr:readQr,gods:readGods,ys:readYs,lq:readLq,gt:readGT,gw:readGw,tr:readTr};
@@ -1476,7 +1491,8 @@ function xNly(k){
     ['怎么加的',its.map(x=>x.say).join('，')+`。合计 ${r.total} 分。`],
     ['五行',five(r.sum)+'。'],
     ['两组',`${two}这一组多 ${r.help} 分，${three}那一组多 ${r.rest} 分。从原局加到这一层，${two}占 ${r.acc}。`],
-    [xp.basis.mode==='ys'?xp.basis.name:x.xi?'喜用':two,xp.basis.mode==='ys'||x.xi?`${me}的 13 分里，${xp.basis.short}占 ${xp.score} 分，就是选择器里这张小卡底下那条的长短。`
+    xp.basis.mode==='sum'?['两种相加',`${me}的 13 分里，${xp.basis.parts[0].short}占 ${xp.parts[0]} 分，${xp.basis.parts[1].short}占 ${xp.parts[1]} 分，加起来 ${xp.score} 分，就是选择器里这张小卡底下那条的长短，满分 26。两种分数直接相加是页面自己的做法，书里没有这样算的。`]
+    :[xp.basis.mode==='ys'?xp.basis.name:x.xi?'喜用':two,xp.basis.mode==='ys'||x.xi?`${me}的 13 分里，${xp.basis.short}占 ${xp.score} 分，就是选择器里这张小卡底下那条的长短。`
       :`这张盘不定喜用（强弱计分在 25 分和 30 分之间）。${me}的 13 分里${two}占 ${xp.score} 分，选择器里这张小卡底下的条画的就是这个。`],
     ['在这一排',rankIn(k,c.g+c.z)],
     ['十神',`天干${c.g}是${god(c.g)}，地支${c.z}的本气${HID[c.z][0]}是${godZ(c.z)}。`]]};
@@ -1489,17 +1505,29 @@ function xPk(k,gz,id){
   const [iy,im]=String(id).split('-');
   const when=k==='大运'?`${id} 年起的十年`:k==='流年'?`${id} 年`:k==='流月'?`${iy} 年${JIE[+im]}起的一个月`:`${new Date(+id).getUTCFullYear()} 年 ${mdText(+id)}`;
   const gods={}; [[gz[0],5]].concat(nlOf(gz[1])).forEach(([h,n])=>{gods[god(h)]=(gods[god(h)]||0)+n;});      // 按十神合起来：天干 5 分，藏干照 nlOf 的分法
-  const help=sum[de]+sum[(de+4)%5], mine=its.filter(o=>v.want.includes(o.e)).map(o=>o.say.replace(/（.*）$/,'')), rest=its.filter(o=>!v.want.includes(o.e));
+  const help=sum[de]+sum[(de+4)%5], pick=w=>its.filter(o=>w.includes(o.e)).map(o=>o.say.replace(/（.*）$/,'')).join('，'), rest=its.filter(o=>!v.want.includes(o.e));
   const rs=relations(NATAL.concat({k,g:gz[0],z:gz[1],layer:1})).filter(r=>r.top===1);
   // 照「喜忌」一页的用神对照：这一柱里用神、喜神、忌神、仇神、闲神各几分。小卡底下的条照的是扶抑的两组，这一段只是对照
   const y=yongNow(), at=kk=>sum[(de+kk)%5], ys=y.yong===null?null:[['用神',y.yong],['喜神',y.shen.xi],['忌神',y.shen.ji],['仇神',y.shen.chou],['闲神',y.shen.xian]];
   const B=v.basis, fyWant=x.xi||[(de+4)%5,de], fyScore=fyWant.reduce((a,e)=>a+sum[e],0);
-  const head=B.mode==='ys'?`照用神：「喜忌」一页照任铁樵的注取的用神是${catEl(y.yong)}，喜神是${catEl(y.shen.xi)}，这一柱的 13 分里它们`
-    :x.xi?`扶抑取的喜用是${elNames(x.xi)}，这一柱的 13 分里它们`:`这张盘不定喜用，条画的是帮日主的${elNames(v.want)}，`;
-  return {t:`${gz}${({大运:'运',流年:'年',流月:'月',流日:'日'})[k]} · ${B.mode==='ys'?'用神和喜神':x.xi?'喜用':'帮日主的'} ${v.score} 分`,p:[
-    [B.name,head+(v.score?`占 ${v.score} 分：${mine.join('，')}。`:'一分也没有。')
-      +(rest.length?`不算的：${rest.map(o=>o.say.replace(/（(.*)）$/,'是$1')).join('，')}。`:'')+'这就是小卡底下那条的长短，满分 13。'],
+  const yongIs=ys?`「喜忌」一页照任铁樵的注取的用神是${catEl(y.yong)}，喜神是${catEl(y.shen.xi)}`:'';
+  const notIn=rest.length?`${B.mode==='sum'?'两种都不算的':'不算的'}：${rest.map(o=>o.say.replace(/（(.*)）$/,'是$1')).join('，')}。`:'';
+  const has=(n,w)=>n?`占 ${n} 分：${pick(w)}。`:'一分也没有。';
+  let first;
+  if(B.mode==='sum'){      // 两种相加：两种各几分、加起来几分，两种都算的五行算了两遍
+    const [a,b]=v.parts, dup=B.parts[0].want.filter(e=>B.parts[1].want.includes(e)&&sum[e]);
+    first=['两种相加',(B.same?`扶抑取的喜用是${elNames(x.xi)}；${yongIs}，两种取的是同样两行。这一柱的 13 分里它们`
+        +(a?`${has(a,v.want)}两种相加就是这 ${a} 分算两遍，${v.score} 分，就是小卡底下那条的长短，满分 26。`:'一分也没有，两种相加也是 0 分，小卡底下的条是空的。')
+      :`扶抑取的喜用是${elNames(x.xi)}，这一柱的 13 分里它们${has(a,B.parts[0].want)}${yongIs}，它们${has(b,B.parts[1].want)}两个数加起来 ${v.score} 分，就是小卡底下那条的长短，满分 26。`
+        +(dup.length?`${dup.map(e=>`${EL[e]} ${sum[e]} 分`).join('、')}两种都算，加的时候算了两遍。`:''))+notIn+'两种分数直接相加是页面自己的做法，书里没有这样算的。'];
+  }else{
+    const head=B.mode==='ys'?`照用神：${yongIs}，这一柱的 13 分里它们`:x.xi?`扶抑取的喜用是${elNames(x.xi)}，这一柱的 13 分里它们`:`这张盘不定喜用，条画的是帮日主的${elNames(v.want)}，`;
+    first=[B.name,head+has(v.score,v.want)+notIn+'这就是小卡底下那条的长短，满分 13。'];
+  }
+  return {t:`${gz}${({大运:'运',流年:'年',流月:'月',流日:'日'})[k]} · ${B.mode==='sum'?'两种相加':B.mode==='ys'?'用神和喜神':x.xi?'喜用':'帮日主的'} ${v.score} 分`,p:[
+    first,
     B.mode==='ys'?['照扶抑',`${x.xi?`扶抑取的喜用是${elNames(x.xi)}`:`这张盘不定喜用，帮日主的是${elNames(fyWant)}`}，这一柱里它们占 ${fyScore} 分。按选择器上面的「扶抑的喜用」，小卡底下的条就照扶抑画。`]
+      :ys&&B.mode==='sum'?['照用神',`这一柱里${ys.map(([n,kk])=>`${n}${EL[(de+kk)%5]} ${at(kk)} 分`).join('、')}。`]
       :ys?['照用神',`「喜忌」一页照任铁樵的注取的用神是${catEl(y.yong)}。这一柱里${ys.map(([n,kk])=>`${n}${EL[(de+kk)%5]} ${at(kk)} 分`).join('、')}；用神和喜神合起来 ${at(y.yong)+at(y.shen.xi)} 分。按选择器上面的「用神和喜神」，小卡底下的条就照用神画。`]:null,
     ['怎么分',its.map(o=>o.say).join('，')+'。一共 13 分。'],
     ['五行',[0,1,2,3,4].filter(e=>sum[e]).map(e=>`${EL[e]} ${sum[e]} 分，是${CAT[(e-de+5)%5][0]}`).join('；')+'。'],

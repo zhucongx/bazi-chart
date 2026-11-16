@@ -713,16 +713,41 @@ people.forEach((id, pi) => {
     eq('点小卡上面的干支：换到这一年', ev('sel.y'), +yb2.dataset.y);
     click($('liunian').querySelector(`[data-y="${sy0}"]`)); click($('liuyue').querySelector(`[data-m="${sm0}"]`));
     if ($('liuri').querySelector(`[data-d="${sd0}"]`)) click($('liuri').querySelector(`[data-d="${sd0}"]`));
-    // 选择器图例里的两个按钮：扶抑的喜用（默认）、用神和喜神。换成用神，小卡底下的条只算用神和喜神那两行；用神不定的盘，按钮不能点。试完换回扶抑
-    const ysBtn = $('sy-lg').querySelector('[data-map="yun:ys"]'), yN = JSON.parse(ev('JSON.stringify(yongNow())'));
-    if (yN.yong === null) ok('用神不定的盘，「用神和喜神」按钮不能点', ysBtn.disabled);
+    // 选择器图例里的三个按钮：扶抑的喜用（默认）、用神和喜神、两种相加。换成用神，小卡底下的条只算用神和喜神那两行；
+    // 两种相加，条是两种分数的和，满分 26。用神不定的盘，后两个按钮不能点。试完换回扶抑
+    const ysBtn = $('sy-lg').querySelector('[data-map="yun:ys"]'), sumBtn = $('sy-lg').querySelector('[data-map="yun:sum"]'), yN = JSON.parse(ev('JSON.stringify(yongNow())'));
+    if (yN.yong === null) ok('用神不定的盘，「用神和喜神」「两种相加」两个按钮都不能点', ysBtn.disabled && sumBtn.disabled);
     else {
       click(ysBtn);
       const uW = (de + yN.yong) % 5, sW = (de + yN.shen.xi) % 5, ysWant = gz => { const s2 = pillarSum(gz), v = s2[uW] + s2[sW]; return { v: String(v), seg: [uW, sW].filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), w: `width:${(v / 13 * 100).toFixed(1)}%` }; };
-      eq('按「用神和喜神」：八步大运的条只算用神和喜神那两行，按钮按下，图例换成这两行', [pkRow('dayun').map(mbOf), [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed')), txt($('sy-lg')).includes('用神和喜神')], [dys.map(([gz]) => ysWant(gz)), ['false', 'true'], true]);
+      eq('按「用神和喜神」：八步大运的条只算用神和喜神那两行，按钮按下，图例换成这两行', [pkRow('dayun').map(mbOf), [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed')), txt($('sy-lg')).includes('用神和喜神')], [dys.map(([gz]) => ysWant(gz)), ['false', 'true', 'false'], true]);
       click(pkRow('dayun')[0].querySelector('.mb'));
       eq('照用神时点小卡的条：明细头一段讲用神和喜神，另一段对照扶抑', [txt($('sheet-t')).includes('用神和喜神'), !!pkP('用神和喜神'), !!pkP('照扶抑')], [true, true, true]);
-      ev('closeSheet()'); click($('sy-lg').querySelector('[data-map="yun:fy"]'));
+      ev('closeSheet()'); click($('sy-lg').querySelector('[data-map="yun:sum"]'));
+      // 两种相加：分数是扶抑的喜用分加上用神和喜神的分（同一种五行两种都算的算两遍），条的满分 26；前一段扶抑、后一段用神和喜神，后一段的第一格前面空一道缝
+      const mbCut = b => { const o = mbOf(b), is = [...b.querySelectorAll('.mb-fill i')]; return Object.assign(o, { cut: is.findIndex(i => i.classList.contains('cut')) }); };
+      const sumWant = gz => { const s2 = pillarSum(gz), fyS = want.filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), ysS = [uW, sW].filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), a = want.reduce((t, e) => t + s2[e], 0), b = s2[uW] + s2[sW];
+        return { v: String(a + b), seg: fyS.concat(ysS), w: `width:${((a + b) / 26 * 100).toFixed(1)}%`, cut: fyS.length && ysS.length ? fyS.length : -1, ab: [a, b] }; };
+      const sw = dys.map(([gz]) => sumWant(gz)), noAb = o => { const { ab, ...r } = o; return r; };
+      eq('按「两种相加」：八步大运的条是扶抑的喜用分加上用神和喜神的分，满分 26，两种之间空一道缝；按钮按下，图例写着满分 26；选的记在浏览器里',
+        [pkRow('dayun').map(mbCut), [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed')), txt($('sy-lg')).includes('满分 26'), JSON.parse(ev("localStorage.getItem('bz-map')")).yun],
+        [sw.map(noAb), ['false', 'false', 'true'], true, 'sum']);
+      eq('两种相加时，流年、流月、流日三排的分数也是两种的和', [pkRow('liunian'), pkRow('liuyue'), pkRow('liuri')].map(r => r.map(b => txt(b.querySelector('.mb b')))),
+        [yearsOf(sdy).map(y => sumWant(ev(`yearGZ(${y})`)).v), [...Array(12).keys()].map(m => sumWant(ev(`monthGZ(${sy0},${m})`)).v), days.map(t => sumWant(ev(`dayGZ(${t})`)).v)]);
+      click(pkRow('dayun')[0].querySelector('.mb'));
+      // 两种取的五行一样（same）时，头一段只列一遍分数，说相加就是算两遍；不一样时两种各列一遍，两种都算的五行写明算了两遍
+      const sp = pkP('两种相加'), spAb = [...sp.matchAll(/它们(?:占 (\d+) 分|一分也没有)/g)].map(m => +(m[1] || 0)), dupE = want.filter(e => e === uW || e === sW).filter(e => pillarSum(dys[0][0])[e]);
+      const same = want.length === 2 && want.every(e => e === uW || e === sW), a0 = sw[0].ab[0];
+      const sumLine = same ? (a0 ? sp.includes(`这 ${a0} 分算两遍，${sw[0].v} 分`) : sp.includes('两种相加也是 0 分')) : sp.includes(`加起来 ${sw[0].v} 分`) && sp.includes('算了两遍') === dupE.length > 0;
+      eq('两种相加时点小卡的条：标题是两种的和；头一段两种各几分、加起来几分，两种都算的五行写明算了两遍，写明相加是页面自己的做法；另有「照用神」一段；排名照相加的分数',
+        [txt($('sheet-t')).endsWith(`两种相加 ${sw[0].v} 分`), spAb, sumLine, sp.includes('页面自己的做法'), !!pkP('照用神'), pkP('在这一排').includes(`最高 ${Math.max(...sw.map(o => +o.v))} 分`)],
+        [true, same ? [a0] : sw[0].ab, true, true, true, true]);
+      ev('closeSheet()');
+      eq('两种相加时，计分一页的解读、说明和四层的读法都照相加的分数写',
+        [txt($('rd-tr')).includes(`选中的${dys[sdy][0]}运 ${sw[sdy].v} 分`), txt($('rd-tr')).includes('两种分数加起来'), txt($('note-syfig')).includes('满分 26'), txt($('note-sy')).includes('两种分数相加'), txt($('layers')).includes(`两种相加 ${sw[sdy].v} 分`),
+          [txt($('rd-tr')), txt($('note-syfig'))].map(t => t.includes('翻一倍'))],
+        [true, true, true, true, true, [same, same]]);
+      click($('sy-lg').querySelector('[data-map="yun:fy"]'));
       eq('按回「扶抑的喜用」：条回到扶抑', pkRow('dayun').map(mbOf), dys.map(([gz]) => mbWant(gz)));
     }
     eq('选择器在排盘那张卡片里，就在标签栏上面；四排柱子已经去掉', [$('card-pan').contains($('dayun')), ($('liuri').compareDocumentPosition($('h-pan')) & 4) === 4, !!$('trend'), d.querySelectorAll('.tb').length], [true, true, false, 0]);
@@ -797,11 +822,14 @@ console.log('几张虚构的盘');
   const keep = ev('sel.p');
   const withChart = (info, f) => { ev(`PEOPLE.push(chartOf(${JSON.stringify(info)}));usePerson(PEOPLE.length-1);`); const r = f(); ev(`PEOPLE.pop();usePerson(${keep});`); return r; };
   // 强弱计分 26 到 29 分：不定喜用。这一张是 28 分（癸酉 壬戌 己卯 己巳）。页面自带的三位都不在这一段，选择器小卡底下的条画的是帮日主的分，每一柱都照分值另算
+  ev("MAPBY.yun='sum'");      // 选着「两种相加」换到这张盘：用神不定，只能照扶抑画
   const r26 = withChart({ id: 't26', name: '二八', gender: '男', birth: '1993-10-25 10:00', lon: 120 }, () => JSON.parse(ev(`JSON.stringify((()=>{const x=xiNow(), de=gEl(DM), help=[de,(de+4)%5];
     const want=gz=>(help.includes(gEl(gz[0]))?5:0)+nlOf(gz[1]).reduce((a,[h,n])=>a+(help.includes(gEl(h))?n:0),0);
-    return {help:x.help, xi:x.xi, page:[...document.querySelectorAll('#dayun .mb b')].map(b=>+b.textContent), want:P.dayun.map(d=>want(d.gz)), lg:document.getElementById('sy-lg').textContent};})())`)));
-  eq('不定喜用的虚构盘（强弱计分 26 到 29 分）：不定喜用；八步大运小卡底下的分数是帮日主的分，和照分值另算的一致；图例写着画帮日主的',
-    [r26.help >= 26 && r26.help <= 29, r26.xi, r26.page, r26.lg.includes('不定喜用，画帮日主的')], [true, null, r26.want, true]);
+    return {help:x.help, xi:x.xi, page:[...document.querySelectorAll('#dayun .mb b')].map(b=>+b.textContent), want:P.dayun.map(d=>want(d.gz)), lg:document.getElementById('sy-lg').textContent,
+      btn:[...document.querySelectorAll('#sy-lg [data-map]')].map(b=>b.getAttribute('aria-pressed')+(b.disabled?' 不能点':''))};})())`)));
+  ev("MAPBY.yun='fy';renderDynamic()");
+  eq('不定喜用的虚构盘（强弱计分 26 到 29 分）：不定喜用；八步大运小卡底下的分数是帮日主的分，和照分值另算的一致；图例写着画帮日主的；选着「两种相加」也照扶抑画，后两个按钮不能点',
+    [r26.help >= 26 && r26.help <= 29, r26.xi, r26.page, r26.lg.includes('不定喜用，画帮日主的'), r26.btn], [true, null, r26.want, true, ['true', 'false 不能点', 'false 不能点']]);
   // 同一对天干在原局有两处，一处落在日干上：解读里两处分开说，落在日干上的是日主，另一处是比肩
   const rr = withChart({ id: 'trel', name: '两克', gender: '男', birth: '1984-04-24', shichen: '巳' }, () => [ev('P.pillars.join(" ")'), strip(ev('readRel()'))]);
   eq('甲戊相克在年干和月干、年干和日干两处：解读里分开说，一处是七杀克比肩，一处是七杀克日主', [rr[0], rr[1].includes('年干和月干是七杀克比肩'), rr[1].includes('年干和日干是七杀克日主')], ['甲子 戊辰 戊子 丁巳', true, true]);

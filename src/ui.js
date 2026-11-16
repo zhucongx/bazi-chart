@@ -199,7 +199,6 @@ function renderPerson(){
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  $('note-sy').textContent=noteSy();
   renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
@@ -236,7 +235,7 @@ function fillCircle(id,x,y,r,frac){
 }
 /* 两张生克图的圈照什么数：图上方三个按钮，记在 MAPBY 里，也存进浏览器（bz-map），读写都包在 try/catch 里。
    五行图默认五行能量；十神图默认含藏干数，和十神表的个数一样。2026-11-15 用户要的：照五行一页三种数法的样子，给图加几个按钮换着看 */
-const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神']]};
+const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神'],['sum','两种相加']]};
 const MAPBY={wx:'nl',gods:'cnt',yun:'fy'};      // yun：选择器小卡底下的条照哪一种看法（text.js 的 yunBasis）
 try{const m=JSON.parse(localStorage.getItem('bz-map')||'{}');Object.keys(MAPBY).forEach(k=>{if(MAP_OPTS[k].some(o=>o[0]===m[k])) MAPBY[k]=m[k];});}catch(e){}
 const mapSeg=(k,sub)=>`<div class="seg" role="group" aria-label="圈照什么数">${MAP_OPTS[k].map(([v,l])=>`<button type="button" data-map="${k}:${v}" aria-pressed="${MAPBY[k]===v}">${l}</button>`).join('')}</div><p class="seg-s">${sub}</p>`;
@@ -309,10 +308,12 @@ function renderPan(){
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
 /* 选择器小卡底下的条：这一柱带来的 13 分里喜用占几分（xiPillar），一段一种五行，后面是分数；不定喜用时画帮日主的两行。
+   照哪一种看法见 text.js 的 yunBasis：两种相加时满分 26，前一段扶抑、后一段用神和喜神，后一段的第一格带 cut，前面空一道缝。
    条带 data-x（key 见 text.js 的 xPk），点它打开这一柱的明细，不换选择；点小卡别的地方才是换选择 */
 function mbar(gz,key){
-  const v=xiPillar(gz), segs=v.want.filter(e=>v.sum[e]).map(e=>`<i class="${ELC[e]}" style="flex:${v.sum[e]}"></i>`).join('');
-  return `<span class="mb" data-x="${key}"><span class="mb-bar"><span class="mb-fill" style="width:${(v.score/13*100).toFixed(1)}%">${segs}</span></span><b>${v.score}</b></span>`;
+  const v=xiPillar(gz), segs=v.basis.parts.map(p=>p.want.filter(e=>v.sum[e])).filter(a=>a.length)
+    .map((a,j)=>a.map((e,i)=>`<i class="${ELC[e]}${j&&!i?' cut':''}" style="flex:${v.sum[e]}"></i>`).join('')).join('');
+  return `<span class="mb" data-x="${key}"><span class="mb-bar"><span class="mb-fill" style="width:${(v.score/v.basis.max*100).toFixed(1)}%">${segs}</span></span><b>${v.score}</b></span>`;
 }
 function renderDayun(){
   $('dayun').innerHTML=P.dayun.map((d,i)=>`<button class="pk${i===NOW_DY?' now':''}" aria-pressed="${i===sel.dy}" data-dy="${i}"><span class="yr">${d.y0}–${d.y1}</span><span class="gz">${gzSpan(d.gz)}</span><span class="gd">${god(d.gz[0])}·${godZ(d.gz[1])}</span><span class="ag">${d.a0}–${d.a1} 岁</span>${mbar(d.gz,`pk|大运|${d.gz}|${d.y0}`)}</button>`).join('');
@@ -346,9 +347,10 @@ function renderYunRead(){
     ['流月',monthGZ(sel.y,sel.m),`${JIE[sel.m]} ${jieMD(sel.y)[sel.m]} 起`],
     ['流日',dayGZ(sel.d),`${new Date(sel.d).getUTCFullYear()} 年 ${mdText(sel.d)}`]];
   const x=xiNow(), say=gz=>{
-    const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h), v=xiPillar(gz).score;
+    const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h), xp=xiPillar(gz), v=xp.score, B=xp.basis;
     return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`)
-      +(yunBasis().mode==='ys'?`这一柱的 13 分里${yunBasis().short}占 ${v} 分。`:x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
+      +(B.mode==='sum'?`这一柱的 13 分里喜用占 ${xp.parts[0]} 分，用神和喜神占 ${xp.parts[1]} 分，两种相加 ${v} 分。`
+        :B.mode==='ys'?`这一柱的 13 分里${B.short}占 ${v} 分。`:x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
   };
   $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
 }
@@ -471,11 +473,14 @@ function renderSy(){
   $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">帮日主<small>${EL[de]}、${EL[se]}${mark([se,de])}</small></th><th scope="col">另外三类<small>${[1,2,3].map(k=>EL[(de+k)%5]).join('、')}${mark([(de+1)%5,(de+2)%5,(de+3)%5])}</small></th><th scope="col">加到这一层<small>帮日主的占</small></th></tr>`;
   const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
-  // 图例：选择器小卡底下的条里算进去的几种五行
-  // 图例：选择器小卡底下的条照哪一种看法（两个按钮，用神不定的盘不能点用神），算进去的几种五行
-  const yb=yunBasis(), seg=`<span class="seg inl" role="group" aria-label="小卡底下的条照哪一种看法">${MAP_OPTS.yun.map(([v,l])=>`<button type="button" data-map="yun:${v}" aria-pressed="${yb.mode===v}"${v==='ys'&&!yb.canYs?' disabled title="这张盘的用神不定"':''}>${l}</button>`).join('')}</span>`;
-  $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+(yb.mode==='ys'?xb('x','ys|用神','用神和喜神'):x.xi?xb('x','xi','喜用（扶抑）'):'<span>不定喜用，画帮日主的</span>')+yb.want.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join('')+'<span class="rest"><i></i>其余</span><span>满分 13</span>';
-  $('note-syfig').textContent=noteSyFig();
+  // 图例：选择器小卡底下的条照哪一种看法（三个按钮，用神不定的盘只能照扶抑），算进去的几种五行；两种相加时两种各列一遍
+  const yb=yunBasis(), seg=`<span class="seg inl" role="group" aria-label="小卡底下的条照哪一种看法">${MAP_OPTS.yun.map(([v,l])=>`<button type="button" data-map="yun:${v}" aria-pressed="${yb.mode===v}"${v!=='fy'&&!yb.canYs?' disabled title="这张盘的用神不定"':''}>${l}</button>`).join('')}</span>`;
+  const chips=w=>w.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join(''), lyXi=xb('x','xi','喜用（扶抑）'), lyYs=xb('x','ys|用神','用神和喜神');
+  const grp=h=>`<span class="lg-g">${h}</span>`;      // 名字和它的色块排在一起，窄屏换行时不拆开
+  const what=yb.mode==='sum'?grp(lyXi+chips(yb.parts[0].want))+grp('<span>加上</span>'+lyYs+chips(yb.parts[1].want))
+    :grp((yb.mode==='ys'?lyYs:x.xi?lyXi:'<span>不定喜用，画帮日主的</span>')+chips(yb.want));
+  $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+what+`<span class="rest"><i></i>其余</span><span>满分 ${yb.max}</span>`;
+  $('note-syfig').textContent=noteSyFig(); $('note-sy').textContent=noteSy();      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
