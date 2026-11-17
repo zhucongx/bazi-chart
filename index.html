@@ -249,6 +249,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
 .pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
+.pk .yr .ag{margin-left:4px}
 .pk[aria-pressed="true"] .ag{color:var(--ink2)}      /* 选中的卡是淡蓝底，浅灰字对比度不够 */
 /* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数；两种相加时满分 26，两种之间空一道缝（.cut）。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
 /* 小卡底下的条能点开明细：和别处夹在文字里的可点词一样，分数带虚线下划线，悬停垫淡钴蓝，点开淡蓝底加一圈钴蓝。
@@ -338,6 +339,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gjz .gjz-ge{font-size:12.5px;color:var(--ink3)}
 .gjz .gjz-ge b{font-weight:600;color:var(--ink)}
 .gjz .gjz-no td{font-size:13px;color:var(--ink3)}
+.gjb th[scope=row]{width:44%}
+.gjz.gjb th[scope=row] .x{white-space:normal}      /* 书里的话长，手机上要能折行，不然第二列被挤得很窄 */
+.gjb #gjb-say b,#gjb-say b{font-weight:600;color:var(--ink)}
+.gjb .gjb-off .gjz-w{color:var(--ink3)}
 @media (max-width:600px){
   .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
   .gjz th[scope=row] .x{white-space:nowrap}      /* 组合的名字不折行，全称的那一句在下面折 */
@@ -421,9 +426,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sd-st i.on{color:currentColor}
 .sd-t.on small,.sd-t.on em{color:var(--ink2)}
 .sd-s{font-size:12.5px;color:var(--ink2)}
-.xi{display:flex;flex-wrap:wrap;gap:10px 36px;align-items:flex-end;padding:16px 18px;border:1px solid var(--line);border-radius:14px}      /* 喜忌一页最上面：扶抑取的喜用和忌 */
-.xi .sub{flex-basis:100%}
-.xi-sep{flex-basis:100%;border-top:1px dashed var(--line)}      /* 上面一排是扶抑的两组，下面一排是用神和四个名目 */
+/* 喜忌一页最上面：两套取法各一块（.xi-g），各有标题、一排结果（.xi-r）和一句说明。手机上上下排、中间一道虚线；电脑上左右并排、中间一道竖的虚线 */
+.xi{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:14px}
+.xi-g{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 18px}
+.xi-g+.xi-g{border-top:1px dashed var(--line)}
+.xi-g h4{margin:0;font:600 13.5px/1.4 var(--body);color:var(--ink)}
+.xi-g h4 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
+.xi-r{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-end}
+.xi .sub{margin:0}
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
 .qx b{display:flex;flex-wrap:wrap;gap:8px}
@@ -452,7 +462,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wxmap .nm{font:600 11px var(--body);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
 .wxmap .ct{font:400 9.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 .wxmap .sx{font:400 9.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
-#godmap svg{max-width:390px}
+#godmap svg{max-width:470px}
 .wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
 .wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
 .wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
@@ -481,6 +491,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lg .x{font-size:inherit}
 .lg .rest i{background:var(--line)}
 .stkw{display:block;max-width:220px;margin-top:6px}
+.stkw.top{margin:3px 0 7px}      /* 宫位表：条在文字上面 */
 .lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
 .lg span{display:inline-flex;align-items:center;gap:5px}
 .lg i{width:10px;height:10px;border-radius:2px;background:currentColor}
@@ -560,8 +571,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
   :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
   :root[data-read="off"] .split.keep{grid-template-columns:minmax(0,11fr) minmax(0,10fr)}      /* 八字一页右边还有四柱之间的关系，关掉解读也并排 */
-  /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面 */
+  /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面。
+     十神生克图有两圈、十五个圈，400 像素里字和线太挤，这一页图占 480 像素（2026-11-18 排版审阅） */
   .beside.fig{grid-template-columns:400px minmax(0,1fr)}
+  .beside.fig.god{grid-template-columns:480px minmax(0,1fr)}
+  .xi{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+  .xi-g+.xi-g{border-top:0;border-left:1px dashed var(--line)}
   .side{gap:18px}
   .gt th,.gt td{padding:5px 2px}
   .gt thead th{padding:10px 4px;font-size:14.5px;line-height:26px}
@@ -608,7 +623,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 流日：一个月二十九到三十二天，电脑上不横向滚动，固定十一列，排成三行全部露出来。
      原来排两行，每张小卡不到六十像素，加了喜用分的条以后太挤（用户说「流日太挤了，不行改成三行」） */
   #liuri{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:10px 6px;overflow:visible}      /* 行距 10：「今天」小印伸出卡片上沿 8 像素，不压到上一行 */
-  #liuri .pk{padding-left:2px;padding-right:2px}
+  #liuri .pk{padding:6px 2px 7px;gap:1px}      /* 流日三行，卡片比别的三排矮：星期和日期并成一行，上下的留白收紧（2026-11-18 排版审阅说流日占了四百多像素） */
   .pk .yr,.pk .gd,.pk .ag{font-size:12.5px}
   #liuri .pk .gd{font-size:11.5px}
   .pk .gz{font-size:23px}
@@ -982,7 +997,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <tbody id="gods"></tbody>
       </table>
     </div>
-    <div class="beside fig">
+    <div class="beside fig god">
       <figure class="wxmap" id="godmap"></figure>
       <div class="side">
         <p class="note" id="note-godmap"></p>
@@ -990,10 +1005,21 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
     </div>
   </div>
-  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类），下面是格局组合（成格、败格的条件），最后是解读 -->
+  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类）、用神变化、相神三行，中间是成败救应表（照归的格逐条核对，2026-11-18 加的），下面是格局组合（常说的十五个），最后是解读 -->
   <div class="panel" role="tabpanel" id="p-gj" aria-labelledby="h-gj" hidden>
-    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，下面照原文逐条核对常说的十几个组合，看书里算成格还是败格的条件</p>
+    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，看用神有没有变化、相神是哪几个字；中间照归的格逐条核对成、败、带忌、救应；下面是常说的十几个组合</p>
     <div class="kvs" id="kv-gj"></div>
+    <div class="gjzblock">
+      <h3>成败救应 <small>照这张盘归的格，逐条核对《子平真诠》「论用神成败救应」</small></h3>
+      <p class="note" id="gjb-say"></p>
+      <div class="tablewrap">
+        <table class="gods gjz gjb">
+          <thead><tr><th scope="col">书里的话</th><th scope="col">这张盘</th></tr></thead>
+          <tbody id="gjb"></tbody>
+        </table>
+      </div>
+      <p class="note" id="note-gjb"></p>
+    </div>
     <div class="gjzblock">
       <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
       <div class="tablewrap">
@@ -1686,12 +1712,12 @@ const SOURCES={
       url:[7,9,11,14,15,17,25,37,38,41,46,47,48,50,51].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_0_${n}.html`)},
   qlmg:{book:'《千里命稿》',note:'韦千里著，问真八字学习课堂里的录文。这本书还在著作权保护期内，只引几个字的短语',
         url:[4,8,12,16,20,21].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_3_${n}.html`)},
-  zpjz:{book:'《子平真诠评注》',note:'徐乐吾评注，问真八字学习课堂里的录文「论十干十二支」一节。只引徐乐吾的评注，页面上同一套录文里另有现代人加的注，不引',
-        url:[3,7].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_2_${n}.html`)},
+  zpjz:{book:'《子平真诠评注》',note:'徐乐吾评注，问真八字学习课堂里的录文「论十干十二支」「论伤官」等节。只引徐乐吾的评注，页面上同一套录文里另有现代人加的注，不引',
+        url:[3,7,43].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_2_${n}.html`)},
   dtcw:{book:'《滴天髓阐微》',note:'任铁樵注，问真八字学习课堂里的录文「体用」「闲神」两节。维基文库「滴天髓闡微」是同一个本子，「体用」这一段有两处录错的字，所以照问真的',
         url:[10,15,47].map(n=>`https://www.iwzbz.com/artical/pcbook/v2/3_1_7_${n}.html`)},
   zpzq:{book:'《子平真诠》',note:'中华典藏网的《子平真诠》，题沈孝瞻著，页面没有写所据的本子',
-        url:[53623,53626,53628,53629,53630,53634,53635,53636,53641,53643,53655,53663,53665,53625,53651,53659,53661].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
+        url:[53623,53626,53628,53629,53630,53634,53635,53636,53641,53643,53655,53663,53665,53625,53651,53659,53661,53653,53657].map(n=>`https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/${n}.html`)}
 };
 
 /* 《滴天髓》论十干，各取开头两句，后面是这两句里头一句的白话大意。出处 dts。 */
@@ -1948,6 +1974,35 @@ const Q={
   zp_he1:['zpzq','盖五阳逢财，五阴遇官，俱是作合，惟是本身十干合之，不为合去。'],
   zp_he2:['zpzq','若庚在年上，乙在月上，则月上之乙，先去合庚，而日干反不能合，是为合去也。'],
   zp_ren_sha:['zpzq','阳刃用之，则赖以制刃，不怕伤身，故反喜财印，忌制伏也。'],
+  // 成败救应表：败格的后两句，带忌、救应两整句（表里的每一条都是这几句里的一截）
+  zp_b_ren:['zpzq','阳刃无官煞，刃格败也'],
+  zp_b_jl:['zpzq','建禄月劫，无财官，透煞印，建禄月劫之格败也。'],
+  zp_dj_all:['zpzq','如正官逢财而又逢伤；透官而又逢合；财旺生官而又逢伤逢合；印透食以泄气，而又遇财露；透煞以生印，而又透财，以去印存煞；食神带煞印而又逢财；七煞逢食制而又逢印；伤官生财而财又逢合；佩印而印又遭伤，透财而逢煞，是皆谓之带忌也。'],
+  zp_jy_all:['zpzq','如官逢伤而透印以解之，杂煞而合煞以清之，刑冲而会合以解之；财逢劫而透食以化之，生官以制之，逢煞而食神制煞以生财，或存财而合煞；印逢财而劫财以解之，或合财而存印；食逢枭而就煞以成格，或生财以护食；煞逢食制，印来护煞，而逢财以去印存食；伤官生财透煞而煞逢合；阳刃用官煞带伤食，而重印以护之；建禄月劫用官，遇伤而伤被合，用财带煞而煞被合，是谓之救应也。'],
+  // 各格自己那一章里另外说的条件
+  zp_gz_cai:['zpzq','至于官格透伤用印者，又忌见财'], zp_gz_xc:['zpzq','至若地支刑冲，会合可解'],
+  zp_cai_guan:['zpzq','有财旺生官者，身强而不透伤官，不混七煞'], zp_cai_shi:['zpzq','有财用食生者，身强而不露官，略带一位比劫'],
+  zp_shi_cai:['zpzq','财要有根，不必偏正叠出'],
+  zp_yin_guan:['zpzq','只要官星清纯'], zp_yin_sha:['zpzq','故必身重印轻，或身轻印重，有所不足'],
+  zp_sg_cai:['zpzq','只要身强而有根'], zp_sg_yin:['zpzq','反要伤官旺，身稍弱'], zp_sg_sha:['zpzq','煞因伤而有制，两得其宜，只要无财'],
+  zp_ren_tou:['zpzq','阳刃用官，透刃不虑；阳刃露煞，透刃无成'],
+  zp_jl_guan:['zpzq','禄格用官，干头透出为奇，又要财印相随，不可孤官无辅'], zp_jl_cai:['zpzq','禄劫用财，须带食伤'], zp_jl_sha:['zpzq','禄劫用煞，必须制伏'],
+  // 天干相合算不算合住
+  zp_he3:['zpzq','譬如甲与己合，而甲己中间，以庚间隔之，则甲岂能越克我之庚而合己？'], zp_he4:['zpzq','又有隔位太远，如甲在年干，己在时上，心虽相契，地则相远'],
+  // 用神变化、相神
+  zp_bian1:['zpzq','故若丁生亥月，本为正官，支全卯未，则化为印。'], zp_bian2:['zpzq','如丙生寅月，本为印绶，甲不透干而会午会戌，则化为劫。'],
+  zp_bian3:['zpzq','丙生寅月，午戌会劫，而又或透甲，或透壬，则仍为印而格不破。'], zp_bian4:['zpzq','变之而善，其格愈美；变之不善，其格遂坏'],
+  zp_xs2:['zpzq','如官逢财生，则官为用，财为相；财旺生官，则财为用，官为相；煞逢食制，则煞为用，食为相。'],
+  zp_xs3:['zpzq','凡全局之格，赖此一字而成者，均谓之相也。'], zp_xs4:['zpzq','伤用神甚于伤身，伤相甚于伤用。'],
+  // 各格那几章里举的命例，检查脚本从这里解出四柱，拿成败救应表跑一遍
+  zp_ex_mao:['zpzq','如毛状元命，乙酉、庚辰、甲午、戊辰，合煞存财也'], zp_ex_liyu:['zpzq','李御史命，庚辰、戊子、戊寅、甲寅，制煞生财也'],
+  zp_ex_ge:['zpzq','如葛参政命，壬申、壬子、戊午、乙卯'], zp_ex_yang:['zpzq','如壬寅、壬寅、庚辰、辛巳，杨待郎之命是也'],
+  zp_ex_wang:['zpzq','如己酉、乙亥、壬戌、庚子，庚合乙而去伤存官，王总兵命也'], zp_ex_jin2:['zpzq','如庚戌、戊子、癸酉、癸亥，金丞相命是也'],
+  zp_ex_zhang:['zpzq','如甲子、丙子、癸丑、壬辰，张都统命是也'], zp_ex_yuan:['zpzq','戊辰、癸亥、壬午、丙午，合煞存财，袁内阁命是也'],
+  zp_ex_sha:['zpzq','如乙亥、乙酉、乙卯、丁丑'], zp_ex_ren1:['zpzq','若己酉、丙子、壬寅、丙午，官透有力，旺财生之'], zp_ex_ren2:['zpzq','又辛酉、甲午、丙申、壬辰，透煞根浅，财印助之'],
+  zp_ex_liang:['zpzq','若丁未、癸卯、癸亥、癸丑，梁丞相之命是也'], zp_ex_hu:['zpzq','如戊戌、壬戌、丙子、戊戌，胡会元命是也'],
+  zp_ex_shi:['zpzq','如壬午、己酉、戊午、庚申，史春芳命也'], zp_ex_sg:['zpzq','如戊申、甲子、庚午、丁丑，藏癸露丁，戊甲为辅'],
+  zp_ex_zhangcz:['zpzq','如丙寅、戊戌、辛酉、戊子，张参政之命是也'], zp_ex_wangsl:['zpzq','如辛酉、丙申、壬申、辛亥，汪侍郎命是也'],
   qt_jiasha:['qtbj','庚金得所，名阳刃驾杀'],
   sf_xiexiu:['sftk','喜身强泄秀气精英于火矣'],
   yh_hunza:['yhzp','官星要纯，不要杂。'],
@@ -2091,6 +2146,7 @@ const Q={
   tc_yu:['dtcw','木论如此，余者可知'],
   // 强弱一页：《千里命稿》说什么算得令；徐乐吾讲阳干、阴干从不从
   ql_dl:['qlmg','当令即月令旺相'],
+  zj_sg1:['zpjz','冬金见水，谓金水伤官，生于冬令，喜见火温'], zj_sg3:['zpjz','金水伤官之喜见官星，取以调和气候，非必以官星为用。'],
   zj_c1:['zpjz','五阳从气不从势，五阴从势无情义'],
   zj_c2:['zpjz','只要四柱略有根，或印有根，则弱归其弱，而不能从'],
   zj_c3:['zpjz','即使日元稍有根苗，或通月令之气，亦所不论'],
@@ -2576,7 +2632,7 @@ function xiOf(dm,ps,hua){
   return {tier:r.tier,lean:false,xi:r.tier==='弱'?o.slice(0,2):o.slice(2),ji:r.tier==='弱'?o.slice(2):o.slice(0,2),help:r.help};
 }
 /* 这张盘的喜用是照什么取的，一句话：身强、身弱，或者强弱居中照用神取 */
-const xiWhy=x=>x.lean?`${HELP} ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑；喜用照下面的用神取`:`${HELP} ${x.help} 分，算身${x.tier}`;
+const xiWhy=x=>x.lean?`${HELP} ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑；喜用照用神取`:`${HELP} ${x.help} 分，算身${x.tier}`;
 const xiNow=()=>memo('xi',()=>xiOf(DM,NATAL,true));
 const qsNow=()=>memo('qs',()=>qsOf(DM,NATAL,true)), huaNow=()=>nlNow().hua;
 /* 用神（扶抑）：照任铁樵《滴天髓阐微》「体用」一节的注，按强弱计分定的强弱取。yongPick 是纯计算，yongOf 喂它数。
@@ -2799,6 +2855,18 @@ function geju(){
   return list.length?{kind:'透',mz,ben,list}:{kind:'不透',mz,ben,list:[{h:ben,where:[]}]};
 }
 const gejuNames=g=>[...new Set(g.list.map(x=>GE[god(x.h)]))];
+/* 每一格是什么，用白话说：月令是日主的什么，传统上把它读作什么，这一格书里看重什么、怕什么。2026-11-18 用户说格局「点开看不懂」，
+   格局参考、格局组合、成败救应三处的解释都把白话放在最前面，原文和怎么查放在后面 */
+const GE_PLAIN={
+  正官格:'月令是正官：克日主、阴阳和日主不同的那一行。传统上把正官读作规矩和职位，是管着日主的力量。这一格书里看重的是正官有没有财来生、有没有印护着，最怕伤官来克它、别的地支来冲它。',
+  财格:'月令是财：日主克的那一行。传统上把财读作日主能支配的东西。这一格书里看重的是财有没有食神、伤官来生，能不能生出正官，最怕比肩、劫财来分它。',
+  印格:'月令是印：生日主的那一行。传统上把印读作庇护和学问。这一格书里看重的是印有没有正官、七杀来生，最怕财来克它。',
+  食神格:'月令是食神：日主生的、阴阳和日主相同的那一行。传统上把食神读作产出和才艺。这一格书里看重的是食神能不能生财、能不能制住七杀，最怕偏印来克它。',
+  七杀格:'月令是七杀：克日主、阴阳和日主相同的那一行，克得最直接。传统上把七杀读作压力和权威。这一格书里看重的是七杀有没有食神、伤官来制，最怕财去生它而没有东西制它。',
+  伤官格:'月令是伤官：日主生的、阴阳和日主不同的那一行。传统上把伤官读作表达和才华，也读作不服管。这一格书里看重的是伤官能不能生财、有没有印管着，最怕碰上正官。',
+  阳刃格:'月令是阳刃：阳干日主最旺的那个位置。日主自己太旺，这一格书里看重的是有没有正官或者七杀来制住它。',
+  建禄月劫:'月令和日主是同一行，是日主自己的旺地。月令帮的是日主自己，不能拿来当用神，这一格书里要在别的字里找财、正官、七杀或者食神、伤官来用。'};
+const GJ_TERMS='用神是一张盘里拿来作主的字，格局一家从月令取。成格是说用神得了帮助、没有被破坏，这一格立得住；败格是说用神被克、被合走，立不住。带忌是成格的条件之外又带着破坏用神的字；救应是有破坏用神的字，又有别的字把它制住或者合走。这几个词说的都是盘里各字之间的生克。';
 /* 强弱：照《千里命稿》「强弱篇」的三条依据数一遍。纯计算，书里举的八个例子拿它当测试。
    dm 是日干，ps 是 [年柱, 月柱, 日柱, 时柱]，tu 为真表示生在四立前的十八天里（书里说这时土当令）。
    三条依据各落成一条能数的规则，这是这一页定的：
@@ -3108,8 +3176,8 @@ function gejuRow(){
   const g=geju(), mz=g.mz, E=EL[gEl(DM)], hs=HID[mz].split('');
   const head=`格局是从月令出发给一张盘归类的办法。清代沈孝瞻的《子平真诠》说${q('zp_ys')}用神指一张盘里拿来作主的字。这句话的意思是拿日干去比月支，看月支是日主的什么十神，就归到哪一类。书里分八类来讲：正官、财、印绶、食神、偏官（就是七杀）、伤官、阳刃、建禄月劫。`;
   const tail=[
-    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}成和败的条件，这一页下面的「格局组合」表照原文逐条核对了常说的十几个。书里还要找相神，也就是辅佐用神的字：${q('zp_xs')}相神要把全盘的字放在一起权衡，这一页不做。`],
-    ['注意',`这只是照书里的规则走的第一步。原文还讲到地支会合成局会让用神变化，这里没有算。别的书有别的办法：《穷通宝鉴》先看调候；《神峰通考》先找盘里的病和药，它说${q('sf_bing')}，又引旧诗${q('sf_shi')}几家的结论常常不同，这一页不替它们裁决。`]];
+    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}这一页中间的「成败救应」表照这张盘归的格，把那一章的条件逐条核对；下面的「格局组合」表不分格，列常说的十几个组合。书里还要找相神，也就是辅佐用神的字：${q('zp_xs')}「相神」一行把成败救应表里合了的各条靠的字列了出来。`],
+    ['注意',`这只是照书里的规则走的第一步。原文还讲到地支会合成局会让用神变化，见下面「用神变化」一行。别的书有别的办法：《穷通宝鉴》先看调候；《神峰通考》先找盘里的病和药，它说${q('sf_bing')}，又引旧诗${q('sf_shi')}几家的结论常常不同，这一页不替它们裁决。`]];
   if(g.kind==='建禄'||g.kind==='阳刃'||g.kind==='月劫'){
     const out=g.out.map(p=>`${p.k}干${p.g}（${god(p.g)}）`), cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
     const fire=gEl(g.ben)!==gEl(DM);          // 戊生巳月、午月，己生午月：月令是禄或刃，本气却是火，是印
@@ -3117,6 +3185,7 @@ function gejuRow(){
     const mid=fire?`不过土的禄和刃借的是火的位置，${mz}的本气${gN(g.ben)}对${DMN}来说是${god(g.ben)}。照禄和刃的定义，这张盘归${cls}一类；照本气看，它又是印。`+(g.kind==='阳刃'?`书里讲阳刃时提到戊生午月，说遇到合适的字${q('zp_hua')}。`:'这一页读到的几章里没有讲到这种情形。')
       :`月令和日主是同一类，书里说不能拿它当用神：${q('zp_wu')}。`;
     return {k:'格局参考',dd:`照《子平真诠》的办法：月令${mz}${g.kind==='建禄'?'是日主的禄':g.kind==='阳刃'?'是日主的阳刃':'的本气'+g.ben+'和日主同类'}，`+(fire?`本气${g.ben}又是${god(g.ben)}，归${cls}还是归印格，书里没有定说`:`归${cls}一类，用神要在别处另取`),t:'格局参考',p:[
+      ['白话',`格局就是给一张盘分类。办法是看月支里的字对日主来说是什么十神，是什么就叫什么格。这张盘归${cls}一类。${GE_PLAIN[g.kind==='阳刃'?'阳刃格':'建禄月劫']}`],
       ['是什么',head],
       ['怎么走的',why+mid+`归在${cls}一类时，要看的是天干上透出来的财、正官、七杀、食神和伤官。这张盘的天干上，`+(out.length?`这几类有${out.join('、')}。`:'这几类一个也没有。')],
       ['顺用和逆用',`书里把八类分成两组：${q('zp_shun')}${cls}在逆用的一组。`]].concat(tail)};
@@ -3127,6 +3196,7 @@ function gejuRow(){
     :g.kind==='透'?`月令${mz}的本气${gN(g.ben)}没有透到天干上。${mz}里还藏着${hs.slice(1).map(gN).join('、')}，其中${g.list.map(x=>`${x.h}透在${x.where.join('、')}，是${god(x.h)}`).join('；')}。书里拿寅月举例：${q('zp_bh')}本气不透而别的藏干透了，就由透出来的那个作主。`+(g.list.length>1?`两个都透了，书里讲四库月时说${q('zp_zq')}所以两个都要看，归${nm}。`:`所以归${nm}。`)
     :`月令${mz}里藏的${hs.map(gN).join('、')}都没有透到天干上。这里按本气${gN(g.ben)}算，是${god(g.ben)}，归${nm}。原文举的例子都有字透出来，都不透时按本气算是这一页自己的处理。`;
   return {k:'格局参考',dd:`照《子平真诠》的办法：`+(g.kind==='本气'?`月令${mz}的本气${g.ben}透在${one.where.join('、')}，是${god(g.ben)}，归${nm}`:g.kind==='透'?`月令${mz}的本气${g.ben}没有透，${g.list.map(x=>`藏干${x.h}透在${x.where.join('、')}，是${god(x.h)}`).join('，')}，归${nm}`:`月令${mz}里藏的字都没有透，按本气${g.ben}算是${god(g.ben)}，归${nm}`),t:'格局参考',p:[
+    ['白话',`格局就是给一张盘分类。办法是看月支里的字对日主来说是什么十神，是什么就叫什么格。这张盘归${nm}。`+names.map(x=>(names.length>1?x+'：':'')+GE_PLAIN[x]).join('')],
     ['是什么',head],
     ['怎么走的',how+(god(g.list[0].h)==='七杀'?'七杀在书里叫偏官，也叫煞。':'')+(names.some(x=>x==='财格'||x==='印格')?'书里正财和偏财合称财，正印和偏印合称印绶。':'')],
     ['顺用和逆用',`书里把八类分成两组：${q('zp_shun')}`+names.map(x=>`${x}在${shun(x)?'顺':'逆'}用的一组`).join('，')+'。']].concat(tail)};
@@ -3144,42 +3214,42 @@ function gejuRow(){
    书里没有给多少分算制得住、算混杂得厉害，页面只列两边的分数，不替盘下结论。
    印禄相随、食伤混杂两个，在读到的典籍里没有找到原文，没有做，记在 docs/取法约定.md 的最后一节。 */
 const GJZ_GRP={食伤:['食神','伤官'],财:['正财','偏财'],印:['正印','偏印'],比劫:['比肩','劫财'],帮身:['比肩','劫财','正印','偏印'],
-  正官:['正官'],七杀:['七杀'],伤官:['伤官'],食神:['食神'],偏印:['偏印'],劫财:['劫财']};
-const GJZ_SAY={食伤:'食神、伤官',财:'正财、偏财',印:'正印、偏印',比劫:'比肩、劫财',帮身:'比肩、劫财、正印、偏印'};      // 页面上照全称写
+  正官:['正官'],七杀:['七杀'],伤官:['伤官'],食神:['食神'],偏印:['偏印'],劫财:['劫财'],官杀:['正官','七杀']};
+const GJZ_SAY={食伤:'食神、伤官',财:'正财、偏财',印:'正印、偏印',比劫:'比肩、劫财',帮身:'比肩、劫财、正印、偏印',官杀:'正官、七杀'};      // 页面上照全称写
 const GJZ_EL={帮身:0,比劫:0,劫财:0,食伤:1,食神:1,伤官:1,财:2,正官:3,七杀:3,印:4,偏印:4};                              // 对日主的关系，算五行的颜色用
 const gjzSay=k=>GJZ_SAY[k]||k;
 /* 名单和先后。c 是书里算成格还是败格的条件；gl 是用全称说的一句；v 是两边之间的关系；ge 是《子平真诠》在哪几格下面讲这一条；
    w 是这一格「是什么」的白话；q 是引的原文。合称写在组合的名字里，是这些组合通行的叫法，旁边的 gl 用全称再说一遍 */
 const GJZ=[
-  {n:'食伤制杀',c:'成',a:'食伤',b:'七杀',v:'制',gl:'食神、伤官制七杀',ge:['七杀格','食神格','伤官格','建禄月劫'],q:['zp_c_sha','zp_c_shi','zp_c_shang','zp_sha_shi'],
+  {n:'食伤制杀',why:'七杀克日主，好比压在日主身上的力量。食神、伤官是日主生出来的，正好克七杀，等于日主自己派出去挡七杀的帮手。七杀有了管束，书里算成格。',todo:'「论偏官」说这一种要「煞旺食强而身健」，又说财在前、食神在后，或者印在前、食神在后时，露财、透印也可以；七杀和食神、伤官谁旺谁弱页面只列分数，字的先后没有核对。',c:'成',a:'食伤',b:'七杀',v:'制',gl:'食神、伤官制七杀',ge:['七杀格','食神格','伤官格','建禄月劫'],q:['zp_c_sha','zp_c_shi','zp_c_shang','zp_sha_shi'],
     w:'食伤指食神和伤官，杀是七杀。七杀克日主，食神、伤官克七杀，等于替日主挡住七杀，叫制杀。'},
-  {n:'杀印相生',c:'成',a:'七杀',b:'印',v:'生',gl:'七杀生印，印再生日主',ge:['印格','伤官格','七杀格'],q:['zp_c_yin','zp_c_shang','zp_sha_yin'],
+  {n:'杀印相生',why:'七杀本来克日主。有印在中间，七杀先去生印，印再生日主，克日主的力量拐了个弯，变成帮日主的力量。书里算成格。',todo:'「论偏官」说印要「有情」，「论印绶」说要「身重印轻，或身轻印重」；这两条页面没有核对，只看了身弱不弱。',c:'成',a:'七杀',b:'印',v:'生',gl:'七杀生印，印再生日主',ge:['印格','伤官格','七杀格'],q:['zp_c_yin','zp_c_shang','zp_sha_yin'],
     w:'七杀生印，印再生日主，七杀的力量绕一圈转到日主身上，叫杀印相生。'},
-  {n:'伤官配印',c:'成',a:'印',b:'伤官',v:'制',gl:'印克伤官，又生日主',ge:['伤官格','正官格'],q:['zp_c_shang','zp_b_shang','zp_guan_shang'],
+  {n:'伤官配印',why:'伤官是日主生出来的，书里说它不受约束，还会去克正官。印克伤官，好比给它加了管束；印同时又生日主。书里算成格。',todo:'「论伤官」说印「不必多见，偏正叠出，反为不秀」；印多不多页面没有核对。伤官旺不旺见「成败救应」表里照分数比的那一条。',c:'成',a:'印',b:'伤官',v:'制',gl:'印克伤官，又生日主',ge:['伤官格','正官格'],q:['zp_c_shang','zp_b_shang','zp_guan_shang'],
     w:'印克伤官，同时生日主。伤官旁边有印，伤官被管住，日主也得了生，书里叫伤官佩印。'},
-  {n:'官印相生',c:'成',a:'正官',b:'印',v:'生',gl:'正官生印，印再生日主',ge:['印格','正官格'],q:['zp_c_yin','zp_c_guan'],
+  {n:'官印相生',why:'正官克日主，是约束。正官去生印，印再生日主，约束转成了支持，三样一路生下来。书里算成格。',todo:'「论印绶」说「只要官星清纯」，混不混七杀见「官杀混杂」；正官和印的位置、有没有被合住，这一条没有核对。',c:'成',a:'正官',b:'印',v:'生',gl:'正官生印，印再生日主',ge:['印格','正官格'],q:['zp_c_yin','zp_c_guan'],
     w:'正官生印，印再生日主，三者顺着生下来，叫官印相生。'},
-  {n:'羊刃驾杀',c:'成',a:'七杀',b:'劫财',v:'制',gl:'日主有阳刃，又有七杀来制',ge:['阳刃格'],q:['qt_jiasha','zp_yr','zp_c_ren','zp_ren_sha'],
+  {n:'羊刃驾杀',why:'阳刃是日主最旺的位置，旺过了头。七杀克日主也克阳刃，正好把过旺的力量压住，两样互相牵制。书里算成格。',todo:'「论阳刃」说「阳刃露煞，透刃无成」，就是阳刃也透在天干上、和七杀相合的情形；又分正官、七杀的根深、根浅。这两样这一条没有核对。',c:'成',a:'七杀',b:'劫财',v:'制',gl:'日主有阳刃，又有七杀来制',ge:['阳刃格'],q:['qt_jiasha','zp_yr','zp_c_ren','zp_ren_sha'],
     w:'阳刃是日干的帝旺，比禄还进一步，《子平真诠》说只有五个阳干有。阳刃很旺，七杀正好制它，叫羊刃驾杀，也写作阳刃驾杀。'},
-  {n:'食伤生财',c:'成',a:'食伤',b:'财',v:'生',gl:'食神、伤官生财',ge:['食神格','伤官格','财格','建禄月劫'],q:['zp_c_shi','zp_c_shang','zp_c_cai'],
+  {n:'食伤生财',why:'日主生食神、伤官，食神、伤官再生财，力量从日主一路流到财上，没有卡住。传统上读作本事变成了收获。书里算成格。',todo:'「论财」说用食神生财要「身强而不露官」，「论食神」说「财要有根」，「论伤官」说冬天的金日主伤官生财不算好。露不露正官、财有没有根见「成败救应」表，季节没有核对。',c:'成',a:'食伤',b:'财',v:'生',gl:'食神、伤官生财',ge:['食神格','伤官格','财格','建禄月劫'],q:['zp_c_shi','zp_c_shang','zp_c_cai'],
     w:'日主生食神、伤官，食神、伤官再生财，顺着生下来，叫食伤生财。'},
-  {n:'食伤泄秀',c:'成',a:'食伤',b:'帮身',v:'泄',gl:'日主强，由食神、伤官泄出去',ge:['印格'],q:['zp_c_yin','sf_xiexiu'],
+  {n:'食伤泄秀',why:'日主太强，力量没处去。食神、伤官是日主生的，把多出来的力量带出去，书里把这叫泄秀，算成格的一种。',todo:'书里说的是「身印两旺」，印旺不旺页面没有另外核对；「论建禄月劫」说用食神、伤官泄秀「唯春木秋金」才好，季节也没有核对。',c:'成',a:'食伤',b:'帮身',v:'泄',gl:'日主强，由食神、伤官泄出去',ge:['印格'],q:['zp_c_yin','sf_xiexiu'],
     w:'日主强的时候，由它生出的食神、伤官把多出来的力量泄出去，叫泄秀。'},
-  {n:'合财合官',c:'成',v:'合',gl:'日干和挨着它的正财或正官相合',ge:[],q:['zp_he1','zp_he2'],
+  {n:'合财合官',why:'天干两两相合，合上了就靠得更紧。日干合的正好是自己的正财或者正官，书里说这是日主自己去合，不算被别的字合走。',todo:'合了以后化不化，见「强弱」一页的「合化」一行；这一条只看合不合。',c:'成',v:'合',gl:'日干和挨着它的正财或正官相合',ge:[],q:['zp_he1','zp_he2'],
     w:'天干五合里，阳干日主合的是自己的正财，阴干日主合的是自己的正官。日干和挨着的正财或正官相合，《子平真诠》说这是「我合之」，不算被合去。'},
-  {n:'财官印全',c:'成',gl:'正财或偏财、正官、正印或偏印三样都有',ge:['正官格','建禄月劫'],q:['zp_c_guan','zp_c_jl'],
+  {n:'财官印全',why:'财生正官，正官生印，印生日主。三样都有，一环接一环生到日主身上。书里算成格。',todo:'「论正官」说财、印都透出时要「两不相碍」，举的例子是财和印中间隔着日干；财和印紧贴着相克、相合的情形没有核对。月令有没有被刑冲见「成败救应」表。',c:'成',gl:'正财或偏财、正官、正印或偏印三样都有',ge:['正官格','建禄月劫'],q:['zp_c_guan','zp_c_jl'],
     w:'财生正官，正官生印，印生日主，三样都有，一路生下来，叫财官印全。'},
-  {n:'比劫制财',c:'败',a:'比劫',b:'财',v:'克',gl:'比肩、劫财克财',ge:['财格'],q:['zp_b_cai','zp_j_cai'],
+  {n:'比劫制财',why:'比肩、劫财和日主是同一行，都克财。财只有那么多，同类多了就来分。财少而同类多，书里算败格。',todo:'书里的救应（透食神、伤官化解，生正官制住）见「成败救应」表财格的几条，这一条没有算进去。',c:'败',a:'比劫',b:'财',v:'克',gl:'比肩、劫财克财',ge:['财格'],q:['zp_b_cai','zp_j_cai'],
     w:'比肩、劫财克财。财少而比肩、劫财多，书里叫「财轻比重」，现在也常说比劫夺财。'},
-  {n:'贪财坏印',c:'败',a:'财',b:'印',v:'克',gl:'财克印',ge:['印格'],q:['zp_b_yin','zp_j_yin'],
+  {n:'贪财坏印',why:'印生日主，是日主的靠山。财克印，印被克坏，日主的靠山就没了。印轻而财重，书里算败格。',todo:'书里的救应（比肩、劫财克财，财被合住）见「成败救应」表印格的几条；「论印绶」另说印重财轻时「透财以抑太过」反算成格，这一条只照分数比了轻重。',c:'败',a:'财',b:'印',v:'克',gl:'财克印',ge:['印格'],q:['zp_b_yin','zp_j_yin'],
     w:'财克印，印被财克坏，叫贪财坏印。书里讲的是印格的「印轻逢财」。'},
-  {n:'官杀混杂',c:'败',v:'混',gl:'正官和七杀同时出现',ge:['正官格'],q:['yh_hunza','yh_hunza2','zp_guan_shang','zp_guan_he'],
+  {n:'官杀混杂',why:'正官和七杀都克日主，一个温和，一个直接。两样同时出现，约束日主的力量就不纯了，书里说要去掉一样、留下一样才清。',todo:'「论偏官」说「或去官，或去煞，取清则贵」，去掉一样的办法除了合住，还有食神、伤官制去、被冲去；页面只核对了合住。',c:'败',v:'混',gl:'正官和七杀同时出现',ge:['正官格'],q:['yh_hunza','yh_hunza2','zp_guan_shang','zp_guan_he'],
     w:'正官和七杀都是克日主的一行。正官的阴阳和日主不同，七杀相同。两样同时出现，叫官杀混杂，书里说正官要纯。'},
-  {n:'伤官见官',c:'败',a:'伤官',b:'正官',v:'克',gl:'伤官克正官',ge:['正官格','伤官格'],q:['zp_b_guan','zp_b_shang'],
+  {n:'伤官见官',why:'正官是书里最看重的约束，伤官正好克它。盘里有正官，又有伤官来克，书里算败格。',todo:'「论伤官」说伤官会合化成财的，见正官不算伤官见官；会合的变化见「用神变化」一行，这一条没有算进去。',c:'败',a:'伤官',b:'正官',v:'克',gl:'伤官克正官',ge:['正官格','伤官格'],q:['zp_b_guan','zp_b_shang'],
     w:'伤官克正官。盘里有正官，又有伤官来克它，叫伤官见官。'},
-  {n:'枭神夺食',c:'败',a:'偏印',b:'食神',v:'克',gl:'偏印克食神',ge:['食神格'],q:['zp_b_shi','zp_j_shi'],
+  {n:'枭神夺食',why:'食神是日主的产出。偏印克食神，好比把它夺走，所以偏印也叫枭神。书里算败格。',todo:'「论食神」说夏天的木日主火太旺时「透印不碍」，季节没有核对。',c:'败',a:'偏印',b:'食神',v:'克',gl:'偏印克食神',ge:['食神格'],q:['zp_b_shi','zp_j_shi'],
     w:'偏印也叫枭神。偏印克食神，叫枭神夺食，书里叫「食神逢枭」。'},
-  {n:'七杀无制',c:'败',v:'无制',gl:'七杀透出，没有食神、伤官来制',ge:['七杀格'],q:['zp_b_sha'],
+  {n:'七杀无制',why:'七杀克日主克得最直接。盘里没有食神、伤官去管它，它就直接压在日主身上。书里算败格。',todo:'「论偏官」另有「有煞无食制而用印当者」，就是没有食神、伤官而用印来化；有没有印见「杀印相生」，这一条没有算进去。',c:'败',v:'无制',gl:'七杀透出，没有食神、伤官来制',ge:['七杀格'],q:['zp_b_sha'],
     w:'七杀透出，盘里又没有食神、伤官来制它，叫七杀无制。'}];
 function gjzOf(dm,ps){
   const de=gEl(dm), T={}, C={}, E={};
@@ -3218,7 +3288,7 @@ function gjzOf(dm,ps){
   const jin=de===3?[['生在秋天或冬天（金水伤官见官，书里说的理由是「调候为急」）','申酉戌亥子丑'.includes(ps[1].z)],
     ['天干有财或印辅助（「然要财印为辅」）',t('财').length+t('印').length>0],['伤官和正官没有一起透出（「不可伤官并透」）',!(t('伤官').length&&t('正官').length)]]:[];
   get('伤官见官').jinOk=de===3?jin.every(x=>x[1]):null;
-  const heSha=t('七杀').some(x=>[x.i-1,x.i+1].some(j=>j>=0&&j<4&&ps[j].g===gHe(x.h)));      // 七杀旁边的天干和它相合（合煞留官）
+  const heSha=t('七杀').some(x=>ganHeBy(ps,x.i)>=0);      // 七杀被别的天干合住（合煞留官）
   const ext={
     食伤制杀:[['身强（七杀格「身强七煞逢制」）',qiang],['天干不透财（「煞用食制，不要露财透印」）',!t('财').length],['天干不透印（同上）',!t('印').length],['盘里没有财（食神格、伤官格的「无财」）',!has('财')]],
     杀印相生:[['身弱（伤官格「伤官旺、身主弱而透煞印」）',ruo]],
@@ -3275,15 +3345,19 @@ function xGjz(n){
   const sc=o.sides?o.sides.map(x=>`${x.say} ${x.n} 分`).join('，')+'。':'';
   return {t:`${o.n} · ${STS[o.st].split('，')[0]}`,p:[
     ['是什么',o.w],
-    ['怎么查',how+'这是页面照原文定的查法，原文里没有逐字写。'],
+    [o.c==='成'?'为什么算成格':'为什么算败格',o.why],
     ['这张盘',`${STS[o.st]}。`+now],
+    ['怎么查',how+'这是页面照原文定的查法，原文里没有逐字写。'],
     sc?['分数',sc+'分数是五行能量分给十个十神的分，和「十神」一页十神表「能量」那一种相同，一共 55 分，不算日主自己。书里没有说多少分算'+({制:'制得住',生:'生得动',克:'克得动',泄:'泄得动',混:'混杂得厉害',无制:'七杀太旺'})[o.v||'生']+'，页面只列分数。']:null,
     o.ext.length?['书里的条件',o.ext.map(([l,ok])=>`${l}：${ok===null?'定不了（强弱居中）':ok?'合':'不合'}`).join('；')+'。'
       +(o.n==='伤官见官'&&o.jinOk!==null?(o.jinOk?'日主属金，后三条都合，照《子平真诠》这张盘的伤官见官不算败。':'日主属金，后三条没有全合，照《子平真诠》不能当金水伤官见官来看。'):'书里的这些条件是分格局说的，这里照这张盘逐条看一遍，不合成结论。')]:null,
     o.n==='伤官见官'&&o.jinOk!==null?['金水伤官',`金日主的伤官是水，书里叫金水伤官。《子平真诠》「论用神配气候得失」说它见官${q('zp_sg_tiao')}，又说${q('zp_sg_qiu')}；「论伤官」说${q('zp_sg_guan')}。页面照这三句核对：生在秋天或冬天，天干有财或印，伤官和正官不一起透出。`]:null,
+    o.n==='伤官见官'?['评注',`徐乐吾的《子平真诠评注》把金水伤官说成冬天的事：${q('zj_sg1')}。理由和原文一样是气候：${q('zj_sg3')}评注还说伤官用正官不只金水一种，木日主生在夏天、火是它的伤官时也一样。页面照《子平真诠》原文「秋金遇水」那一句，金日主生在秋天、冬天都算；评注说的夏天的木日主，页面没有算进去。`+(gEl(DM)===3?`这张盘生在${NATAL[1].z}月，${'亥子丑'.includes(NATAL[1].z)?'是冬天，照评注也算':'申酉戌'.includes(NATAL[1].z)?'是秋天，照原文算，照评注不在它说的冬天里':'不在秋天、冬天'}。`:'')]:null,
+    o.todo?['没有核对的',o.todo]:null,
     ['和格局',o.ge.length?`《子平真诠》是在${o.ge.join('、')}下面讲这一条的。这张盘照「格局参考」一行归${ge.join('和')}，`+(inGe.length?'正是其中之一。':'不在其中，书里没有在这一格下面讲它。')
       :'这一条出自《子平真诠》「论十干合而不合」，不分格局。'],
     ['典籍',o.q.map(k=>{const s=({zp:'《子平真诠》',yh:'《渊海子平》',qt:'《穷通宝鉴》',sf:'《神峰通考》'})[k.slice(0,2)]+GJZ_CH[k]+q(k);return Q[k][1].endsWith('。')?s:s+'。';}).join('')],
+    ['名词',GJ_TERMS],
     ['注意','这些组合是书里给格局分成格、败格的说法，讲的是盘里各字之间的生克，不是对人的判断。旧书里跟着这些组合的富贵贫贱一类断语，页面一概不引。各家对同一个组合的条件说法不一，页面照的是上面引的那几句。']]};
 }
 /* 引文出自哪一章，写在书名后面 */
@@ -3295,6 +3369,228 @@ const GJZ_CH={zp_c_sha:'「论用神成败救应」：',zp_c_shi:'同一章：',
 function noteGjz(){
   return '条件照书里的原文定成能逐条核对的几条，只数三个天干和四个地支的本气：两边都透在天干上记「透出」，一边透出、另一边只在地支的本气里记「藏着」，两边都只在地支里不算。分数是五行能量分给十个十神的分，一共 55 分，不算日主自己；书里没有给多少分算制得住、算混杂，页面只列两边的分数。'
     +'最后一列是《子平真诠》在哪几格下面讲这一条，加粗的是这张盘照「格局参考」归的那一格。印禄相随、食伤混杂两个，在读到的典籍里没有找到原文，没有列。';
+}
+
+/* ---------- 成败救应：照这张盘归的格，逐条核对《子平真诠》「论用神成败救应」 ----------
+   2026-11-18 用户说「格局没补的都补上」。那一章给八个格各列了成格、败格的条件，又列了带忌（成中有败）和救应（败中有成），页面拆成六十条，
+   每一条落成几项能数的条件（need），全合才算合；强弱居中时要看强弱的那几项定不了（null）。救应的各条把它救的那一条败格的条件也写进去，
+   败的条件不合，救应也就不算（先是只写了「财逢劫」「印逢财」，书里算成格的金状元命、张参政命也被算成了救应）。
+   数法和格局组合相同：只数年、月、时三个天干和四个地支的本气。「盘里有」是透出或者在本气里；「相见」是两样都有、至少一样透出
+   （「论正官」金状元命的「无伤官」）；轻重照十神的能量比；身强、身弱照强弱计分。
+   「被合住」照「论十干合而不合」：年干和月干紧贴的算；月干和时干隔着日干也算，除非日干克其中一个（「岂能越克我之庚而合己」）；
+   年干和时干太远不算；日干自己合它不算（「本身十干合之，不为合去」）。书里的命例里月干、时干相合的有三个（王总兵、穆同知、丙戌丁酉庚申壬午）。
+   more 是这一格自己那一章里另外说的条件，只列合不合，不算进这一条合不合；todo 是书里说了、页面没有核对的；
+   xg 是这一条成立时辅佐用神的字，照「论相神紧要」叫相神。 */
+function ganHeBy(ps,i){      // 第 i 个天干（年 0、月 1、时 3）被哪一个天干合住，没有是 -1
+  if(i===2) return -1;
+  const h=gHe(ps[i].g), dm=ps[2].g, ke=g=>(gEl(dm)+2)%5===gEl(g);
+  for(const j of [0,1,3]){
+    if(j===i||ps[j].g!==h) continue;
+    if(Math.abs(i-j)===1) return j;
+    if(i+j===4&&!ke(ps[i].g)&&!ke(h)) return j;      // 月干和时干，中间的日干不克它们
+  }
+  return -1;
+}
+function gjCtx(dm,ps){
+  const de=gEl(dm), T={}, C={}, E={};
+  GODS.forEach(g=>{T[g]=[];C[g]=[];E[g]=0;});
+  ps.forEach((p,i)=>{
+    if(i!==2){const gn=godOf(dm,p.g);T[gn].push({k:p.k,i,h:p.g});E[gn]+=5;}
+    nlOf(p.z).forEach(([h,n],j)=>{const gn=godOf(dm,h);if(j===0) C[gn].push({k:p.k,i,z:p.z,h});E[gn]+=i===1?n*2:n;});
+  });
+  const t=k=>GJZ_GRP[k].flatMap(g=>T[g]), c=k=>GJZ_GRP[k].flatMap(g=>C[g]), all=k=>t(k).concat(c(k)), has=k=>all(k).length>0, en=k=>GJZ_GRP[k].reduce((a,g)=>a+E[g],0);
+  const tier=qsOf(dm,ps,true).tier;
+  const he=k=>t(k).map(x=>{const j=ganHeBy(ps,x.i);return j<0?null:Object.assign({},x,{by:{k:ps[j].k,i:j,h:ps[j].g}});}).filter(Boolean);
+  const jian=(a,b)=>has(a)&&has(b)&&t(a).length+t(b).length>0, adj=(a,b)=>t(a).some(x=>t(b).some(y=>Math.abs(x.i-y.i)===1));
+  const mz=ps[1].z, oz=[0,2,3].map(i=>({k:ps[i].k,z:ps[i].z}));
+  const xc=oz.filter(o=>Z_CHONG[mz+o.z]||Z_XING[mz+o.z]), hai=oz.filter(o=>Z_HAI[mz+o.z]||Z_PO[mz+o.z]);
+  const hui=oz.filter(o=>o.z!==mz&&(Z_HE[mz+o.z]||SANHE.some(x=>x.includes(mz)&&x.slice(0,3).includes(o.z))));
+  const root=k=>c(k).length>0||t(k).some(x=>ps.some(p=>gtOf(x.h,p.z)));
+  const jinOk=de===3&&'申酉戌亥子丑'.includes(mz)&&t('财').length+t('印').length>0&&!(t('伤官').length&&t('正官').length);
+  return {de,ps,t,c,all,has,en,tier,qiang:tier==='间'?null:tier==='强',ruo:tier==='间'?null:tier==='弱',buQiang:tier==='间'?null:tier!=='强',he,jian,adj,mz,xc,hai,hui,root,jinOk};
+}
+/* 条件的写法。每一个返回 [说法, 合不合] */
+const GB={
+  has:k=>x=>[`盘里有${gjzSay(k)}`,x.has(k)], no:k=>x=>[`盘里没有${gjzSay(k)}`,!x.has(k)],
+  tou:k=>x=>[`${gjzSay(k)}透出`,x.t(k).length>0], noTou:k=>x=>[`天干不透${gjzSay(k)}`,!x.t(k).length],
+  any:(a,b)=>x=>[`盘里有${gjzSay(a)}或者${gjzSay(b)}`,x.has(a)||x.has(b)], anyTou:(a,b)=>x=>[`${gjzSay(a)}或者${gjzSay(b)}透出`,x.t(a).length+x.t(b).length>0],
+  jian:(a,b)=>x=>[`${gjzSay(a)}和${gjzSay(b)}相见`,x.jian(a,b)], he:k=>x=>[`透出的${gjzSay(k)}被别的天干合住`,x.he(k).length>0],
+  lt:(a,b)=>x=>[`${gjzSay(a)}的分数比${gjzSay(b)}少`,x.en(a)<x.en(b)], ge:(a,b)=>x=>[`${gjzSay(a)}的分数不比${gjzSay(b)}少`,x.en(a)>=x.en(b)],
+  qiang:x=>['身强',x.qiang], ruo:x=>['身弱',x.ruo], buQiang:x=>['身不强',x.buQiang],
+  xc:x=>['月支被别的地支刑或者冲',x.xc.length>0],
+  all:k=>x=>x.all(k), tous:k=>x=>x.t(k), by:k=>x=>x.he(k).map(o=>o.by)};
+const GJB=[
+  // 正官格
+  {id:'官成',ge:'正官格',k:'成',t:'官逢财印，又无刑冲破害',q:'zp_c_guan',w:'正官有财来生，或者有印护着，月令又没有被别的地支刑、冲、破、害。',
+    need:[GB.any('财','印'),x=>['月支没有被别的地支刑、冲、破、害',!x.xc.length&&!x.hai.length]],xg:x=>x.all('财').concat(x.all('印')),
+    todo:'「论正官」说财、印都透出时要「两不相碍」，举的例子是中间隔着日干；两样紧贴着相克、相合的情形页面没有核对。'},
+  {id:'官败伤',ge:'正官格',k:'败',t:'官逢伤克刑冲',q:'zp_b_guan',w:'这一句的前一半：伤官克正官。',need:[GB.jian('伤官','正官')]},
+  {id:'官败冲',ge:'正官格',k:'败',t:'官逢伤克刑冲',q:'zp_b_guan',w:'这一句的后一半：月令被别的地支刑或者冲。',need:[GB.xc]},
+  {id:'官忌伤',ge:'正官格',k:'带忌',t:'正官逢财而又逢伤',q:'zp_dj_all',w:'正官有财来生，却又碰上伤官。',need:[GB.has('财'),GB.jian('伤官','正官')]},
+  {id:'官忌合',ge:'正官格',k:'带忌',t:'透官而又逢合',q:'zp_dj_all',w:'正官透出来，却被别的天干合住。日干自己合它不算。',need:[GB.he('正官')]},
+  {id:'官救印',ge:'正官格',k:'救应',t:'官逢伤而透印以解之',q:'zp_jy_all',w:'伤官克正官，有印透出来制住伤官。',need:[GB.jian('伤官','正官'),GB.tou('印')],xg:GB.tous('印'),
+    more:[[GB.noTou('财'),'zp_gz_cai']]},
+  {id:'官救合',ge:'正官格',k:'救应',t:'杂煞而合煞以清之',q:'zp_jy_all',w:'正官之外又有七杀，七杀被别的天干合住，只剩正官。',need:[GB.jian('正官','七杀'),GB.he('七杀')],xg:GB.by('七杀')},
+  {id:'官救会',ge:'正官格',k:'救应',t:'刑冲而会合以解之',q:'zp_jy_all',w:'月令被刑、被冲，又有别的地支和它六合或者三合，把刑冲解开。',
+    need:[GB.xc,x=>['月支和别的地支有六合或者三合（两支也算）',x.hui.length>0]],more:[[x=>['月支有会合',x.hui.length>0],'zp_gz_xc']]},
+  // 财格
+  {id:'财成官',ge:'财格',k:'成',t:'财生官旺',q:'zp_c_cai',w:'财生正官。',need:[GB.has('正官')],xg:GB.all('正官'),more:[[GB.qiang,'zp_cai_guan'],[GB.noTou('伤官'),'zp_cai_guan'],[GB.noTou('七杀'),'zp_cai_guan']]},
+  {id:'财成食',ge:'财格',k:'成',t:'财逢食生而身强带比',q:'zp_c_cai',w:'食神生财，日主强，又带着比肩或者劫财。',need:[GB.has('食神'),GB.qiang,GB.has('比劫')],xg:GB.all('食神'),more:[[GB.noTou('正官'),'zp_cai_shi']]},
+  {id:'财成印',ge:'财格',k:'成',t:'财格透印而位置妥贴，两不相克',q:'zp_c_cai',w:'财格又透出印，财和印隔得开，互不相克。',need:[GB.tou('印'),x=>['透出的印没有紧贴着透出的财',!x.adj('印','财')]],xg:GB.tous('印'),
+    todo:'「位置妥贴」页面只看透出的印和透出的财是不是紧贴；财只在月支里、印坐在月干上的情形没有细分。'},
+  {id:'财败比',ge:'财格',k:'败',t:'财轻比重',q:'zp_b_cai',w:'财少，比肩、劫财多，财被克。',need:[GB.jian('比劫','财'),GB.lt('财','比劫')]},
+  {id:'财败杀',ge:'财格',k:'败',t:'财透七煞',q:'zp_b_cai',w:'财格透出七杀，财去生七杀。',need:[GB.tou('七杀')]},
+  {id:'财忌',ge:'财格',k:'带忌',t:'财旺生官而又逢伤逢合',q:'zp_dj_all',w:'财生正官，正官却被伤官克，或者被别的天干合住。',need:[GB.has('正官'),x=>['伤官和正官相见，或者透出的正官被合住',x.jian('伤官','正官')||x.he('正官').length>0]]},
+  {id:'财救食',ge:'财格',k:'救应',t:'财逢劫而透食以化之',q:'zp_jy_all',w:'比肩、劫财克财，有食神或者伤官透出来，把它们的力量转去生财。',need:[GB.jian('比劫','财'),GB.lt('财','比劫'),GB.tou('食伤')],xg:GB.tous('食伤')},
+  {id:'财救官',ge:'财格',k:'救应',t:'生官以制之',q:'zp_jy_all',w:'接着上一句：比肩、劫财克财，财生出正官来制住它们。',need:[GB.jian('比劫','财'),GB.lt('财','比劫'),GB.has('正官')],xg:GB.all('正官')},
+  {id:'财救制',ge:'财格',k:'救应',t:'逢煞而食神制煞以生财',q:'zp_jy_all',w:'财格透出七杀，有食神制住七杀，又生财。',need:[GB.tou('七杀'),GB.has('食神')],xg:GB.all('食神')},
+  {id:'财救合',ge:'财格',k:'救应',t:'或存财而合煞',q:'zp_jy_all',w:'财格透出七杀，七杀被别的天干合住，财留了下来。',need:[GB.tou('七杀'),GB.he('七杀')],xg:GB.by('七杀')},
+  // 印格
+  {id:'印成杀',ge:'印格',k:'成',t:'印轻逢煞',q:'zp_c_yin',w:'印不够重，有七杀来生它。',need:[GB.has('七杀'),GB.lt('印','七杀')],xg:GB.all('七杀'),more:[[x=>['身强和印重没有占全',x.qiang===null?null:!(x.qiang&&x.en('印')>=x.en('七杀'))],'zp_yin_sha']],
+    todo:'印轻不轻，页面只拿印和七杀的分数比。'},
+  {id:'印成官',ge:'印格',k:'成',t:'官印双全',q:'zp_c_yin',w:'印格又有正官，正官生印。',need:[GB.has('正官')],xg:GB.all('正官'),more:[[GB.noTou('七杀'),'zp_yin_guan']]},
+  {id:'印成食',ge:'印格',k:'成',t:'身印两旺而用食伤泄气',q:'zp_c_yin',w:'日主和印都旺，由食神、伤官把多出来的力量泄出去。',need:[GB.qiang,GB.has('食伤')],xg:GB.all('食伤')},
+  {id:'印成财',ge:'印格',k:'成',t:'印多逢财而财透根轻',q:'zp_c_yin',w:'印太多，有财透出来压一压，财本身又不重。',need:[GB.tou('财'),x=>['正印、偏印的分数比正财、偏财多',x.en('印')>x.en('财')]],xg:GB.tous('财'),
+    todo:'「根轻」页面照分数比，没有另看财在地支里的根。'},
+  {id:'印败财',ge:'印格',k:'败',t:'印轻逢财',q:'zp_b_yin',w:'印不重，又被财克。',need:[GB.jian('财','印'),GB.lt('印','财')]},
+  {id:'印败杀',ge:'印格',k:'败',t:'身强印重而透煞',q:'zp_b_yin',w:'日主强、印也重，还透出七杀来生印。',need:[GB.qiang,GB.tou('七杀'),GB.ge('印','七杀')]},
+  {id:'印忌食',ge:'印格',k:'带忌',t:'印透食以泄气，而又遇财露',q:'zp_dj_all',w:'印格透出食神、伤官泄气，却又透出财。',need:[GB.tou('食伤'),GB.tou('财')]},
+  {id:'印忌杀',ge:'印格',k:'带忌',t:'透煞以生印，而又透财，以去印存煞',q:'zp_dj_all',w:'透出七杀生印，却又透出财，财克去印，只剩七杀。',need:[GB.tou('七杀'),GB.tou('财')]},
+  {id:'印救劫',ge:'印格',k:'救应',t:'印逢财而劫财以解之',q:'zp_jy_all',w:'财克印，有比肩、劫财克住财。',need:[GB.jian('财','印'),GB.lt('印','财'),GB.has('比劫')],xg:GB.all('比劫')},
+  {id:'印救合',ge:'印格',k:'救应',t:'或合财而存印',q:'zp_jy_all',w:'财克印，财被别的天干合住，印留了下来。日干自己合财不算。',need:[GB.jian('财','印'),GB.lt('印','财'),GB.he('财')],xg:GB.by('财')},
+  // 食神格
+  {id:'食成财',ge:'食神格',k:'成',t:'食神生财',q:'zp_c_shi',w:'食神生财。',need:[GB.has('财')],xg:GB.all('财'),more:[[x=>['财在地支里有根',x.root('财')],'zp_shi_cai']]},
+  {id:'食成杀',ge:'食神格',k:'成',t:'食带煞而无财',q:'zp_c_shi',w:'食神制七杀，盘里没有财。',need:[GB.has('七杀'),GB.no('财')],xg:GB.all('七杀')},
+  {id:'食成印',ge:'食神格',k:'成',t:'弃食就煞而透印',q:'zp_c_shi',w:'不用食神，改用七杀，又透出印。',need:[GB.has('七杀'),GB.tou('印')],xg:x=>x.all('七杀').concat(x.t('印'))},
+  {id:'食败枭',ge:'食神格',k:'败',t:'食神逢枭',q:'zp_b_shi',w:'偏印克食神。偏印也叫枭神。',need:[GB.jian('偏印','食神')]},
+  {id:'食败杀',ge:'食神格',k:'败',t:'生财露煞',q:'zp_b_shi',w:'食神生财，却又透出七杀。',need:[GB.has('财'),GB.tou('七杀')]},
+  {id:'食忌',ge:'食神格',k:'带忌',t:'食神带煞印而又逢财',q:'zp_dj_all',w:'食神带着七杀和印，却又碰上财。',need:[GB.has('七杀'),GB.has('印'),GB.has('财')]},
+  {id:'食救杀',ge:'食神格',k:'救应',t:'食逢枭而就煞以成格',q:'zp_jy_all',w:'偏印克食神，改用七杀成格。',need:[GB.jian('偏印','食神'),GB.has('七杀')],xg:GB.all('七杀')},
+  {id:'食救财',ge:'食神格',k:'救应',t:'或生财以护食',q:'zp_jy_all',w:'偏印克食神，有财克住偏印，护住食神。',need:[GB.jian('偏印','食神'),GB.has('财')],xg:GB.all('财')},
+  // 七杀格
+  {id:'杀成',ge:'七杀格',k:'成',t:'身强七煞逢制',q:'zp_c_sha',w:'日主强，七杀又有食神、伤官来制。',need:[GB.qiang,GB.has('食伤')],xg:GB.all('食伤'),more:[[GB.noTou('财'),'zp_sha_shi'],[GB.noTou('印'),'zp_sha_shi']],
+    todo:'「论偏官」另讲七杀用印、用财、去官留煞几种，「论用神成败救应」没有列，这张表也没有；用食神制杀时「财先食后」「印先食后」的先后也没有核对。'},
+  {id:'杀败',ge:'七杀格',k:'败',t:'七煞逢财无制',q:'zp_b_sha',w:'七杀有财来生，又没有食神、伤官制它。',need:[GB.has('财'),GB.no('食伤')]},
+  {id:'杀忌',ge:'七杀格',k:'带忌',t:'七煞逢食制而又逢印',q:'zp_dj_all',w:'食神、伤官制着七杀，却又透出印来克它们。',need:[GB.has('食伤'),GB.tou('印')]},
+  {id:'杀救',ge:'七杀格',k:'救应',t:'煞逢食制，印来护煞，而逢财以去印存食',q:'zp_jy_all',w:'食神、伤官制七杀，印透出来克它们，又有财克去印。',need:[GB.has('食伤'),GB.tou('印'),GB.has('财')],xg:GB.all('财')},
+  // 伤官格
+  {id:'伤成财',ge:'伤官格',k:'成',t:'伤官生财',q:'zp_c_shang',w:'伤官生财。',need:[GB.has('财')],xg:GB.all('财'),more:[[GB.qiang,'zp_sg_cai']],
+    todo:'「论伤官」说冬天的金日主伤官生财不算好（水冻着生不了木），页面没有核对。'},
+  {id:'伤成印',ge:'伤官格',k:'成',t:'伤官佩印而伤官旺，印有根',q:'zp_c_shang',w:'印制着伤官，伤官旺，印在地支里有根。',need:[x=>['正印、偏印透出，在地支里有根',x.t('印').some(o=>x.ps.some(p=>gtOf(o.h,p.z)))],GB.ge('伤官','印')],xg:GB.tous('印'),more:[[GB.buQiang,'zp_sg_yin']]},
+  {id:'伤成杀',ge:'伤官格',k:'成',t:'伤官旺、身主弱而透煞印',q:'zp_c_shang',w:'伤官旺、日主弱，透出七杀和印：七杀生印，印生日主又制伤官。',need:[GB.ruo,GB.tou('七杀'),GB.tou('印')],xg:x=>x.t('七杀').concat(x.t('印')),more:[[GB.no('财'),'zp_sg_sha']]},
+  {id:'伤成制',ge:'伤官格',k:'成',t:'伤官带煞而无财',q:'zp_c_shang',w:'伤官制七杀，盘里没有财。',need:[GB.has('七杀'),GB.no('财')],xg:GB.all('七杀')},
+  {id:'伤败官',ge:'伤官格',k:'败',t:'伤官非金水而见官',q:'zp_b_shang',w:'伤官克正官。金日主的伤官是水，叫金水伤官，合书里的条件时见正官不算败。',
+    need:[GB.jian('伤官','正官'),x=>['不合金水伤官见官的条件（日主属金、生在秋冬、天干有财或印、伤官和正官不并透，四样全合才算合）',!x.jinOk]],
+    todo:'「论伤官」又说伤官会合化成财的（化伤为财），见正官也不算伤官见官，见「用神变化」一行。'},
+  {id:'伤败杀',ge:'伤官格',k:'败',t:'生财生带煞',q:'zp_b_shang',w:'伤官生财，又带着七杀。所据的本子这里作「生财生带煞」，照文意是「生财而带煞」。',need:[GB.has('财'),GB.has('七杀')]},
+  {id:'伤败印',ge:'伤官格',k:'败',t:'佩印而伤轻身旺',q:'zp_b_shang',w:'有印制着伤官，可是伤官轻、日主旺。',need:[GB.has('印'),GB.qiang,GB.lt('伤官','印')]},
+  {id:'伤忌合',ge:'伤官格',k:'带忌',t:'伤官生财而财又逢合',q:'zp_dj_all',w:'伤官生财，财却被别的天干合住。日干自己合财不算。',need:[GB.he('财')]},
+  {id:'伤忌印',ge:'伤官格',k:'带忌',t:'佩印而印又遭伤',q:'zp_dj_all',w:'有印制着伤官，印却被紧贴着它的财克。',need:[GB.tou('印'),x=>['透出的财紧贴着透出的印',x.adj('财','印')]]},
+  {id:'伤忌杀',ge:'伤官格',k:'带忌',t:'透财而逢煞',q:'zp_dj_all',w:'透出财，又碰上七杀，财去生七杀。',need:[GB.tou('财'),GB.has('七杀')]},
+  {id:'伤救',ge:'伤官格',k:'救应',t:'伤官生财透煞而煞逢合',q:'zp_jy_all',w:'伤官生财，透出七杀，七杀被别的天干合住。',need:[GB.has('财'),GB.tou('七杀'),GB.he('七杀')],xg:GB.by('七杀')},
+  // 阳刃格
+  {id:'刃成',ge:'阳刃格',k:'成',t:'阳刃透官煞而露财印，不见伤官',q:'zp_c_ren',w:'阳刃有透出的正官或者七杀来制，又露出财或者印，盘里没有伤官。',need:[GB.anyTou('正官','七杀'),GB.anyTou('财','印'),GB.no('伤官')],xg:x=>x.t('官杀').concat(x.t('财'),x.t('印')),
+    more:[[x=>['七杀没有被别的天干合住',!x.he('七杀').length],'zp_ren_tou']],todo:'「论阳刃」还分正官、七杀「露而根深」「藏而不露，或露而根浅」，根的深浅页面没有核对。'},
+  {id:'刃败',ge:'阳刃格',k:'败',t:'阳刃无官煞',q:'zp_b_ren',w:'阳刃没有正官、七杀来制。',need:[GB.no('官杀')]},
+  {id:'刃救',ge:'阳刃格',k:'救应',t:'阳刃用官煞带伤食，而重印以护之',q:'zp_jy_all',w:'用正官、七杀制阳刃，却带着食神、伤官来克它们，有重重的印护住。',need:[GB.has('官杀'),GB.has('食伤'),x=>['正印、偏印有两处以上',x.all('印').length>=2]],xg:GB.all('印')},
+  // 建禄月劫
+  {id:'禄成官',ge:'建禄月劫',k:'成',t:'透官而逢财印',q:'zp_c_jl',w:'透出正官，又有财或者印跟着。',need:[GB.tou('正官'),GB.any('财','印')],xg:x=>x.t('正官').concat(x.all('财'),x.all('印')),more:[[GB.any('财','印'),'zp_jl_guan']]},
+  {id:'禄成财',ge:'建禄月劫',k:'成',t:'透财而逢食伤',q:'zp_c_jl',w:'透出财，又有食神、伤官把比肩、劫财的力量转去生财。',need:[GB.tou('财'),GB.has('食伤')],xg:x=>x.t('财').concat(x.all('食伤')),more:[[GB.has('食伤'),'zp_jl_cai']]},
+  {id:'禄成杀',ge:'建禄月劫',k:'成',t:'透煞而遇制伏',q:'zp_c_jl',w:'透出七杀，又有食神、伤官制它。',need:[GB.tou('七杀'),GB.has('食伤')],xg:x=>x.t('七杀').concat(x.all('食伤')),more:[[GB.has('食伤'),'zp_jl_sha']],
+    todo:'「论建禄月劫」另说没有财、正官而用食神、伤官泄秀的也算一种，「论用神成败救应」没有列，这张表也没有。'},
+  {id:'禄败',ge:'建禄月劫',k:'败',t:'无财官，透煞印',q:'zp_b_jl',w:'没有财和正官，透出的是七杀和印。',need:[GB.no('财'),GB.no('正官'),GB.tou('七杀'),GB.tou('印')]},
+  {id:'禄救伤',ge:'建禄月劫',k:'救应',t:'建禄月劫用官，遇伤而伤被合',q:'zp_jy_all',w:'用正官，透出伤官来克它，伤官被别的天干合住。',need:[GB.tou('正官'),GB.he('伤官')],xg:GB.by('伤官')},
+  {id:'禄救杀',ge:'建禄月劫',k:'救应',t:'用财带煞而煞被合',q:'zp_jy_all',w:'用财，带着七杀，七杀被别的天干合住。',need:[GB.tou('财'),GB.he('七杀')],xg:GB.by('七杀')}];
+const GJB_K=[['成','成格的条件'],['败','败格的条件'],['带忌','带忌：成格的条件里又带着破它的字'],['救应','救应：败格的条件里又有救它的字']];
+/* ges 是要核对的格（一个或者两个）。每个格：各条合不合，四类各合几条，归纳成一个词 v。
+   v 的先后是页面的做法：合了救应的归「救应」；否则合了败格或带忌的条件，同时也合成格的（或者只合带忌的）归「带忌」，只合败格的归「败」；
+   只合成格的归「成」；一条也不合归「都不合」。xiang 是合了的成格、救应各条里辅佐用神的字，去掉重复的 */
+function gjbOf(dm,ps,ges){
+  const x=gjCtx(dm,ps);
+  const rows=GJB.filter(o=>ges.includes(o.ge)).map(o=>{
+    const need=o.need.map(f=>f(x)), ok=need.some(n=>n[1]===false)?false:need.some(n=>n[1]===null)?null:true;
+    return Object.assign({},o,{need,ok,more:(o.more||[]).map(([f,qk])=>f(x).concat(qk)),xiang:ok===true&&o.xg?o.xg(x):[]});
+  });
+  const groups=ges.map(ge=>{
+    const rs=rows.filter(r=>r.ge===ge), n=k=>rs.filter(r=>r.k===k&&r.ok===true).length, cnt={成:n('成'),败:n('败'),带忌:n('带忌'),救应:n('救应')};
+    const v=cnt.救应?'救应':cnt.败+cnt.带忌?(cnt.成||!cnt.败?'带忌':'败'):cnt.成?'成':'都不合';
+    return {ge,rows:rs,cnt,unsure:rs.filter(r=>r.ok===null).length,v};
+  });
+  const seen={}, xiang=rows.flatMap(r=>r.xiang.map(o=>Object.assign({from:r.id},o))).filter(o=>{const key=o.k+(o.z||'')+o.h;if(seen[key]) return false;seen[key]=1;return true;});
+  return {groups,rows,xiang,tier:x.tier};
+}
+/* 用神变化（「论用神变化」里因会合而变的一半；因透干而变的一半在格局参考里）：月支和另外两个地支凑齐三合局，月令的用神化成这一局的五行。
+   full 三支全；from、cat 是月令本气、这一局对日主的关系（0 同我 … 4 生我）；same 两者相同，不变；benTou 月令的本气又透在天干上，
+   照书「变而不失本格」；ge 是化出来的格：比肩和劫财归建禄月劫，别的看那一行透出来的天干是什么十神，没有透的看这一局旺支的本气（页面定的）。
+   只认三支全的三合，三会、半合不算；旺支被冲的情形书里这一章没有讲，不另算 */
+function bianOf(dm,ps){
+  const mz=ps[1].z, zs=ps.map(p=>p.z), ju=SANHE.find(x=>x.slice(0,3).includes(mz)), tri=ju.slice(0,3);
+  const full=tri.every(z=>zs.includes(z)), half=tri.filter(z=>z!==mz&&zs.includes(z)), to=EL.indexOf(ju[3][0]), ben=HID[mz][0], de=gEl(dm);
+  const from=(gEl(ben)-de+5)%5, cat=(to-de+5)%5, tou=[0,1,3].filter(i=>gEl(ps[i].g)===to).map(i=>({k:ps[i].k,i,h:ps[i].g}));
+  const gd=godOf(dm,tou.length?tou[0].h:HID[ju[1]][0]), benTou=[0,1,3].some(i=>ps[i].g===ben), hit=full&&cat!==from;
+  return {mz,tri:tri.join(''),name:ju[3],full,half,to,ben,from,cat,same:cat===from,tou,god:gd,benTou,hit,ge:hit?(cat===0?'建禄月劫':GE[gd]):null};
+}
+const bianNow=()=>memo('bian',()=>bianOf(DM,NATAL));
+/* 成败救应照哪个格核对：会合让用神变了、月令的本气又没有透出来的，照变出来的格；别的照格局参考归的格 */
+function gjbGes(){const b=bianNow(), cur=gjzGe();return b.hit&&!b.benTou&&!cur.includes(b.ge)?{ges:[b.ge],bian:true}:{ges:cur,bian:false};}
+const gjbNow=()=>memo('gjb',()=>gjbOf(DM,NATAL,gjbGes().ges));
+const GJB_V={成:'只合成格的条件，照这一章算成格，意思是用神得了帮助，这一格立得住。',带忌:'合了成格的条件，又合了败格或者带忌的条件，照这一章是成中有败，叫带忌，意思是用神得了帮助，可是又带着破坏它的字。',
+  败:'只合败格的条件，照这一章算败格，意思是用神被破坏了，这一格立不住。',救应:'合了救应的条件，照这一章是败中有成，意思是有破坏用神的字，又有别的字把它制住或者合走。',
+  都不合:'这一章给这一格列的条件一条也不合，书里没有说这种情形算成还是算败。'};
+const GJB_VN={成:'成格',带忌:'成中带忌',败:'败格',救应:'败中有救应',都不合:'成败的条件都不合'};
+/* 成败救应那张表上面的一句话 */
+function gjbSay(){
+  const r=gjbNow(), g0=gjbGes();
+  return (g0.bian?`月令会合成局，用神有变化（见上面「用神变化」一行），下面照${g0.ges[0]}核对。`:'')
+    +r.groups.map(g=>`${g.ge}：${GE_PLAIN[g.ge]}<br>照「论用神成败救应」逐条看${g.ge}：成格的条件合 ${g.cnt.成} 条，败格的合 ${g.cnt.败} 条，带忌的合 ${g.cnt.带忌} 条，救应的合 ${g.cnt.救应} 条`+(g.unsure?`，另有 ${g.unsure} 条要看强弱，强弱居中定不了`:'')+`。<b>${GJB_VN[g.v]}</b>：${GJB_V[g.v]}`).join('');
+}
+function noteGjb(){
+  return '这张表只列这张盘归的那一格。每一条照原文落成几项能数的条件，几项全合才算合；没有合的那一项后面标着「不合」。数法和下面的格局组合相同：只数三个天干和四个地支的本气，'
+    +'「相见」是两样都有、至少一样透出，「被合住」是透出的字被别的天干五合（年干和月干、月干和时干之间才算，日干自己合它不算），轻重照十神的能量比，身强、身弱照强弱计分。'
+    +'上面归纳的那一句照书里「成中有败，必是带忌；败中有成，全凭救应」来说；几条同时合的时候书里没有排先后，先后是页面的做法。';
+}
+/* 点成败救应表里的一条 */
+function xGjb(id){
+  const r=gjbNow(), o=r.rows.find(x=>x.id===id); if(!o) return null;
+  const st=o.ok===null?'定不了':o.ok?'合':'不合', tx=v=>v===null?'定不了（强弱居中）':v?'合':'不合';
+  return {t:`${o.ge} · ${GJB_K.find(x=>x[0]===o.k)[1].split('：')[0]} · ${st}`,p:[
+    ['意思',o.w+({成:'合了这一条，书里说这一格成了。',败:'合了这一条，书里说这一格败了。',带忌:'合了这一条，书里说这一格成里带着败，叫带忌。',救应:'合了这一条，书里说败里有救，叫救应。'})[o.k]],
+    ['这一格',GE_PLAIN[o.ge]],
+    ['这张盘',o.need.map(([l,v])=>`${l}：${tx(v)}`).join('；')+`。${o.need.length>1?'几项全合才算合，':''}这一条${st}。`+(o.xiang.length?`成这一条靠的是${gjzWhere(o.xiang)}，书里把这样的字叫相神，见上面「相神」一行。`:'')],
+    ['原文',`《子平真诠》「论用神成败救应」：${qs(o.q)}这一条是其中的「${o.t}」。`],
+    o.more.length?['同一格里另外的话',o.more.map(([l,v,qk])=>`${q(qk)}，页面落成「${l}」：${tx(v)}`).join('；')+'。这几项只列出来，不算进这一条合不合。']:null,
+    o.todo?['没有核对的',o.todo]:null,
+    ['名词',GJ_TERMS],
+    ['怎么查','只数年、月、时三个天干和四个地支的本气。「盘里有」是透在天干上或者在地支的本气里；「相见」是两样都有，至少一样透出；「被合住」是透出的字被别的天干五合，年干和月干、月干和时干之间才算，日干自己合它不算；分数是十神的能量；身强、身弱照强弱计分。这是页面照原文定的查法，原文里没有逐字写。'],
+    ['注意','成格、败格、带忌、救应是书里给格局分类的说法，讲的是盘里各字之间的生克，不是对人的判断。书里断盘还要看字的先后、远近和轻重，页面只照能数的几项走。']]};
+}
+/* 「用神变化」一行 */
+function bianRow(){
+  const b=bianNow(), cur=gjzGe(), F=CAT[b.from][0], T=CAT[b.cat][0];
+  const dd=!b.full?`月支${b.mz}没有和别的地支凑齐三合局`+(b.half.length?`（只有${b.mz}、${b.half.join('、')}两支，是半合）`:'')+'，用神不变'
+    :b.same?`${b.tri}三合${b.name}，和月令的本气同是${F}，用神不变`
+    :b.benTou?`${b.tri}三合${b.name}，月令的${F}化成${T}；本气${b.ben}又透在天干上，照书仍照${cur.join('和')}论`
+    :cur.includes(b.ge)?`${b.tri}三合${b.name}，月令的${F}化成${T}，和「格局参考」归的${b.ge}一致`
+    :`${b.tri}三合${b.name}，月令的${F}化成${T}，照书改照${b.ge}论`;
+  return {k:'用神变化',dd,t:'用神变化',p:[
+    ['是什么',`《子平真诠》说用神从月令取，可是月令会变。变法有两种：一种是月支的本气不透、别的藏干透了出来，上面「格局参考」一行已经照它走了；一种是月支和另外两个地支凑成三合局，月令就化成这一局的五行。这一行看后一种。`],
+    ['典籍',`《子平真诠》「论用神变化」：${q('zp_bian1')}又说${q('zp_bian2')}变了以后好不好，书里分两种：${q('zp_bian4')}。也有变了而不失本格的：${q('zp_bian3')}`],
+    ['这张盘',`月支${b.mz}属${b.tri}三合${b.name}。`+(!b.full?(b.half.length?`盘里另有${b.half.join('、')}，只凑了两支，是半合，页面不算变化。`:'另外两支盘里都没有，没有变化。')
+      :`三支都在。${b.name}对${DMN}来说是${T}；月令的本气${gN(b.ben)}是${god(b.ben)}，属${F}。`+(b.same?'两者是同一类，用神不变。'
+        :`照这一章，月令的${F}化成${T}。`+(b.benTou?`可是本气${b.ben}又透在天干上，照书「变之而不失本格」，仍照${cur.join('和')}论。`
+          :cur.includes(b.ge)?`「格局参考」一行照透出来的字归的也是${b.ge}，两处一致。`
+          :`${b.tou.length?`${T.split('和')[0]}这一行透在${b.tou.map(o=>`${o.k}干${o.h}`).join('、')}，是${b.god}`:`这一行没有透干，照这一局旺支的本气算是${b.god}`}，归${b.ge}。下面的「成败救应」表照${b.ge}核对。`)))],
+    ['注意','只认三支全的三合。三会和只有两支的半合，这一章没有举例，页面不算。变了以后是好是坏，书里要通盘看，页面不判。三合局的旺支被冲时还合不合，这一章没有讲，页面照合论。']]};
+}
+/* 「相神」一行：成败救应表里合了的成格、救应各条，靠哪几个字成的 */
+function xiangRow(){
+  const r=gjbNow(), ge=gjbGes().ges, oks=r.rows.filter(o=>o.ok===true&&o.xiang.length);
+  const dd=r.xiang.length?`照「论相神紧要」，这张盘的${ge.join('和')}靠这几个字成：${gjzWhere(r.xiang)}`:`「成败救应」表里成格、救应的条件一条也没有合，指不出相神`;
+  return {k:'相神',dd,t:'相神',p:[
+    ['是什么',`相神是辅佐用神的字。《子平真诠》「论相神紧要」：${q('zp_xs')}又举例：${q('zp_xs2')}总起来说：${q('zp_xs3')}`],
+    ['这张盘',r.xiang.length?oks.map(o=>`「${o.t}」这一条合，靠的是${gjzWhere(o.xiang)}`).join('；')+'。书里把这样的字叫相神。'
+      :`下面「成败救应」表里，${ge.join('和')}的成格、救应各条都没有合。书里的相神是成格所靠的那个字，这张盘照这张表指不出来。`],
+    ['注意',`书里接着说${q('zp_xs4')}相神被合住、被克去，格就败了。相神有没有被伤，页面没有核对。这一行只是把「成败救应」表里合了的各条靠的字列出来；书里找相神要通盘看，页面只照能数的条件走。`]]};
 }
 
 /* ---------- 顶部信息 ---------- */
@@ -3435,6 +3731,8 @@ function kvRows(){return memo('kv',()=>{
     congRow(),
     huaRow(),
     gejuRow(),
+    bianRow(),
+    xiangRow(),
     tiaohouRow(),
     duizhaoRow()
   ];
@@ -3896,9 +4194,9 @@ function readGj(){
   const inGe=r.list.filter(o=>o.st!=='无'&&o.ge.some(g=>ge.includes(g))).map(o=>o.n);
   return box('解读',`<ul class="cols">${lis([
     `这张盘照《子平真诠》的办法归${ge.join('和')}，见上面「格局参考」一行。归类只是第一步，书里接着看成和败：${q('zp_cb')}`,
-    (cg.length?`格局组合里，书里算成格的条件，这张盘有${say(cg)}`:'格局组合里，书里算成格的条件，这张盘一个也没有')+'；'+(bg.length?`算败格的有${say(bg)}。`:'算败格的一个也没有。')
+    (cg.length?`格局组合不分格，书里算成格的条件，这张盘有${say(cg)}`:'格局组合不分格，书里算成格的条件，这张盘一个也没有')+'；'+(bg.length?`算败格的有${say(bg)}。`:'算败格的一个也没有。')
       +(r.list.some(o=>o.st!=='无')?(inGe.length?`其中${inGe.join('、')}是书里在${ge.join('和')}下面讲的。`:`这几个都不是书里在${ge.join('和')}下面讲的。`):''),
-    `成和败常常同时出现。书里说${q('zp_dj')}带忌是成格的条件里又带着破它的字，救应是败格的条件里又有救它的字。页面只把每一条的条件摆出来，不替这张盘裁决成还是败。`,
+    `成和败常常同时出现。书里说${q('zp_dj')}带忌是成格的条件里又带着破它的字，救应是败格的条件里又有救它的字。「成败救应」表照${gjbGes().ges.join('和')}把这一章的条件逐条核对，归纳下来是${gjbNow().groups.map(g=>GJB_VN[g.v]).join('、')}。这是照一本书、照能数的条件走出来的，书里断盘还要看字的先后和轻重。`,
     '两边力量谁大谁小，看表里的分数；书里没有给多少分算制得住。成格、败格是书里给格局分类的说法，讲的是盘里各字之间的生克，不是对人的判断，页面也不据此说这张盘的主人怎样。'])}</ul>`);
 }
 const READS={bz:readBz,pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,qr:readQr,gods:readGods,gj:readGj,ys:readYs,lq:readLq,gt:readGT,gw:readGw,tr:readTr};
@@ -4136,6 +4434,7 @@ function X0(key){
   if(k==='nly') return xNly(a[1]);
   if(k==='pk') return xPk(a[1],a[2],a[3]);
   if(k==='gjz') return xGjz(a[1]);
+  if(k==='gjb') return xGjb(a[1]);
   if(k==='xi') return xXi();
   if(k==='sd') return xSd(a[1]);
   if(k==='ys') return xYong(a[1]);
@@ -4487,7 +4786,7 @@ function renderPerson(){
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -4623,7 +4922,7 @@ function renderLiuyue(){
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}<span class="ag">周${W[new Date(t).getUTCDay()]}</span></span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
@@ -4751,7 +5050,7 @@ function renderGw(){
     +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
     +row('十二长生',c=>`${c.g}坐${c.z}是${xb('x','zz|'+c.k,c.zz)}`+(c.day?'':`<br>日主到${c.z}是${xb('x','st|'+c.k,c.st)}`))
     +row('空亡',c=>c.xk)
-    +row('五行能量',c=>`${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>帮日主的 ${c.nl.help} 分，其余 ${c.nl.rest} 分<span class="stkw" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>`)
+    +row('五行能量',c=>`<span class="stkw top" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>帮日主的 ${c.nl.help} 分，其余 ${c.nl.rest} 分`)      // 条在文字上面：文字有长有短，条放在下面四柱对不齐（2026-11-18 排版审阅）
     +'</tbody></table>';
 }
 /* 计分一页：一行一层的表（nlLayers），表下面的说明和解读；选择器上方的图例。小卡底下的条由 mbar() 画在选择器里，跟着选择器一起重画 */
@@ -4785,6 +5084,17 @@ function renderGjz(){
     +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
   $('note-gjz').textContent=noteGjz();
 }
+/* 格局一页中间的成败救应表：照这张盘归的格（一个或两个），把「论用神成败救应」的各条按成、败、带忌、救应分四段列出来。
+   每一行：书里的话（点开是解释）和一句白话；合、不合或者定不了；几项条件，没有合的那一项后面标出来。表上面一句话是四类各合几条和归纳 */
+function renderGjb(){
+  const r=gjbNow();
+  const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${o.w}</small></th>`
+    +`<td><span class="gjz-st${o.ok===true?' t':''}">${o.ok===null?'定不了':o.ok?'合':'不合'}</span><span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
+  $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
+    +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
+  $('gjb-say').innerHTML=gjbSay();
+  $('note-gjb').textContent=noteGjb();
+}
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
   const r=qsNow(), pt=qsParts(DM,NATAL,true), x=xiNow(), de=gEl(DM), se=(de+4)%5, W=r.total, pos=v=>(v/W*100).toFixed(2)+'%';
@@ -4806,16 +5116,20 @@ function renderQs(){
 }
 /* 喜忌一页最上面：扶抑取的喜用和忌，照「强弱」一页的强弱计分 */
 function renderXi(){
-  const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
-  $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
-      :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
-    +`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照下面的用神${yongNow().pair?'取，其余三行算忌':'和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；下面的用神照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
-    // 用神那一排：用神、喜神、忌神、仇神、闲神各一块，字块是五行，底下写是哪两个十神
-    +(()=>{const y=yongNow(), de=gEl(DM), blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
-      // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一块里两种五行，分不出喜神、忌神，那几块不画
-      return '<div class="xi-sep" aria-hidden="true"></div>'+(y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
-        :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
-        :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`)+`<p class="sub">${yongSay()}</p>`;})();
+  // 两套取法各一块，各有标题、结果和一句说明：左边（手机上在上面）是扶抑的喜用和忌，右边是用神和喜神、忌神、仇神、闲神。
+  // 原来两排放在一个框里、中间一道虚线，排版审阅说容易读成同一套判断（2026-11-18）
+  const x=xiNow(), y=yongNow(), de=gEl(DM), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
+  const fy=x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
+    :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`;
+  const fySub=`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照「用神」那一块${yongNow().pair?'取，其余三行算忌':'的用神和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；「用神」那一块照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`;
+  // 用神那一块：用神、喜神、忌神、仇神、闲神各一格，字块是五行，底下写是哪两个十神。
+  // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一格里两种五行，分不出喜神、忌神，那几格不画
+  const blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
+  const ys=y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
+    :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
+    :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`;
+  $('xi').innerHTML=`<div class="xi-g"><h4>扶抑的喜用<small>照强弱计分：身弱扶它，身强抑它</small></h4><div class="xi-r">${fy}</div>${fySub}</div>`
+    +`<div class="xi-g"><h4>用神<small>照任铁樵《滴天髓阐微》的注，再分出喜神、忌神、仇神、闲神</small></h4><div class="xi-r">${ys}</div><p class="sub">${yongSay()}</p></div>`;
 }
 /* 「强弱」一页最上面的四张卡片：得令、得地、得势、得气（数据在 text.js 的 sideFour）。每张是标题（点开看解释）、判语、一排小格子、一句话。
    小格子帮日主的（有根、帮扶、气盛）垫日主那一行五行的淡底，得令一张是旺相休囚死五格，日主落在哪一格就垫哪一格 */

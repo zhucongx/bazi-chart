@@ -443,6 +443,67 @@ console.log('典籍引文');
     const out=[one('甲','寅'),one('甲','卯'),one('乙','寅'),one('戊','午'),one('丙','亥')];[P,DM,DMN,NATAL,MEMO]=keep;return out;})()`), ['建禄', '阳刃', '月劫', '阳刃', '不透·七杀格']);
 }
 
+// ---------- 1a1. 成败救应、用神变化、相神 ----------
+console.log('成败救应、用神变化、相神');
+{
+  const gjb = JSON.parse(ev("JSON.stringify(GJB.map(o=>({id:o.id,ge:o.ge,k:o.k,t:o.t,q:o.q,more:(o.more||[]).map(m=>m[1]),todo:!!o.todo,xg:!!o.xg})))"));
+  const Qt = k => ev(`Q[${JSON.stringify(k)}]?Q[${JSON.stringify(k)}][1]:''`);
+  eq('成败救应：一共六十条，编号不重复；八个格都有，正官 8、财 10、印 10、食神 8、七杀 4、伤官 11、阳刃 3、建禄月劫 6；分成、败、带忌、救应四类，各 20、14、10、16 条',
+    [gjb.length, new Set(gjb.map(o => o.id)).size, ['正官格', '财格', '印格', '食神格', '七杀格', '伤官格', '阳刃格', '建禄月劫'].map(g => gjb.filter(o => o.ge === g).length), ['成', '败', '带忌', '救应'].map(k => gjb.filter(o => o.k === k).length)],
+    [60, 60, [8, 10, 10, 8, 4, 11, 3, 6], [20, 14, 10, 16]]);
+  eq('成败救应：每一条的话都是登记过的引文里的一截；成格、败格的话在讲这一格的那一句里，带忌、救应的话在那两整句里', gjb.filter(o => !Qt(o.q).includes(o.t) || (o.k === '带忌' && o.q !== 'zp_dj_all') || (o.k === '救应' && o.q !== 'zp_jy_all')).map(o => o.id), []);
+  // 那一章的四段原文，照分号、逗号拆开，每一截都落在某一条里（「或」「如」这些连接的字不算）
+  const cover = ['zp_c_guan', 'zp_c_cai', 'zp_c_yin', 'zp_c_shi', 'zp_c_sha', 'zp_c_shang', 'zp_c_ren', 'zp_c_jl', 'zp_b_guan', 'zp_b_cai', 'zp_b_yin', 'zp_b_shi', 'zp_b_sha', 'zp_b_shang', 'zp_b_ren', 'zp_b_jl', 'zp_dj_all', 'zp_jy_all'];
+  const pieces = cover.flatMap(k => Qt(k).split(/[；，。、]/).map(x => x.replace(/^(如|或)/, '')).filter(x => x && !/格成也$|格败也$|之格成也$|之格败也$|是皆谓之带忌也|是谓之救应也|^建禄月劫$/.test(x)));
+  eq('成败救应：这一章讲成、败、带忌、救应的十八句，拆开的每一截都有一条对着，没有漏的', pieces.filter(p => !gjb.some(o => o.t.includes(p))), []);
+  eq('成败救应引的原文里没有富贵、贫贱一类断语', [...new Set(gjb.flatMap(o => [o.q].concat(o.more)))].filter(k => !Qt(k) || /富贵|贵格|大贵|小贵|贫|贱|夭|寿|祸/.test(Qt(k))), []);
+  // 书里各格那几章举的命例。四柱从引文里解出来；照哪一格核对、归纳成什么、合了哪一条，和书里说的对得上
+  const run = ps => JSON.parse(ev(`(function(){const keep=[P,DM,DMN,NATAL,MEMO];
+    NATAL=${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1],day:i===2}));DM=NATAL[2].g;DMN=gN(DM);MEMO={};
+    const b=bianNow(), g=gjbGes(), r=gjbNow(), kv=kvRows();
+    const out={cur:gjzGe(),hit:b.hit,benTou:b.benTou,bge:b.ge,ges:g.ges,bian:g.bian,v:r.groups.map(x=>x.v),ok:r.rows.filter(o=>o.ok===true).map(o=>o.id),xiang:r.xiang.map(o=>o.k+(o.z?'支'+o.z:'干'+o.h)),
+      dd:[kv.find(x=>x.k==='用神变化').dd,kv.find(x=>x.k==='相神').dd]};
+    [P,DM,DMN,NATAL,MEMO]=keep;return JSON.stringify(out);})()`));
+  const four = k => (Qt(k).match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) || []).slice(0, 4);
+  const BOOK = [['zp_ex_jin', '印格', '成', '印成财'], ['zp_ex_xuan', '正官格', '救应', '官救印'], ['zp_ex_li', '正官格', '救应', '官救合'], ['zp_ex_mao', '财格', '救应', '财救合'], ['zp_ex_liyu', '财格', '救应', '财救制'],
+    ['zp_ex_ge', '财格', '成', '财成官'], ['zp_ex_wang', '建禄月劫', '救应', '禄救伤'], ['zp_ex_jin2', '建禄月劫', '成', '禄成官'], ['zp_ex_zhang', '建禄月劫', '成', '禄成财'], ['zp_ex_yuan', '建禄月劫', '救应', '禄救杀'],
+    ['zp_ex_sha', '七杀格', '成', '杀成'], ['zp_ex_ren1', '阳刃格', '成', '刃成'], ['zp_ex_ren2', '阳刃格', '成', '刃成'], ['zp_ex_liang', '食神格', '成', '食成财'], ['zp_ex_hu', '食神格', '成', '食成杀'],
+    ['zp_ex_shi', '伤官格', '成', '伤成财'], ['zp_ex_zhangcz', '印格', '成', '印成官'], ['zp_ex_wangsl', '印格', '成', '印成财']];
+  const got = BOOK.map(([k]) => { const p = four(k), r = run(p); return [p.length, r.ges.join(), r.v.join(), r]; });
+  eq('成败救应：书里举的十八个命例，照哪一格核对、归纳成成格还是有救应、合的是书里说的那一条，都对得上（合煞存财、制煞生财、遇伤佩印、杂煞取清、去伤存官……）',
+    BOOK.filter(([k, ge, v, id], i) => !(got[i][0] === 4 && got[i][1] === ge && got[i][2] === v && got[i][3].ok.includes(id))).map((x, i) => x[0]), []);
+  const yang = run(four('zp_ex_yang')), sg = run(four('zp_ex_sg'));
+  eq('成败救应：有两个命例和书里说的不一样，记在这里。杨侍郎命书里说身强、财用食生，强弱计分归身弱，一条也不合；金水伤官用官的那一个，财和印紧贴着透出，归带忌', [yang.v, yang.ok, sg.v, sg.ok.includes('伤忌印')], [['都不合'], [], ['带忌'], true]);
+  eq('金状元命：亥、卯、未三合木局，月令的正官化成印，成败救应照印格核对（书里说「化官为印而透财」）；宣参国命也是亥卯未，月令的本气己透在年干，照书仍照正官格',
+    [got[0][3].cur, got[0][3].hit, got[0][3].bian, got[0][3].ges, got[1][3].hit, got[1][3].benTou, got[1][3].bian, got[1][3].ges], [['正官格'], true, true, ['印格'], true, true, false, ['正官格']]);
+  // 用神变化：书里的几句话各配一副虚构的四柱
+  const bian = (dm, ps) => JSON.parse(ev(`JSON.stringify((b=>({full:b.full,hit:b.hit,cat:b.cat,from:b.from,ge:b.ge,benTou:b.benTou,half:b.half}))(bianOf('${dm}',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]})))))`));
+  eq('用神变化：丁生亥月支全卯未，正官化成印；丙生寅月会午会戌、甲不透，印化成比肩和劫财；同一副换成透甲，本气透出；癸生寅月会午戌，食神和伤官化成财；丙生申月会子辰、透壬，财化成七杀',
+    [bian('丁', ['乙卯', '丁亥', '丁未', '庚戌']), bian('丙', ['戊午', '庚寅', '丙戌', '己丑']), bian('丙', ['甲午', '丙寅', '丙戌', '己丑']), bian('癸', ['戊午', '甲寅', '癸酉', '壬戌']), bian('丙', ['壬子', '戊申', '丙辰', '己丑'])].map(b => [b.hit, b.from, b.cat, b.ge, b.benTou]),
+    [[true, 3, 4, '印格', false], [true, 4, 0, '建禄月劫', false], [true, 4, 0, '建禄月劫', true], [true, 1, 2, '财格', true], [true, 2, 3, '七杀格', false]]);
+  eq('用神变化：只有两支的半合不算；三合的五行和月令本气是同一类的不变', [bian('丁', ['乙卯', '丁亥', '丁酉', '庚戌']), bian('丙', ['戊寅', '戊午', '丙戌', '己丑'])].map(b => [b.full, b.hit, b.half.join('')]), [[false, false, '卯'], [true, false, '寅戌']]);
+  // 被合住：年干和月干紧贴的算；月干和时干隔着日干也算，除非日干克其中一个；年干和时干太远不算；日干自己不算
+  const heBy = (ps, i) => ev(`ganHeBy(${JSON.stringify(ps)}.map(x=>({g:x[0],z:x[1]})),${i})`);
+  eq('被合住：王总兵命月干乙被时干庚合住（隔着日干壬）；日干丙克庚时，月干庚和时干乙合不成；年干和时干不算；年干和月干紧贴的算；日干自己不算',
+    [heBy(four('zp_ex_wang'), 1), heBy(['己酉', '庚午', '丙戌', '乙未'], 1), heBy(['庚子', '戊子', '甲子', '乙丑'], 0), heBy(['庚寅', '乙酉', '甲子', '戊辰'], 0), heBy(['戊辰', '己未', '甲子', '戊辰'], 2)], [3, -1, -1, 1, -1]);
+  // 归纳的那个词
+  const vOf = c => ev(`(c=>c.救应?'救应':c.败+c.带忌?(c.成||!c.败?'带忌':'败'):c.成?'成':'都不合')(${JSON.stringify(c)})`);
+  const rnd4 = (() => { let seed = 7; const rnd = n => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 2147483648 * n); }; const G = '甲乙丙丁戊己庚辛壬癸', Z = '子丑寅卯辰巳午未申酉戌亥';
+    return () => { const y = rnd(60), m = rnd(12), dd = rnd(60), h = rnd(12), yg = y % 10, dg = dd % 10; return [G[yg] + Z[y % 12], G[(yg % 5 * 2 + 2 + m) % 10] + Z[(m + 2) % 12], G[dg] + Z[dd % 12], G[(dg % 5 * 2 + h) % 10] + Z[h]]; }; })();
+  const seenV = new Set(), seenGe = new Set(), badV = [];
+  for (let t = 0; t < 600; t++) {
+    const ps = rnd4(), r = JSON.parse(ev(`(function(){const keep=[P,DM,DMN,NATAL,MEMO];
+      NATAL=${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1],day:i===2}));DM=NATAL[2].g;DMN=gN(DM);MEMO={};
+      const g=gjbGes(), r=gjbNow();const out={ges:g.ges,groups:r.groups.map(x=>({ge:x.ge,cnt:x.cnt,v:x.v,n:x.rows.length,bad:x.rows.filter(o=>o.need.some(n=>typeof n[0]!=='string'||![true,false,null].includes(n[1]))).length})),
+        xi:r.rows.filter(o=>o.ok!==true&&o.xiang.length).length,tx:[gjbSay(),bianRow().dd,xiangRow().dd].join('|')};
+      [P,DM,DMN,NATAL,MEMO]=keep;return JSON.stringify(out);})()`));
+    r.groups.forEach(g => { seenV.add(g.v); seenGe.add(g.ge); if (g.v !== vOf(g.cnt) || g.bad || g.n !== gjb.filter(o => o.ge === g.ge).length) badV.push([ps.join(' '), g]); });
+    if (r.xi || BAD.test(r.tx) || !r.ges.length) badV.push([ps.join(' '), r.tx]);
+  }
+  eq('成败救应：600 副随机的四柱，每一格列的条数、每一项条件的样子、归纳的词都对；五种归纳、八个格都碰到了；没有合的条不列相神；三处文字里没有空的',
+    [badV.slice(0, 2), [...seenV].sort(), seenGe.size], [[], ['成', '带忌', '救应', '败', '都不合'].sort(), 8]);
+}
+
 // ---------- 1a2. 打分法 ----------
 console.log('打分法');
 {
@@ -796,7 +857,7 @@ people.forEach((id, pi) => {
     const RE = k => (de + k) % 5, restEls = [RE(1), RE(2), RE(3)], lean = q.tier === '间';
     const xiWant = !lean ? (q.tier === '强' ? restEls : [se, de]) : yW !== null ? [RE(yW), RE(yW + yOffs[1])] : pW.map(RE);
     const jiWant = !lean ? (q.tier === '强' ? [se, de] : restEls) : yW !== null ? [RE(yW + yOffs[2]), RE(yW + yOffs[3])] : [se, de, ...restEls].filter(e => !xiWant.includes(e));
-    eq('强弱分析：扶抑取的喜用，身弱是印和比劫，身强是食伤、财、官杀；在两条线之间强弱居中，喜用照用神取，写明照的是下面的用神；卡片上的喜用和忌和另算的一致', [JSON.parse(ev('JSON.stringify([xiNow().xi,xiNow().ji])')), [...$('xi').querySelectorAll('.qx')].slice(0, 2).map(n => txt(n.querySelector('b'))), txt($('xi').querySelector('.sub')).includes('喜用照下面的用神')], [[xiWant, jiWant], [xiWant.map(e => ELN[e]).join(''), jiWant.map(e => ELN[e]).join('')], lean]);
+    eq('强弱分析：扶抑取的喜用，身弱是印和比劫，身强是食伤、财、官杀；在两条线之间强弱居中，喜用照用神取，写明照的是「用神」那一块；卡片上的喜用和忌和另算的一致', [JSON.parse(ev('JSON.stringify([xiNow().xi,xiNow().ji])')), [...$('xi').querySelectorAll('.qx')].slice(0, 2).map(n => txt(n.querySelector('b'))), txt($('xi').querySelector('.sub')).includes('喜用照「用神」那一块')], [[xiWant, jiWant], [xiWant.map(e => ELN[e]).join(''), jiWant.map(e => ELN[e]).join('')], lean]);
     const yBlocks = [...$('xi').querySelectorAll('.qx')].slice(2).map(n => [txt(n.querySelector('span')), txt(n.querySelector('b')), n.querySelector('small') ? txt(n.querySelector('small')) : '']);
     eq('喜忌一页的用神那一排：用神照另算的取，喜神、忌神、仇神、闲神照有余、不足分，字块是五行，底下写着两个十神；取了两类时一块里两种五行，没有喜神那几块', [JSON.parse(ev('JSON.stringify([yongNow().yong,yongNow().pair])')), yBlocks],
       [[yW, pW], pW ? [['用神', pW.map(k => ELN[(de + k) % 5]).join(''), pW.map(k => CATN[k]).join('、')]] : yW === null ? [['用神', '不定', '']] : ['用神', '喜神', '忌神', '仇神', '闲神'].map((nm, j) => { const k = (yW + yOffs[j]) % 5; return [nm, ELN[(de + k) % 5], CATN[k]]; })]);

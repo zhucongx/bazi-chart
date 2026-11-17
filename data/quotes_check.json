@@ -1,7 +1,7 @@
 {
- "checked": "2026-11-17",
- "total": 411,
- "hash": 2042830725,
+ "checked": "2026-11-18",
+ "total": 457,
+ "hash": 258519909,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -99,10 +99,11 @@
   },
   "zpjz": {
    "book": "《子平真诠评注》",
-   "quotes": 4,
+   "quotes": 6,
    "pages": [
     "https://www.iwzbz.com/artical/pcbook/v2/3_1_2_3.html",
-    "https://www.iwzbz.com/artical/pcbook/v2/3_1_2_7.html"
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_2_7.html",
+    "https://www.iwzbz.com/artical/pcbook/v2/3_1_2_43.html"
    ]
   },
   "dtcw": {
@@ -116,7 +117,7 @@
   },
   "zpzq": {
    "book": "《子平真诠》",
-   "quotes": 58,
+   "quotes": 102,
    "pages": [
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53623.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53626.html",
@@ -134,7 +135,9 @@
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53625.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53651.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53659.html",
-    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53661.html"
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53661.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53653.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53657.html"
    ]
   }
  }
