@@ -14,11 +14,12 @@
      计分一页是一张一行一层的计分表。第三张是六亲和宫位，不带标签栏。
      每一页带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
-     五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。 */
+     五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。
+     2026-11-17 用户说金和土的颜色太像：原来两者亮度几乎一样，土改深、偏赭石，金改亮、偏泥金，色差从 20 左右拉到 35；深色主题的土也避开了火。 */
   --paper:#f2f4f8; --card:#ffffff; --wash:#f4f6fb; --ink:#131a2a; --ink2:#48546a; --ink3:#657084; --line:#dfe4ec;
   --accent:#1d3f94; --accent-soft:#e7edf9; --warn:#96392b; --warn-soft:#f8ebe7; --seal:#b23a2c; --seal-ink:#ffffff; --tint:rgba(29,63,148,.07); --tint-ring:rgba(29,63,148,.3);
-  --wood:#2c7a57; --fire:#bd3b2d; --earth:#8a5c30; --metal:#846609; --water:#2360ad;
-  --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6efe6; --metal-s:#f8f2de; --water-s:#eaf1fb;
+  --wood:#2c7a57; --fire:#bd3b2d; --earth:#7a4523; --metal:#8f7300; --water:#2360ad;
+  --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6ece4; --metal-s:#faf4d6; --water-s:#eaf1fb;
   --shadow:0 1px 2px rgba(19,26,42,.04),0 6px 20px rgba(19,26,42,.05);
   --pop:0 2px 6px rgba(19,26,42,.08),0 14px 36px rgba(19,26,42,.18);
   --display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
@@ -28,8 +29,8 @@
   :root:not([data-theme="light"]){
     --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
     --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
-    --wood:#63c394; --fire:#f0877a; --earth:#d5a36a; --metal:#e2c461; --water:#79adf3;
-    --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#29211a; --metal-s:#282412; --water-s:#152337;
+    --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
+    --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#152337;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
     --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
     color-scheme:dark;
@@ -38,8 +39,8 @@
 :root[data-theme="dark"]{
   --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
   --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
-  --wood:#63c394; --fire:#f0877a; --earth:#d5a36a; --metal:#e2c461; --water:#79adf3;
-  --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#29211a; --metal-s:#282412; --water-s:#152337;
+  --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
+  --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#152337;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
   --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
   color-scheme:dark;
@@ -2558,8 +2559,8 @@ function xiOf(dm,ps,hua){
 const xiNow=()=>memo('xi',()=>xiOf(DM,NATAL,true));
 const qsNow=()=>memo('qs',()=>qsOf(DM,NATAL,true)), huaNow=()=>nlNow().hua;
 /* 用神（扶抑）：照任铁樵《滴天髓阐微》「体用」一节的注，按强弱计分定的强弱取。yongPick 是纯计算，yongOf 喂它数。
-   cat 是五类各多少分（五行能量），下标是对日主的关系：0 同我（比肩、劫财，不算日主自己的 5 分）、1 我生（食神、伤官）、2 我克（正财、偏财）、
-   3 克我（正官、七杀）、4 生我（正印、偏印）。el 和 cat 一样，只是同我这一类含日主自己，是这一行五行的全部分数。
+   cat 是五类各多少分（五行能量），下标是对日主的关系：0 同我（比肩、劫财）、1 我生（食神、伤官）、2 我克（正财、偏财）、
+   3 克我（正官、七杀）、4 生我（正印、偏印），都不算日主自己那一笔（合化以后它在哪一行就从哪一行减）。el 是这五行的全部分数，含日主自己。
    身弱：克泄耗的三类里最重的一类，官杀或食伤最重取印，财最重取比劫；财和另一类一样重时两条规则取的不一样，不定。
    身强：印比比劫重取财，比劫比印重取食伤；一样重时注里没有说，不定。强弱未定（26 到 29 分）时不定。
    取了用神，再照同书「闲神」一节的注分喜神、忌神、仇神、闲神。注里只举了用木：木有余，火喜、金忌、水仇、土闲；木不足，水喜、土忌、金仇、火闲，
@@ -2580,7 +2581,10 @@ function yongPick(tier,cat,el){
   return r;
 }
 function yongOf(dm,ps,hua){
-  const de=gEl(dm), s=(hua?nlScoreHua(ps):nlScore(ps)).sum, el=[0,1,2,3,4].map(k=>s[(de+k)%5]), cat=el.slice(); cat[0]-=5;
+  const de=gEl(dm), sc=hua?nlScoreHua(ps):nlScore(ps), s=sc.sum, el=[0,1,2,3,4].map(k=>s[(de+k)%5]), cat=el.slice();
+  // 不算日主自己那一笔：合化成立时它已经改记到化神那一行，在它实际所在的那一行里减。原来固定从比肩劫财里减 5 分，
+  // 日干化掉的盘会减成负数、多算别的一行（2026-11-17 审阅报告 R1）
+  const self=sc.items.find(x=>x.i===2&&x.j===0); cat[(self.e-de+5)%5]-=self.n;
   return Object.assign(yongPick(qsOf(dm,ps,hua).tier,cat,el),{cat,el});
 }
 const yongNow=()=>memo('yong',()=>yongOf(DM,NATAL,true));
@@ -2975,7 +2979,9 @@ function gjzOf(dm,ps){
   {const o=get('食伤泄秀');Object.assign(o,{tier,st:tier!=='强'?'无':t('食伤').length?'透':c('食伤').length?'藏':'无',sides:[side('帮身'),side('食伤')],pa:t('食伤').concat(c('食伤'))});}
   // 合财合官：和日干相合的那个天干透在月干或时干，紧挨着日干。年干上的隔着月干，页面不算
   {const o=get('合财合官'), h=gHe(dm), near=ps.filter((p,i)=>(i===1||i===3)&&p.g===h).map(p=>({k:p.k,h})), gn=godOf(dm,h);
-    Object.assign(o,{h,gn,near,far:ps[0].g===h,zheng:ps[1].g===h&&ps[0].g===dm,st:near.length?'透':'无',sides:null});}
+    // 争合：月干、时干两个合神一起合日干（「两丁合壬」）；或者年干和日干是同一个字，一起合月干的合神。原来只认后一种（审阅报告 R2）
+    const zheng=near.length===2?'two':ps[1].g===h&&ps[0].g===dm?'year':'';
+    Object.assign(o,{h,gn,near,far:ps[0].g===h,zheng,st:near.length?'透':'无',sides:null});}
   // 财官印全：三样都透出记「透」，三样都有、至少一样透出、其余只在地支本气里记「藏」
   {const o=get('财官印全'), ks=['财','正官','印'];Object.assign(o,{st:ks.every(k=>t(k).length)?'透':ks.every(has)&&ks.some(k=>t(k).length)?'藏':'无',sides:ks.map(side),parts:ks.map(k=>({k,p:t(k).concat(c(k))}))});}
   // 官杀混杂：正官和七杀都透出记「透」，一样透出、另一样只在地支本气里记「藏」
@@ -2987,7 +2993,7 @@ function gjzOf(dm,ps){
   const ext={
     食伤制杀:[['身强（七杀格「身强七煞逢制」）',tier==='强'],['天干不透财（「煞用食制，不要露财透印」）',!t('财').length],['天干不透印（同上）',!t('印').length],['盘里没有财（食神格、伤官格的「无财」）',!has('财')]],
     杀印相生:[['身弱（伤官格「伤官旺、身主弱而透煞印」）',tier==='弱']],
-    伤官配印:[['印透出又有根（「伤官佩印而伤官旺，印有根」）',t('印').length>0&&c('印').length>0],['身不强（败格的条件是「佩印而伤轻身旺」）',tier!=='强']],
+    伤官配印:[['印透出，在地支里有根（「伤官佩印而伤官旺，印有根」；有根照「根和透」一页的认法，藏干都算）',t('印').some(x=>ps.some(p=>gtOf(x.h,p.z)))],['身不强（败格的条件是「佩印而伤轻身旺」）',tier!=='强']],
     羊刃驾杀:[['天干露财或印（「阳刃透官煞而露财印」）',t('财').length+t('印').length>0],['盘里不见伤官（同上「不见伤官」）',!has('伤官')]],
     食伤生财:[['身强（财格「财逢食生而身强带比」）',tier==='强']],
     合财合官:[['没有别的字来争合（「两辛合丙，两丁合壬」一类）',!get('合财合官').zheng]],
@@ -3020,7 +3026,7 @@ function xGjz(n){
   const ge=gjzGe(), inGe=o.ge.filter(g=>ge.includes(g));
   const STS={透:'有，都透在天干上',藏:'有，有一边只在地支的本气里，没有透出来',无:'没有'};
   let now;
-  if(o.n==='合财合官') now=o.near.length?`日干${DMN}和${o.near.map(x=>`${x.k}干${gN(x.h)}`).join('、')}相合，${gN(o.h)}是${DMN}的${o.gn}。`+(o.zheng?`年干也是${DM}，和日干一起合月干的${o.h}，是争合。`:'')
+  if(o.n==='合财合官') now=o.near.length?`日干${DMN}和${o.near.map(x=>`${x.k}干${gN(x.h)}`).join('、')}相合，${gN(o.h)}是${DMN}的${o.gn}。`+(o.zheng==='two'?`月干、时干都是${o.h}，两个${o.h}一起合日干，是争合。`:o.zheng==='year'?`年干也是${DM}，和日干一起合月干的${o.h}，是争合。`:'')
     :`和${DMN}相合的是${gN(o.h)}（${o.gn}），`+(o.far?`它在年干，隔着月干，页面不算日干合它。`:'月干、时干上都没有。');
   else if(o.n==='财官印全'||o.n==='官杀混杂') now=o.parts.map(x=>x.p.length?`${gjzSay(x.k)}在${gjzWhere(x.p)}`:`天干和地支的本气里没有${gjzSay(x.k)}`).join('；')+'。';
   else if(o.n==='羊刃驾杀') now=isYin(DM)?`日主${DMN}是阴干。《子平真诠》说阳刃只有五个阳干有，所以没有这一条。`
@@ -4016,18 +4022,20 @@ function writeLocal(){
   return STORE_OK;
 }
 /* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
-const HOUR_PICK={};
+const HOUR_PICK=Object.create(null);      // 没有原型：编号叫 constructor、toString 的人不会读到继承来的东西（审阅报告 R4）
 /* 从链接打开、还没保存的人：{info, dates}。只有一个，排在最后，不写进 localStorage；点「保存」才存 */
 let TEMP=null;
 /* 人物那一排的先后：拖动调整过的，按 id 记在 localStorage 的 bz-order 里（2026-11-17 用户要的「允许拖动这些标签调整顺序」）。
    不在里面的人（新加的、没排过的）跟在后面，彼此保持原来的先后；来自链接的那一位总在最后 */
 let ORDER=[];
+let BROKEN=[];                     // 存在浏览器里、却排不出盘的人（rebuildPeople 记下），打开页面时提示
 function readOrder(){try{const v=JSON.parse(localStorage.getItem('bz-order')||'[]');ORDER=Array.isArray(v)?v.filter(x=>typeof x==='string'):[];}catch(e){ORDER=[];}}
 function saveOrder(){ORDER=PEOPLE.filter(p=>!p.temp).map(p=>p.id);try{localStorage.setItem('bz-order',JSON.stringify(ORDER));}catch(e){}}
 function rebuildPeople(){
   PEOPLE.length=0;PEOPLE.push(...DATA.people);
   const one=info=>chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);
-  LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  BROKEN=[];
+  LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){BROKEN.push(info.name||info.id);}});      // 排不出盘的不显示，记下来提示
   const at=p=>{const k=ORDER.indexOf(p.id);return k<0?Infinity:k;}, sorted=PEOPLE.map((p,i)=>[p,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(x=>x[0]);
   PEOPLE.length=0;PEOPLE.push(...sorted);
   if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
@@ -4605,6 +4613,7 @@ function shareNow(){
   const q=new URLSearchParams(ok?linkOf(Object.assign({},info,{name:P.name})):'p='+encodeURIComponent(P.id));
   if(ok&&info.nohour) q.set('h',P.shichen);          // 时辰不详的，带上正在看的时辰，对方打开看到的是同一张盘
   q.set('tab',sel.tab.natal+','+sel.tab.pan);q.set('dy',String(sel.dy));q.set('y',String(sel.y));q.set('m',String(sel.m));q.set('d',isoDay(sel.d));
+  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
   return {url:SHARE_BASE+'#'+q.toString(),what:!ok?'这一位在页面里的编号，不含出生信息；只在页面自带这一位时打得开':info.nohour?'出生日期和正在看的时辰':info.shichen?'出生日期和时辰':'出生日期、时间和出生地的经度'};
 }
 function refreshShare(){
@@ -4629,7 +4638,7 @@ function openLink(hash,fallback){
   const s=String(hash||'').replace(/^#/,''); if(!s) return false;
   const q=new URLSearchParams(s), keys=[...q.keys()];
   if(!keys.some(k=>['p','b','bz','n','g','sh','nh','lon'].includes(k))){
-    if(!keys.some(k=>['tab','dy','y','m','d','h'].includes(k))) return false;
+    if(!keys.some(k=>['tab','dy','y','m','d','h','by'].includes(k))) return false;
     if(!P) usePerson(fallback||0);
     if(pickHour(q,sel.p)) usePerson(sel.p);
     applyView(q);return true;
@@ -4659,9 +4668,13 @@ function pickHour(q,i){
 /* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
 function applyView(q){
   (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
+  // by：五行一页、十神一页的数法和选择器小卡的计分模式，照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
+  const by=(q.get('by')||'').split(','); let mapped=false;
+  ['wx','gods','yun'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
+  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
   const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
   const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
-  if(dy===null&&y===null&&m===null&&!d) return;
+  if(dy===null&&y===null&&m===null&&!d){if(mapped) renderDynamic();return;}
   if(dy!==null&&dy<P.dayun.length){sel.dy=dy;const r=P.dayun[dy];sel.y=REAL_Y>=r.y0&&REAL_Y<=r.y1?REAL_Y:r.y0;}
   if(y!==null){const k=P.dayun.findIndex(r=>y>=r.y0&&y<=r.y1);if(k>=0){sel.dy=k;sel.y=y;}}
   if(m!==null&&m<12) sel.m=m;
@@ -4865,13 +4878,14 @@ function importText(text){
     if(src.notes&&typeof src.notes==='object') info.notes=cleanNotes(src.notes,nb);
     const bad=checkInfo(info);
     if(bad){errs.push(`${info.name}：${bad}`);return;}
+    try{chartOf(info.nohour?Object.assign({},info,{shichen:'午'}):info);}catch(e){errs.push(`${info.name}：排不出盘（${e.message}）`);return;}   // 写入以前先试排一遍
     if(nb.n) errs.push(`${info.name}的手写解读里有 ${nb.n} 项格式不对，这几项没有导入`);
     if(DATA.people.some(p=>p.id===info.id)) info.id=newId();      // 和页面自带的人重名的，另起一个编号
     const i=LOCAL.findIndex(o=>o.id===info.id);
     if(i>=0) LOCAL[i]=info; else LOCAL.push(info);                // 以前导入过的，这次顶替掉
     n++;last=info.id;
   });
-  if(n){writeLocal();rebuildPeople();closeForm();usePerson(PEOPLE.findIndex(p=>p.id===last));}
+  if(n){writeLocal();rebuildPeople();closeForm();const k=PEOPLE.findIndex(p=>p.id===last);if(k>=0) usePerson(k);}
   return (n?`导入了 ${n} 个人。`:'没有导入任何人。')+(errs.length?'没导入的：'+errs.join('；'):'')+(n&&!STORE_OK?NO_STORE:'');
 }
 function exportLocal(){
@@ -4904,7 +4918,7 @@ document.addEventListener('click',e=>{
     const [k,v]=b.dataset.map.split(':');
     if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
       if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
-      refreshSheet();}
+      refreshSheet();refreshShare();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
   }
@@ -5040,6 +5054,7 @@ F('file').addEventListener('change',e=>{
   r.readAsText(f);
 });
 readLocal();readOrder();rebuildPeople();
+if(BROKEN.length) say(`浏览器里存的 ${BROKEN.length} 个人排不出盘，没有显示：${BROKEN.map(esc).join('、')}。`);
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);

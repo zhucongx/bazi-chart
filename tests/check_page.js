@@ -382,6 +382,12 @@ console.log('典籍引文');
   // 虚构的盘：庚金的阳刃在酉，七杀丙只在巳的本气里，照《穷通宝鉴》「丙杀藏支，名为羊刃驾杀」记藏着；阴干日主没有阳刃
   eq('格局组合：羊刃驾杀，七杀藏在地支里也算（记藏着）；阴干日主没有这一条', [gjOf(['甲子', '癸酉', '庚辰', '辛巳']).羊刃驾杀.st, gjOf(['甲子', '丁卯', '乙卯', '辛巳']).羊刃驾杀.st, Q('qt_jiasha').includes('阳刃驾杀')], ['藏', '无', true]);
   eq('格局组合：合财合官，辛日丙时是合官；丙在年干、隔着月干不算', [gjOf(['癸卯', '甲寅', '辛卯', '丙申']).合财合官, gjOf(['丙申', '庚寅', '辛卯', '庚寅']).合财合官.st], [{ st: '透', ext: [true], gn: '正官' }, '无']);
+  // 2026-11-17 审阅报告：R1 日干合化以后，取用神时不算日主自己那一笔，要从它改记到的那一行减；R2 月干、时干两个丁一起合壬是争合；O1 印有根照「根和透」的认法
+  const yo = ps => JSON.parse(ev(`JSON.stringify((()=>{const p=${JSON.stringify(ps)}.map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));const y=yongOf(p[2].g,p,true);return {cat:y.cat,yong:y.yong};})())`));
+  eq('用神：日干癸和月干戊化火，日主自己那 5 分改记到火，就从正财、偏财里减：五类是 0、19、16、15、5，食神、伤官最重，取印', yo(['庚午', '戊寅', '癸卯', '己未']), { cat: [0, 19, 16, 15, 5], yong: 4 });
+  const zg = ps => ev(`(()=>{const p=${JSON.stringify(ps)}.map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));return gjzOf(p[2].g,p).list.find(o=>o.n==='合财合官').zheng;})()`);
+  eq('合财合官的争合：月干、时干两个丁合壬算争合，「没有别的字来争合」不合；年干乙和日干乙一起合月干庚也算；只有一对不算', [zg(['己巳', '丁丑', '壬申', '丁未']), gjOf(['己巳', '丁丑', '壬申', '丁未']).合财合官.ext[0], zg(['乙丑', '庚辰', '乙卯', '丙子']), zg(['癸卯', '甲寅', '辛卯', '丙申'])], ['two', false, 'year', '']);
+  eq('伤官配印的「印有根」照「根和透」的认法：己巳、丙子、庚午、丙子里午中有己，算有根；地支里没有一点土的不算', [gjOf(['己巳', '丙子', '庚午', '丙子']).伤官配印.ext[0], gjOf(['己卯', '丙子', '庚子', '丙子']).伤官配印.ext[0]], [true, false]);
   eq('格局组合引的原文里没有富贵、贫贱一类断语（页面拿这张盘去对条件，引了就等于把断语套到盘上）', ev("GJZ.flatMap(o=>o.q).filter(k=>/富贵|贵格|大贵|小贵|贫|贱|夭|寿|祸/.test(Q[k][1]))"), []);
   eq('格局组合：十五个组合，成格九个、败格六个；印禄相随、食伤混杂没有找到原文，不列', [ev('GJZ.length'), ev("GJZ.filter(o=>o.c==='成').length"), ev("GJZ.some(o=>/印禄相随|食伤混杂/.test(o.n))")], [15, 9, false]);
   eq('大运、流年等外来的一柱：只看原局自己的那十七个不会出现，其余四十一个都出现过', ssCheck ? [ev('SS_NAMES').filter(n => !ssCheck.extra.counts[n]).length, ev('SS_NAMES').filter(n => ssCheck.extra.counts[n]).length] : [], [17, 41]);
@@ -629,7 +635,8 @@ people.forEach((id, pi) => {
     const mu = ev('Q.tc_mu[1]'), mus = mu.split('；').map(t => Object.fromEntries([...t.matchAll(/以(.)为(.)神/g)].map(m => [m[2], m[1]])));
     const shenEl = (cat, el) => { const y = JSON.parse(ev(`JSON.stringify(yongPick('弱',${JSON.stringify(cat)},${JSON.stringify(el)}))`)); return Object.fromEntries([['喜', 'xi'], ['忌', 'ji'], ['仇', 'chou'], ['闲', 'xian']].map(([c, f]) => [c, ELN[(1 + y.shen[f]) % 5]])); };
     eq('喜神、忌神、仇神、闲神：日主丁火、用神是印（木）时，有余、不足两种分法和任铁樵注里用木的例子逐个相同', [shenEl([5, 5, 5, 20, 13], [10, 5, 5, 20, 13]), shenEl([5, 5, 5, 20, 12], [10, 5, 5, 20, 12]), mus.length], [mus[0], mus[1], 2]);
-    const elRel = [0, 1, 2, 3, 4].map(k => sum[(de + k) % 5]), catRel = elRel.slice(); catRel[0] -= 5;
+    // 不算日主自己那 5 分：日干合化了，就从它改记到的那一行减（mvG 是「合化」一行给的天干改记，上面照它另算了分数；2026-11-17 审阅报告 R1）
+    const elRel = [0, 1, 2, 3, 4].map(k => sum[(de + k) % 5]), catRel = elRel.slice(); catRel[((mvG[2] !== undefined ? mvG[2] : de) - de + 5) % 5] -= 5;
     let yW = null;
     if (q.tier === '弱') { const m = Math.max(catRel[1], catRel[2], catRel[3]), top = [3, 1, 2].filter(k => catRel[k] === m); yW = top.includes(2) && top.length > 1 ? null : top[0] === 2 ? 0 : 4; }
     else if (q.tier === '强') yW = catRel[4] > catRel[0] ? 2 : catRel[0] > catRel[4] ? 1 : null;
@@ -805,6 +812,8 @@ people.forEach((id, pi) => {
       const pairs={食伤制杀:['食伤','七杀'],杀印相生:['七杀','印'],伤官配印:['印','伤官'],官印相生:['正官','印'],食伤生财:['食伤','财'],比劫制财:['比劫','财'],贪财坏印:['财','印'],伤官见官:['伤官','正官'],枭神夺食:['偏印','食神']};
       return Object.entries(pairs).map(([n,[a,b]])=>[n,tou(a)&&tou(b)?'透':has(a)&&has(b)&&(tou(a)||tou(b))?'藏':'无']);})())`));
     eq('格局组合：九个两边的组合，照「两边都透出记透出，一边透出、一边只在地支本气里记藏着，其余不算」另算一遍，结果相同', st2.map(([n]) => [n, gj.list.find(o => o.n === n).st]), st2);
+    const yc = JSON.parse(ev('JSON.stringify(yongNow().cat)'));
+    ok('用神的五类分数都不是负数，加起来 55（不算日主自己那一笔，合化了也一样）', yc.every(n => n >= 0) && yc.reduce((a, b) => a + b, 0) === 55, yc);
     ok('格局组合：食伤制杀和七杀无制不会同时出现', !(gj.list.find(o => o.n === '食伤制杀').st !== '无' && gj.list.find(o => o.n === '七杀无制').st !== '无'));
     const first = $('gjz').querySelector('th[scope=row] .x') || $('gjz').querySelector('.gjz-no .x');
     click(first);
@@ -1096,6 +1105,12 @@ console.log('添加、编辑、删除、导入');
   checkAll('只知道时辰的人');
   ok(`只知道时辰的人，${checked - kept} 条解释都有内容`, checked > kept && !bad.length, bad.slice(0, 3));
   ok('文件不是 JSON、日期不对时，导入会说明原因', /不是 JSON/.test(ev(`importText('abc')`)) && /没有导入任何人/.test(ev(`importText('[{"name":"坏的","gender":"男","birth":"2001-02-30 10:00","lon":120}]')`)) && ev('PEOPLE.length') === n0 + 3);
+  { // 编号叫 constructor、toString、__proto__ 的人：照样能导入、显示、存下来（审阅报告 R4）
+    const ids = ['constructor', 'toString', '__proto__'];
+    const msg = ev(`importText(${JSON.stringify(JSON.stringify(ids.map(id => ({ id, name: '编号' + id.slice(0, 4), gender: '男', birth: '2000-01-01', nohour: true }))))})`);
+    eq('编号叫 constructor、toString、__proto__ 的人：导入、显示、存在浏览器里都正常', [/导入了 3 个人/.test(msg), ids.map(id => ev(`PEOPLE.some(p=>p.id===${JSON.stringify(id)})`)), ids.map(id => JSON.parse(ev("localStorage.getItem('bz-people')")).some(p => p.id === id))], [true, [true, true, true], [true, true, true]]);
+    ev(`LOCAL=LOCAL.filter(x=>!${JSON.stringify(ids)}.includes(x.id));writeLocal();rebuildPeople();usePerson(0)`);
+  }
   click($('pp-add'));
   fill({ name: '表单选时辰', gender: '女', date: '1993-10-10', time: '', shichen: '辰' });
   submit();
@@ -1280,6 +1295,23 @@ console.log('分享链接');
   ok('分享框开着时换页，链接里的标签跟着变', decodeURIComponent($('share-url').value).includes('tab=gods,'));
   click($('share-x'));
   ok('点「关闭」收起分享框', $('share').hidden);
+  { // 分享链接带上五行、十神两页的数法和选择器小卡的计分模式（by）；打开时照它恢复，旧链接和认不出的值不动（审阅报告 R3）
+    pick(0);
+    const setModes = (wx, gods, yun) => ev(`MAPBY.wx='${wx}';MAPBY.gods='${gods}';MAPBY.yun='${yun}';renderBars();renderWxMap();renderGods();renderGodMap();renderDynamic()`);
+    const modes = () => JSON.parse(ev('JSON.stringify(MAPBY)')), scores = () => [...$('dayun').querySelectorAll('.mb b')].map(txt);
+    const pressed = id => [...$(id).querySelectorAll('[data-map]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.map);
+    setModes('face', 'nl', ev('yongNow().yong===null') ? 'fy' : 'sum');
+    const want = modes(), hash = ev('shareNow().url').split('#')[1], sent = scores();
+    setModes('nl', 'cnt', 'fy');
+    ev(`openLink(${JSON.stringify('#' + hash)})`);
+    eq('分享链接带着三个模式；打开链接照它恢复，按钮选中态和小卡的分数都和发送方一样', [new URLSearchParams(hash).get('by'), modes(), pressed('wx-seg'), pressed('gods-seg'), pressed('sy-lg'), scores()],
+      [`${want.wx},${want.gods},${want.yun}`, want, [`wx:${want.wx}`], [`gods:${want.gods}`], [`yun:${want.yun}`], sent]);
+    const noBy = hash.replace(/(^|&)by=[^&]*/, ''), bad = hash.replace(/by=[^&]*/, 'by=xx%2Cyy%2Czz');
+    setModes('nl', 'cnt', 'fy'); ev(`openLink(${JSON.stringify('#' + noBy)})`); const a = modes();
+    ev(`openLink(${JSON.stringify('#' + bad)})`); const b = modes();
+    eq('没带 by 的旧链接、by 里认不出的值：都保持原来的模式', [a, b], [{ wx: 'nl', gods: 'cnt', yun: 'fy' }, { wx: 'nl', gods: 'cnt', yun: 'fy' }]);
+    setModes('nl', 'cnt', 'fy'); ev("localStorage.setItem('bz-map',JSON.stringify(MAPBY))");
+  }
   click($('h-bz'));
   // 两个时辰不详的链接：前一个点了子时，后一个照样按午时排；分享时带上正在看的时辰，打开照它排；换时辰时选中的年份留着
   ev(`openLink('#n=A&g=m&b=1993-10-10&nh=1')`); click(d.querySelector('#hours [data-hour="子"]'));
