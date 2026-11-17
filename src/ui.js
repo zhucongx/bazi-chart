@@ -376,7 +376,7 @@ function renderYunRead(){
   const x=xiNow(), say=gz=>{
     const g=gz[0], h=HID[gz[1]][0], a=god(g), b=god(h), xp=xiPillar(gz), v=xp.score, B=xp.basis;
     return `天干${g}是${a}，${eff(rel(g))}。地支${gz[1]}的本气${h}是${b}，${eff(rel(h))}。`+(a===b?`${a}的传统读法是${KW[a]}。`:`${a}的传统读法是${KW[a]}；${b}是${KW[b]}。`)
-      +(B.mode==='sum'?`这一柱的 13 分里喜用占 ${xp.parts[0]} 分，用神和喜神占 ${xp.parts[1]} 分，两种相加 ${v} 分。`
+      +(B.mode==='sum'?`这一柱的 13 分里喜用占 ${xp.parts[0]} 分，${B.parts[1].name}占 ${xp.parts[1]} 分，两种相加 ${v} 分。`
         :B.mode==='ys'?`这一柱的 13 分里${B.short}占 ${v} 分。`:x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
   };
   $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
@@ -500,9 +500,10 @@ function renderSy(){
   $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">帮日主<small>${EL[de]}、${EL[se]}${mark([se,de])}</small></th><th scope="col">另外三类<small>${[1,2,3].map(k=>EL[(de+k)%5]).join('、')}${mark([(de+1)%5,(de+2)%5,(de+3)%5])}</small></th><th scope="col">加到这一层<small>帮日主的占</small></th></tr>`;
   const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
-  // 图例：选择器小卡底下的条照哪一种看法（三个按钮，用神不定的盘只能照扶抑），算进去的几种五行；两种相加时两种各列一遍
-  const yb=yunBasis(), seg=`<span class="seg inl" role="group" aria-label="小卡底下的条照哪一种看法">${MAP_OPTS.yun.map(([v,l])=>`<button type="button" data-map="yun:${v}" aria-pressed="${yb.mode===v}"${v!=='fy'&&!yb.canYs?' disabled title="这张盘的用神不定"':''}>${l}</button>`).join('')}</span>`;
-  const chips=w=>w.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join(''), lyXi=xb('x','xi','喜用（扶抑）'), lyYs=xb('x','ys|用神','用神和喜神');
+  // 图例：选择器小卡底下的条照哪一种看法（三个按钮：用神不定的盘不能照用神，两种相加要扶抑的喜用和用神都定了），算进去的几种五行；两种相加时两种各列一遍
+  const off={fy:'',ys:yb0=>yb0.canYs?'':'这张盘的用神不定',sum:yb0=>yb0.canSum?'':x.xi?'这张盘的用神不定':'这张盘扶抑取不了喜用'};
+  const yb=yunBasis(), seg=`<span class="seg inl" role="group" aria-label="小卡底下的条照哪一种看法">${MAP_OPTS.yun.map(([v,l])=>{const t=off[v]&&off[v](yb);return `<button type="button" data-map="yun:${v}" aria-pressed="${yb.mode===v}"${t?` disabled title="${t}"`:''}>${l}</button>`;}).join('')}</span>`;
+  const chips=w=>w.map(e=>`<span class="${ELC[e]}"><i></i>${EL[e]}</span>`).join(''), lyXi=xb('x','xi','喜用（扶抑）'), lyYs=xb('x','ys|用神',yb.mode==='ys'?yb.name:yb.mode==='sum'?yb.parts[1].name:'用神和喜神');
   const grp=h=>`<span class="lg-g">${h}</span>`;      // 名字和它的色块排在一起，窄屏换行时不拆开
   const what=yb.mode==='sum'?grp(lyXi+chips(yb.parts[0].want))+grp('<span>加上</span>'+lyYs+chips(yb.parts[1].want))
     :grp((yb.mode==='ys'?lyYs:x.xi?lyXi:'<span>不定喜用，画帮日主的</span>')+chips(yb.want));
@@ -547,11 +548,13 @@ function renderXi(){
   const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
   $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
       :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
-    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
+    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；下面的用神照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
     // 用神那一排：用神、喜神、忌神、仇神、闲神各一块，字块是五行，底下写是哪两个十神
     +(()=>{const y=yongNow(), de=gEl(DM), blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
-      return '<div class="xi-sep" aria-hidden="true"></div>'+(y.yong===null?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`
-        :YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join(''))+`<p class="sub">${yongSay()}</p>`;})();
+      // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一块里两种五行，分不出喜神、忌神，那几块不画
+      return '<div class="xi-sep" aria-hidden="true"></div>'+(y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
+        :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
+        :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`)+`<p class="sub">${yongSay()}</p>`;})();
 }
 /* 「强弱」一页最上面的四张卡片：得令、得地、得势、得气（数据在 text.js 的 sideFour）。每张是标题（点开看解释）、判语、一排小格子、一句话。
    小格子帮日主的（有根、帮扶、气盛）垫日主那一行五行的淡底，得令一张是旺相休囚死五格，日主落在哪一格就垫哪一格 */

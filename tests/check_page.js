@@ -383,8 +383,10 @@ console.log('典籍引文');
   eq('格局组合：羊刃驾杀，七杀藏在地支里也算（记藏着）；阴干日主没有这一条', [gjOf(['甲子', '癸酉', '庚辰', '辛巳']).羊刃驾杀.st, gjOf(['甲子', '丁卯', '乙卯', '辛巳']).羊刃驾杀.st, Q('qt_jiasha').includes('阳刃驾杀')], ['藏', '无', true]);
   eq('格局组合：合财合官，辛日丙时是合官；丙在年干、隔着月干不算', [gjOf(['癸卯', '甲寅', '辛卯', '丙申']).合财合官, gjOf(['丙申', '庚寅', '辛卯', '庚寅']).合财合官.st], [{ st: '透', ext: [true], gn: '正官' }, '无']);
   // 2026-11-17 审阅报告：R1 日干合化以后，取用神时不算日主自己那一笔，要从它改记到的那一行减；R2 月干、时干两个丁一起合壬是争合；O1 印有根照「根和透」的认法
-  const yo = ps => JSON.parse(ev(`JSON.stringify((()=>{const p=${JSON.stringify(ps)}.map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));const y=yongOf(p[2].g,p,true);return {cat:y.cat,yong:y.yong};})())`));
-  eq('用神：日干癸和月干戊化火，日主自己那 5 分改记到火，就从正财、偏财里减：五类是 0、19、16、15、5，食神、伤官最重，取印', yo(['庚午', '戊寅', '癸卯', '己未']), { cat: [0, 19, 16, 15, 5], yong: 4 });
+  // pick 是不管化气格、只照强弱取的用神（yongPick），R1 查的就是这一步用的五类分数
+  const yo = ps => JSON.parse(ev(`JSON.stringify((()=>{const p=${JSON.stringify(ps)}.map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));const y=yongOf(p[2].g,p,true);return {cat:y.cat,yong:y.yong,pick:yongPick(qsOf(p[2].g,p,true).tier,y.cat,y.el).yong};})())`));
+  // 这副四柱也合化气格条件（戊癸生在寅月化火），2026-11-17 起用神照任铁樵以化神为体：火有余，取泄火的土，也就是正官和七杀
+  eq('用神：日干癸和月干戊化火，日主自己那 5 分改记到火，就从正财、偏财里减：五类是 0、19、16、15、5，照强弱取是食神、伤官最重，取印；合化气格条件，实际照化神取正官和七杀', yo(['庚午', '戊寅', '癸卯', '己未']), { cat: [0, 19, 16, 15, 5], yong: 3, pick: 4 });
   const zg = ps => ev(`(()=>{const p=${JSON.stringify(ps)}.map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));return gjzOf(p[2].g,p).list.find(o=>o.n==='合财合官').zheng;})()`);
   eq('合财合官的争合：月干、时干两个丁合壬算争合，「没有别的字来争合」不合；年干乙和日干乙一起合月干庚也算；只有一对不算', [zg(['己巳', '丁丑', '壬申', '丁未']), gjOf(['己巳', '丁丑', '壬申', '丁未']).合财合官.ext[0], zg(['乙丑', '庚辰', '乙卯', '丙子']), zg(['癸卯', '甲寅', '辛卯', '丙申'])], ['two', false, 'year', '']);
   eq('伤官配印的「印有根」照「根和透」的认法：己巳、丙子、庚午、丙子里午中有己，算有根；地支里没有一点土的不算', [gjOf(['己巳', '丙子', '庚午', '丙子']).伤官配印.ext[0], gjOf(['己卯', '丙子', '庚子', '丙子']).伤官配印.ext[0]], [true, false]);
@@ -631,18 +633,35 @@ people.forEach((id, pi) => {
     // 用神：照任铁樵《滴天髓阐微》「体用」的注取，喜神、忌神、仇神、闲神照「闲神」的注分。先拿编出来的分数核对规则的每一支，再拿这张盘另算一遍
     const yp = (t, cat, el) => JSON.parse(ev(`JSON.stringify(yongPick(${JSON.stringify(t)},${JSON.stringify(cat)},${JSON.stringify(el)}))`)).yong;
     eq('用神：身弱时克泄耗里官杀最重取印，食伤最重取印，财最重取比肩和劫财；财和另一类一样重时不定，官杀和食伤一样重仍取印', [yp('弱', [2, 5, 10, 20, 3], [7, 5, 10, 20, 3]), yp('弱', [2, 20, 10, 5, 3], [7, 20, 10, 5, 3]), yp('弱', [2, 5, 20, 10, 3], [7, 5, 20, 10, 3]), yp('弱', [2, 10, 15, 15, 3], [7, 10, 15, 15, 3]), yp('弱', [2, 15, 10, 15, 3], [7, 15, 10, 15, 3])], [4, 4, 0, null, 4]);
-    eq('用神：身强时印比比肩和劫财重取财，比肩和劫财重取食神和伤官，一样重不定；强弱未定不定', [yp('强', [10, 5, 5, 5, 20], [15, 5, 5, 5, 20]), yp('强', [20, 5, 5, 5, 10], [25, 5, 5, 5, 10]), yp('强', [15, 5, 5, 5, 15], [20, 5, 5, 5, 15]), yp('间', [10, 10, 10, 10, 10], [15, 10, 10, 10, 10])], [2, 1, null, null]);
+    eq('用神：身强时印比比肩和劫财重取财，比肩和劫财重取食神和伤官，一样重不定；强弱未定、克泄耗三类一样重不定', [yp('强', [10, 5, 5, 5, 20], [15, 5, 5, 5, 20]), yp('强', [20, 5, 5, 5, 10], [25, 5, 5, 5, 10]), yp('强', [15, 5, 5, 5, 15], [20, 5, 5, 5, 15]), yp('间', [10, 10, 10, 10, 10], [15, 10, 10, 10, 10])], [2, 1, null, null]);
+    // 强弱未定（26 到 29 分）照注里讲两头都不是的盘那一句（tc_ting）：官杀最重算「两停」取食伤，财最重算「均敌」取印和比劫两类（pair），
+    // 食伤最重、或者最重的有两类不定；身弱、身强的盘不会有 pair（2026-11-17）
+    const ypx = (t, cat, el) => { const r = JSON.parse(ev(`JSON.stringify(yongPick(${JSON.stringify(t)},${JSON.stringify(cat)},${JSON.stringify(el)}))`)); return [r.yong, r.pair, r.shen ? 'shen' : null]; };
+    eq('用神：强弱未定时官杀最重取食神和伤官（分喜神），财最重取印和比劫两类（不分喜神）；食伤最重、官杀和财一样重、官杀和食伤一样重都不定；身弱、身强不取两类',
+      [ypx('间', [5, 6, 2, 24, 18], [10, 6, 2, 24, 18]), ypx('间', [0, 1, 17, 16, 21], [5, 1, 17, 16, 21]), ypx('间', [18, 21, 5, 5, 6], [23, 21, 5, 5, 6]), ypx('间', [6, 10, 11, 11, 17], [11, 10, 11, 11, 17]), ypx('间', [5, 15, 5, 15, 15], [10, 15, 5, 15, 15]), ypx('弱', [2, 5, 20, 10, 3], [7, 5, 20, 10, 3]), ypx('强', [20, 5, 5, 5, 10], [25, 5, 5, 5, 10])],
+      [[1, null, 'shen'], [null, [4, 0], null], [null, null, null], [null, null, null], [null, null, null], [0, null, 'shen'], [1, null, 'shen']]);
+    // 化气格（2026-11-17）：照任铁樵「化之真者，即以化神为体」，化神有余取泄它的一行，不足取生它的和它自己两类。
+    // 《千里命稿》外格篇构成化气格的三个命例，加一副化神正好 12 分的四柱（随机找的，正好 12 分不算超过平均）
+    const yh = ps => JSON.parse(ev(`JSON.stringify((()=>{const p=${JSON.stringify(ps)}.split(' ').map((s,i)=>({k:'年月日时'[i],g:s[0],z:s[1],day:i===2}));const y=yongOf(p[2].g,p,true);return [y.hua,y.yong,y.pair,y.shen&&y.shen.xi];})())`));
+    eq('用神：化气格照任铁樵以化神为体。甲己化土有余取金、喜神土；乙庚化金有余取水、喜神金；丁壬化木有余取火、喜神木；戊癸化火正好 12 分算不足，取木和火两类',
+      ['戊辰 壬戌 甲辰 己巳', '甲申 癸酉 乙丑 庚辰', '乙卯 丁卯 壬午 癸卯', '辛卯 戊戌 癸卯 庚申'].map(yh),
+      [[{ to: 2, you: true }, 3, null, 2], [{ to: 3, you: true }, 4, null, 3], [{ to: 0, you: true }, 2, null, 1], [{ to: 1, you: false }, null, [1, 2], null]]);
     const mu = ev('Q.tc_mu[1]'), mus = mu.split('；').map(t => Object.fromEntries([...t.matchAll(/以(.)为(.)神/g)].map(m => [m[2], m[1]])));
     const shenEl = (cat, el) => { const y = JSON.parse(ev(`JSON.stringify(yongPick('弱',${JSON.stringify(cat)},${JSON.stringify(el)}))`)); return Object.fromEntries([['喜', 'xi'], ['忌', 'ji'], ['仇', 'chou'], ['闲', 'xian']].map(([c, f]) => [c, ELN[(1 + y.shen[f]) % 5]])); };
     eq('喜神、忌神、仇神、闲神：日主丁火、用神是印（木）时，有余、不足两种分法和任铁樵注里用木的例子逐个相同', [shenEl([5, 5, 5, 20, 13], [10, 5, 5, 20, 13]), shenEl([5, 5, 5, 20, 12], [10, 5, 5, 20, 12]), mus.length], [mus[0], mus[1], 2]);
     // 不算日主自己那 5 分：日干合化了，就从它改记到的那一行减（mvG 是「合化」一行给的天干改记，上面照它另算了分数；2026-11-17 审阅报告 R1）
     const elRel = [0, 1, 2, 3, 4].map(k => sum[(de + k) % 5]), catRel = elRel.slice(); catRel[((mvG[2] !== undefined ? mvG[2] : de) - de + 5) % 5] -= 5;
-    let yW = null;
-    if (q.tier === '弱') { const m = Math.max(catRel[1], catRel[2], catRel[3]), top = [3, 1, 2].filter(k => catRel[k] === m); yW = top.includes(2) && top.length > 1 ? null : top[0] === 2 ? 0 : 4; }
+    let yW = null, pW = null;      // pW：强弱未定、财最重时取的印和比劫两类
+    const topOf = () => { const m = Math.max(catRel[1], catRel[2], catRel[3]); return [3, 1, 2].filter(k => catRel[k] === m); };
+    const hg0 = JSON.parse(ev('JSON.stringify({ok:huaNow().gan.ok,to:huaNow().gan.to})'));      // 化气格照「合化」一行的结论，它对着《千里命稿》的命例另有检查
+    if (hg0.ok) { if (sum[hg0.to] > 12) yW = ((hg0.to + 1) % 5 - de + 5) % 5; else pW = [((hg0.to + 4) % 5 - de + 5) % 5, (hg0.to - de + 5) % 5]; }
+    else if (q.tier === '弱') { const top = topOf(); yW = top.includes(2) && top.length > 1 ? null : top[0] === 2 ? 0 : 4; }
     else if (q.tier === '强') yW = catRel[4] > catRel[0] ? 2 : catRel[0] > catRel[4] ? 1 : null;
+    else { const top = topOf(); if (top.length === 1 && top[0] === 3) yW = 1; else if (top.length === 1 && top[0] === 2) pW = [4, 0]; }
     const yOffs = yW === null ? [] : elRel[yW] > 12 ? [0, 1, 3, 4, 2] : [0, 4, 2, 3, 1], CATN = JSON.parse(ev('JSON.stringify(CAT.map(c=>c[0]))'));
     const yBlocks = [...$('xi').querySelectorAll('.qx')].slice(xiWant ? 2 : 1).map(n => [txt(n.querySelector('span')), txt(n.querySelector('b')), n.querySelector('small') ? txt(n.querySelector('small')) : '']);
-    eq('喜忌一页的用神那一排：用神照另算的取，喜神、忌神、仇神、闲神照有余、不足分，字块是五行，底下写着两个十神', [JSON.parse(ev('JSON.stringify(yongNow().yong)')), yBlocks], [yW, yW === null ? [['用神', '不定', '']] : ['用神', '喜神', '忌神', '仇神', '闲神'].map((nm, j) => { const k = (yW + yOffs[j]) % 5; return [nm, ELN[(de + k) % 5], CATN[k]]; })]);
+    eq('喜忌一页的用神那一排：用神照另算的取，喜神、忌神、仇神、闲神照有余、不足分，字块是五行，底下写着两个十神；取了两类时一块里两种五行，没有喜神那几块', [JSON.parse(ev('JSON.stringify([yongNow().yong,yongNow().pair])')), yBlocks],
+      [[yW, pW], pW ? [['用神', pW.map(k => ELN[(de + k) % 5]).join(''), pW.map(k => CATN[k]).join('、')]] : yW === null ? [['用神', '不定', '']] : ['用神', '喜神', '忌神', '仇神', '闲神'].map((nm, j) => { const k = (yW + yOffs[j]) % 5; return [nm, ELN[(de + k) % 5], CATN[k]]; })]);
     const ys0 = [...$('xi').querySelectorAll('[data-x^="ys|"]')].map(b => { click(b); const r = [txt($('sheet-t')).split(' · ')[0], [...$('sheet-b').querySelectorAll('.lb')].map(txt).includes('依据') || yW === null]; ev('closeSheet()'); return r; });
     // 强弱一页最上面的四张卡片：得令照《千里命稿》的月令，得地看四个地支里有没有日主的根，得势数年、月、时三干里帮日主的，得气数年、日、时三支上的气盛。都拿四柱另算一遍
     const qr0 = JSON.parse(ev('JSON.stringify(qrNow())')), sdCard = nm => [...$('sd').querySelectorAll('.sd-c')].find(c => txt(c.querySelector('.sd-h .x')) === nm);
@@ -743,26 +762,37 @@ people.forEach((id, pi) => {
     const pkSh = () => txt($('sheet-t')), pkP = l => { const n = [...$('sheet-b').querySelectorAll('p')].find(p => txt(p.querySelector('.lb')) === l); return n ? txt(n.querySelector('.tx')) : ''; };
     const pkHow = (pkP('怎么分').match(/ (\d+) 分（/g) || []).map(s => parseInt(s, 10)), pkWant = mbWant(ygz);
     eq('点流年小卡底下的条：打开这一柱的明细，选择不变；各笔加起来 13 分，标题和「喜用」里的分数就是条上的数，五行、十神、和原局各有一段', [!$('sheet').hidden, pkSh().startsWith(ygz + '年'), pkSh().endsWith(` ${pkWant.v} 分`), [ev('sel.dy'), ev('sel.y'), ev('sel.m'), ev('sel.d')], pkHow.reduce((a, b) => a + b, 0), pkP(tier === '间' ? '帮日主的' : '喜用').includes(`占 ${pkWant.v} 分`) || (pkWant.v === '0' && pkP(tier === '间' ? '帮日主的' : '喜用').includes('一分也没有')), !!pkP('五行') && !!pkP('十神'), pkP('和原局').includes('这些都不改分数'), yb2.querySelector('.mb').classList.contains('on')], [true, true, true, selBefore, 13, true, true, true, true]);
-    // 明细里「照用神」一行：用神、喜神、忌神、仇神、闲神五项加起来 13 分，「合起来」是用神加喜神；用神不定的盘没有这一行
-    const ysLine = pkP('照用神'), ysN = [...ysLine.matchAll(/(用神|喜神|忌神|仇神|闲神)(.) (\d+) 分/g)].map(m => [m[1], +m[3]]), ysSum = (ysLine.match(/合起来 (\d+) 分/) || [])[1];
-    eq('小卡的明细里「照用神」一行：五项加起来 13 分，用神和喜神合起来的数对得上；用神不定时没有这一行', ev('yongNow().yong===null') ? ysLine : [ysN.map(x => x[0]), ysN.reduce((a, x) => a + x[1], 0), +ysSum === ysN[0][1] + ysN[1][1]], ev('yongNow().yong===null') ? '' : [['用神', '喜神', '忌神', '仇神', '闲神'], 13, true]);
+    // 明细里「照用神」一行：用神、喜神、忌神、仇神、闲神五项加起来 13 分，「合起来」是用神加喜神；用神取了印和比劫两类的，说它们就是帮日主的一组；用神不定的盘没有这一行
+    const ysLine = pkP('照用神'), ysN = [...ysLine.matchAll(/(用神|喜神|忌神|仇神|闲神)(.) (\d+) 分/g)].map(m => [m[1], +m[3]]), ysSum = (ysLine.match(/合起来 (\d+) 分/) || [])[1], yN = JSON.parse(ev('JSON.stringify(yongNow())'));
+    const pairHelpW = !!yN.pair && tier === '间' && yN.pair.includes(4) && yN.pair.includes(0);      // 强弱未定、两类用神正好是印和比劫
+    eq('小卡的明细里「照用神」一行：五项加起来 13 分，用神和喜神合起来的数对得上；用神是两类时列两类、合起来的数对得上，强弱未定而两类正好是印和比劫时说就是帮日主的一组；用神不定时没有这一行',
+      pairHelpW ? ysLine.includes('两类，正好就是上面帮日主的这一组') : yN.pair ? [ysN.map(x => x[0]), +ysSum === ysN[0][1] + ysN[1][1]] : yN.yong === null ? ysLine : [ysN.map(x => x[0]), ysN.reduce((a, x) => a + x[1], 0), +ysSum === ysN[0][1] + ysN[1][1]],
+      pairHelpW ? true : yN.pair ? [['用神', '用神'], true] : yN.yong === null ? '' : [['用神', '喜神', '忌神', '仇神', '闲神'], 13, true]);
     click(yb2.querySelector('.mb'));
     ok('再点一次同一条，明细收起', $('sheet').hidden);
     click(pkRow('liunian').find(b => b.dataset.y === yb2.dataset.y).querySelector('.gz'));
     eq('点小卡上面的干支：换到这一年', ev('sel.y'), +yb2.dataset.y);
     click($('liunian').querySelector(`[data-y="${sy0}"]`)); click($('liuyue').querySelector(`[data-m="${sm0}"]`));
     if ($('liuri').querySelector(`[data-d="${sd0}"]`)) click($('liuri').querySelector(`[data-d="${sd0}"]`));
-    // 选择器图例里的三个按钮：扶抑的喜用（默认）、用神和喜神、两种相加。换成用神，小卡底下的条只算用神和喜神那两行；
-    // 两种相加，条是两种分数的和，满分 26。用神不定的盘，后两个按钮不能点。试完换回扶抑
-    const ysBtn = $('sy-lg').querySelector('[data-map="yun:ys"]'), sumBtn = $('sy-lg').querySelector('[data-map="yun:sum"]'), yN = JSON.parse(ev('JSON.stringify(yongNow())'));
-    if (yN.yong === null) ok('用神不定的盘，「用神和喜神」「两种相加」两个按钮都不能点', ysBtn.disabled && sumBtn.disabled);
-    else {
+    // 选择器图例里的三个按钮：扶抑的喜用（默认）、用神和喜神、两种相加。换成用神，小卡底下的条只算用神和喜神那两行（用神取了印和比劫两类的，算这两类）；
+    // 两种相加，条是两种分数的和，满分 26。用神定了才能照用神，扶抑的喜用和用神都定了才能相加；强弱未定的盘选着相加，照用神画。试完换回扶抑
+    const ysBtn = $('sy-lg').querySelector('[data-map="yun:ys"]'), sumBtn = $('sy-lg').querySelector('[data-map="yun:sum"]'), canYs = yN.yong !== null || !!yN.pair, canSum = canYs && tier !== '间';
+    const pressedYun = () => [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed'));
+    eq('「用神和喜神」用神定了才能点；「两种相加」扶抑的喜用和用神都定了才能点', [ysBtn.disabled, sumBtn.disabled], [!canYs, !canSum]);
+    if (canYs) {
       click(ysBtn);
-      const uW = (de + yN.yong) % 5, sW = (de + yN.shen.xi) % 5, ysWant = gz => { const s2 = pillarSum(gz), v = s2[uW] + s2[sW]; return { v: String(v), seg: [uW, sW].filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), w: `width:${(v / 13 * 100).toFixed(1)}%` }; };
-      eq('按「用神和喜神」：八步大运的条只算用神和喜神那两行，按钮按下，图例换成这两行', [pkRow('dayun').map(mbOf), [...$('sy-lg').querySelectorAll('[data-map]')].map(b => b.getAttribute('aria-pressed')), txt($('sy-lg')).includes('用神和喜神')], [dys.map(([gz]) => ysWant(gz)), ['false', 'true', 'false'], true]);
+      const ysEls = yN.yong !== null ? [(de + yN.yong) % 5, (de + yN.shen.xi) % 5] : yN.pair.map(k => (de + k) % 5), ysName = yN.yong !== null ? '用神和喜神' : '用神';
+      const ysWant = gz => { const s2 = pillarSum(gz), v = ysEls.reduce((a, e) => a + s2[e], 0); return { v: String(v), seg: ysEls.filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), w: `width:${(v / 13 * 100).toFixed(1)}%` }; };
+      eq('按「用神和喜神」：八步大运的条只算用神和喜神那两行（用神是两类时算这两类），按钮按下，图例换成这两行', [pkRow('dayun').map(mbOf), pressedYun(), txt($('sy-lg')).includes(ysName)], [dys.map(([gz]) => ysWant(gz)), ['false', 'true', 'false'], true]);
       click(pkRow('dayun')[0].querySelector('.mb'));
-      eq('照用神时点小卡的条：明细头一段讲用神和喜神，另一段对照扶抑', [txt($('sheet-t')).includes('用神和喜神'), !!pkP('用神和喜神'), !!pkP('照扶抑')], [true, true, true]);
-      ev('closeSheet()'); click($('sy-lg').querySelector('[data-map="yun:sum"]'));
+      eq('照用神时点小卡的条：明细头一段讲用神，另一段对照扶抑', [txt($('sheet-t')).includes(ysName), !!pkP(ysName), !!pkP('照扶抑')], [true, true, true]);
+      ev('closeSheet()');
+      if (!canSum) {      // 强弱未定：扶抑取不了喜用，选着「两种相加」照用神画
+        ev("MAPBY.yun='sum';renderDynamic()");
+        eq('强弱未定的盘选着「两种相加」：照用神画，按下的是「用神和喜神」', [pkRow('dayun').map(mbOf), pressedYun()], [dys.map(([gz]) => ysWant(gz)), ['false', 'true', 'false']]);
+      } else {
+      const [uW, sW] = ysEls;
+      click($('sy-lg').querySelector('[data-map="yun:sum"]'));
       // 两种相加：分数是扶抑的喜用分加上用神和喜神的分（同一种五行两种都算的算两遍），条的满分 26；前一段扶抑、后一段用神和喜神，后一段的第一格前面空一道缝
       const mbCut = b => { const o = mbOf(b), is = [...b.querySelectorAll('.mb-fill i')]; return Object.assign(o, { cut: is.findIndex(i => i.classList.contains('cut')) }); };
       const sumWant = gz => { const s2 = pillarSum(gz), fyS = want.filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), ysS = [uW, sW].filter(e => s2[e]).map(e => [ELCN[e], s2[e]]), a = want.reduce((t, e) => t + s2[e], 0), b = s2[uW] + s2[sW];
@@ -786,6 +816,7 @@ people.forEach((id, pi) => {
         [txt($('rd-tr')).includes(`选中的${dys[sdy][0]}运 ${sw[sdy].v} 分`), txt($('rd-tr')).includes('两种分数加起来'), txt($('note-syfig')).includes('满分 26'), txt($('note-sy')).includes('两种分数相加'), txt($('layers')).includes(`两种相加 ${sw[sdy].v} 分`),
           [txt($('rd-tr')), txt($('note-syfig'))].map(t => t.includes('翻一倍'))],
         [true, true, true, true, true, [same, same]]);
+      }
       click($('sy-lg').querySelector('[data-map="yun:fy"]'));
       eq('按回「扶抑的喜用」：条回到扶抑', pkRow('dayun').map(mbOf), dys.map(([gz]) => mbWant(gz)));
     }
@@ -881,8 +912,8 @@ console.log('几张虚构的盘');
 {
   const keep = ev('sel.p');
   const withChart = (info, f) => { ev(`PEOPLE.push(chartOf(${JSON.stringify(info)}));usePerson(PEOPLE.length-1);`); const r = f(); ev(`PEOPLE.pop();usePerson(${keep});`); return r; };
-  // 强弱计分 26 到 29 分：不定喜用。这一张是 28 分（癸酉 壬戌 己卯 己巳）。页面自带的三位都不在这一段，选择器小卡底下的条画的是帮日主的分，每一柱都照分值另算
-  ev("MAPBY.yun='sum'");      // 选着「两种相加」换到这张盘：用神不定，只能照扶抑画
+  // 强弱计分 26 到 29 分：不定喜用。这一张是 28 分（癸酉 壬戌 己卯 己巳），克泄耗三类里食神和伤官最重，用神也不定。选择器小卡底下的条画的是帮日主的分，每一柱都照分值另算
+  ev("MAPBY.yun='sum'");      // 选着「两种相加」换到这张盘：扶抑和用神都不定，只能照扶抑画
   const r26 = withChart({ id: 't26', name: '二八', gender: '男', birth: '1993-10-25 10:00', lon: 120 }, () => JSON.parse(ev(`JSON.stringify((()=>{const x=xiNow(), de=gEl(DM), help=[de,(de+4)%5];
     const want=gz=>(help.includes(gEl(gz[0]))?5:0)+nlOf(gz[1]).reduce((a,[h,n])=>a+(help.includes(gEl(h))?n:0),0);
     return {help:x.help, xi:x.xi, page:[...document.querySelectorAll('#dayun .mb b')].map(b=>+b.textContent), want:P.dayun.map(d=>want(d.gz)), lg:document.getElementById('sy-lg').textContent,
@@ -890,6 +921,35 @@ console.log('几张虚构的盘');
   ev("MAPBY.yun='fy';renderDynamic()");
   eq('不定喜用的虚构盘（强弱计分 26 到 29 分）：不定喜用；八步大运小卡底下的分数是帮日主的分，和照分值另算的一致；图例写着画帮日主的；选着「两种相加」也照扶抑画，后两个按钮不能点',
     [r26.help >= 26 && r26.help <= 29, r26.xi, r26.page, r26.lg.includes('不定喜用，画帮日主的'), r26.btn], [true, null, r26.want, true, ['true', 'false 不能点', 'false 不能点']]);
+  // 强弱未定的盘照任铁樵「两停」「均敌」那一句取用神（2026-11-17 用户说「照这个补」）。三张虚构的盘：
+  // 甲辰 乙亥 丙子 癸巳，28 分，正官和七杀 24 分最重，取食神和伤官（土），土 6 分不足，喜神是生它的火；
+  // 戊午 辛酉 壬午 丁未，26 分，正财和偏财 17 分最重，取印和比劫两类（金、水），分不出喜神；照用神画的条就是帮日主的分；
+  // 甲戌 己巳 辛亥 己亥，28 分，正财和偏财、正官和七杀都是 11 分，注里没有讲，不定
+  const midOf = info => withChart(info, () => JSON.parse(ev(`JSON.stringify((()=>{const y=yongNow(), at=k=>{MAPBY.yun=k;renderDynamic();return {mode:yunBasis().mode,mb:[...document.querySelectorAll('#dayun .mb b')].map(b=>+b.textContent),
+      btn:[...document.querySelectorAll('#sy-lg [data-map]')].map(b=>b.getAttribute('aria-pressed')+(b.disabled?' 不能点':''))};};
+    const r={pillars:P.pillars.join(' '),help:qsNow().help,yong:y.yong,pair:y.pair,blocks:[...document.querySelectorAll('#xi .qx')].map(n=>n.querySelector('span').textContent+' '+n.querySelector('b').textContent),
+      say:yongSay(),basis:X('ys|用神').p.find(p=>p[0]==='依据')[1],xi:X('ys|喜神').p.find(p=>p[0]==='这张盘')[1],fy:at('fy'),ys:at('ys'),sum:at('sum')};MAPBY.yun='fy';renderDynamic();return r;})())`)));
+  const mT = midOf({ id: 'tmt', name: '两停', gender: '男', birth: '1964-11-23', shichen: '巳' }), mJ = midOf({ id: 'tmj', name: '均敌', gender: '男', birth: '1978-09-17', shichen: '未' }), mB = midOf({ id: 'tmb', name: '并列', gender: '男', birth: '1994-05-25', shichen: '亥' });
+  const ting = ev('Q.tc_ting[1]'), BTN_YS = ['false', 'true', 'false 不能点'];
+  eq('强弱未定、官杀最重（两停）：用神取食神和伤官（土），喜神火、忌神水、仇神木、闲神金；喜忌一页照全称转述，点开的依据里是原文；能照用神画，不能相加，选着相加时照用神画',
+    [mT.pillars, mT.help, mT.yong, mT.pair, mT.blocks, mT.say.includes('日主和正官、七杀势均力敌，用食神和伤官。'), mT.basis.includes(ting), mT.fy.btn, mT.ys.mode, mT.ys.btn, mT.sum.mode, mT.sum.btn, mT.sum.mb.join() === mT.ys.mb.join()],
+    ['甲辰 乙亥 丙子 癸巳', 28, 1, null, ['喜用（扶抑） 不定', '用神 土', '喜神 火', '忌神 水', '仇神 木', '闲神 金'], true, true, ['true', 'false', 'false 不能点'], 'ys', BTN_YS, 'ys', BTN_YS, true]);
+  eq('强弱未定、财最重（均敌）：用神取印和比劫两类（金、水），一块里两种五行；照全称转述那一条；喜神写两类分不出；照用神画的条和帮日主的一样',
+    [mJ.pillars, mJ.help, mJ.yong, mJ.pair, mJ.blocks, mJ.say.includes('日主和正财、偏财势均力敌，用正印、偏印和比肩、劫财。'), mJ.basis.includes(ting), mJ.xi.includes('两类用神分不出来'), mJ.ys.mode, mJ.ys.btn, mJ.ys.mb.join() === mJ.fy.mb.join()],
+    ['戊午 辛酉 壬午 丁未', 26, null, [4, 0], ['喜用（扶抑） 不定', '用神 金水'], true, true, true, 'ys', BTN_YS, true]);
+  eq('强弱未定、财和官杀一样重：用神不定，说注里没有讲；后两个按钮不能点，选着用神、相加都照扶抑画',
+    [mB.pillars, mB.help, mB.yong, mB.pair, mB.blocks, mB.say.includes('一样重，注里没有讲这种情形'), mB.ys.mode, mB.sum.mode, mB.fy.btn],
+    ['甲戌 己巳 辛亥 己亥', 28, null, null, ['喜用（扶抑） 不定', '用神 不定'], true, 'fy', 'fy', ['true', 'false 不能点', 'false 不能点']]);
+  // 化气格照任铁樵以化神为体（2026-11-17）：1988-10-16 巳时是《千里命稿》外格篇甲己化土的那副四柱，土有余，用神金、喜神土；
+  // 2011-10-15 申时戊癸化火，火正好 12 分算不足，用神是木和火两类。两张都身弱，扶抑的喜用照日干取，所以三个按钮都能点
+  const hT = midOf({ id: 'tht', name: '化土', gender: '男', birth: '1988-10-16', shichen: '巳' }), hH = midOf({ id: 'thh', name: '化火', gender: '男', birth: '2011-10-15', shichen: '申' });
+  const tcHua = ev('Q.tc_hua[1]');
+  eq('化气格、化神有余（甲己化土）：用神取土所生的金，喜神土、忌神木、仇神火、闲神水；扶抑的喜用仍照日干取；依据里是任铁樵讲化格的原文；三个按钮都能点',
+    [hT.pillars, hT.yong, hT.pair, hT.blocks, hT.say.includes('化土') && hT.say.includes('算有余'), hT.basis.includes(tcHua), hT.sum.mode, hT.sum.btn],
+    ['戊辰 壬戌 甲辰 己巳', 3, null, ['喜用（扶抑） 水木', '忌 火土金', '用神 金', '喜神 土', '忌神 木', '仇神 火', '闲神 水'], true, true, 'sum', ['false', 'false', 'true']]);
+  eq('化气格、化神不足（戊癸化火，正好 12 分）：用神取生火的木和火自己两类，分不出喜神；正好 12 分写「没有超过」；能相加',
+    [hH.pillars, hH.yong, hH.pair, hH.blocks, hH.say.includes('12 分，没有超过五行平均的 12 分，算不足'), hH.xi.includes('两类用神分不出来'), hH.sum.mode, hH.sum.btn],
+    ['辛卯 戊戌 癸卯 庚申', null, [1, 2], ['喜用（扶抑） 金水', '忌 木火土', '用神 木火'], true, true, 'sum', ['false', 'false', 'true']]);
   // 同一对天干在原局有两处，一处落在日干上：解读里两处分开说，落在日干上的是日主，另一处是比肩
   const rr = withChart({ id: 'trel', name: '两克', gender: '男', birth: '1984-04-24', shichen: '巳' }, () => [ev('P.pillars.join(" ")'), strip(ev('readRel()'))]);
   eq('甲戊相克在年干和月干、年干和日干两处：解读里分开说，一处是七杀克比肩，一处是七杀克日主', [rr[0], rr[1].includes('年干和月干是七杀克比肩'), rr[1].includes('年干和日干是七杀克日主')], ['甲子 戊辰 戊子 丁巳', true, true]);
