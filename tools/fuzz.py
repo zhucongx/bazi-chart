@@ -110,7 +110,9 @@ def main():
             person, facts = gen_data.chart(f'随机人物 {src["id"]}', src, None, nayin_el)
             people.append(person)
             expected[person['id']] = facts
-    near = sum(1 for p in people if p['pillars'][:2] != p['pillarsClock'][:2])
+    # 真太阳时落在交节另一边的：年柱、月柱照出生的那一刻排，整个照真太阳时排会不一样（2026-11-17 以前就是那样排的）
+    near = sum(1 for p in people if p['tst'] < p['prevJie']['at'] or p['tst'] >= p['nextJie']['at'])
+    assert all(p['pillars'][:2] == p['pillarsClock'][:2] for p in people)
     other_hour = sum(1 for p in people if p['pillars'][2:] != p['pillarsClock'][2:])
 
     y0 = min(d['y0'] for p in people for d in p['dayun'])
@@ -132,7 +134,7 @@ def main():
 
     print(f'{len(people)} 个虚构的人（随机种子 {seed}），出生在 {min(p["clock"][0] for p in people)} 到 {max(p["clock"][0] for p in people)} 年。')
     print(f'其中 {sum(1 for p in people if "shichen" in p)} 个只知道时辰，{sum(1 for p in people if p["clock"][0] < 1900)} 个出生在 1900 年以前；'
-          f'{near} 个按真太阳时和按钟表时间排出的年柱或月柱不同，{other_hour} 个日柱或时柱不同。')
+          f'{near} 个真太阳时落在交节的另一边（年柱、月柱照出生的那一刻排），{other_hour} 个按真太阳时和按钟表时间排出的日柱或时柱不同。')
     print(f'页面 tmp/index.html，{len(page.encode("utf-8"))} 字节。开始检查：')
     r = subprocess.run(['node', str(ROOT / 'tests' / 'check_page.js'), '--base', str(TMP), '--quick', '--quiet'], cwd=ROOT)
     sys.exit(r.returncode)

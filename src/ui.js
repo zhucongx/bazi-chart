@@ -5,8 +5,13 @@ const md=(y,s)=>{const [m,d]=s.split('/').map(Number);return new Date(y,m-1,d);}
 const TODAY=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
 /* 今天所在的干支年：过了立春才算新的一年 */
 const REAL_Y=(()=>{const y=now.getFullYear(), lc=jieMD(y)?md(y,jieMD(y)[0]):new Date(y,1,4);return now<lc?y-1:y;})();
-/* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1 */
+/* NOW_DY、NOW_M：今天落在这个人的哪一步大运、哪个月；今天不在他的大运范围里时是 -1。NOW_DY 照交运的那一天算（dyAt），不照整年 */
 let NOW_DY=-1, NOW_M=-1;
+/* 交运的那一天：第 i 步大运从起运日（P.yun.start）往后推 10i 年开始。选择器里的大运和流年按整年排（一步十个流年，从交运那一年排起），
+   交运那一年里交运以前的日子其实还在上一步，或者还没起运。dyAt(t) 给出某一天实际在哪一步：-1 是还没起运，P.dayun.length 是过了页面排的八步。
+   「当前」那枚印和选中日期的说明（text.js 的 dyNote）都照它。2026-11-17 内容审阅 C2：原来「当前」只按年份认大运，选到交运以前的日子也没有说明 */
+const dyStart=i=>Date.UTC(P.yun.start[0]+10*i,P.yun.start[1]-1,P.yun.start[2]);
+function dyAt(t){let k=-1;for(let i=0;i<=P.dayun.length;i++){if(t>=dyStart(i)) k=i;}return k;}
 /* 选中的人、大运、流年、流月、流日，打开的解释，以及两张卡片各自翻到哪一页 */
 const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'bz',pan:'pan'}};     // x 是打开的解释，xn 是点的第几个同名的字
 
@@ -90,12 +95,16 @@ function usePerson(i){
   NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));
   SHENSHA=shenshaOf(P.pillars,DATA.nayin,!!P.gender);
   Y_MIN=P.dayun[0].y0; Y_MAX=P.dayun[P.dayun.length-1].y1;
-  const inRange=REAL_Y>=Y_MIN&&REAL_Y<=Y_MAX;
-  NOW_DY=inRange?P.dayun.findIndex(d=>REAL_Y>=d.y0&&REAL_Y<=d.y1):-1;
+  const inRange=REAL_Y>=Y_MIN&&REAL_Y<=Y_MAX, at=dyAt(TODAY);
+  NOW_DY=at>=0&&at<P.dayun.length?at:-1;
   NOW_M=inRange?currentMonth(REAL_Y):-1;
-  sel.dy=inRange?NOW_DY:0;          // 今天不在这个人的大运范围里（古人，或者还没起运），就从第一步大运看起
+  // 默认选今年所在的那一组（流年那一排里要有今年）。它和「当前」的那一步可能差一步，这时选择器下面有一句说明（dyNote）。
+  // 今天不在这个人的大运范围里（古人，或者还没起运），就从第一步大运看起
+  sel.dy=inRange?P.dayun.findIndex(d=>REAL_Y>=d.y0&&REAL_Y<=d.y1):0;
   sel.y=inRange?REAL_Y:Y_MIN;
   sel.m=NOW_M<0?0:NOW_M; sel.d=TODAY; sel.x=null;
+  // 今天不在大运范围里的人，从起运的那一天看起：起运日落在第一年的哪个流月，就停在那个月的那一天。起运日在那一年立春以前的，照旧停在第一个月
+  if(!inRange){const s0=dyStart(0);for(let m=0;m<12;m++){if(monthDays(Y_MIN,m).includes(s0)){sel.m=m;sel.d=s0;}}}
   $('sheet').hidden=true;
   try{localStorage.setItem('bz-person',P.id);}catch(e){}
   renderPerson();
@@ -602,7 +611,8 @@ function reveal(){
     if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollLeft=l-(box.clientWidth-b.offsetWidth)/2;
   });
 }
-function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();}
+function renderDyNote(){const t=dyNote(), n=$('note-dy'); n.textContent=t; n.hidden=!t;}      // 选中的日子不在选中的那一步大运里时，选择器下面说一句
+function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();}
 
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
