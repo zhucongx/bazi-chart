@@ -117,7 +117,7 @@ function refreshSheet(){
 /* ---------- 标签栏 ----------
    两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、喜忌，大运流年是四柱细盘、干支关系、根和透、计分。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
-const TABS={natal:['bz','tk','wx','qr','gods','ys'],pan:['pan','rel','gt','sy']};      // 六亲宫位不在读盘的那条线上，是页面最下面单独的一张卡片（#card-lq），不在标签里
+const TABS={natal:['bz','tk','wx','qr','gods','gj','ys'],pan:['pan','rel','gt','sy']};      // 六亲宫位不在读盘的那条线上，是页面最下面单独的一张卡片（#card-lq），不在标签里
 function setTab(card,id,focus){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   sel.tab[card]=id;
@@ -184,10 +184,10 @@ function renderPerson(){
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
-  ['bz','pan','yun','rel','rel2','wx','tk','qr','gods','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
+  ['bz','pan','yun','rel','rel2','wx','tk','qr','gods','gj','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
   $('note-yun').textContent=noteYun();
   $('note-wx').textContent=noteWx();
-  // 日主一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「强弱」「十神」两页的结论
+  // 日主一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「强弱」「格局」两页的结论
   const kv=kvRows(), quad=quadItems(), part={kv:[],'kv-qr':[],'kv-gj':[],kv2:[]};
   let at='kv';
   kv.forEach(r=>{at=KV_FROM[r.k]||at;if(!KV_ELSEWHERE.includes(r.k)) part[at].push(r);});
@@ -483,7 +483,7 @@ function renderSy(){
   $('note-syfig').textContent=noteSyFig(); $('note-sy').textContent=noteSy();      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }
-/* 十神一页最下面的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
+/* 格局一页的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
    两边的分数和一条分段的条、《子平真诠》在哪几格下面讲（这张盘的格加粗）；没有的并成一行，名字照样能点开。最后一行指向强弱一页的从格 */
 function renderGjz(){
   const r=gjzNow(), ge=gjzGe();
