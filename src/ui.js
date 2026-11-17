@@ -147,9 +147,9 @@ function refreshSheet(){
   if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
 }
 /* ---------- 标签栏 ----------
-   两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、喜忌，大运流年是四柱细盘、干支关系、根和透、计分。
+   两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、格局、喜忌、六亲，大运流年是四柱细盘、干支关系、根和透、计分。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
-const TABS={natal:['bz','tk','wx','qr','gods','gj','ys'],pan:['pan','rel','gt','sy']};      // 六亲宫位不在读盘的那条线上，是页面最下面单独的一张卡片（#card-lq），不在标签里
+const TABS={natal:['bz','tk','wx','qr','gods','gj','ys','lq'],pan:['pan','rel','gt','sy']};      // 六亲宫位（lq）是原局的最后一页：它不在强弱、格局、喜忌那条读盘的线上，所以排在喜忌后面。原来是页面最下面单独的一张卡片，2026-11-18 用户问能不能放到上面，挪进了标签栏
 function setTab(card,id,focus){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   sel.tab[card]=id;
@@ -215,7 +215,7 @@ function renderPerson(){
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
-  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span><span class="${gCls(p.g)}${p.day?' dm':''}">${p.g}</span><span class="${zCls(p.z)}">${p.z}</span></span></span>`).join('');
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span class="cx" data-x="gz|${p.k}" role="button" tabindex="0"><span class="${gCls(p.g)}${p.day?' dm':' gd'}"${p.day?'':` data-g="${p.k}干"`}>${p.g}</span><span class="${zCls(p.z)} gd" data-g="${p.k}支">${p.z}</span></span></span>`).join('');      // 每个字上面一个小字，写它的位置：年干、年支……日干那里是「日主」。都由样式生成，不占文字内容。2026-11-18 用户说「只标记了日主，别的也写一下吧」；我先标成了十神，用户说「不是标记十神吧，表日干日支之类的」
   const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
@@ -228,14 +228,14 @@ function renderPerson(){
   let at='kv';
   kv.forEach(r=>{at=KV_FROM[r.k]||at;if(!KV_ELSEWHERE.includes(r.k)) part[at].push(r);});
   const dl=rows=>rows.length?`<dl class="kv">${rows.map(r=>`<dt>${xb('x',r.x||'kv|'+r.k,r.k)}</dt><dd>${r.dd}</dd>`).join('')}</dl>`:'';
-  $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${['t-tk','q-yy','q-ga','q-ge'][i]}"/></svg>${xb('x',r.x,r.k)}</span><b>${r.big}</b><small>${r.sub}</small></div>`).join('');
+  $('quad').innerHTML=quad.map((r,i)=>`<div class="qd"><span class="qd-k"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${['t-tk','q-yy','q-ga','q-ge'][i]}"/></svg>${xb('x',r.x,r.k)}</span>${r.lines?`<b>${r.big}</b>`:`<b class="cx" data-x="${r.x}" role="button" tabindex="0">${r.big}</b>`}<small>${r.sub}</small></div>`).join('');      // 大字也能点（2026-11-18 用户说「这俩也不能点啊」）；旺衰参考是两行，各点各的
   Object.keys(part).forEach(id=>{$(id).innerHTML=dl(part[id]);});
   $('note-qr').textContent=noteQr();
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -271,10 +271,10 @@ function fillCircle(id,x,y,r,frac){
 }
 /* 两张生克图的圈照什么数：图上方三个按钮，记在 MAPBY 里，也存进浏览器（bz-map），读写都包在 try/catch 里。
    五行图默认五行能量；十神图默认含藏干数，和十神表的个数一样。2026-11-15 用户要的：照五行一页三种数法的样子，给图加几个按钮换着看 */
-const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神'],['sum','两种相加']]};
-const MAPBY={wx:'nl',gods:'cnt',yun:'fy'};      // yun：选择器小卡底下的条照哪一种看法（text.js 的 yunBasis）
+const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神'],['sum','两种相加']],gj:[['gjb','成败救应'],['gjz','格局组合']]};
+const MAPBY={wx:'nl',gods:'cnt',yun:'fy',gj:'gjb'};      // yun：选择器小卡底下的条照哪一种看法（text.js 的 yunBasis）
 try{const m=JSON.parse(localStorage.getItem('bz-map')||'{}');Object.keys(MAPBY).forEach(k=>{if(MAP_OPTS[k].some(o=>o[0]===m[k])) MAPBY[k]=m[k];});}catch(e){}
-const mapSeg=(k,sub)=>`<div class="seg" role="group" aria-label="圈照什么数">${MAP_OPTS[k].map(([v,l])=>`<button type="button" data-map="${k}:${v}" aria-pressed="${MAPBY[k]===v}">${l}</button>`).join('')}</div><p class="seg-s">${sub}</p>`;
+const mapSeg=(k,sub,label)=>`<div class="seg" role="group" aria-label="${label||'圈照什么数'}">${MAP_OPTS[k].map(([v,l])=>`<button type="button" data-map="${k}:${v}" aria-pressed="${MAPBY[k]===v}">${l}</button>`).join('')}</div><p class="seg-s">${sub}</p>`;
 /* 五行一页的生克图：只画五行。火在最上面，顺时针是相生的次序。圈填多少照选中的数法（五行个数、含藏干数、五行能量），最多的一行填满；圈旁边写数。
    上半圈三个圈的字写在圈的上方，下面两个写在圈的下方，免得压在线上。日主所属的一行圈加粗。点圈打开的解释跟着数法：五行能量是 nl|，含藏干数是 wx|，五行个数是 wxf| */
 function renderWxMap(){
@@ -388,7 +388,7 @@ function renderYunRead(){
       +(B.mode==='sum'?`这一柱的 13 分里喜用占 ${xp.parts[0]} 分，${B.parts[1].name}占 ${xp.parts[1]} 分，两种相加 ${v} 分。`
         :B.mode==='ys'?`这一柱的 13 分里${B.short}占 ${v} 分。`:x.xi?`这一柱的 13 分里喜用占 ${v} 分。`:`这一柱的 13 分里帮日主的${HELP}占 ${v} 分。`);
   };
-  $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b>${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
+  $('layers').innerHTML=rows.map(r=>`<div><dt>${r[0]}<b class="cx" data-x="gz|${r[0]}" role="button" tabindex="0">${gzSpan(r[1])}</b><small>${r[2]}</small></dt><dd>${say(r[1])}</dd></div>`).join('');
 }
 function renderRelations(){
   const d=P.dayun[sel.dy], ln=yearGZ(sel.y), ly=monthGZ(sel.y,sel.m), lr=dayGZ(sel.d);
@@ -446,10 +446,11 @@ function renderLinks(all){
     return `<span class="lk${tone}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
       +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}" data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
       +'</span><span class="lk-l"></span>'
-      +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)}" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';
+      +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)} cx" data-x="${isG?'g':'z'}|${cs[i].k}|${isG?cs[i].g:cs[i].z}" role="button" tabindex="0" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';      // 线两头圈出来的字和中间那两行的字是同一条解释
   };
   // 相邻两个字之间的生克：a、b 是五行的序号。横的跨两列，竖的在一列里
-  const sk=(a,b,cls,style)=>{const [k,dir]=skOf(a,b);return `<span class="${cls} ${k==='生'?'sheng':k==='克'?'ke':'tong'}${dir<0?' rev':''}" style="${style}"><b>${k}</b></span>`;};
+  // 小圈能点：左右相邻的两个字是 sk|（生、克或者同类），一柱里上下的干和支是这一柱合起来的解释 gz|。2026-11-18 用户说这些「还是不能点」
+  const sk=(a,b,cls,style,key)=>{const [k,dir]=skOf(a,b);return `<span class="${cls} ${k==='生'?'sheng':k==='克'?'ke':'tong'}${dir<0?' rev':''}" style="${style}"><b class="cx" data-x="${key}" role="button" tabindex="0">${k}</b></span>`;};
   const dy=P.dayun[sel.dy], sub=[mdText(sel.d),jieMD(sel.y)[sel.m]+' 起',sel.y+' 年',dy.y0+'–'+dy.y1].concat(LK_GW);
   let mid='';
   cs.forEach((c,i)=>{
@@ -457,12 +458,12 @@ function renderLinks(all){
     mid+=`<span class="lk-h" style="${col};grid-row:${R+1}">${c.dyn?c.k:c.k+'柱'}<small>${sub[i]}</small></span>`
       +`<span class="lk-g" style="${col};grid-row:${R+2}">${c.day?'日主':god(c.g)}</span>`
       +`<span class="lk-cell" style="${col};grid-row:${R+3}">${xb('x lk-c '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}</span>`
-      +sk(gEl(c.g),zEl(c.z),'sk-y',`${col};grid-row:${R+4}`)
+      +sk(gEl(c.g),zEl(c.z),'sk-y',`${col};grid-row:${R+4}`,`gz|${c.k}`)
       +`<span class="lk-cell" style="${col};grid-row:${R+5}">${xb('x lk-c '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`
       +`<span class="lk-g" style="${col};grid-row:${R+6}">${godZ(c.z)}</span>`;
     if(i!==DYN-1&&i<cs.length-1){            // 大运和年柱之间不连：前四列是一串，原局是一串
       const n=cs[i+1], span=`grid-column:${i+2}/${i+4}`;
-      mid+=sk(gEl(c.g),gEl(n.g),'sk-x',`${span};grid-row:${R+3}`)+sk(zEl(c.z),zEl(n.z),'sk-x',`${span};grid-row:${R+5}`);
+      mid+=sk(gEl(c.g),gEl(n.g),'sk-x',`${span};grid-row:${R+3}`,`sk|${c.k}|g|${n.k}|g`)+sk(zEl(c.z),zEl(n.z),'sk-x',`${span};grid-row:${R+5}`,`sk|${c.k}|z|${n.k}|z`);
     }
   });
   $('lkmap').innerHTML=
@@ -487,13 +488,13 @@ function renderGT(){
       return `<td class="${cc(c,i)}">${t?xb(`gt-c${t.ben?' ben':''}${t.tou?' tou':''}`,`gt|${r.k}|${c.k}`,`<i class="${gCls(t.h)}">${t.h}</i>${t.ben||t.tou?`<small>${[t.ben?'本气':'',t.tou?'透':''].filter(Boolean).join('<br>')}</small>`:''}`):''}</td>`;}).join('')+'</tr>').join('');
   $('gtmap').innerHTML=`<table class="gt"><thead>${head}</thead><tbody>${body}</tbody></table>`;
 }
-/* 宫位表（最下面的六亲宫位卡片）：一列一柱（gwCols），八行：配谁、干支、十神、配的亲属、和别的柱、十二长生、空亡、五行能量。只列事实 */
+/* 宫位表（原局最后一页「六亲」的下半）：一列一柱（gwCols），八行：配谁、干支、十神、配的亲属、和别的柱、十二长生、空亡、五行能量。只列事实 */
 function renderGw(){
   const cs=gwCols(), row=(label,fn)=>`<tr><th scope="row">${label}</th>${cs.map(c=>`<td>${fn(c)}</td>`).join('')}</tr>`;
   const tg=gd=>gd==='日主'?gd:xb('x','tg|'+gd,gd), five=s=>[0,1,2,3,4].filter(e=>s[e]).map(e=>`${EL[e]} ${s[e]} 分`).join('、');
   $('gwmap').innerHTML=`<table class="gods gw"><thead><tr><th></th>${cs.map(c=>`<th scope="col">${xb('x','col|'+c.k,c.k+'柱')}</th>`).join('')}</tr></thead><tbody>`
     +row('配谁',c=>c.who)
-    +row('干支',c=>`<span class="gz">${xb('x '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}${xb('x '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`)
+    +row('干支',c=>`<span class="gz">${xb('x','gz|'+c.k,gzSpan(c.g+c.z))}</span>`)      // 干支成对出现的地方，点开是这一柱合起来的解释（gz|），不拆成天干、地支两条。2026-11-18 用户要的
     +row('十神',c=>`天干${c.g}：${tg(c.god)}<br>地支${c.z}里：${c.hid.map(([h,gd])=>`${h} ${tg(gd)}`).join('、')}`)
     +row('配的亲属',c=>c.kin.length?c.kin.map(r=>`${r.who}看${tg(r.god)}：${r.at.length?'在这一柱，'+r.at.join('、'):'不在这一柱'}`).join('<br>'):'六亲表里没有配祖上的十神')
     +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
@@ -522,10 +523,27 @@ function renderSy(){
 }
 /* 格局一页的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
    两边的分数和一条分段的条、《子平真诠》在哪几格下面讲（这张盘的格加粗）；没有的并成一行，名字照样能点开。最后一行指向强弱一页的从格 */
+/* 喜忌一页「调候的情形」：《穷通宝鉴》这个月开头一句后面分的各种情形，一种一枚可以点的小签，合的排在前面；点开是解释 */
+function renderThc(){
+  const t=thNow();
+  const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${o.ok?'合':'不合'}</small></button>`;
+  const row=(title,xs)=>xs.length?`<div class="tgrow"><h4>${title}</h4><div class="rels">${xs.map(tag).join('')}</div></div>`:'';
+  $('thc').innerHTML=row('这张盘合的',t.cases.filter(o=>o.ok))+row('没有合的',t.cases.filter(o=>!o.ok));
+  $('thc-say').innerHTML=thcSay();
+  $('note-thc').textContent=noteThc();
+}
+/* 格局一页的两张表一次只显示一张：上面两个小标签「成败救应」「格局组合」，点哪个看哪个。
+   2026-11-18 用户说两张表连着排太长，「做成可以点的小标签」，意思是标签页：「一个写这个一个写那个」。
+   我先做成了一枚枚可以点的小签，用户说理解错了，改回表格加标签。选的是哪一张记在 MAPBY.gj 里，和别的几组按钮一样存进浏览器 */
+function renderGjSeg(){
+  const by=MAPBY.gj;
+  $('gj-seg').innerHTML=mapSeg('gj',by==='gjb'?'照这张盘归的格，逐条核对《子平真诠》「论用神成败救应」':'常说的十几个组合，不分格，照书里的原文逐条核对','格局一页看哪一张表');
+  $('gjb-block').hidden=by!=='gjb'; $('gjz-block').hidden=by!=='gjz';
+}
 function renderGjz(){
   const r=gjzNow(), ge=gjzGe();
   const bar=o=>o.sides?`<span class="gjz-sc"><span class="gjz-bar">${o.sides.map(x=>`<i class="${ELC[x.e]}" style="flex:${x.n}"></i>`).join('')}</span><span class="gjz-n">${o.sides.map(x=>`${x.say} ${x.n}`).join(' · ')}</span></span>`:'<span class="gjz-n">不比分数</span>';
-  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.gl}</small></th><td><span class="gjz-st${o.st==='透'?' t':''}">${o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着'}</span><span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
+  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.hua}</small></th><td><span class="gjz-st${o.st==='透'?' t':''}">${o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着'}</span><span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
     +`<td class="gjz-ge">${o.ge.length?o.ge.map(g=>ge.includes(g)?`<b>${g}</b>`:g).join('、'):'不分格局'}</td></tr>`;
   const grp=(c,title)=>{const yes=r.list.filter(o=>o.c===c&&o.st!=='无'), no=r.list.filter(o=>o.c===c&&o.st==='无');
     return `<tr class="gjz-h"><th colspan="4" scope="colgroup">${title}</th></tr>`+yes.map(row).join('')+(no.length?`<tr class="gjz-no"><td colspan="4">这张盘没有：${no.map(o=>xb('x','gjz|'+o.n,o.n)).join('、')}</td></tr>`:'');};
@@ -533,11 +551,11 @@ function renderGjz(){
     +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
   $('note-gjz').textContent=noteGjz();
 }
-/* 格局一页中间的成败救应表：照这张盘归的格（一个或两个），把「论用神成败救应」的各条按成、败、带忌、救应分四段列出来。
+/* 格局一页的成败救应表（标签「成败救应」下面）：照这张盘归的格（一个或两个），把「论用神成败救应」的各条按成、败、带忌、救应分四段列出来。
    每一行：书里的话（点开是解释）和一句白话；合、不合或者定不了；几项条件，没有合的那一项后面标出来。表上面一句话是四类各合几条和归纳 */
 function renderGjb(){
   const r=gjbNow();
-  const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${o.w}</small></th>`
+  const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${GJB_HW[o.id]}</small></th>`
     +`<td><span class="gjz-st${o.ok===true?' t':''}">${o.ok===null?'定不了':o.ok?'合':'不合'}</span><span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
@@ -553,43 +571,45 @@ function renderQs(){
     +`<div class="qg-bar"><span class="qg-fill" style="width:${pos(r.help)}">${fill}</span><i class="qg-tk" style="left:${pos(25)}"></i><i class="qg-tk" style="left:${pos(30)}"></i></div>`
     +`<div class="qg-ax"><span style="left:0">0</span><span style="left:${pos(25)}">25</span><span style="left:${pos(30)}">30</span><span style="left:100%">${W}</span></div>`
     +`<div class="qg-zone" style="grid-template-columns:25fr 5fr ${W-30}fr"><span>身弱</span><span></span><span>身强</span></div></div>`;
-  const tile=(k,v,sub)=>`<div class="qt"><span>${k}</span><b>${v} 分</b><small>${sub}</small></div>`;
-  const els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
-  $('qs').innerHTML=`<div class="qs-dm"><span>日主</span><b class="${gCls(DM)}">${DM}</b><small>${yy(DM)}${EL[de]}</small></div>`
+  const tile=(k,v,sub,key)=>`<div class="qt cx" data-x="qsp|${key}" role="button" tabindex="0"><span>${k}</span><b>${v} 分</b><small>${sub}</small></div>`;      // 四块都能点，打开这一块的分数是哪几笔
+  $('qs').innerHTML=`<div class="qs-dm"><span>日主</span><b class="${gCls(DM)} cx" data-x="kv|日主" role="button" tabindex="0">${DM}</b><small>${yy(DM)}${EL[de]}</small></div>`
     +`<div class="qs-main">`
     +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱居中'})[r.tier]}</b><span>${HELP} ${r.help} 分，满分 ${W} 分</span></div>`
     +gauge
-    +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`+(pt.meFrom!==undefined?`，合化改记${EL[(nlNow().items.find(x=>x.i===2&&x.j===0)||{}).e]}`:''))}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
-    +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
+    +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`+(pt.meFrom!==undefined?`，合化改记${EL[(nlNow().items.find(x=>x.i===2&&x.j===0)||{}).e]}`:''),'self')}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`,'yue')}${tile('另外三个地支',pt.zhi,'年支、日支、时支','zhi')}${tile('三个天干',pt.gan,'年干、月干、时干','gan')}</div>`
+    +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li><span class="cx" data-x="${it.pos==='干'?'g':'h'}|${it.k}|${it.ch}" role="button" tabindex="0">${qsSay(it)}</span></li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
     +`</div>`;
 }
 /* 喜忌一页最上面：扶抑取的喜用和忌，照「强弱」一页的强弱计分 */
 function renderXi(){
   // 两套取法各一块，各有标题、结果和一句说明：左边（手机上在上面）是扶抑的喜用和忌，右边是用神和喜神、忌神、仇神、闲神。
+  // 左边两个小标题是「喜用」和「忌」：原来是「喜用（扶抑）」和「忌」，用户问「这俩标签的词并列吗」，括号里的说明挪到了这一块的标题上
   // 原来两排放在一个框里、中间一道虚线，排版审阅说容易读成同一套判断（2026-11-18）
-  const x=xiNow(), y=yongNow(), de=gEl(DM), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
-  const fy=x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
-    :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`;
-  const fySub=`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照「用神」那一块${yongNow().pair?'取，其余三行算忌':'的用神和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；「用神」那一块照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`;
+  const x=xiNow(), y=yongNow(), de=gEl(DM), els=a=>a.map(e=>`<span class="${ELC[e]} cx" data-x="xe|${e}" role="button" tabindex="0">${ic(e)}${EL[e]}</span>`).join('');      // 字块能点：这一行五行在两套取法里各是什么（xe|）
+  const fy=x.xi?`<div class="qx"><span>${xb('x','xi','喜用')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
+    :`<div class="qx"><span>${xb('x','xi','喜用')}</span><b class="no">不定</b></div>`;
+  const fySub=`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照「用神」那一块${yongNow().pair?'取，其余三行算忌':'的用神和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；「用神」那一块照任铁樵以化神为体。':''}点「喜用」看依据和别家的取法。</p>`;
   // 用神那一块：用神、喜神、忌神、仇神、闲神各一格，字块是五行，底下写是哪两个十神。
   // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一格里两种五行，分不出喜神、忌神，那几格不画
   const blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
   const ys=y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
     :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
     :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`;
-  $('xi').innerHTML=`<div class="xi-g"><h4>扶抑的喜用<small>照强弱计分：身弱扶它，身强抑它</small></h4><div class="xi-r">${fy}</div>${fySub}</div>`
+  $('xi').innerHTML=`<div class="xi-g"><h4>扶抑的喜用和忌<small>照强弱计分：身弱扶它，身强抑它</small></h4><div class="xi-r">${fy}</div>${fySub}</div>`
     +`<div class="xi-g"><h4>用神<small>照任铁樵《滴天髓阐微》的注，再分出喜神、忌神、仇神、闲神</small></h4><div class="xi-r">${ys}</div><p class="sub">${yongSay()}</p></div>`;
 }
 /* 「强弱」一页最上面的四张卡片：得令、得地、得势、得气（数据在 text.js 的 sideFour）。每张是标题（点开看解释）、判语、一排小格子、一句话。
    小格子帮日主的（有根、帮扶、气盛）垫日主那一行五行的淡底，得令一张是旺相休囚死五格，日主落在哪一格就垫哪一格 */
 function renderSd(){
   const f=sideFour(), r=f.r, de=gEl(DM), me=ELC[de], ST=['旺','相','休','囚','死'];
-  const tile=(top,ch,cls,sub,on)=>`<span class="sd-t${on?' on '+me:''}"><small>${top}</small><b class="${cls}">${ch}</b><em>${sub}</em></span>`;
+  // 小格子都能点：得令的五格是月令状态（zt|），得地是那个地支（z|），得势是那个天干（g|），得气是日主在那一支上的十二长生（st|）。
+  // 2026-11-18 用户问「这些为什么不能点」。帮日主的格子垫淡底，样式名叫 hit；on 留给「解释正开着」的标记
+  const tile=(top,ch,cls,sub,on,key)=>`<span class="sd-t${on?' hit '+me:''}" data-x="${key}" role="button" tabindex="0"><small>${top}</small><b class="${cls}">${ch}</b><em>${sub}</em></span>`;
   const card=(nm,o,body)=>`<div class="sd-c${o.ok?' ok':''}"><div class="sd-h">${xb('x','sd|'+nm,nm)}<span class="sd-v">${o.v}</span></div><div class="sd-b">${body}</div><p class="sd-s">${sdSay(nm)}</p></div>`;
-  $('sd').innerHTML=card('得令',f.ling,`<span class="sd-st">${ST.map(s=>`<i class="${s===r.st?'on '+me:''}">${s}</i>`).join('')}</span>`)
-    +card('得地',f.di,f.di.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.root?'根 '+x.root:x.seal?'印 '+x.seal:'·',!!x.root)).join(''))
-    +card('得势',f.shi,r.gan.map(x=>tile(x.k+'干',x.g,gCls(x.g),god(x.g),x.r===0||x.r===4)).join(''))
-    +card('得气',f.qi,r.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.s,STAGES.indexOf(x.s)<5)).join(''));
+  $('sd').innerHTML=card('得令',f.ling,`<span class="sd-st">${ST.map(s=>`<i class="${s===r.st?'hit '+me:''}" data-x="zt|${s}" role="button" tabindex="0">${s}</i>`).join('')}</span>`)
+    +card('得地',f.di,f.di.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.root?'根 '+x.root:x.seal?'印 '+x.seal:'·',!!x.root,`z|${x.k}|${x.z}`)).join(''))
+    +card('得势',f.shi,r.gan.map(x=>tile(x.k+'干',x.g,gCls(x.g),god(x.g),x.r===0||x.r===4,`g|${x.k}|${x.g}`)).join(''))
+    +card('得气',f.qi,r.zhi.map(x=>tile(x.k+'支',x.z,zCls(x.z),x.s,STAGES.indexOf(x.s)<5,`st|${x.k}`)).join(''));
 }
 function renderBars(){
   // 五行一页的表：一行一种五行，数法照表上面的按钮（MAPBY.wx），和下面的五行生克图相同。名字点开的解释跟着数法：五行能量是 nl|，含藏干数是 wx|，五行个数是 wxf|
@@ -598,7 +618,7 @@ function renderBars(){
   $('wx-seg').innerHTML=mapSeg('wx',(by==='nl'?'五行能量：藏干分主次，月支加倍，一共 60 分':by==='cnt'?`含藏干数：四个天干加${cn(natalHidden().length)}个藏干`:'五行个数：只数盘面的八个字')+'。下面的表和五行生克图都照它');
   $('wxt-h').textContent=by==='nl'?'分数':'个数';
   $('wxt').innerHTML=[0,1,2,3,4].map(i=>{const k=(i-de+5)%5;
-    return `<tr><td class="${ELC[i]}">${xb('x',key(i),`<span class="el">${ic(i)}${EL[i]}</span>`)}</td><td>${CAT[k][1]}<span class="gp">${xb('x','grp|'+k,GRP[k])}</span></td>`
+    return `<tr><td class="${ELC[i]}">${xb('x',key(i),`<span class="el">${ic(i)}${EL[i]}</span>`)}</td><td>${CAT[k][1]}<span class="gp">${xb('x','grp|'+k,GRP[k])}</span><small class="mn">${GOD_MEAN[k]}</small></td>`
       +`<td class="${ELC[i]}"><span class="wn"><b>${v[i]} ${u}</b><span class="track${by==='nl'?' avg':''}"${by==='nl'?` style="--avg:${(tot/5/mx*100).toFixed(2)}%"`:''}><span class="fill" style="width:${Math.round(v[i]/mx*100)}%"></span></span></span></td>`
       +`<td>${pct(v[i],tot)}</td><td><span class="st">${wxState(i)}</span></td><td class="wh">${wxWhere(i,by)}</td></tr>`;}).join('');
   $('note-nl').textContent=by==='nl'?noteNl():by==='cnt'?'含藏干数：四个天干，加上地支里藏的每一个天干各算一个，不分主次，月支也不加倍。':'五行个数：四个天干，加上四个地支各按自己的五行算一个，不看地支里藏的天干。';
@@ -947,7 +967,7 @@ document.addEventListener('click',e=>{
     if(b.disabled) return;
     const [k,v]=b.dataset.map.split(':');
     if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
-      if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
+      if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else if(k==='gj'){if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();} else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
       refreshSheet();refreshShare();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
