@@ -105,6 +105,10 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .pp[aria-pressed="true"]{color:var(--accent);font-weight:600;border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
 .pp.add{border-style:dashed;background:none}
 .pp small.from{margin-left:6px;font-size:11px;font-weight:400;color:var(--ink3)}
+/* 人物那一排拖动调整先后（ui.js 里拖动的那一段）：按住时不选中文字、不弹出菜单；拖着的那个变淡、边框变虚线 */
+.people .pp{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.people.sorting .pp{cursor:grabbing}
+.pp.dragging{opacity:.55;border-style:dashed;border-color:var(--accent)}
 /* 分享框，和从链接打开、还没保存的人上面那一条 */
 .share,.pp-link{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .share[hidden],.pp-link[hidden]{display:none}

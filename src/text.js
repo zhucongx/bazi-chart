@@ -969,14 +969,24 @@ function metaRows(){return memo('meta',()=>{
   const ty=G[(G.indexOf(mp[0])+1)%10]+Z[(Z.indexOf(mz)+3)%12];
   const about=[yu.y?`${yu.y} 年`:'',yu.m?`${yu.m} 个月`:''].filter(Boolean).join(' ');
   const dl=P.lon-120, cz=P.pillarsClock?P.pillarsClock[3][1]:sc.z;
+  // 生在国外、记录的是当地钟表时间的（P.localClock，见 tools/gen_data.py 的 tz，2026-11-17 加外国人示例时加的；P.local 是另一回事，指存在这个浏览器里的人）：
+  // 公历一行写当地时间，真太阳时和当地钟表比，经度修正照当地时间的基准经线算（lmt 是当地平太阳时，不用修正），钟表落在哪个时辰也看当地钟表
+  const loc=!!P.localClock, L=P.localClock||c, sec=a=>Date.UTC(a[0],a[1]-1,a[2],a[3],a[4],a[5]||0)/1000, lmt=loc&&P.tz==='lmt';
+  const offL=loc?sec(t)-sec(L):off, clk=loc?'当地钟表':'北京时间', zone=loc?esc(P.tzName||'当地时间'):'北京时间';
+  const zm=loc?(lmt?P.lon:P.tz*15):120, dz=loc?P.lon-zm:dl, dzSec=loc?Math.round(dz*240):P.dlonSec;
+  const lonTxt=x=>`${x<0?'西':'东'}经 ${num(Math.abs(x))} 度`;
+  const czL=loc?Z[Math.floor(((L[3]+1)%24)/2)]:cz, scL=loc?Object.assign({},sc,{c0:hmOf(sc.h0*3600-offL),c1:hmOf(sc.h1*3600-offL)}):sc;
   const rows=[
-    {k:'公历',dd:`${c[0]} 年 ${c[1]} 月 ${c[2]} 日 ${hm(c)}（北京时间）`,t:'公历出生时间',p:[
-      ['是什么',P.source?`${esc(P.source)}上记录的钟表时间。`:'出生时的钟表时间，按北京时间记。'],
+    {k:'公历',dd:`${L[0]} 年 ${L[1]} 月 ${L[2]} 日 ${hm(L)}（${loc?'当地时间':'北京时间'}）`,t:'公历出生时间',p:[
+      ['是什么',loc?`出生地当时的钟表时间，${zone}。${P.source?'出处：'+esc(P.source)+'。':''}换成北京时间是 ${c[0]} 年 ${c[1]} 月 ${c[2]} 日 ${hm(c)}。页面拿这一刻和出生地的经度换算真太阳时，起运也照这一刻算。`
+        :P.source?`${esc(P.source)}上记录的钟表时间。`:'出生时的钟表时间，按北京时间记。'],
       ['怎么用','排盘就是把它换成四组干支：年柱以立春为界，月柱以节气为界，日柱按六十甲子一天一个往下排，时柱两小时一个时辰。']]},
-    {k:'真太阳时',dd:`${t[2]!==c[2]?`${t[1]} 月 ${t[2]} 日 `:''}${hms(t)}，`+(mn(off)?`比北京时间${slow(off)}约 ${mn(off)} 分钟`:'和北京时间相差不到一分钟'),t:'真太阳时',p:[
+    {k:'真太阳时',dd:`${t[2]!==L[2]?`${t[1]} 月 ${t[2]} 日 `:''}${hms(t)}，`+(mn(offL)?`比${clk}${slow(offL)}约 ${mn(offL)} 分钟`:`和${clk}相差不到一分钟`),t:'真太阳时',p:[
       ['是什么','按太阳实际位置算出来的当地时间。定时辰用它，不用钟表时间。'],
-      ['怎么来的',`${P.place?esc(P.place)+'在':'出生地在'}东经 ${num(P.lon)} 度，`+(dl?`比北京时间的基准经线（东经 120 度）偏${dl<0?'西':'东'} ${num(Math.abs(dl))} 度，每度差 4 分钟，${slow(P.dlonSec)}${P.dlonSec%60?'约 ':' '}${mn(P.dlonSec)} 分钟。`:'正好在北京时间的基准经线上，不用做经度修正。')+`${c[1]} 月${xun(c[2])}，地球公转造成的偏差（均时差）是${slow(P.eotSec)}约 ${mn(P.eotSec)} 分钟。两项合计${slow(off)}约 ${mn(off)} 分钟。`],
-      ['这张盘',`${hm(c)} 换算后是 ${hmNear(t)}，在${sc.z}时（${sc.h0} 点到${sc.h1<sc.h0?'次日 ':' '}${sc.h1} 点）。按钟表时间算，这个时辰是 ${sc.c0} 到 ${sc.c1}。`+(cz!==sc.z?`钟表上的 ${hm(c)} 本来落在${cz}时，换算之后进了${sc.z}时，时柱跟着变了。`:'')]]},
+      ['怎么来的',`${P.place?esc(P.place)+'在':'出生地在'}${lonTxt(P.lon)}，`+(lmt?'当地用的是平太阳时，就是照它自己的经度定的钟表时间，不用做经度修正。'
+        :dz?`比${zone}的基准经线（${lonTxt(zm)}）偏${dz<0?'西':'东'} ${num(Math.abs(dz))} 度，每度差 4 分钟，${slow(dzSec)}${dzSec%60?'约 ':' '}${mn(dzSec)} 分钟。`:`正好在${zone}的基准经线上，不用做经度修正。`)
+        +`${L[1]} 月${xun(L[2])}，地球公转造成的偏差（均时差）是${slow(P.eotSec)}约 ${mn(P.eotSec)} 分钟。`+(lmt?'':`两项合计${slow(offL)}约 ${mn(offL)} 分钟。`)],
+      ['这张盘',`${hm(L)} 换算后是 ${hmNear(t)}，在${sc.z}时（${sc.h0} 点到${sc.h1<sc.h0?'次日 ':' '}${sc.h1} 点）。按${loc?'当地钟表':'钟表时间'}算，这个时辰是 ${scL.c0} 到 ${scL.c1}。`+(czL!==sc.z?`钟表上的 ${hm(L)} 本来落在${czL}时，换算之后进了${sc.z}时，时柱跟着变了。`:'')]]},
     {k:'农历',dd:`${ltxt}，${sc.z}时`,t:'农历日期',p:[
       ['是什么',`${ltxt}。`],
       ['注意','农历日期不参与排盘，只作对照。月柱看节气，不看农历月份；年柱看立春，不看正月初一。'+(lu.year===yp?'':(gz60(yp[0],yp[1])+1)%60===gz60(lu.year[0],lu.year[1])?`这一天过了正月初一，还没到立春，所以农历年已经是${lu.year}，年柱还是${yp}。`:`这一天过了立春，还没到正月初一，所以年柱已经是${yp}，农历年还是${lu.year}。`)]]},
@@ -1002,8 +1012,8 @@ function metaRows(){return memo('meta',()=>{
     {k:'起运',dd:`出生后${about?'约 '+about:'不到一个月'}，${jy.Y} 年 ${jy.M} 月${xun(jy.D)}`,t:'起运时间',p:[
       ['是什么','第一步大运从什么时候开始。'],
       ['怎么来的',`${yy((P.pillarsClock||P.pillars)[0][0])}年出生的${P.gender?'男':'女'}性，大运${yu.forward?'顺':'逆'}排，从出生时刻往${yu.forward?'后':'回'}数到${yu.forward?'下':'上'}一个节（${yu.jie}），相隔 ${span(yu.gapMin)}。按三天折合一年，${about?'约等于 '+about:'折下来不到一个月'}。`],
-      ['这张盘',`${c[0]} 年 ${c[1]} 月出生，${jy.Y} 年 ${jy.M} 月${xun(jy.D)}起运，第一步是${P.dayun[0].gz}。`],
-      ['注意',`折算有粗有细：有的只按整天和时辰算，有的按分钟算，起运的日子会差几天。这里按分钟算，${P.shichen?'出生时刻取时辰的中点':'出生时刻用钟表时间'}。`]]},
+      ['这张盘',`${L[0]} 年 ${L[1]} 月出生，${jy.Y} 年 ${jy.M} 月${xun(jy.D)}起运，第一步是${P.dayun[0].gz}。`],
+      ['注意',`折算有粗有细：有的只按整天和时辰算，有的按分钟算，起运的日子会差几天。这里按分钟算，${P.shichen?'出生时刻取时辰的中点':loc?'出生时刻照记录的当地时间换算':'出生时刻用钟表时间'}。`]]},
     {k:'交运',dd:jy.before?`每逢尾数是 ${jy.Y%10} 的年份，${jy.M} 月${xun(jy.D)}换大运`:`每逢${jy.ygz[0]}年的 ${jy.M} 月${xun(jy.D)}换大运`,t:'交运',p:[
       ['是什么','每十年换一步大运，换的那个时间点叫交运。'],
       ['这张盘',(jy.before?`${jy.Y} 年 ${jy.M} 月还没过立春，算${jy.ygz}年。之后每逢公历尾数是 ${jy.Y%10} 的年份换运`:`${jy.Y} 年是${jy.ygz}年。之后每逢公历尾数是 ${jy.Y%10} 的年份（都是${jy.ygz[0]}年）换运`)+`：${jy.Y+10}、${jy.Y+20}、${jy.Y+30}。换运在 ${jy.M} 月${xun(jy.D)}，日子由出生时刻推出，和立春不是同一天。`]]}
