@@ -454,8 +454,8 @@ function xiOf(dm,ps,hua){
 const xiNow=()=>memo('xi',()=>xiOf(DM,NATAL,true));
 const qsNow=()=>memo('qs',()=>qsOf(DM,NATAL,true)), huaNow=()=>nlNow().hua;
 /* 用神（扶抑）：照任铁樵《滴天髓阐微》「体用」一节的注，按强弱计分定的强弱取。yongPick 是纯计算，yongOf 喂它数。
-   cat 是五类各多少分（五行能量），下标是对日主的关系：0 同我（比肩、劫财，不算日主自己的 5 分）、1 我生（食神、伤官）、2 我克（正财、偏财）、
-   3 克我（正官、七杀）、4 生我（正印、偏印）。el 和 cat 一样，只是同我这一类含日主自己，是这一行五行的全部分数。
+   cat 是五类各多少分（五行能量），下标是对日主的关系：0 同我（比肩、劫财）、1 我生（食神、伤官）、2 我克（正财、偏财）、
+   3 克我（正官、七杀）、4 生我（正印、偏印），都不算日主自己那一笔（合化以后它在哪一行就从哪一行减）。el 是这五行的全部分数，含日主自己。
    身弱：克泄耗的三类里最重的一类，官杀或食伤最重取印，财最重取比劫；财和另一类一样重时两条规则取的不一样，不定。
    身强：印比比劫重取财，比劫比印重取食伤；一样重时注里没有说，不定。强弱未定（26 到 29 分）时不定。
    取了用神，再照同书「闲神」一节的注分喜神、忌神、仇神、闲神。注里只举了用木：木有余，火喜、金忌、水仇、土闲；木不足，水喜、土忌、金仇、火闲，
@@ -476,7 +476,10 @@ function yongPick(tier,cat,el){
   return r;
 }
 function yongOf(dm,ps,hua){
-  const de=gEl(dm), s=(hua?nlScoreHua(ps):nlScore(ps)).sum, el=[0,1,2,3,4].map(k=>s[(de+k)%5]), cat=el.slice(); cat[0]-=5;
+  const de=gEl(dm), sc=hua?nlScoreHua(ps):nlScore(ps), s=sc.sum, el=[0,1,2,3,4].map(k=>s[(de+k)%5]), cat=el.slice();
+  // 不算日主自己那一笔：合化成立时它已经改记到化神那一行，在它实际所在的那一行里减。原来固定从比肩劫财里减 5 分，
+  // 日干化掉的盘会减成负数、多算别的一行（2026-11-17 审阅报告 R1）
+  const self=sc.items.find(x=>x.i===2&&x.j===0); cat[(self.e-de+5)%5]-=self.n;
   return Object.assign(yongPick(qsOf(dm,ps,hua).tier,cat,el),{cat,el});
 }
 const yongNow=()=>memo('yong',()=>yongOf(DM,NATAL,true));
@@ -871,7 +874,9 @@ function gjzOf(dm,ps){
   {const o=get('食伤泄秀');Object.assign(o,{tier,st:tier!=='强'?'无':t('食伤').length?'透':c('食伤').length?'藏':'无',sides:[side('帮身'),side('食伤')],pa:t('食伤').concat(c('食伤'))});}
   // 合财合官：和日干相合的那个天干透在月干或时干，紧挨着日干。年干上的隔着月干，页面不算
   {const o=get('合财合官'), h=gHe(dm), near=ps.filter((p,i)=>(i===1||i===3)&&p.g===h).map(p=>({k:p.k,h})), gn=godOf(dm,h);
-    Object.assign(o,{h,gn,near,far:ps[0].g===h,zheng:ps[1].g===h&&ps[0].g===dm,st:near.length?'透':'无',sides:null});}
+    // 争合：月干、时干两个合神一起合日干（「两丁合壬」）；或者年干和日干是同一个字，一起合月干的合神。原来只认后一种（审阅报告 R2）
+    const zheng=near.length===2?'two':ps[1].g===h&&ps[0].g===dm?'year':'';
+    Object.assign(o,{h,gn,near,far:ps[0].g===h,zheng,st:near.length?'透':'无',sides:null});}
   // 财官印全：三样都透出记「透」，三样都有、至少一样透出、其余只在地支本气里记「藏」
   {const o=get('财官印全'), ks=['财','正官','印'];Object.assign(o,{st:ks.every(k=>t(k).length)?'透':ks.every(has)&&ks.some(k=>t(k).length)?'藏':'无',sides:ks.map(side),parts:ks.map(k=>({k,p:t(k).concat(c(k))}))});}
   // 官杀混杂：正官和七杀都透出记「透」，一样透出、另一样只在地支本气里记「藏」
@@ -883,7 +888,7 @@ function gjzOf(dm,ps){
   const ext={
     食伤制杀:[['身强（七杀格「身强七煞逢制」）',tier==='强'],['天干不透财（「煞用食制，不要露财透印」）',!t('财').length],['天干不透印（同上）',!t('印').length],['盘里没有财（食神格、伤官格的「无财」）',!has('财')]],
     杀印相生:[['身弱（伤官格「伤官旺、身主弱而透煞印」）',tier==='弱']],
-    伤官配印:[['印透出又有根（「伤官佩印而伤官旺，印有根」）',t('印').length>0&&c('印').length>0],['身不强（败格的条件是「佩印而伤轻身旺」）',tier!=='强']],
+    伤官配印:[['印透出，在地支里有根（「伤官佩印而伤官旺，印有根」；有根照「根和透」一页的认法，藏干都算）',t('印').some(x=>ps.some(p=>gtOf(x.h,p.z)))],['身不强（败格的条件是「佩印而伤轻身旺」）',tier!=='强']],
     羊刃驾杀:[['天干露财或印（「阳刃透官煞而露财印」）',t('财').length+t('印').length>0],['盘里不见伤官（同上「不见伤官」）',!has('伤官')]],
     食伤生财:[['身强（财格「财逢食生而身强带比」）',tier==='强']],
     合财合官:[['没有别的字来争合（「两辛合丙，两丁合壬」一类）',!get('合财合官').zheng]],
@@ -916,7 +921,7 @@ function xGjz(n){
   const ge=gjzGe(), inGe=o.ge.filter(g=>ge.includes(g));
   const STS={透:'有，都透在天干上',藏:'有，有一边只在地支的本气里，没有透出来',无:'没有'};
   let now;
-  if(o.n==='合财合官') now=o.near.length?`日干${DMN}和${o.near.map(x=>`${x.k}干${gN(x.h)}`).join('、')}相合，${gN(o.h)}是${DMN}的${o.gn}。`+(o.zheng?`年干也是${DM}，和日干一起合月干的${o.h}，是争合。`:'')
+  if(o.n==='合财合官') now=o.near.length?`日干${DMN}和${o.near.map(x=>`${x.k}干${gN(x.h)}`).join('、')}相合，${gN(o.h)}是${DMN}的${o.gn}。`+(o.zheng==='two'?`月干、时干都是${o.h}，两个${o.h}一起合日干，是争合。`:o.zheng==='year'?`年干也是${DM}，和日干一起合月干的${o.h}，是争合。`:'')
     :`和${DMN}相合的是${gN(o.h)}（${o.gn}），`+(o.far?`它在年干，隔着月干，页面不算日干合它。`:'月干、时干上都没有。');
   else if(o.n==='财官印全'||o.n==='官杀混杂') now=o.parts.map(x=>x.p.length?`${gjzSay(x.k)}在${gjzWhere(x.p)}`:`天干和地支的本气里没有${gjzSay(x.k)}`).join('；')+'。';
   else if(o.n==='羊刃驾杀') now=isYin(DM)?`日主${DMN}是阴干。《子平真诠》说阳刃只有五个阳干有，所以没有这一条。`

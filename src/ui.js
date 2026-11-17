@@ -24,18 +24,20 @@ function writeLocal(){
   return STORE_OK;
 }
 /* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
-const HOUR_PICK={};
+const HOUR_PICK=Object.create(null);      // 没有原型：编号叫 constructor、toString 的人不会读到继承来的东西（审阅报告 R4）
 /* 从链接打开、还没保存的人：{info, dates}。只有一个，排在最后，不写进 localStorage；点「保存」才存 */
 let TEMP=null;
 /* 人物那一排的先后：拖动调整过的，按 id 记在 localStorage 的 bz-order 里（2026-11-17 用户要的「允许拖动这些标签调整顺序」）。
    不在里面的人（新加的、没排过的）跟在后面，彼此保持原来的先后；来自链接的那一位总在最后 */
 let ORDER=[];
+let BROKEN=[];                     // 存在浏览器里、却排不出盘的人（rebuildPeople 记下），打开页面时提示
 function readOrder(){try{const v=JSON.parse(localStorage.getItem('bz-order')||'[]');ORDER=Array.isArray(v)?v.filter(x=>typeof x==='string'):[];}catch(e){ORDER=[];}}
 function saveOrder(){ORDER=PEOPLE.filter(p=>!p.temp).map(p=>p.id);try{localStorage.setItem('bz-order',JSON.stringify(ORDER));}catch(e){}}
 function rebuildPeople(){
   PEOPLE.length=0;PEOPLE.push(...DATA.people);
   const one=info=>chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);
-  LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  BROKEN=[];
+  LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){BROKEN.push(info.name||info.id);}});      // 排不出盘的不显示，记下来提示
   const at=p=>{const k=ORDER.indexOf(p.id);return k<0?Infinity:k;}, sorted=PEOPLE.map((p,i)=>[p,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(x=>x[0]);
   PEOPLE.length=0;PEOPLE.push(...sorted);
   if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
@@ -613,6 +615,7 @@ function shareNow(){
   const q=new URLSearchParams(ok?linkOf(Object.assign({},info,{name:P.name})):'p='+encodeURIComponent(P.id));
   if(ok&&info.nohour) q.set('h',P.shichen);          // 时辰不详的，带上正在看的时辰，对方打开看到的是同一张盘
   q.set('tab',sel.tab.natal+','+sel.tab.pan);q.set('dy',String(sel.dy));q.set('y',String(sel.y));q.set('m',String(sel.m));q.set('d',isoDay(sel.d));
+  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
   return {url:SHARE_BASE+'#'+q.toString(),what:!ok?'这一位在页面里的编号，不含出生信息；只在页面自带这一位时打得开':info.nohour?'出生日期和正在看的时辰':info.shichen?'出生日期和时辰':'出生日期、时间和出生地的经度'};
 }
 function refreshShare(){
@@ -637,7 +640,7 @@ function openLink(hash,fallback){
   const s=String(hash||'').replace(/^#/,''); if(!s) return false;
   const q=new URLSearchParams(s), keys=[...q.keys()];
   if(!keys.some(k=>['p','b','bz','n','g','sh','nh','lon'].includes(k))){
-    if(!keys.some(k=>['tab','dy','y','m','d','h'].includes(k))) return false;
+    if(!keys.some(k=>['tab','dy','y','m','d','h','by'].includes(k))) return false;
     if(!P) usePerson(fallback||0);
     if(pickHour(q,sel.p)) usePerson(sel.p);
     applyView(q);return true;
@@ -667,9 +670,13 @@ function pickHour(q,i){
 /* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
 function applyView(q){
   (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
+  // by：五行一页、十神一页的数法和选择器小卡的计分模式，照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
+  const by=(q.get('by')||'').split(','); let mapped=false;
+  ['wx','gods','yun'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
+  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
   const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
   const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
-  if(dy===null&&y===null&&m===null&&!d) return;
+  if(dy===null&&y===null&&m===null&&!d){if(mapped) renderDynamic();return;}
   if(dy!==null&&dy<P.dayun.length){sel.dy=dy;const r=P.dayun[dy];sel.y=REAL_Y>=r.y0&&REAL_Y<=r.y1?REAL_Y:r.y0;}
   if(y!==null){const k=P.dayun.findIndex(r=>y>=r.y0&&y<=r.y1);if(k>=0){sel.dy=k;sel.y=y;}}
   if(m!==null&&m<12) sel.m=m;
@@ -873,13 +880,14 @@ function importText(text){
     if(src.notes&&typeof src.notes==='object') info.notes=cleanNotes(src.notes,nb);
     const bad=checkInfo(info);
     if(bad){errs.push(`${info.name}：${bad}`);return;}
+    try{chartOf(info.nohour?Object.assign({},info,{shichen:'午'}):info);}catch(e){errs.push(`${info.name}：排不出盘（${e.message}）`);return;}   // 写入以前先试排一遍
     if(nb.n) errs.push(`${info.name}的手写解读里有 ${nb.n} 项格式不对，这几项没有导入`);
     if(DATA.people.some(p=>p.id===info.id)) info.id=newId();      // 和页面自带的人重名的，另起一个编号
     const i=LOCAL.findIndex(o=>o.id===info.id);
     if(i>=0) LOCAL[i]=info; else LOCAL.push(info);                // 以前导入过的，这次顶替掉
     n++;last=info.id;
   });
-  if(n){writeLocal();rebuildPeople();closeForm();usePerson(PEOPLE.findIndex(p=>p.id===last));}
+  if(n){writeLocal();rebuildPeople();closeForm();const k=PEOPLE.findIndex(p=>p.id===last);if(k>=0) usePerson(k);}
   return (n?`导入了 ${n} 个人。`:'没有导入任何人。')+(errs.length?'没导入的：'+errs.join('；'):'')+(n&&!STORE_OK?NO_STORE:'');
 }
 function exportLocal(){
@@ -912,7 +920,7 @@ document.addEventListener('click',e=>{
     const [k,v]=b.dataset.map.split(':');
     if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
       if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
-      refreshSheet();}
+      refreshSheet();refreshShare();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
   }
@@ -1048,6 +1056,7 @@ F('file').addEventListener('change',e=>{
   r.readAsText(f);
 });
 readLocal();readOrder();rebuildPeople();
+if(BROKEN.length) say(`浏览器里存的 ${BROKEN.length} 个人排不出盘，没有显示：${BROKEN.map(esc).join('、')}。`);
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);
