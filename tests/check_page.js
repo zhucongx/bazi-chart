@@ -443,6 +443,130 @@ console.log('典籍引文');
     const out=[one('甲','寅'),one('甲','卯'),one('乙','寅'),one('戊','午'),one('丙','亥')];[P,DM,DMN,NATAL,MEMO]=keep;return out;})()`), ['建禄', '阳刃', '月劫', '阳刃', '不透·七杀格']);
 }
 
+// ---------- 1a2. 打分法 ----------
+console.log('打分法');
+{
+  const G = '甲乙丙丁戊己庚辛壬癸', Z = '子丑寅卯辰巳午未申酉戌亥';
+  // 讲义把六十甲子分成五种各十二柱，这里照讲义列的抄一遍，核对页面按五行算出来的分法
+  const KIND = {
+    天干克地支: '甲辰 甲戌 乙丑 乙未 丙申 丁酉 戊子 己亥 庚寅 辛卯 壬午 癸巳',
+    地支克天干: '甲申 乙酉 丙子 丁亥 戊寅 己卯 庚午 辛巳 壬辰 癸丑 癸未 壬戌',
+    天干生地支: '甲午 乙巳 丙戌 丙辰 丁未 丁丑 戊申 己酉 庚子 辛亥 壬寅 癸卯',
+    地支生天干: '甲子 乙亥 丙寅 丁卯 戊午 己巳 庚辰 庚戌 辛丑 辛未 壬申 癸酉',
+    干支同气: '甲寅 乙卯 丙午 丁巳 戊辰 戊戌 己未 己丑 庚申 辛酉 壬子 癸亥' };
+  const kindOf = gz => Object.keys(KIND).find(k => KIND[k].split(' ').includes(gz));
+  const JZ = Array.from({ length: 60 }, (_, i) => G[i % 10] + Z[i % 12]);
+  eq('打分法：六十甲子照天干和地支的关系分成五种，每种十二柱，和讲义列的相同', [JZ.every(gz => ev(`DF_TYPE[(zEl('${gz[1]}')-gEl('${gz[0]}')+5)%5]`) === kindOf(gz)), Object.values(KIND).map(v => v.split(' ').length)], [true, [12, 12, 12, 12, 12]]);
+  // 地支的藏干分值：藏的字和页面别处相同，本气相同，每一支合计 100 分；藏一个字 100，两个 70、30，三个 60、30、10
+  eq('打分法：地支藏的字和页面别处的藏干相同，本气在最前面，分值是 100，或者 70、30，或者 60、30、10',
+    [...Z].filter(z => { const h = JSON.parse(ev(`JSON.stringify(DF_Z['${z}'])`)), hid = ev(`HID['${z}']`); const want = { 1: '100', 2: '70,30', 3: '60,30,10' }[h.length]; return !(h.map(x => x[0]).sort().join('') === [...hid].sort().join('') && h[0][0] === hid[0] && h.map(x => x[1]).join() === want); }), []);
+  // 讲义单独说的十三柱，增减的方向要和这一柱的关系对得上
+  const fixes = JSON.parse(ev('JSON.stringify(DF_FIX)'));
+  const sign = { 天干克地支: [0, -1], 地支克天干: [-1, -1], 天干生地支: [0, 1], 地支生天干: [1, -1] };      // 天干那一项的 0 表示可以不减（甲辰、丁未）
+  eq('打分法：单独定数的十三柱都是六十甲子里的，增减的方向和这一柱的关系对得上', [Object.keys(fixes).length, Object.keys(fixes).filter(gz => { const k = kindOf(gz), [a, b] = fixes[gz], w = sign[k]; return !(JZ.includes(gz) && w && (w[0] === 0 ? a <= 0 : Math.sign(a) === w[0]) && Math.sign(b) === w[1]); })], [13, []]);
+
+  // 照讲义的规则另写的一遍，和页面的 dfOf 在随机的四柱上逐行对照
+  const HIDN = { 子: '癸100', 丑: '己60 癸30 辛10', 寅: '甲60 丙30 戊10', 卯: '乙100', 辰: '戊60 乙30 癸10', 巳: '丙60 戊30 庚10', 午: '丁70 己30', 未: '己60 丁30 乙10', 申: '庚60 壬30 戊10', 酉: '辛100', 戌: '戊60 辛30 丁10', 亥: '壬70 甲30' };
+  const PCT = { 天干克地支: [-30, -45], 地支克天干: [-50, -25], 天干生地支: [-30, 30], 地支生天干: [30, -30] };
+  const ONE = { 甲辰: [0, -70], 甲戌: [-30, -50], 乙丑: [-30, -50], 乙未: [-30, -50], 壬辰: [-40, -30], 癸丑: [-40, -30], 丙戌: [-25, 30], 丁未: [0, 30], 甲子: [20, -20], 丁卯: [20, -20], 庚辰: [20, -20], 辛未: [20, -20], 癸酉: [20, -20] };
+  const el5 = g => Math.floor(G.indexOf(g) / 2), r1 = x => Math.round(x * 10) / 10;
+  function df2(ps, dm) {
+    const gan = [], roots = [];        // 第一步：本柱
+    ps.forEach(gz => {
+      const kind = kindOf(gz), hid = HIDN[gz[1]].split(' ').map(x => [x[0], +x.slice(1)]);
+      if (kind === '干支同气') gan.push(36 + hid[0][1] / 2);
+      else { const [a, b] = ONE[gz] || PCT[kind]; gan.push(36 * (100 + a) / 100); hid[0][1] = hid[0][1] * (100 + b) / 100; }
+      roots.push(hid);
+    });
+    const pct = [0, 0, 0, 0];           // 第二步：紧贴的天干
+    for (let i = 0; i < 3; i++) {
+      const a = ps[i][0], b = ps[i + 1][0], same = G.indexOf(a) % 2 === G.indexOf(b) % 2;
+      for (const [x, y, xi, yi] of [[a, b, i, i + 1], [b, a, i + 1, i]]) {
+        if ((el5(x) + 1) % 5 === el5(y)) { pct[xi] -= same ? 20 : 30; pct[yi] += same ? 20 : 30; }      // x 生 y
+        if ((el5(x) + 2) % 5 === el5(y)) { pct[xi] -= same ? 30 : 15; pct[yi] -= same ? 50 : 30; }      // x 克 y
+      }
+    }
+    const g1 = gan.map((v, i) => Math.max(0, v * (100 + pct[i]) / 100));
+    const far = [100, 100, 90, 80], away = [100, 90, 75, 60];
+    return [0, 1, 2, 3, 4].map(e => {     // 第三步：每一行的总分
+      const stems = [0, 1, 2, 3].filter(i => el5(ps[i][0]) === e), rt = roots.map(h => h.find(x => el5(x[0]) === e));
+      const base = HIDN, raw = ps.map(gz => (base[gz[1]].split(' ').find(x => el5(x[0]) === e) || '').slice(1) | 0);
+      let core = -1;
+      if (e === el5(dm)) core = 2;
+      else if (stems.length) stems.forEach(i => { if (core < 0 || r1(g1[i]) > r1(g1[core])) core = i; });      // 一样多的取靠前的一柱
+      else [0, 1, 2, 3].forEach(i => { if (rt[i] && (core < 0 || raw[i] > raw[core] || (raw[i] === raw[core] && r1(rt[i][1]) > r1(rt[core][1])))) core = i; });
+      if (core < 0) return 0;
+      let tg = 0, tz = 0;
+      stems.forEach(i => { tg += g1[i] * far[Math.abs(i - core)] / 100; });
+      let i = 0;
+      while (i < 4) {
+        if (!rt[i]) { i++; continue; }
+        let j = i; while (j + 1 < 4 && rt[j + 1]) j++;
+        let near = 9; for (let k = i; k <= j; k++) near = Math.min(near, Math.abs(k - core));
+        for (let k = i; k <= j; k++) tz += rt[k][1] * away[near] / 100;
+        i = j + 1;
+      }
+      return r1(tg + tz);
+    });
+  }
+  const dfPage = ps => JSON.parse(ev(`(()=>{const ps=${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}));const r=dfOf(ps[2].g,ps,huaOf(ps).moves);
+    return JSON.stringify({sum:r.sum,g1:r.g1,name:r.name,lv:r.lv,by:r.by,S:r.S,roots:r.roots,H:r.H,K:r.K,mk:r.mk,c:r.c,xi:r.xi,ji:r.ji,why:r.why,zn:r.el[gEl(ps[2].g)].zhi.length})})()`));
+  // 讲义自己算的两个例子。讲义的数和页面的数并排：页面把「四、五成」取四成半、「二、三成」取两成半，讲义手算时各处取的不一样
+  const W1 = dfPage(['己亥', '甲戌', '辛巳', '丙申']), W2 = dfPage(['戊辰', '辛酉', '壬午', '甲辰']);
+  eq('打分法：讲义算的第一个例子（己亥、甲戌、辛巳、丙申），页面算出木 40.9、火 70.9、土 80.6、金 82.9、水 56.5，四个天干 17.6、13.9、9.9、21.4', [W1.sum, W1.g1], [[40.9, 70.9, 80.6, 82.9, 56.5], [17.6, 13.9, 9.9, 21.4]]);
+  eq('打分法：讲义算的第二个例子（戊辰、辛酉、壬午、甲辰），页面算出木 91.2、火 38.5、土 142.2、金 186、水 44.2', W2.sum, [91.2, 38.5, 142.2, 186, 44.2]);
+  const BOOK1 = [41, 66.8, 107.6, 85.9, 53], BOOK2 = [91.2, 42, 151.2, 186, 41.7];
+  eq('打分法：两个例子十行里，九行和讲义手算的数相差不到 10 分；第一个例子的土差 27 分，讲义这里没有照它自己说的甲戌柱给戌土减分',
+    [W1.sum.map((v, i) => Math.abs(v - BOOK1[i]) < 10), W2.sum.map((v, i) => Math.abs(v - BOOK2[i]) < 10), r1(BOOK1[2] - W1.sum[2])], [[true, true, false, true, true], [true, true, true, true, true], 27]);
+  // 讲义两章里写明日主归哪一档的例子。四柱照讲义抄，只取四柱和归的档，不取别的。有一个例子的四柱在讲义里印错了（阳干配了阴支），没有收
+  const LV = `庚子 己卯 乙未 壬午 偏旺|丁丑 甲辰 戊辰 壬戌 太旺|丁丑 癸卯 己未 辛未 偏旺|戊戌 戊午 戊辰 丙辰 旺极|癸卯 甲寅 甲辰 甲子 旺极|庚子 辛亥 壬子 戊申 太旺|己亥 壬申 己卯 丁卯 太弱|己亥 壬申 己卯 乙丑 偏弱|己未 丙寅 壬午 壬寅 太弱|己未 丙寅 壬午 乙巳 弱极|
+庚辰 己卯 乙亥 丁丑 偏旺|甲申 壬申 庚申 辛巳 太旺|己丑 戊辰 己巳 戊辰 旺极|庚申 乙酉 辛丑 庚辰 旺极|己酉 乙亥 乙未 丁丑 中和|戊申 乙卯 辛未 壬辰 偏弱|丙申 甲寅 庚午 丁未 太弱|甲寅 丁卯 己亥 丙寅 太弱|壬寅 壬寅 庚子 丙子 弱极|癸酉 甲寅 乙巳 庚辰 偏旺|
+癸酉 甲寅 甲申 甲辰 偏旺|癸酉 甲寅 乙亥 庚辰 偏旺|戊申 乙卯 己丑 癸酉 偏弱|甲寅 甲戌 甲申 庚午 偏旺|丁巳 戊午 己未 庚申 偏旺|乙亥 癸未 癸巳 壬戌 偏弱|丙子 己亥 己未 壬申 偏旺|丁丑 癸丑 戊戌 丙辰 旺极|丁丑 庚戌 丁亥 庚子 太弱|乙未 壬午 壬子 癸卯 偏旺|
+己卯 庚午 己丑 癸酉 偏旺|癸丑 甲寅 甲午 乙亥 偏旺|壬寅 甲辰 乙亥 丙戌 偏旺|壬寅 壬戌 庚寅 壬午 太弱|己卯 壬申 壬寅 辛丑 偏旺|甲戌 戊辰 壬申 癸卯 偏弱|己未 戊辰 己酉 甲子 偏旺|戊申 乙丑 乙酉 己卯 偏弱|癸丑 丙辰 丁酉 丙午 偏旺|戊申 甲寅 丁巳 壬寅 偏旺|
+癸丑 癸亥 庚申 戊寅 偏弱|癸未 甲寅 甲辰 庚午 偏旺|戊戌 乙卯 庚戌 丙子 偏弱|甲辰 甲戌 甲寅 乙丑 偏旺|庚辰 癸未 乙卯 乙酉 偏旺|壬午 甲辰 辛酉 甲午 偏旺|庚戌 壬午 丁亥 甲辰 偏弱|壬子 丙午 壬午 乙巳 偏弱|辛卯 庚寅 丁丑 庚子 偏弱|乙未 乙酉 乙未 庚辰 偏弱|
+庚子 庚辰 乙丑 己卯 偏弱|癸丑 乙丑 癸亥 庚申 偏旺|戊午 丁巳 己卯 乙亥 中和|丁酉 乙巳 庚辰 戊寅 中和|癸丑 丁巳 癸亥 乙卯 中和|戊子 甲寅 乙亥 丙子 太旺|庚辰 庚辰 戊戌 庚戌 太旺|丙戌 戊戌 戊寅 癸丑 太旺|庚辰 己丑 辛酉 甲午 太旺|戊申 己未 辛丑 丁酉 太旺|
+庚戌 己丑 戊戌 癸丑 太旺|庚戌 癸未 戊戌 丙辰 太旺|乙亥 己卯 乙卯 乙酉 太旺|戊申 庚申 辛未 丁酉 太旺|癸丑 己未 辛酉 戊子 太旺|癸未 甲寅 乙亥 己卯 旺极|癸亥 癸亥 壬子 庚子 旺极|庚辰 庚辰 庚申 庚辰 旺极|丁丑 癸卯 丁丑 辛亥 太弱|丁未 癸卯 丁丑 辛亥 偏弱|
+辛巳 丁酉 甲申 戊辰 太弱|壬寅 癸亥 辛亥 庚寅 太弱|辛亥 庚子 丙戌 壬辰 太弱|癸丑 己未 癸丑 己未 太弱|戊戌 乙丑 丁亥 庚戌 太弱|丁巳 丙午 癸丑 甲寅 太弱|丙寅 甲午 辛巳 戊戌 太弱|癸卯 甲子 庚子 丁亥 弱极`.replace(/\n/g, '').split('|').map(x => x.split(' '));
+  const lvGot = LV.map(x => dfPage(x.slice(0, 4)).name), lvMiss = LV.filter((x, i) => lvGot[i] !== x[4]).map((x, i) => x.slice(0, 4).join('') + x[4]);
+  // 没对上的十八个：讲义凭合化、冲和通盘权衡定的，或者分数正好在线的两边。名单写死在这里，算法一动就看得见
+  const MISS = ['庚子己卯乙未壬午偏旺', '甲申壬申庚申辛巳太旺', '庚申乙酉辛丑庚辰旺极', '己酉乙亥乙未丁丑中和', '丁丑癸丑戊戌丙辰旺极', '癸丑癸亥庚申戊寅偏弱', '壬子丙午壬午乙巳偏弱', '辛卯庚寅丁丑庚子偏弱', '乙未乙酉乙未庚辰偏弱',
+    '庚子庚辰乙丑己卯偏弱', '戊午丁巳己卯乙亥中和', '丁酉乙巳庚辰戊寅中和', '癸丑丁巳癸亥乙卯中和', '庚辰庚辰戊戌庚戌太旺', '癸未甲寅乙亥己卯旺极', '丁未癸卯丁丑辛亥偏弱', '癸丑己未癸丑己未太弱', '丙寅甲午辛巳戊戌太弱'];
+  eq('打分法：讲义里写明日主归哪一档的 78 个例子，页面的算法对上 60 个；没对上的 18 个和记下来的名单相同', [LV.length, LV.every(x => x.slice(0, 4).every(gz => JZ.includes(gz))), LV.length - lvMiss.length, lvMiss], [78, true, 60, MISS]);
+  eq('打分法：讲义第三章讲七档时举的十个例子对上九个；中和以外的六档都有例子对上，中和的四个例子一个也没有对上（讲义的中和是通盘权衡出来的，分数线只有十分宽）',
+    [LV.slice(0, 10).filter((x, i) => lvGot[i] === x[4]).length, [...new Set(LV.filter((x, i) => lvGot[i] === x[4]).map(x => x[4]))].sort(), LV.filter(x => x[4] === '中和').length], [9, ['偏弱', '偏旺', '太弱', '太旺', '弱极', '旺极'].sort(), 4]);
+  // 随机的四柱：页面的分数和另写的一遍逐行相同；归档和照规矩另算的相同；取的和忌的不重叠
+  let seed = 20261117; const rnd = n => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 2147483648 * n); };
+  const badSum = [], badLv = [], badXi = [], seen = new Set(), seenWhy = new Set();
+  for (let t = 0; t < 3000; t++) {
+    const y = rnd(60), m = rnd(12), dd = rnd(60), h = rnd(12), yg = y % 10, dg = dd % 10;
+    const ps = [G[yg] + Z[y % 12], G[(yg % 5 * 2 + 2 + m) % 10] + Z[(m + 2) % 12], G[dg] + Z[dd % 12], G[(dg % 5 * 2 + h) % 10] + Z[h]];
+    const r = dfPage(ps), w = df2(ps, ps[2][0]);
+    if (w.some((v, i) => Math.abs(v - r.sum[i]) > 0.11)) badSum.push([ps.join(' '), r.sum, w]);      // 两边各自四舍五入到一位小数，容许差 0.1
+    const lv = r.K === 0 || r.S >= 435 ? 6 : r.S > 114 ? (r.S >= 272 || (r.K <= 2 && r.mk < 104) ? 5 : 4) : r.S >= 104 ? 3 : (r.H === 0 && r.zn === 0) ? 0 : (r.S < 45 || r.roots < 30) ? 1 : 2;
+    if (lv !== r.lv || r.H + r.K !== 7 || r.S !== r.c[0] || r.mk !== Math.max(r.c[1], r.c[2], r.c[3])) badLv.push([ps.join(' '), r.name, lv]);
+    if (r.lv === 3 ? r.xi !== null : !(r.xi.length && r.ji.length && r.xi.every(k => !r.ji.includes(k)) && r.xi.concat(r.ji).every(k => k >= 0 && k <= 4) && (r.lv < 3 ? true : r.lv === 6 || !r.xi.includes(4)))) badXi.push([ps.join(' '), r.name, r.xi, r.ji]);
+    seen.add(r.name); seenWhy.add(r.why);
+  }
+  eq('打分法：3000 副随机的四柱，五行的分数和照讲义另写的一遍逐行相同', badSum.slice(0, 3), []);
+  eq('打分法：3000 副随机的四柱，归的档和照分数线、字数另算的相同；七档都碰到了', [badLv.slice(0, 3), [...seen].sort()], [[], ['中和', '偏弱', '偏旺', '太弱', '太旺', '弱极', '旺极'].sort()]);
+  eq('打分法：取的和忌的不重叠；中和不取；偏旺、太旺不取正印和偏印', badXi.slice(0, 3), []);
+  // 各档怎么取，逐条核对。五类的先后：比肩和劫财、食神和伤官、正财和偏财、正官和七杀、正印和偏印
+  const yong = (lv, c) => { const r = JSON.parse(ev(`JSON.stringify(dfYong(${lv},${JSON.stringify(c)}))`)); return [r.xi, r.ji]; };
+  eq('打分法取喜用：偏旺而别的都不旺，取正官和七杀、正财和偏财；正官和七杀不到 45 分，改取食神和伤官、正财和偏财',
+    [yong(4, [150, 60, 60, 60, 60]), yong(4, [150, 60, 60, 44, 60])], [[[3, 2], [4, 0]], [[1, 2], [4, 0]]]);
+  eq('打分法取喜用：偏旺而另一类也过了 114 分：印旺取财、食伤；财旺取官杀；官杀旺取食伤；食伤旺取财、官杀',
+    [yong(4, [150, 60, 60, 60, 120]), yong(4, [150, 60, 120, 60, 60]), yong(4, [150, 60, 60, 120, 60]), yong(4, [150, 120, 60, 60, 60])], [[[2, 1], [4, 0, 3]], [[3], [4, 0, 2, 1]], [[1], [4, 0, 2, 3]], [[2, 3], [4, 0, 1]]]);
+  eq('打分法取喜用：偏弱而别的都不旺，取印、比劫；官杀旺取印、比劫；财旺取比劫、印；食伤旺只取印；印旺取比劫、财',
+    [yong(2, [80, 60, 60, 60, 60]), yong(2, [80, 60, 60, 120, 60]), yong(2, [80, 60, 120, 60, 60]), yong(2, [80, 120, 60, 60, 60]), yong(2, [80, 60, 60, 60, 120])],
+    [[[4, 0], [2, 3]], [[4, 0], [2, 3]], [[0, 4], [2, 3, 1]], [[4], [1, 2, 3]], [[0, 2], [4, 1, 3]]]);
+  eq('打分法取喜用：太旺取食伤，印比日主那一行还多时取比劫；旺极取印、比劫、食伤；中和不取',
+    [yong(5, [300, 50, 50, 50, 90]), yong(5, [200, 50, 50, 50, 210]), yong(6, [450, 20, 0, 0, 60]), yong(3, [109, 100, 100, 100, 100])], [[[1], [4, 0, 2, 3]], [[0], [3, 4]], [[4, 0, 1], [3, 2]], [null, null]]);
+  eq('打分法取喜用：太弱看另外四类里最旺的：食伤旺取财，财旺取官杀，官杀旺取官杀、财，印旺取比劫；弱极顺着克、泄、耗里最旺的一类',
+    [yong(1, [30, 200, 90, 90, 50]), yong(1, [30, 90, 200, 90, 50]), yong(1, [30, 90, 90, 200, 50]), yong(1, [30, 90, 90, 90, 200]), yong(0, [20, 90, 90, 200, 0]), yong(0, [20, 90, 200, 90, 0]), yong(0, [20, 200, 90, 90, 0])],
+    [[[2], [3, 4]], [[3], [0, 4]], [[3, 2], [4, 0, 1]], [[0], [1, 2, 3]], [[2, 3], [4, 0, 1]], [[1, 2], [4, 0]], [[1, 2], [3, 4]]]);
+  ok('打分法：取喜用的每一条都有说明的话，随机的四柱里用到的条目都在里面', [...seenWhy].every(k => ev(`typeof DF_WHY['${k}']`) === 'string') && ev('Object.keys(DF_WHY).length') === 22, [...seenWhy]);
+}
+
 // ---------- 1b. 页面内排盘，对照 lunar_python ----------
 console.log('页面内排盘');
 {
@@ -1149,6 +1273,42 @@ pick(0);
     click(d.querySelectorAll('#people [data-p]')[0]);
     click($('h-tk')); click($('h-pan'));
   }
+}
+
+// ---------- 4z. 页面图标 ----------
+console.log('页面图标');
+{
+  // 三个图标都内联成 data: 网址，页面仍然是单个文件：32 像素的 PNG、SVG、苹果设备用的 180 像素 PNG
+  const links = [...dom.window.document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')].map(l => [l.getAttribute('rel'), l.getAttribute('sizes') || '', l.getAttribute('href').split(',')[0]]);
+  eq('页面图标：三个 link 都是内联的 data: 网址，先是 32 像素的 PNG，再是 SVG，最后是苹果设备用的', links,
+    [['icon', '32x32', 'data:image/png;base64'], ['icon', '', 'data:image/svg+xml;base64'], ['apple-touch-icon', '', 'data:image/png;base64']]);
+  // 图标上的八卦照先天八卦排。卦画照朱熹《周易本义》的「八卦取象歌」：乾三连，坤六断，震仰盂，艮覆碗，离中虚，坎中满，兑上缺，巽下断；
+  // 方位照先天图：乾南坤北，离东坎西，兑东南，震东北，巽西南，艮西北。图上南在上、东在左，每一卦靠里的是初爻。相对的两卦阴阳正好相反。
+  // 每一卦照它的五行上色，照《梅花易数》卷一「八宫所属五行」：乾、兑，金；坤、艮，土；震、巽，木；坎，水；离，火。
+  // 这几句 2026-11-17 对着维基文库的页面核对过，页面和版本号记在 docs/取法约定.md 的「页面图标」一节
+  const href = dom.window.document.querySelector('link[rel="icon"][type="image/svg+xml"]').getAttribute('href');
+  const svg = Buffer.from(href.split(',')[1], 'base64').toString('utf8');
+  const GUA = { 乾: '111', 坤: '000', 震: '100', 艮: '001', 离: '101', 坎: '010', 兑: '110', 巽: '011' };      // 初爻、二爻、上爻，1 是阳爻
+  const ANGLE = { 乾: 0, 巽: 45, 坎: 90, 艮: 135, 坤: 180, 震: 225, 离: 270, 兑: 315 };      // 从正上方起顺时针的度数
+  const WXOF = { 乾: '金', 兑: '金', 坤: '土', 艮: '土', 震: '木', 巽: '木', 坎: '水', 离: '火' };
+  const fills = {};
+  const drawn = [...svg.matchAll(/<g data-gua="(.)"(?: transform="rotate\((\d+) 32 32\)")? fill="(#[0-9a-f]{6})">(.*?)<\/g>/g)].map(([, gua, deg, fill, body]) => {
+    fills[gua] = fill;
+    // 一道爻一个 path：阳爻是一整块，阴爻中间断开、是两块。起笔的 y 大的靠近中心，是初爻
+    const yao = [...body.matchAll(/<path d="([^"]+)"/g)].map(p => [+(p[1].match(/^M[\d.]+ ([\d.]+)/) || [])[1], (p[1].match(/M/g) || []).length]);
+    yao.sort((a, b) => b[0] - a[0]);
+    return [gua, +(deg || 0), yao.map(y => y[1] === 1 ? '1' : y[1] === 2 ? '0' : '?').join('')];
+  });
+  eq('图标上的八卦：八个卦各一个，卦画和「八卦取象歌」相同，方位照先天八卦，靠里的是初爻', drawn, Object.keys(ANGLE).map(g => [g, ANGLE[g], GUA[g]]));
+  ok('图标上相对的两卦阴阳正好相反（乾坤、震巽、坎离、艮兑）', drawn.length === 8 && drawn.every(([, a, code]) => { const o = drawn.find(x => x[1] === (a + 180) % 360); return o && [...code].every((c, i) => c !== o[2][i]); }));
+  // 配色：同一种五行的卦同一种颜色，五种五行五种颜色；色相落在这种五行该有的那一段（火红、土赭、金黄、木绿、水蓝）
+  const hue = c => { const [r, g, b] = [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); return d === 0 ? -1 : Math.round(60 * (mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4)); };
+  const HUE = { 火: [0, 15], 土: [16, 35], 金: [36, 60], 木: [100, 170], 水: [190, 240] };
+  const byWx = {}; Object.keys(WXOF).forEach(g => { (byWx[WXOF[g]] = byWx[WXOF[g]] || new Set()).add(fills[g]); });
+  eq('图标上每一卦照它的五行上色：同一种五行一种颜色，五种颜色各不相同，色相和五行对得上',
+    [Object.keys(fills).length, Object.keys(HUE).map(x => byWx[x] ? byWx[x].size : 0), new Set(Object.values(fills)).size, Object.keys(HUE).map(x => { const h = hue([...(byWx[x] || ['#000000'])][0] || '#000000'); return h >= HUE[x][0] && h <= HUE[x][1]; })],
+    [8, [1, 1, 1, 1, 1], 5, [true, true, true, true, true]]);
+  ok('内联的 SVG 里没有注释，带着 viewBox', !svg.includes('<!--') && svg.includes('viewBox="0 0 64 64"'));
 }
 
 // ---------- 4a. 零散的术语、城市经度表 ----------
