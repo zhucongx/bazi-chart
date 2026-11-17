@@ -235,7 +235,7 @@ function renderPerson(){
   $('note-sk').textContent=noteSK();
   $('note-gt').textContent=noteGT();
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGw();renderQs();renderSd();renderXi();renderDynamic();
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -371,7 +371,7 @@ function renderLiuyue(){
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}</span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span><span class="ag">周${W[new Date(t).getUTCDay()]}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}<span class="ag">周${W[new Date(t).getUTCDay()]}</span></span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
@@ -499,7 +499,7 @@ function renderGw(){
     +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
     +row('十二长生',c=>`${c.g}坐${c.z}是${xb('x','zz|'+c.k,c.zz)}`+(c.day?'':`<br>日主到${c.z}是${xb('x','st|'+c.k,c.st)}`))
     +row('空亡',c=>c.xk)
-    +row('五行能量',c=>`${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>帮日主的 ${c.nl.help} 分，其余 ${c.nl.rest} 分<span class="stkw" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>`)
+    +row('五行能量',c=>`<span class="stkw top" style="width:${Math.round(c.nl.total/21*100)}%">${stk(c.nl.sum)}</span>${xb('x','nlp|'+c.k,c.nl.total+' 分')}：${five(c.nl.sum)}<br>帮日主的 ${c.nl.help} 分，其余 ${c.nl.rest} 分`)      // 条在文字上面：文字有长有短，条放在下面四柱对不齐（2026-11-18 排版审阅）
     +'</tbody></table>';
 }
 /* 计分一页：一行一层的表（nlLayers），表下面的说明和解读；选择器上方的图例。小卡底下的条由 mbar() 画在选择器里，跟着选择器一起重画 */
@@ -533,6 +533,17 @@ function renderGjz(){
     +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
   $('note-gjz').textContent=noteGjz();
 }
+/* 格局一页中间的成败救应表：照这张盘归的格（一个或两个），把「论用神成败救应」的各条按成、败、带忌、救应分四段列出来。
+   每一行：书里的话（点开是解释）和一句白话；合、不合或者定不了；几项条件，没有合的那一项后面标出来。表上面一句话是四类各合几条和归纳 */
+function renderGjb(){
+  const r=gjbNow();
+  const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${o.w}</small></th>`
+    +`<td><span class="gjz-st${o.ok===true?' t':''}">${o.ok===null?'定不了':o.ok?'合':'不合'}</span><span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
+  $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
+    +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
+  $('gjb-say').innerHTML=gjbSay();
+  $('note-gjb').textContent=noteGjb();
+}
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
   const r=qsNow(), pt=qsParts(DM,NATAL,true), x=xiNow(), de=gEl(DM), se=(de+4)%5, W=r.total, pos=v=>(v/W*100).toFixed(2)+'%';
@@ -554,16 +565,20 @@ function renderQs(){
 }
 /* 喜忌一页最上面：扶抑取的喜用和忌，照「强弱」一页的强弱计分 */
 function renderXi(){
-  const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
-  $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
-      :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
-    +`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照下面的用神${yongNow().pair?'取，其余三行算忌':'和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；下面的用神照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
-    // 用神那一排：用神、喜神、忌神、仇神、闲神各一块，字块是五行，底下写是哪两个十神
-    +(()=>{const y=yongNow(), de=gEl(DM), blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
-      // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一块里两种五行，分不出喜神、忌神，那几块不画
-      return '<div class="xi-sep" aria-hidden="true"></div>'+(y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
-        :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
-        :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`)+`<p class="sub">${yongSay()}</p>`;})();
+  // 两套取法各一块，各有标题、结果和一句说明：左边（手机上在上面）是扶抑的喜用和忌，右边是用神和喜神、忌神、仇神、闲神。
+  // 原来两排放在一个框里、中间一道虚线，排版审阅说容易读成同一套判断（2026-11-18）
+  const x=xiNow(), y=yongNow(), de=gEl(DM), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
+  const fy=x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
+    :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`;
+  const fySub=`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照「用神」那一块${yongNow().pair?'取，其余三行算忌':'的用神和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；「用神」那一块照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`;
+  // 用神那一块：用神、喜神、忌神、仇神、闲神各一格，字块是五行，底下写是哪两个十神。
+  // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一格里两种五行，分不出喜神、忌神，那几格不画
+  const blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
+  const ys=y.yong!==null?YONG_SHEN.map(([nm,f],j)=>blk(nm,j?y.shen[f]:y.yong)).join('')
+    :y.pair?`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b>${els(y.pair.map(k=>(de+k)%5))}</b><small>${y.pair.map(k=>CAT[k][0]).join('、')}</small></div>`
+    :`<div class="qx"><span>${xb('x','ys|用神','用神')}</span><b class="no">不定</b></div>`;
+  $('xi').innerHTML=`<div class="xi-g"><h4>扶抑的喜用<small>照强弱计分：身弱扶它，身强抑它</small></h4><div class="xi-r">${fy}</div>${fySub}</div>`
+    +`<div class="xi-g"><h4>用神<small>照任铁樵《滴天髓阐微》的注，再分出喜神、忌神、仇神、闲神</small></h4><div class="xi-r">${ys}</div><p class="sub">${yongSay()}</p></div>`;
 }
 /* 「强弱」一页最上面的四张卡片：得令、得地、得势、得气（数据在 text.js 的 sideFour）。每张是标题（点开看解释）、判语、一排小格子、一句话。
    小格子帮日主的（有根、帮扶、气盛）垫日主那一行五行的淡底，得令一张是旺相休囚死五格，日主落在哪一格就垫哪一格 */

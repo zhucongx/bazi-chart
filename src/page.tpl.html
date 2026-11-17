@@ -247,6 +247,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .gz{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.3}
 .pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
+.pk .yr .ag{margin-left:4px}
 .pk[aria-pressed="true"] .ag{color:var(--ink2)}      /* 选中的卡是淡蓝底，浅灰字对比度不够 */
 /* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数；两种相加时满分 26，两种之间空一道缝（.cut）。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
 /* 小卡底下的条能点开明细：和别处夹在文字里的可点词一样，分数带虚线下划线，悬停垫淡钴蓝，点开淡蓝底加一圈钴蓝。
@@ -336,6 +337,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gjz .gjz-ge{font-size:12.5px;color:var(--ink3)}
 .gjz .gjz-ge b{font-weight:600;color:var(--ink)}
 .gjz .gjz-no td{font-size:13px;color:var(--ink3)}
+.gjb th[scope=row]{width:44%}
+.gjz.gjb th[scope=row] .x{white-space:normal}      /* 书里的话长，手机上要能折行，不然第二列被挤得很窄 */
+.gjb #gjb-say b,#gjb-say b{font-weight:600;color:var(--ink)}
+.gjb .gjb-off .gjz-w{color:var(--ink3)}
 @media (max-width:600px){
   .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
   .gjz th[scope=row] .x{white-space:nowrap}      /* 组合的名字不折行，全称的那一句在下面折 */
@@ -419,9 +424,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sd-st i.on{color:currentColor}
 .sd-t.on small,.sd-t.on em{color:var(--ink2)}
 .sd-s{font-size:12.5px;color:var(--ink2)}
-.xi{display:flex;flex-wrap:wrap;gap:10px 36px;align-items:flex-end;padding:16px 18px;border:1px solid var(--line);border-radius:14px}      /* 喜忌一页最上面：扶抑取的喜用和忌 */
-.xi .sub{flex-basis:100%}
-.xi-sep{flex-basis:100%;border-top:1px dashed var(--line)}      /* 上面一排是扶抑的两组，下面一排是用神和四个名目 */
+/* 喜忌一页最上面：两套取法各一块（.xi-g），各有标题、一排结果（.xi-r）和一句说明。手机上上下排、中间一道虚线；电脑上左右并排、中间一道竖的虚线 */
+.xi{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:14px}
+.xi-g{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 18px}
+.xi-g+.xi-g{border-top:1px dashed var(--line)}
+.xi-g h4{margin:0;font:600 13.5px/1.4 var(--body);color:var(--ink)}
+.xi-g h4 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
+.xi-r{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-end}
+.xi .sub{margin:0}
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
 .qx b{display:flex;flex-wrap:wrap;gap:8px}
@@ -450,7 +460,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wxmap .nm{font:600 11px var(--body);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
 .wxmap .ct{font:400 9.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 .wxmap .sx{font:400 9.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
-#godmap svg{max-width:390px}
+#godmap svg{max-width:470px}
 .wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
 .wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
 .wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
@@ -479,6 +489,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .lg .x{font-size:inherit}
 .lg .rest i{background:var(--line)}
 .stkw{display:block;max-width:220px;margin-top:6px}
+.stkw.top{margin:3px 0 7px}      /* 宫位表：条在文字上面 */
 .lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
 .lg span{display:inline-flex;align-items:center;gap:5px}
 .lg i{width:10px;height:10px;border-radius:2px;background:currentColor}
@@ -558,8 +569,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .split{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:18px 44px;align-items:start}
   :root[data-read="off"] .split{grid-template-columns:minmax(0,760px)}
   :root[data-read="off"] .split.keep{grid-template-columns:minmax(0,11fr) minmax(0,10fr)}      /* 八字一页右边还有四柱之间的关系，关掉解读也并排 */
-  /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面 */
+  /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面。
+     十神生克图有两圈、十五个圈，400 像素里字和线太挤，这一页图占 480 像素（2026-11-18 排版审阅） */
   .beside.fig{grid-template-columns:400px minmax(0,1fr)}
+  .beside.fig.god{grid-template-columns:480px minmax(0,1fr)}
+  .xi{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+  .xi-g+.xi-g{border-top:0;border-left:1px dashed var(--line)}
   .side{gap:18px}
   .gt th,.gt td{padding:5px 2px}
   .gt thead th{padding:10px 4px;font-size:14.5px;line-height:26px}
@@ -606,7 +621,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 流日：一个月二十九到三十二天，电脑上不横向滚动，固定十一列，排成三行全部露出来。
      原来排两行，每张小卡不到六十像素，加了喜用分的条以后太挤（用户说「流日太挤了，不行改成三行」） */
   #liuri{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:10px 6px;overflow:visible}      /* 行距 10：「今天」小印伸出卡片上沿 8 像素，不压到上一行 */
-  #liuri .pk{padding-left:2px;padding-right:2px}
+  #liuri .pk{padding:6px 2px 7px;gap:1px}      /* 流日三行，卡片比别的三排矮：星期和日期并成一行，上下的留白收紧（2026-11-18 排版审阅说流日占了四百多像素） */
   .pk .yr,.pk .gd,.pk .ag{font-size:12.5px}
   #liuri .pk .gd{font-size:11.5px}
   .pk .gz{font-size:23px}
@@ -980,7 +995,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <tbody id="gods"></tbody>
       </table>
     </div>
-    <div class="beside fig">
+    <div class="beside fig god">
       <figure class="wxmap" id="godmap"></figure>
       <div class="side">
         <p class="note" id="note-godmap"></p>
@@ -988,10 +1003,21 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
     </div>
   </div>
-  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类），下面是格局组合（成格、败格的条件），最后是解读 -->
+  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类）、用神变化、相神三行，中间是成败救应表（照归的格逐条核对，2026-11-18 加的），下面是格局组合（常说的十五个），最后是解读 -->
   <div class="panel" role="tabpanel" id="p-gj" aria-labelledby="h-gj" hidden>
-    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，下面照原文逐条核对常说的十几个组合，看书里算成格还是败格的条件</p>
+    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，看用神有没有变化、相神是哪几个字；中间照归的格逐条核对成、败、带忌、救应；下面是常说的十几个组合</p>
     <div class="kvs" id="kv-gj"></div>
+    <div class="gjzblock">
+      <h3>成败救应 <small>照这张盘归的格，逐条核对《子平真诠》「论用神成败救应」</small></h3>
+      <p class="note" id="gjb-say"></p>
+      <div class="tablewrap">
+        <table class="gods gjz gjb">
+          <thead><tr><th scope="col">书里的话</th><th scope="col">这张盘</th></tr></thead>
+          <tbody id="gjb"></tbody>
+        </table>
+      </div>
+      <p class="note" id="note-gjb"></p>
+    </div>
     <div class="gjzblock">
       <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
       <div class="tablewrap">
