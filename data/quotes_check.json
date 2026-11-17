@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-17",
- "total": 408,
- "hash": 3390704954,
+ "total": 411,
+ "hash": 2042830725,
  "sources": {
   "dts": {
    "book": "《滴天髓》",
@@ -116,7 +116,7 @@
   },
   "zpzq": {
    "book": "《子平真诠》",
-   "quotes": 55,
+   "quotes": 58,
    "pages": [
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53623.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53626.html",
@@ -133,7 +133,8 @@
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53665.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53625.html",
     "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53651.html",
-    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53659.html"
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53659.html",
+    "https://www.diancang.xyz/xuanxuewushu/zipingzhenquan/53661.html"
    ]
   }
  }

@@ -159,6 +159,7 @@ h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
 h3 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
+#note-dy{color:var(--ink);margin-bottom:6px}      /* 选中的日子不在选中的那一步大运里时的一句说明，字比别的说明深一档 */
 /* 带标签栏的卡片有两张：原局（日主、五行、强弱、十神、喜忌）和排盘（四柱细盘、干支关系、根和透、大运流年），各自一次显示一页。
    标签就是卡片的标题，所以用宋体：选中的是墨色，下面一道钴蓝的线；其余的是淡墨色。换页由 ui.js 的 setTab 完成。
    每一页开头一行小字（.sub）说这一页讲什么 */
@@ -1018,6 +1019,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="prow"><h3 id="h-ln"></h3><div class="picker" id="liunian" role="group" aria-label="流年"></div></div>
   <div class="prow"><h3 id="h-ly"></h3><div class="picker" id="liuyue" role="group" aria-label="流月"></div></div>
   <div class="prow"><h3 id="h-lr"></h3><div class="picker" id="liuri" role="group" aria-label="流日"></div></div>
+  <p class="note" id="note-dy" hidden></p>
   <p class="note" id="note-yun"></p>
   <div class="tabbar" role="tablist" aria-label="排盘">
     <button class="tab" type="button" role="tab" id="h-pan" data-tab="pan:pan" aria-controls="p-pan" aria-selected="true"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-pan"/></svg>四柱细盘</button>

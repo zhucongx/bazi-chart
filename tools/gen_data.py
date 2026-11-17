@@ -53,10 +53,10 @@ people.json 的字段（写成紧凑的一行 JSON）：
     lunar          真太阳时那一刻的农历：{year: 农历年的干支（以正月初一为界）, month: 月（比如「腊」，
                    闰月带「闰」字，比如「闰四」）, day: 日（比如「初二」）, leap: 是不是闰月}
     xingzuo        星座，按真太阳时的日期
-    pillars        [年柱,月柱,日柱,时柱]，按真太阳时
-    pillarsClock   按钟表时间排的四柱，用来对比
-    prevJie        真太阳时之前最近的节：{name: 节名, at: [年,月,日,时,分,秒], min: 从这个节到真太阳时的整分钟数}
-    nextJie        真太阳时之后最近的节，min 是从真太阳时到这个节的整分钟数
+    pillars        [年柱,月柱,日柱,时柱]。年柱、月柱照钟表时间（出生的那一刻在交节之前还是之后），日柱、时柱照真太阳时
+    pillarsClock   整个按钟表时间排的四柱，用来对照日柱、时柱；年柱、月柱和 pillars 相同
+    prevJie        出生那一刻（钟表时间）之前最近的节：{name: 节名, at: [年,月,日,时,分,秒], min: 从这个节到出生那一刻的整分钟数}
+    nextJie        出生那一刻之后最近的节，min 是从出生那一刻到这个节的整分钟数
     taiyuan、minggong、shengong、taixi   胎元、命宫、身宫、胎息
     yun            起运：{forward: 是不是顺排, y、m、d、h: 折合成几年几个月几天几小时, start: [年,月,日] 起运的公历日期,
                    jie: 数到的那个节, gapMin: 钟表时间和这个节相隔的分钟数}。
@@ -85,11 +85,14 @@ expected.json 的字段，{id: {…}}，每个人：
   黄赤交角取平黄赤交角，时刻取出生那一刻（钟表时间减 8 小时，当作世界时）。
   两项各自四舍五入到整秒，再加到钟表时间上。
   这条公式是近似式，和严格算法相比最多差 4 秒左右，平均差 1 秒多。
-- 四柱按真太阳时取，用 lunar_python 默认的取法：年以立春为界，月以节为界，日以零点为界。
+- 四柱用 lunar_python 默认的取法：年以立春为界，月以节为界，日以零点为界。
   23 点以后出生的，日柱仍算当天，时柱的天干按第二天的子时取。另有子初就换日的说法。
-  另外按钟表时间也排一遍，放在 pillarsClock。节气的时刻是北京时间，所以出生时间离节气
-  交接很近时，两种排法的年柱或月柱可能不同，这时会打印提醒。
-- 大运按钟表时间取，getYun(gender, 2)：从出生数到节的分钟数，4320 分钟（三天）折一年。
+- 年柱、月柱看出生的那一刻在交节之前还是之后。交节是一个确定的时刻，lunar_python 的节气是北京时间，
+  所以拿钟表时间去比。日柱、时柱照真太阳时。2026-11-17 以前四柱都照真太阳时，交节前后同一个时刻
+  换个经度就换了年柱、月柱，和按钟表时间排的大运也接不上。
+  另外整个按钟表时间也排一遍，放在 pillarsClock，用来对照日柱、时柱。
+  真太阳时落在交节另一边的，会打印提醒。
+- 大运按钟表时间取，和年柱、月柱是同一个基准。getYun(gender, 2)：从出生数到节的分钟数，4320 分钟（三天）折一年。
   阳年男、阴年女顺排，数到下一个节；阴年男、阳年女逆排，数到上一个节。
 - 十二长生按阳干顺行、阴干逆行，土跟着火走。别的流派有阴干也顺行、土跟着水走的说法。
 """
@@ -99,7 +102,7 @@ import math
 import sys
 from pathlib import Path
 
-from lunar_python import Solar
+from lunar_python import EightChar, Solar
 from lunar_python.util import LunarUtil
 
 from shensha import shensha
@@ -171,6 +174,22 @@ def time_of(solar):
 def whole_minutes(a, b):
     """从 a 到 b 相隔的整分钟数，向下取整。"""
     return int((b - a).total_seconds() // 60)
+
+
+class MixedLunar:
+    """给 lunar_python 的 EightChar 用的农历对象：年柱、月柱的方法交给钟表时间那一刻的农历，其余的都交给真太阳时那一刻的。
+
+    年柱、月柱看出生的那一刻在交节之前还是之后，交节是一个确定的时刻，lunar_python 的节气是北京时间，所以拿钟表时间去比；
+    日柱、时柱照当地的真太阳时。EightChar 取年、月用的方法名都是 getYear…Exact、getMonth…Exact，照名字分给两个对象。
+    这样胎元、命宫、十神、藏干、空亡、纳音都还是 lunar_python 自己算的。出生时间不在交节附近时，两个对象的年、月相同，
+    结果和原来整个照真太阳时排的一样。"""
+
+    def __init__(self, tst_lunar, clock_lunar):
+        self._tst, self._clock = tst_lunar, clock_lunar
+
+    def __getattr__(self, name):
+        by_clock = name.startswith(('getYear', 'getMonth')) and 'Exact' in name
+        return getattr(self._clock if by_clock else self._tst, name)
 
 
 def span(minutes):
@@ -303,18 +322,22 @@ def chart(name, src, notes, nayin_el):
             clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
         dlon, eot, tst = true_solar_time(clock, src['lon'])
 
-    # 四柱：按真太阳时。另按钟表时间排一遍。
+    # 四柱：年柱、月柱照钟表时间（出生的那一刻在交节之前还是之后），日柱、时柱照真太阳时，见 MixedLunar。另外整个按钟表时间排一遍。
     lunar = solar_of(tst).getLunar()
-    ec = lunar.getEightChar()
-    pillars = [ec.getYear(), ec.getMonth(), ec.getDay(), ec.getTime()]
     lunar_clock = solar_of(clock).getLunar()
+    ec_tst = lunar.getEightChar()
     ec_clock = lunar_clock.getEightChar()
+    ec = EightChar.fromLunar(MixedLunar(lunar, lunar_clock))
+    pillars = [ec.getYear(), ec.getMonth(), ec.getDay(), ec.getTime()]
     pillars_clock = [ec_clock.getYear(), ec_clock.getMonth(), ec_clock.getDay(), ec_clock.getTime()]
+    assert pillars == pillars_clock[:2] + [ec_tst.getDay(), ec_tst.getTime()]
+    # 真太阳时落在交节的另一边：整个照真太阳时排的话，年柱或月柱会不一样
+    split = [ec_tst.getYear(), ec_tst.getMonth()] != pillars[:2]
 
-    # 真太阳时前后的两个节
-    prev_jie, next_jie = lunar.getPrevJie(), lunar.getNextJie()
+    # 出生那一刻（钟表时间）前后的两个节
+    prev_jie, next_jie = lunar_clock.getPrevJie(), lunar_clock.getNextJie()
     prev_at, next_at = time_of(prev_jie.getSolar()), time_of(next_jie.getSolar())
-    prev_min, next_min = whole_minutes(prev_at, tst), whole_minutes(tst, next_at)
+    prev_min, next_min = whole_minutes(prev_at, clock), whole_minutes(clock, next_at)
 
     # 大运：按钟表时间
     yun = ec_clock.getYun(gender, 2)
@@ -346,10 +369,10 @@ def chart(name, src, notes, nayin_el):
     print('  大运 ' + ' '.join(f'{d["gz"]}({d["y0"]},{d["a0"]}岁)' for d in dayun))
 
     # 提醒
-    if pillars[:2] != pillars_clock[:2] or min(prev_min, next_min) < 180:
-        print('  提醒：出生时间离节气交接很近，年柱或月柱可能有争议。'
-              + ('按真太阳时和按钟表时间排出的年柱或月柱不同；大运是按钟表时间排的，和上面的四柱对不上。'
-                 if pillars[:2] != pillars_clock[:2] else ''))
+    if split or min(prev_min, next_min) < 180:
+        print('  提醒：出生时间离节气交接很近。年柱、月柱照出生的那一刻排。'
+              + (f'真太阳时落在交节的另一边，整个照真太阳时排的话，年柱和月柱是 {ec_tst.getYear()}、{ec_tst.getMonth()}。'
+                 if split else ''))
     if pillars[2:] != pillars_clock[2:]:
         print('  提醒：真太阳时和钟表时间落在不同的时辰或不同的日子，日柱、时柱取决于用不用真太阳时。页面用的是真太阳时。')
 

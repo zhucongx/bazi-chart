@@ -118,21 +118,24 @@ function chartOf(info){
   const dlonSec=sh?0:roundHalfUp((info.lon-120)*240);
   const eotSec=sh?0:roundHalfUp(equationOfTime(2451545.0+(c-8*3600-toSec(2000,1,1,12))/86400));   // 钟表时间减 8 小时，当作世界时
   const ts=c+dlonSec+eotSec, tst=fromSec(ts);
-  const A=pillarsAt(tst), B=pillarsAt(clock);            // 四柱按真太阳时；另按钟表时间排一遍
-  const [yp,mp,dp,hp]=A.p, yg=G.indexOf(yp[0]);
+  // 年柱、月柱看出生的那一刻在交节之前还是之后。交节是一个确定的时刻，节气表存的是北京时间，所以拿钟表时间（也是北京时间）去比；
+  // 日柱、时柱照当地的真太阳时。原来四柱都照真太阳时，交节前后同一个时刻换个经度就换了年柱、月柱，而且和按钟表时间排的大运接不上
+  // （2026-11-17 内容审阅 C1，用户说改）。pillarsClock 是整个按钟表时间排的，留着对照日柱、时柱
+  const A=pillarsAt(tst), B=pillarsAt(clock);
+  const [yp,mp]=B.p, dp=A.p[2], hp=A.p[3], yg=G.indexOf(yp[0]);
   const jieAt=i=>({name:JIE[i%12],at:fromSec(JIE_T[i])});
   // 胎元、命宫、身宫、胎息。月支和时支都换成「寅是 1、丑是 12」的序号来算
   const mzi=(Z.indexOf(mp[1])+10)%12+1, tzi=(Z.indexOf(hp[1])+10)%12+1;
   const pick=off=>{let g=(yg+1)*2+off;while(g>10) g-=10;return G[g-1]+Z[(off+1)%12];};
   const ming=mzi+tzi>=14?26-mzi-tzi:14-mzi-tzi, shen=mzi+Z.indexOf(hp[1])+1;
-  // 大运按钟表时间：阳年男、阴年女顺排，数到下一个节；阴年男、阳年女逆排，数到上一个节
-  const man=info.gender==='男', forward=(G.indexOf(B.p[0][0])%2===0)===man, yj=forward?B.i+1:B.i;
+  // 大运也按钟表时间，和年柱、月柱是同一个基准：阳年男、阴年女顺排，数到下一个节；阴年男、阳年女逆排，数到上一个节
+  const man=info.gender==='男', forward=(yg%2===0)===man, yj=forward?B.i+1:B.i;
   const gapMin=forward?Math.floor(JIE_T[yj]/60)-Math.floor(c/60):Math.floor(c/60)-Math.floor(JIE_T[yj]/60);
   let rest=gapMin; const y=Math.floor(rest/4320); rest-=y*4320;
   const m=Math.floor(rest/360); rest-=m*360;
   const d=Math.floor(rest/12); rest-=d*12;
   const h=rest*2, start=addHours(addDays(addMonths(addYears(clock,y),m),d),h);
-  const mi=gz60(B.p[1][0],B.p[1][1]), dayun=[];
+  const mi=gz60(mp[0],mp[1]), dayun=[];
   for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
   const p={id:info.id,name:info.name,gender:man?1:0,clock};
   if(sh) p.shichen=sh;
@@ -143,9 +146,9 @@ function chartOf(info){
   if(!sh) p.lon=info.lon;
   Object.assign(p,{dlonSec,eotSec,tst,
     lunar:lunarOf(tst[0],tst[1],tst[2]),xingzuo:xingzuoOf(tst[1],tst[2]),
-    pillars:A.p,pillarsClock:B.p,
-    prevJie:Object.assign(jieAt(A.i),{min:Math.floor((ts-JIE_T[A.i])/60)}),
-    nextJie:Object.assign(jieAt(A.i+1),{min:Math.floor((JIE_T[A.i+1]-ts)/60)}),
+    pillars:[yp,mp,dp,hp],pillarsClock:B.p,
+    prevJie:Object.assign(jieAt(B.i),{min:Math.floor((c-JIE_T[B.i])/60)}),
+    nextJie:Object.assign(jieAt(B.i+1),{min:Math.floor((JIE_T[B.i+1]-c)/60)}),
     taiyuan:G[(G.indexOf(mp[0])+1)%10]+Z[(Z.indexOf(mp[1])+3)%12],
     minggong:pick(ming),shengong:pick(shen>12?shen-12:shen),
     taixi:gHe(dp[0])+Z[(13-Z.indexOf(dp[1]))%12],
