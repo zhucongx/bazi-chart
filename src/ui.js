@@ -546,7 +546,7 @@ function renderQs(){
   const els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
   $('qs').innerHTML=`<div class="qs-dm"><span>日主</span><b class="${gCls(DM)}">${DM}</b><small>${yy(DM)}${EL[de]}</small></div>`
     +`<div class="qs-main">`
-    +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱未定'})[r.tier]}</b><span>${HELP} ${r.help} 分，满分 ${W} 分</span></div>`
+    +`<div class="qs-h"><h3>${xb('x','kv|强弱计分','强弱计分')}</h3><b class="qs-t">${({强:'身强',弱:'身弱',间:'强弱居中'})[r.tier]}</b><span>${HELP} ${r.help} 分，满分 ${W} 分</span></div>`
     +gauge
     +`<div class="qt-row">${tile('日主自己',pt.self,`日干${DM}`+(pt.meFrom!==undefined?`，合化改记${EL[(nlNow().items.find(x=>x.i===2&&x.j===0)||{}).e]}`:''))}${tile('月支',pt.yue,`${NATAL[1].z}，分数加倍`)}${tile('另外三个地支',pt.zhi,'年支、日支、时支')}${tile('三个天干',pt.gan,'年干、月干、时干')}</div>`
     +`<ul class="qs-li">${pt.items.length?pt.items.map(it=>`<li>${qsSay(it)}</li>`).join(''):`<li>除了日主自己，八个字里没有${EL[de]}和${EL[se]}</li>`}</ul>`
@@ -557,7 +557,7 @@ function renderXi(){
   const x=xiNow(), els=a=>a.map(e=>`<span class="${ELC[e]}">${ic(e)}${EL[e]}</span>`).join('');
   $('xi').innerHTML=(x.xi?`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b>${els(x.xi)}</b></div><div class="qx"><span>${xb('x','ji','忌')}</span><b>${els(x.ji)}</b></div>`
       :`<div class="qx"><span>${xb('x','xi','喜用（扶抑）')}</span><b class="no">不定</b></div>`)
-    +`<p class="sub">${x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；下面的用神照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
+    +`<p class="sub">${x.lean?`「强弱」一页的强弱计分 ${x.help} 分，在 25 分和 30 分之间，强弱居中，分不出该扶还是该抑。喜用照下面的用神${yongNow().pair?'取，其余三行算忌':'和喜神取，忌照忌神和仇神取'}。`:x.xi?`照「强弱」一页的强弱计分，这张盘身${x.tier}（${HELP} ${x.help} 分）。扶抑一家说身弱扶它、身强抑它，喜用就是这样取的。`:`「强弱」一页的强弱计分在 25 分和 30 分之间，这种算法没有说这一段算强还是算弱，扶抑取不了喜用。`}${congNow().ok?'这张盘合「强弱」一页「从格」一行核对的条件，照从格的书，喜忌和这里正好相反。':''}${huaNow().gan.ok?'这张盘合「强弱」一页「合化」一行核对的化气格条件，照《千里命稿》化气格喜生助化神，和这里的扶抑不同；下面的用神照任铁樵以化神为体。':''}点「喜用（扶抑）」看依据和别家的取法。</p>`
     // 用神那一排：用神、喜神、忌神、仇神、闲神各一块，字块是五行，底下写是哪两个十神
     +(()=>{const y=yongNow(), de=gEl(DM), blk=(nm,k)=>`<div class="qx"><span>${xb('x','ys|'+nm,nm)}</span><b>${els([(de+k)%5])}</b><small>${CAT[k][0]}</small></div>`;
       // 强弱未定、用神取了印和比劫两类的盘（y.pair）：一块里两种五行，分不出喜神、忌神，那几块不画
