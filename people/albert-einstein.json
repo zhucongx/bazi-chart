@@ -1,0 +1,18 @@
+{
+  "id": "albert-einstein",
+  "name": "爱因斯坦",
+  "gender": "男",
+  "birth": "1879-03-14 11:30",
+  "tz": "lmt",
+  "tzName": "当地平太阳时",
+  "place": "德国乌尔姆",
+  "lon": 10.0,
+  "source": "乌尔姆的出生证，原件存在爱因斯坦档案馆，写的是上午十一点半（AstroDatabank 评 AA）",
+  "expect": [
+    "己卯",
+    "丁卯",
+    "丙申",
+    "甲午"
+  ],
+  "order": 6
+}

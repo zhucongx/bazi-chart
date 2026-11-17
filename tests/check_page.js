@@ -886,6 +886,49 @@ console.log('几张虚构的盘');
   eq('甲戊相克在年干和月干、年干和日干两处：解读里分开说，一处是七杀克比肩，一处是七杀克日主', [rr[0], rr[1].includes('年干和月干是七杀克比肩'), rr[1].includes('年干和日干是七杀克日主')], ['甲子 戊辰 戊子 丁巳', true, true]);
 }
 
+// ---------- 3c. 人物那一排调整先后 ----------
+console.log('人物那一排调整先后');
+if (ev('PEOPLE.filter(p=>!p.temp).length') < 3) console.log('  跳过  这个页面上不到三个人');
+else {
+  pick(0);
+  const names = () => [...$('people').querySelectorAll('.pp[data-p]')].map(txt), before = names(), cur = ev('P.id');
+  ok('人物那一排的名字上写着可以按住拖动、键盘上用 Alt 加左右方向键', [...$('people').querySelectorAll('.pp[data-p]')].every(b => /按住拖动/.test(b.title) && /Alt/.test(b.title)));
+  ev('movePerson(0,2)');
+  const after = names();
+  eq('把第一位挪到第三位：这一排照新的先后画，选中的还是原来那一位', [after, ev('P.id'), ev('PEOPLE[sel.p].id'), txt($('people').querySelector('[aria-pressed="true"]'))], [[before[1], before[2], before[0], ...before.slice(3)], cur, cur, before[0]]);
+  eq('新的先后按 id 记在浏览器里', JSON.parse(ev("localStorage.getItem('bz-order')")), JSON.parse(ev('JSON.stringify(PEOPLE.filter(p=>!p.temp).map(p=>p.id))')));
+  ev("readOrder();rebuildPeople();usePerson(PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person')))");
+  eq('重新读一遍名单：照记下的先后排，选中的还是那一位', [names(), ev('P.id')], [after, cur]);
+  const first = $('people').querySelector('.pp[data-p="0"]');
+  first.focus(); first.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+  eq('焦点在名字上按 Alt 加右方向键：往后挪一位，焦点跟着这个名字', [names().slice(0, 2), txt(d.activeElement)], [[after[1], after[0]], after[0]]);
+  eq('挪不出这一排：第一位不能再往前，最后一位不能再往后', [ev('movePerson(0,-1)'), ev('movePerson(PEOPLE.length-1,PEOPLE.length)')], [false, false]);
+  ev("localStorage.removeItem('bz-order');readOrder();rebuildPeople();usePerson(0)");
+  eq('清掉记下的先后，回到默认', names(), before);
+}
+
+// ---------- 3d. 生在国外的人：顶部信息写当地时间 ----------
+console.log('生在国外的人');
+{
+  const ids = JSON.parse(ev('JSON.stringify(PEOPLE.filter(p=>p.localClock).map(p=>p.id))'));
+  if (!ids.length) console.log('  跳过  这个页面上没有生在国外的人');
+  else {
+    const row = k => JSON.parse(ev(`JSON.stringify(metaRows().find(x=>x.k===${JSON.stringify(k)}))`));
+    ids.forEach(id => {
+      ev(`usePerson(PEOPLE.findIndex(p=>p.id===${JSON.stringify(id)}))`);
+      const L = JSON.parse(ev('JSON.stringify(P.localClock)')), gl = row('公历'), zt = row('真太阳时');
+      eq(`${ev('P.name')}：公历一行写当地时间，解释里写着换成北京时间是几点；真太阳时和当地钟表比`,
+        [strip(gl.dd), strip(gl.p[0][1]).includes('换成北京时间是'), /当地钟表/.test(strip(zt.dd))], [`${L[0]} 年 ${L[1]} 月 ${L[2]} 日 ${L[3]}:${String(L[4]).padStart(2, '0')}（当地时间）`, true, true]);
+    });
+    eq('当地时间换成的北京时间，和照 tz 另算的一样（北京时间等于当地时间减去 tz 再加 8 小时，lmt 照经度算）', JSON.parse(ev(`JSON.stringify(PEOPLE.filter(p=>p.localClock).filter(p=>{const off=p.tz==='lmt'?Math.round(p.lon*240):Math.round(p.tz*3600), s=a=>Date.UTC(a[0],a[1]-1,a[2],a[3],a[4],a[5]);return s(p.clock)-s(p.localClock)!==(8*3600-off)*1000;}).map(p=>p.id))`)), []);
+    if (ids.includes('steve-jobs')) {
+      ev("usePerson(PEOPLE.findIndex(p=>p.id==='steve-jobs'))");
+      eq('乔布斯：钟表上的 19:15 落在戌时，换成真太阳时进了酉时；经度修正照太平洋标准时间的西经 120 度算', [strip(row('真太阳时').p[2][1]).includes('钟表上的 19:15 本来落在戌时，换算之后进了酉时'), strip(row('真太阳时').p[1][1]).includes('基准经线（西经 120 度）')], [true, true]);
+    }
+    pick(0);
+  }
+}
+
 // ---------- 4. 解释面板 ----------
 console.log('解释面板');
 pick(0);

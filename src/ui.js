@@ -27,11 +27,32 @@ function writeLocal(){
 const HOUR_PICK={};
 /* 从链接打开、还没保存的人：{info, dates}。只有一个，排在最后，不写进 localStorage；点「保存」才存 */
 let TEMP=null;
+/* 人物那一排的先后：拖动调整过的，按 id 记在 localStorage 的 bz-order 里（2026-11-17 用户要的「允许拖动这些标签调整顺序」）。
+   不在里面的人（新加的、没排过的）跟在后面，彼此保持原来的先后；来自链接的那一位总在最后 */
+let ORDER=[];
+function readOrder(){try{const v=JSON.parse(localStorage.getItem('bz-order')||'[]');ORDER=Array.isArray(v)?v.filter(x=>typeof x==='string'):[];}catch(e){ORDER=[];}}
+function saveOrder(){ORDER=PEOPLE.filter(p=>!p.temp).map(p=>p.id);try{localStorage.setItem('bz-order',JSON.stringify(ORDER));}catch(e){}}
 function rebuildPeople(){
-  PEOPLE.length=DATA.people.length;
+  PEOPLE.length=0;PEOPLE.push(...DATA.people);
   const one=info=>chartOf(info.nohour?Object.assign({},info,{shichen:HOUR_PICK[info.id]||'午'}):info);
   LOCAL.forEach(info=>{try{const p=one(info);p.local=true;PEOPLE.push(p);}catch(e){}});
+  const at=p=>{const k=ORDER.indexOf(p.id);return k<0?Infinity:k;}, sorted=PEOPLE.map((p,i)=>[p,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(x=>x[0]);
+  PEOPLE.length=0;PEOPLE.push(...sorted);
   if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
+}
+/* 照 order 重排 PEOPLE：order 是新的先后，每一项是原来的下标。选中的还是原来那一位，只重画人物那一排 */
+function applyOrder(order){
+  if(order.length!==PEOPLE.length||new Set(order).size!==order.length) return false;
+  const cur=PEOPLE[sel.p], next=order.map(i=>PEOPLE[i]);
+  if(next.some(p=>!p)||next.slice(0,-1).some(p=>p.temp)) return false;     // 来自链接的那一位只能在最后
+  PEOPLE.length=0;PEOPLE.push(...next);sel.p=PEOPLE.indexOf(cur);
+  saveOrder();renderPeopleRow();return true;
+}
+/* 把第 from 位挪到第 to 位（键盘用，也给检查脚本用） */
+function movePerson(from,to){
+  const n=PEOPLE.filter(p=>!p.temp).length; if(from===to||from<0||to<0||from>=n||to>=n) return false;
+  const order=PEOPLE.map((p,i)=>i), [x]=order.splice(from,1); order.splice(to,0,x);
+  return applyOrder(order);
 }
 /* 任何一个人的出生信息：从链接来的、存在浏览器里的、页面自带的（由排好的结果取回） */
 function infoOf(p){
@@ -170,11 +191,15 @@ const KV_FROM={'强弱参考':'kv-qr','格局参考':'kv-gj','调候参考':'kv2
 /* 顶部信息分两处放：起运和交运跟着大运那一行；其余的都在标题下面，出生的基本信息排在前面 */
 const META_MAIN=['公历','真太阳时','时辰','农历','出生地','节气'], META_YUN=['起运','交运'];
 /* 只跟人有关、不随大运流年变的部分 */
-function renderPerson(){
-  $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}">${esc(p.name)}${p.temp?'<small class="from">来自链接</small>':''}</button>`).join('')
+/* 人物那一排：一个人一个按钮，按住拖动调整先后（见文件后面拖动的那一段），后面是添加、编辑、分享 */
+function renderPeopleRow(){
+  $('people').innerHTML=PEOPLE.map((p,i)=>`<button type="button" class="pp" aria-pressed="${i===sel.p}" data-p="${i}"${p.temp?'':' title="点一下换到这一位；按住拖动可以调整先后，键盘上是 Alt 加左右方向键"'}>${esc(p.name)}${p.temp?'<small class="from">来自链接</small>':''}</button>`).join('')
     +'<button type="button" class="pp add" id="pp-add">＋ 添加</button>'
     +(P.local?'<button type="button" class="pp add" id="pp-edit">编辑这一位</button>':'')
     +'<button type="button" class="pp add" id="pp-share">分享</button>';
+}
+function renderPerson(){
+  renderPeopleRow();
   renderLinkBar();
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
@@ -908,6 +933,7 @@ document.addEventListener('click',e=>{
     return;
   }
   if(b.dataset.p!==undefined){
+    if(NOCLICK) return;                    // 刚拖完松手，紧跟着的这一下点击不算换人
     if(Number(b.dataset.p)!==sel.p){say('');usePerson(Number(b.dataset.p));}      // 换了人，上一位的提示就不留了
   }else pickLayer(b);
   if(hadFocus) refocus(b,boxId);
@@ -953,6 +979,14 @@ document.addEventListener('keydown',e=>{
   // 生克图里的圈：焦点在上面时按回车或空格，和点一下一样
   const nx=e.target&&e.target.closest?e.target.closest('[data-x]'):null;
   if(nx&&nx.tagName.toLowerCase()!=='button'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nx.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
+  // 焦点在人物那一排的名字上时，Alt 加左右方向键把这一位往前、往后挪一位，焦点跟着走
+  const pb=e.target&&e.target.closest?e.target.closest('#people .pp[data-p]'):null;
+  if(pb&&e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+    const i=+pb.dataset.p, to=i+(e.key==='ArrowRight'?1:-1);
+    e.preventDefault();
+    if(movePerson(i,to)) $('people').querySelector(`.pp[data-p="${to}"]`).focus();
+    return;
+  }
   // 焦点在标签上时，左右方向键换页，Home、End 到头尾
   const b=e.target&&e.target.closest?e.target.closest('[data-tab]'):null;
   if(!b||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
@@ -961,6 +995,40 @@ document.addEventListener('keydown',e=>{
   setTab(card,e.key==='Home'?list[0]:e.key==='End'?list[list.length-1]:list[(i+(e.key==='ArrowRight'?1:list.length-1))%list.length],true);
 });
 window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
+/* 拖动人物那一排的名字调整先后。鼠标按住拖动超过 5 像素就开始拖；手指要按住 0.35 秒再拖，在这之前挪动超过 8 像素就当是滚动页面，不拖。
+   拖的时候把这个按钮在那一排里挪到指针最近的那个名字前面或后面，松手时照按钮的新先后排 PEOPLE（applyOrder），记进 bz-order。
+   来自链接的那一位排在最后，不能拖，别的名字也挪不到它后面 */
+let DRAG=null, NOCLICK=false;
+function dragOn(){
+  DRAG.on=true;DRAG.b.classList.add('dragging');$('people').classList.add('sorting');
+  try{DRAG.b.setPointerCapture(DRAG.id);}catch(e){}
+}
+function dragDone(keep){
+  const d=DRAG; DRAG=null; if(!d) return;
+  clearTimeout(d.timer); if(!d.on) return;
+  d.b.classList.remove('dragging');$('people').classList.remove('sorting');
+  NOCLICK=true;setTimeout(()=>{NOCLICK=false;},0);
+  if(!keep||!applyOrder([...$('people').querySelectorAll('.pp[data-p]')].map(c=>+c.dataset.p))) renderPeopleRow();
+}
+$('people').addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.pp[data-p]'); if(!b||e.button>0||!PEOPLE[+b.dataset.p]||PEOPLE[+b.dataset.p].temp) return;
+  DRAG={b,id:e.pointerId,x:e.clientX,y:e.clientY,on:false,touch:e.pointerType!=='mouse',timer:0};
+  if(DRAG.touch) DRAG.timer=setTimeout(()=>{if(DRAG&&!DRAG.on) dragOn();},350);
+});
+$('people').addEventListener('pointermove',e=>{
+  if(!DRAG||e.pointerId!==DRAG.id) return;
+  const far=Math.hypot(e.clientX-DRAG.x,e.clientY-DRAG.y);
+  if(!DRAG.on){ if(DRAG.touch){if(far>8){clearTimeout(DRAG.timer);DRAG=null;}return;} if(far<5) return; dragOn(); }
+  e.preventDefault();
+  const row=$('people'), chips=[...row.querySelectorAll('.pp[data-p]')].filter(c=>c!==DRAG.b&&!PEOPLE[+c.dataset.p].temp);
+  let best=null, bd=Infinity;
+  chips.forEach(c=>{const r=c.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, dd=Math.hypot(e.clientX-cx,(e.clientY-cy)*2);if(dd<bd){bd=dd;best={c,cx};}});
+  if(best){const ref=e.clientX>best.cx?best.c.nextSibling:best.c; if(ref!==DRAG.b&&ref!==DRAG.b.nextSibling) row.insertBefore(DRAG.b,ref);}
+});
+$('people').addEventListener('pointerup',e=>{if(DRAG&&e.pointerId===DRAG.id) dragDone(true);});
+$('people').addEventListener('pointercancel',e=>{if(DRAG&&e.pointerId===DRAG.id) dragDone(false);});
+$('people').addEventListener('touchmove',e=>{if(DRAG&&DRAG.on) e.preventDefault();},{passive:false});      // 拖的时候页面不跟着滚
+$('people').addEventListener('contextmenu',e=>{if(DRAG) e.preventDefault();});                              // 手指按住时不弹出菜单
 
 let themeSaved=''; try{themeSaved=localStorage.getItem('bz-theme')||'';}catch(e){}
 setTheme(themeSaved==='light'||themeSaved==='dark'?themeSaved:'');
@@ -979,7 +1047,7 @@ F('file').addEventListener('change',e=>{
   r.onload=()=>{say(importText(String(r.result)));e.target.value='';};
   r.readAsText(f);
 });
-readLocal();rebuildPeople();
+readLocal();readOrder();rebuildPeople();
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);

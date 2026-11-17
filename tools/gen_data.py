@@ -14,6 +14,12 @@ people.json 是页面的数据。expected.json 是用 lunar_python 自己的方�
   只记到时辰的（比如史料里的古人），birth 只写日期，另外写 "shichen": "巳"，不用写 lon：
   { "id": "…", "name": "…", "gender": "男", "birth": "1654-05-04", "shichen": "巳", "place": "…", "order": 1 }
   这时取这个时辰的中点，直接当作真太阳时来排，不做经度和均时差的换算；子时取零点。
+  生在国外、记录的是当地钟表时间的，birth 写当地时间，另外写 tz（2026-11-17 加示例里的外国人时加的）：
+  { "id": "…", "name": "…", "gender": "男", "birth": "1955-02-24 19:15", "tz": -8, "tzName": "太平洋标准时间",
+    "place": "…", "lon": -122.42, "order": 1 }
+    "tz"       当地钟表比世界时快几小时（西边是负数，夏令时直接算进去），或者 "lmt"，表示按出生地经度定的当地平太阳时
+    "tzName"   当地时间的名字，页面上显示
+  这时先把当地时间换成北京时间，再和别人一样按北京时间加经度排；页面上显示的是当地时间。写了 tz 就不写 shichen 和 dst。
   可选字段：
     "dst": true                           出生时间是夏令时，先减一小时
     "expectLunar": "甲午年三月十八"        由公历换算出来的农历必须等于它，否则报错退出（史料多记农历，用它防止换算错）
@@ -37,6 +43,8 @@ people.json 的字段（写成紧凑的一行 JSON）：
     gender         1 男，0 女
     clock          [年,月,日,时,分,秒]，钟表时间（北京时间），夏令时已经减掉
     dst            true。只有减过夏令时才有这个字段
+    localClock、tz、tzName   只有写了 tz 的人才有：localClock 是记录里的当地钟表时间 [年,月,日,时,分,秒]，tz、tzName 照抄出生信息文件；
+                   clock 是它换成的北京时间
     source         出生时间的来源。没写就没有这个字段
     place、lon     出生地和经度
     dlonSec        经度修正，秒
@@ -109,7 +117,7 @@ CHANG_SHENG_AT = dict(zip('甲丙戊庚壬乙丁己辛癸', '亥寅寅巳申午�
 J2000 = datetime.datetime(2000, 1, 1, 12)
 
 REQUIRED = ['id', 'name', 'gender', 'birth', 'place', 'order']       # 另外，没写 shichen 的必须有 lon
-OPTIONAL = ['lon', 'shichen', 'dst', 'source', 'expect', 'expectYunStart', 'expectTst', 'expectLunar', 'memo']   # memo 是给自己看的备注，不进页面
+OPTIONAL = ['lon', 'shichen', 'dst', 'tz', 'tzName', 'source', 'expect', 'expectYunStart', 'expectTst', 'expectLunar', 'memo']   # memo 是给自己看的备注，不进页面
 
 
 # ---- 真太阳时 ------------------------------------------------------------------
@@ -242,6 +250,14 @@ def load_people(src_dir):
             raise SystemExit(f'{name} 缺少字段：lon（只记到时辰的写 shichen，可以不写 lon）')
         elif isinstance(src['lon'], bool) or not isinstance(src['lon'], (int, float)) or not -180 <= src['lon'] <= 180:
             raise SystemExit(f'{name} 的 lon 应当是经度的度数（东经为正），现在是 {src["lon"]!r}')
+        if 'tz' in src:
+            tz = src['tz']
+            if 'shichen' in src or 'dst' in src:
+                raise SystemExit(f'{name}：写了 tz 就不写 shichen 和 dst（夏令时直接算进 tz）')
+            if not (tz == 'lmt' or (not isinstance(tz, bool) and isinstance(tz, (int, float)) and -12 <= tz <= 14)):
+                raise SystemExit(f'{name} 的 tz 应当是当地钟表比世界时快几小时（-12 到 14），或者 "lmt"（当地平太阳时），现在是 {tz!r}')
+        elif 'tzName' in src:
+            raise SystemExit(f'{name}：写了 tzName 却没有写 tz')
         if isinstance(src['order'], bool) or not isinstance(src['order'], (int, float)):
             raise SystemExit(f'{name} 的 order 应当是数字，现在是 {src["order"]!r}')
         if not isinstance(src['id'], str) or not src['id']:
@@ -272,12 +288,19 @@ def chart(name, src, notes, nayin_el):
             raise SystemExit(f'{name} 写了 shichen，birth 的格式应当是 "YYYY-MM-DD"，现在是 {src["birth"]!r}')
         clock = tst = day + datetime.timedelta(hours=2 * Z.index(shichen))
         dlon = eot = 0
+        local = None
     else:
         birth = parse_time(src['birth'], f'{name} 的 birth')
-        if 1986 <= birth.year <= 1991 and 4 <= birth.month <= 9 and 'dst' not in src:
-            print(f'提醒：{name} 的出生日期在 1986 到 1991 年的 4 到 9 月，那几年中国实行过夏令时。'
-                  '请确认记录的时间是不是夏令时，然后写上 "dst": true 或 "dst": false。')
-        clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
+        local = None
+        if 'tz' in src:
+            # 当地的钟表时间，先换成北京时间。lmt 的偏差照出生地经度算，取整的办法和经度修正相同，这样真太阳时正好是当地时间加均时差
+            off = round_half_up(src['lon'] * 240) if src['tz'] == 'lmt' else round(src['tz'] * 3600)
+            local, clock = birth, birth + datetime.timedelta(seconds=8 * 3600 - off)
+        else:
+            if 1986 <= birth.year <= 1991 and 4 <= birth.month <= 9 and 'dst' not in src:
+                print(f'提醒：{name} 的出生日期在 1986 到 1991 年的 4 到 9 月，那几年中国实行过夏令时。'
+                      '请确认记录的时间是不是夏令时，然后写上 "dst": true 或 "dst": false。')
+            clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
         dlon, eot, tst = true_solar_time(clock, src['lon'])
 
     # 四柱：按真太阳时。另按钟表时间排一遍。
@@ -310,6 +333,8 @@ def chart(name, src, notes, nayin_el):
     if shichen:
         print(f'  只记到时辰：{clock:%Y-%m-%d} {shichen}时，取中点 {clock:%H:%M}，{src["place"]}')
     else:
+        if local:
+            print(f'  当地钟表时间 {local}（{src.get("tzName") or src["tz"]}），换成北京时间是 {clock}')
         print(f'  钟表时间 {clock}（北京时间' + ('，已减去夏令时的 1 小时' if src.get('dst') else '') + f'），{src["place"]}，经度 {src["lon"]}')
         print(f'  经度修正 {dlon} 秒，均时差 {eot} 秒，真太阳时 {tst}')
     print(f'  农历 {lunar.getYearInGanZhi()}年 {lunar.getMonthInChinese()}月 {lunar.getDayInChinese()}，星座 {solar_of(tst).getXingZuo()}')
@@ -340,6 +365,11 @@ def chart(name, src, notes, nayin_el):
         raise SystemExit(f'{name}：换算出来的农历是 {lunar_text}，和 expectLunar 写的 {src["expectLunar"]} 不一致。')
 
     person = {'id': src['id'], 'name': src['name'], 'gender': gender, 'clock': six(clock)}
+    if local:
+        person['localClock'] = six(local)
+        person['tz'] = src['tz']
+        if 'tzName' in src:
+            person['tzName'] = src['tzName']
     if shichen:
         person['shichen'] = shichen
     if src.get('dst') and not shichen:
