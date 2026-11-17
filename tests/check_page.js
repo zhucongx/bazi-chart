@@ -471,7 +471,7 @@ people.forEach((id, pi) => {
   eq('五行个数（只数盘面八个字）和含藏干数：五行一页的表点按钮换数法', [wxCol('face'), wxCol('cnt')], [E.wuxing.face.map(n => `${n} 个`), E.wuxing.all.map(n => `${n} 个`)]);
   wxCol('nl');
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
-  eq('解读方框有 14 个：每一页一个，干支关系、计分两页和最下面的六亲宫位各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length), $('card-lq').querySelectorAll('.read').length], [14, [1, 1, 1, 1, 1, 1, 1, 2, 1, 2], 2]);
+  eq('解读方框有 15 个：每一页一个，干支关系、计分两页和最下面的六亲宫位各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length), $('card-lq').querySelectorAll('.read').length], [15, [1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2], 2]);
   eq('标题下面四柱都有标注，「日主」只标在日干上', [[...$('title').querySelectorAll('.pl')].map(x => x.dataset.k), [...$('title').querySelectorAll('.dm')].map(txt)], [['年柱', '月柱', '日柱', '时柱'], [E.pillars[2][0]]]);
   const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
   eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
@@ -506,9 +506,9 @@ people.forEach((id, pi) => {
   eq('十神对照里的个数加起来，等于三个天干加地支里藏的天干', [...d.querySelectorAll('#gods .gn')].map(el => parseInt(txt(el), 10) || 0).reduce((a, b) => a + b, 0), ev('natalStems().length+natalHidden().length'));
   eq('六亲表有六行，位置一栏和各个十神自己的解释里列的相同', [d.querySelectorAll('#liuqin tr').length, ev("liuqinRows().every(r=>r.at===(whereGod(g=>god(g)===r.god).join('、')||'原局里没有'))"), [...d.querySelectorAll('#liuqin tr')].map(tr => txt(tr.cells[1])).join()], [6, true, ev('P.gender') ? '偏财,正印,比肩,正财,七杀,正官' : '偏财,正印,比肩,正官,食神,伤官']);
   // 版面：原局一张卡片照读盘的先后排（八字、日主、五行、强弱、十神、喜忌），大运流年一张卡片：选择器和四个标签（四柱细盘、干支关系、根和透、计分），最下面是六亲宫位
-  eq('版块的先后：原局的六个标签、选择器、排盘的四个标签、最下面的六亲宫位；六亲宫位不是标签', [['h-bz', 'h-tk', 'h-wx', 'h-qr', 'h-gods', 'h-ys', 'h-yun', 'h-pan', 'h-rel', 'h-gt', 'h-sy', 'h-lq'].map(id => $(id)).every((el, i, a) => !!el && (!i || (a[i - 1].compareDocumentPosition(el) & 4) === 4)), $('h-lq').getAttribute('role'), $('card-lq').contains($('liuqin')) && $('card-lq').contains($('gwmap')), $('card-natal').contains($('liuqin'))], [true, null, true, false]);
-  eq('每个标签对着自己的那一页，里面的东西各归各位', [['bz', 'bz'], ['tk', 'quad'], ['wx', 'wxt'], ['qr', 'kv'], ['qr', 'qs'], ['gods', 'gods'], ['gods', 'kv-gj'], ['gods', 'gjz'], ['ys', 'xi'], ['ys', 'kv2'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap'], ['sy', 'sy']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
-  // 日主一页只有四项（日主属性、阴阳参考就是「日主」「阴阳」两行；旺衰参考、格局参考是强弱、十神两页的结论）；月令、根、印、月令透干在强弱一页的最上面
+  eq('版块的先后：原局的七个标签（十神和喜忌中间是格局）、选择器、排盘的四个标签、最下面的六亲宫位；六亲宫位不是标签', [['h-bz', 'h-tk', 'h-wx', 'h-qr', 'h-gods', 'h-gj', 'h-ys', 'h-yun', 'h-pan', 'h-rel', 'h-gt', 'h-sy', 'h-lq'].map(id => $(id)).every((el, i, a) => !!el && (!i || (a[i - 1].compareDocumentPosition(el) & 4) === 4)), $('h-lq').getAttribute('role'), $('card-lq').contains($('liuqin')) && $('card-lq').contains($('gwmap')), $('card-natal').contains($('liuqin'))], [true, null, true, false]);
+  eq('每个标签对着自己的那一页，里面的东西各归各位', [['bz', 'bz'], ['tk', 'quad'], ['wx', 'wxt'], ['qr', 'kv'], ['qr', 'qs'], ['gods', 'gods'], ['gj', 'kv-gj'], ['gj', 'gjz'], ['gj', 'rd-gj'], ['ys', 'xi'], ['ys', 'kv2'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap'], ['sy', 'sy']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
+  // 日主一页只有四项（日主属性、阴阳参考就是「日主」「阴阳」两行；旺衰参考、格局参考是强弱、格局两页的结论）；月令、根、印、月令透干在强弱一页的最上面
   const inBox = (box, k) => !!$(box).querySelector(`[data-x="kv|${k}"]`), kvNames = [...$('kv').querySelectorAll('dt')].map(txt), quadNames = [...$('quad').querySelectorAll('.qd-k')].map(txt);
   eq('日主一页是四个方块；强弱一页最上面是得令、得地、得势、得气四张卡片（月令、根、印三行并在里面），下面有月令透干、强弱计分的卡片和强弱参考；格局参考在十神一页；调候参考、三行对照在喜忌一页', [quadNames, ['日主', '阴阳', '强弱参考', '格局参考'].map(k => inBox('quad', k)), [...$('sd').querySelectorAll('.sd-h .x')].map(txt), ['月令', '根', '印'].some(k => kvNames.includes(k)), kvNames.includes('月令透干'), ['日主', '阴阳'].some(k => inBox('kv', k)), inBox('kv-qr', '强弱参考'), inBox('kv-gj', '格局参考'), ['调候参考', '三行对照'].map(k => inBox('kv2', k)), inBox('qs', '强弱计分'), d.querySelectorAll('#kv dt, #kv-qr dt, #kv-gj dt, #kv2 dt').length], [['日主属性', '阴阳参考', '旺衰参考', '格局参考'], [true, true, true, true], ['得令', '得地', '得势', '得气'], false, true, false, true, true, [true, true], true, ev('kvRows().length') - 6]);
   // 手写解读另加的行：插在哪一行后面就跟着那一行进哪一页，没写插在哪里的排在最后，在喜忌一页
@@ -812,7 +812,7 @@ people.forEach((id, pi) => {
     eq('格局组合：点组合的名字，解释里有是什么、怎么查、这张盘、和格局、典籍、注意', [!$('sheet').hidden, ['是什么', '怎么查', '这张盘', '和格局', '典籍', '注意'].map(gp)], [true, [true, true, true, true, true, true]]);
     ev('closeSheet()');
   }
-  const fixed = ['meta', 'meta-yun', 'bz', 'rd-bz', 'quad', 'kv', 'kv-qr', 'note-gjz', 'kv-gj', 'kv2', 'xi', 'note-qr', 'rd-qr', 'qs', 'sy-lg', 'note-syfig', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-tr', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
+  const fixed = ['meta', 'meta-yun', 'bz', 'rd-bz', 'quad', 'kv', 'kv-qr', 'note-gjz', 'rd-gj', 'kv-gj', 'kv2', 'xi', 'note-qr', 'rd-qr', 'qs', 'sy-lg', 'note-syfig', 'foot', 'note-yun', 'note-wx', 'note-sk', 'note-lq', 'note-gt', 'note-nl', 'note-gw', 'note-sy', 'rd-gw', 'rd-pan', 'rd-yun', 'rd-tr', 'rd-rel', 'rd-rel2', 'rd-wx', 'rd-tk', 'rd-gods', 'rd-ys', 'rd-lq', 'rd-gt'].filter(k => !txt($(k)) || BAD.test(txt($(k))));
   eq('顶部信息和各版块的解读都有内容', fixed, []);
 });
 
@@ -957,18 +957,18 @@ pick(0);
   const tabs = card => [...d.querySelectorAll(`#card-${card} [role="tab"]`)];
   const state = card => tabs(card).map(b => (b.getAttribute('aria-selected') === 'true' ? '选中' : '') + ($(b.getAttribute('aria-controls')).hidden ? '藏' : '显'));
   const key = (el, k) => el.dispatchEvent(new w.KeyboardEvent('keydown', { key: k, bubbles: true }));
-  eq('一开始两张卡片各显示第一页', [state('natal'), state('pan')], [['选中显', '藏', '藏', '藏', '藏', '藏'], ['选中显', '藏', '藏', '藏']]);
+  eq('一开始两张卡片各显示第一页', [state('natal'), state('pan')], [['选中显', '藏', '藏', '藏', '藏', '藏', '藏'], ['选中显', '藏', '藏', '藏']]);
   click($('h-gods'));
-  eq('点「十神」：只有这一页显示，另一张卡片不受影响', [state('natal'), state('pan')], [['藏', '藏', '藏', '藏', '选中显', '藏'], ['选中显', '藏', '藏', '藏']]);
+  eq('点「十神」：只有这一页显示，另一张卡片不受影响', [state('natal'), state('pan')], [['藏', '藏', '藏', '藏', '选中显', '藏', '藏'], ['选中显', '藏', '藏', '藏']]);
   click($('h-gt'));
   eq('点「根和透」：排盘那张卡片换到这一页', state('pan'), ['藏', '藏', '选中显', '藏']);
   eq('翻到哪一页记在浏览器里', w.localStorage.getItem('bz-tabs'), 'gods,gt');
   key($('h-gods'), 'ArrowRight');
-  eq('焦点在标签上按右方向键，换到下一页', state('natal'), ['藏', '藏', '藏', '藏', '藏', '选中显']);
+  eq('焦点在标签上按右方向键，换到下一页：十神的下一页是格局', state('natal'), ['藏', '藏', '藏', '藏', '藏', '选中显', '藏']);
   key($('h-ys'), 'End'); key($('h-ys'), 'ArrowRight');
-  eq('到了最后一页再按右方向键，回到第一页', state('natal'), ['选中显', '藏', '藏', '藏', '藏', '藏']);
+  eq('到了最后一页再按右方向键，回到第一页', state('natal'), ['选中显', '藏', '藏', '藏', '藏', '藏', '藏']);
   key($('h-bz'), 'ArrowLeft');
-  eq('第一页按左方向键，到最后一页', state('natal'), ['藏', '藏', '藏', '藏', '藏', '选中显']);
+  eq('第一页按左方向键，到最后一页', state('natal'), ['藏', '藏', '藏', '藏', '藏', '藏', '选中显']);
   click($('h-tk'));
   // 打开的解释：所指的字在换下去的那一页里就收起；在另一张卡片里的不受影响
   const cell = d.querySelector('#gtmap .gt-c');

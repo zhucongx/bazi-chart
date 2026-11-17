@@ -312,9 +312,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods tr:last-child td,.gods tbody tr:last-child th{border-bottom:0}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-/* 十神一页最下面的格局组合（ui.js 的 renderGjz）：成格、败格两组，有的组合一行一个，没有的并成一行。
+/* 格局一页的格局组合（ui.js 的 renderGjz）：成格、败格两组，有的组合一行一个，没有的并成一行。
    「透出」「藏着」两枚小签，分数是一条两三段的条，颜色照五行；加粗的格是这张盘照格局参考归的那一格 */
-.gjzblock{display:grid;gap:10px;margin-top:22px}
+.gjzblock{display:grid;gap:10px;margin-top:18px}
 .gjz th[scope=row] .x{font-weight:600}
 .gjz th[scope=row] small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--ink3)}
 .gjz .gjz-h th{padding-top:14px;font-size:12px;font-weight:600;color:var(--ink2)}
@@ -331,6 +331,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gjz .gjz-no td{font-size:13px;color:var(--ink3)}
 @media (max-width:600px){
   .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
+  .gjz th[scope=row] .x{white-space:nowrap}      /* 组合的名字不折行，全称的那一句在下面折 */
 }
 .gods .eli .ic{width:14px;height:14px}
 /* 宫位表（最下面的六亲宫位卡片）：一列一柱的表，格子里是几行短句。计分一页：一行一层的计分表，数字靠右 */
@@ -715,7 +716,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .qsrow .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:560px){
-  .tabbar{gap:0 12px}      /* 窄屏上标签不带图标：原局六个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行 */
+  .tabbar{gap:0 9px}      /* 窄屏上标签不带图标：原局七个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行。原来是六个、间距 12，加了格局一页改成 9 */
   .tab{font-size:16px}
   .tab .ic{display:none}
   .layers>div{grid-template-columns:1fr}
@@ -893,6 +894,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <button class="tab" type="button" role="tab" id="h-wx" data-tab="natal:wx" aria-controls="p-wx" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-wx"/></svg>五行</button>
     <button class="tab" type="button" role="tab" id="h-qr" data-tab="natal:qr" aria-controls="p-qr" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-q-ga"/></svg>强弱</button>
     <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
+    <button class="tab" type="button" role="tab" id="h-gj" data-tab="natal:gj" aria-controls="p-gj" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-q-ge"/></svg>格局</button>
     <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>喜忌</button>
   </div>
   <div class="panel split keep" role="tabpanel" id="p-bz" aria-labelledby="h-bz">
@@ -927,7 +929,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk" hidden>
     <div class="pane">
-      <p class="sub">日主是什么，八个字的阴阳；旺衰和格局是后面「强弱」「十神」两页的结论，先在这里列出来</p>
+      <p class="sub">日主是什么，八个字的阴阳；旺衰和格局是后面「强弱」「格局」两页的结论，先在这里列出来</p>
       <div class="quad" id="quad"></div>
     </div>
     <div class="read" id="rd-tk"></div>
@@ -964,7 +966,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel" role="tabpanel" id="p-gods" aria-labelledby="h-gods" hidden>
     <p class="sub" id="h-gods-s"></p>
-    <div class="kvs" id="kv-gj"></div>
     <div class="seg-top" id="gods-seg"></div>
     <div class="tablewrap">
       <table class="gods">
@@ -979,6 +980,11 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
         <div class="read" id="rd-gods"></div>
       </div>
     </div>
+  </div>
+  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类），下面是格局组合（成格、败格的条件），最后是解读 -->
+  <div class="panel" role="tabpanel" id="p-gj" aria-labelledby="h-gj" hidden>
+    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，下面照原文逐条核对常说的十几个组合，看书里算成格还是败格的条件</p>
+    <div class="kvs" id="kv-gj"></div>
     <div class="gjzblock">
       <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
       <div class="tablewrap">
@@ -989,6 +995,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
       <p class="note" id="note-gjz"></p>
     </div>
+    <div class="read" id="rd-gj"></div>
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
     <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
