@@ -57,14 +57,14 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
 th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on,.gt-c.on{background-color:var(--accent-soft);text-decoration:none}
-.x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on{box-shadow:0 0 0 1.5px var(--accent)}
+.x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on,.tg.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
   .x:hover,.hs:hover,.gt-c:hover{background-color:var(--tint)}
   .x.on:hover,.hs.on:hover,.gt-c.on:hover{background-color:var(--accent-soft)}
   .tab:hover{color:var(--ink2)}
   .tab[aria-selected="true"]:hover{color:var(--ink)}
-  .glyph:hover,.rel:hover,.lk-t:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
-  .glyph.on:hover,.rel.on:hover,.lk-t.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
+  .glyph:hover,.rel:hover,.lk-t:hover,.tg:hover{box-shadow:0 0 0 1.5px var(--tint-ring)}
+  .glyph.on:hover,.rel.on:hover,.lk-t.on:hover,.tg.on:hover{box-shadow:0 0 0 1.5px var(--accent)}
 }
 .wood{color:var(--wood)} .fire{color:var(--fire)} .earth{color:var(--earth)} .metal{color:var(--metal)} .water{color:var(--water)}
 .defs{position:absolute;width:0;height:0;overflow:hidden}
@@ -91,10 +91,12 @@ th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decorati
 :root[data-theme="dark"] #theme .sun{display:block} :root[data-theme="dark"] #theme .moon{display:none}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
-/* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱，日柱的天干上面是「日主」。都用样式生成，不占文字内容 */
+/* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱；每个字上面一个小字，日柱的天干是「日主」（一枚淡蓝的小签），其余七个字是它的位置（年干、年支、月干、月支、日支、时干、时支，灰色小字）。都用样式生成，不占文字内容 */
 h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;padding-top:16px}
 h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
 h1 .dm{position:relative}
+h1 .gd{position:relative}
+h1 .gd::before{content:attr(data-g);position:absolute;left:50%;top:-12px;transform:translateX(-50%);font:400 10.5px/1 var(--body);letter-spacing:.04em;white-space:nowrap;color:var(--ink3)}
 h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:translateX(-50%);font:600 10.5px/1 var(--body);letter-spacing:.06em;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:3px 5px}
 .meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 32px}
 .meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:7px 0}
@@ -298,6 +300,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bars.nl .track::after,.wxt .track.avg::after{content:"";position:absolute;top:0;bottom:0;left:var(--avg);width:1px;background:var(--ink3)}
 /* 五行一页的表：一行一种五行。数法照表上面的按钮（MAPBY.wx），条的长短照这一种数法，最多的一行满格；五行能量的条上一道竖线是五行平均的 12 分 */
 .wxt td{vertical-align:middle}
+.wxt .mn{display:block;margin-top:2px;font-size:12px;line-height:1.5;color:var(--ink3)}      /* 关系和合称下面一行：这一类直白地说是什么 */
 .wxt .el{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:18px}
 .wxt .el .ic{width:15px;height:15px}
 .wxt .wn{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -320,9 +323,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gods thead th{font-size:12px;font-weight:400;color:var(--ink3)}
 .gods tr:last-child td,.gods tbody tr:last-child th{border-bottom:0}
 .gods .eli{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-/* 格局一页的格局组合（ui.js 的 renderGjz）：成格、败格两组，有的组合一行一个，没有的并成一行。
-   「透出」「藏着」两枚小签，分数是一条两三段的条，颜色照五行；加粗的格是这张盘照格局参考归的那一格 */
+/* 一枚枚可以点的小签（.tg），点开是解释；一行（.tgrow）是一类：左边小标题，右边一排小签。现在用在「喜忌」一页「调候的情形」里。
+   合了的是钴蓝的边和淡蓝的底（.yes），没有合的是灰字细边。格局一页的两张表试过做成这个样子，用户要的是标签页，改回了表格 */
 .gjzblock{display:grid;gap:10px;margin-top:18px}
+#gjb-say b,#thc-say b{font-weight:600;color:var(--ink)}
+/* 格局一页的两张表（成败救应、格局组合），一次显示一张，上面两个小标签切换 */
+.gj-seg{margin-top:18px}
+.gjzblock[hidden]{display:none}      /* .gjzblock 是 grid，不写这一条 hidden 不起作用，两张表会一起显示 */
+.gj-seg+.gjzblock,.gj-seg+.gjzblock+.gjzblock{margin-top:0}
 .gjz th[scope=row] .x{font-weight:600}
 .gjz th[scope=row] small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--ink3)}
 .gjz .gjz-h th{padding-top:14px;font-size:12px;font-weight:600;color:var(--ink2)}
@@ -345,15 +353,27 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .gjz th:nth-child(4),.gjz td:nth-child(4){display:none}      /* 手机上「在哪一格讲」一列挤不下，点组合的名字照样看得到 */
   .gjz th[scope=row] .x{white-space:nowrap}      /* 组合的名字不折行，全称的那一句在下面折 */
 }
+.tgs{display:flex;flex-direction:column;gap:12px}
+.tgrow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.tgrow h4,.tg-ge{margin:0;font-size:12.5px;font-weight:600;color:var(--ink3)}
+.tg-ge{color:var(--ink);font-size:13.5px}
+.tg{display:inline-flex;align-items:baseline;gap:6px;padding:3px 12px;border:1px solid var(--line);border-radius:16px;font:inherit;font-size:13px;text-align:left;background:var(--card);color:var(--ink3);cursor:pointer}
+.tg small{font-size:12px;white-space:nowrap}
+.tg.yes{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.tg.yes small{font-weight:600;color:var(--accent)}
+.tg.un{border-style:dashed;color:var(--ink2)}
+.tg.ge{font-weight:600}
+.tg.ge small{font-weight:400}
+.tg.yes.ge small{font-weight:600}
 .gods .eli .ic{width:14px;height:14px}
-/* 宫位表（最下面的六亲宫位卡片）：一列一柱的表，格子里是几行短句。计分一页：一行一层的计分表，数字靠右 */
+/* 宫位表（原局最后一页「六亲」的下半）：一列一柱的表，格子里是几行短句。计分一页：一行一层的计分表，数字靠右 */
 .gw{table-layout:fixed;min-width:640px}
 .gw th:first-child{width:6.5em}
 .gw thead th{font-size:13px;font-weight:600;color:var(--ink)}
 .gw tbody th{font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .gw td{line-height:1.75}
 .gw .gz{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.3;letter-spacing:.04em}
-.gw .gz .x{text-decoration:none}
+.gw .gz .x{text-decoration:none;letter-spacing:inherit}
 .sy{min-width:640px;font-variant-numeric:tabular-nums}
 .sy th,.sy td{text-align:right}
 .sy th:first-child{text-align:left;white-space:nowrap}
@@ -420,9 +440,16 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sd-t em{font-style:normal;font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .sd-st{display:flex;gap:5px;width:100%}
 .sd-st i{flex:1 1 0;text-align:center;font-style:normal;font-family:var(--display);font-size:17px;font-weight:700;padding:14px 0;border-radius:8px;background:var(--wash);color:var(--ink3)}
-.sd-t.on.wood,.sd-st i.on.wood{background:var(--wood-s)} .sd-t.on.fire,.sd-st i.on.fire{background:var(--fire-s)} .sd-t.on.earth,.sd-st i.on.earth{background:var(--earth-s)} .sd-t.on.metal,.sd-st i.on.metal{background:var(--metal-s)} .sd-t.on.water,.sd-st i.on.water{background:var(--water-s)}
-.sd-st i.on{color:currentColor}
-.sd-t.on small,.sd-t.on em{color:var(--ink2)}
+.sd-t.hit.wood,.sd-st i.hit.wood{background:var(--wood-s)} .sd-t.hit.fire,.sd-st i.hit.fire{background:var(--fire-s)} .sd-t.hit.earth,.sd-st i.hit.earth{background:var(--earth-s)} .sd-t.hit.metal,.sd-st i.hit.metal{background:var(--metal-s)} .sd-t.hit.water,.sd-st i.hit.water{background:var(--water-s)}
+.sd-st i.hit{color:currentColor}
+.sd-t.hit small,.sd-t.hit em{color:var(--ink2)}
+/* 不是按钮、也能点开解释的一块（日主一页四张卡片的大字，强弱分析卡片的日主、四块、每一笔）：手形光标，悬停和打开时一圈钴蓝 */
+.cx{cursor:pointer;border-radius:8px}
+.cx.on{box-shadow:0 0 0 1.5px var(--accent)}
+@media (hover:hover){.cx:hover{box-shadow:0 0 0 1.5px var(--tint-ring)} .cx.on:hover{box-shadow:0 0 0 1.5px var(--accent)}}
+.sd-t[data-x],.sd-st i[data-x]{cursor:pointer}      /* 小格子能点；on 是解释正开着 */
+.sd-t.on,.sd-st i.on{box-shadow:0 0 0 1.5px var(--accent)}
+@media (hover:hover){.sd-t[data-x]:hover,.sd-st i[data-x]:hover{box-shadow:0 0 0 1.5px var(--tint-ring)} .sd-t.on:hover,.sd-st i.on:hover{box-shadow:0 0 0 1.5px var(--accent)}}
 .sd-s{font-size:12.5px;color:var(--ink2)}
 /* 喜忌一页最上面：两套取法各一块（.xi-g），各有标题、一排结果（.xi-r）和一句说明。手机上上下排、中间一道虚线；电脑上左右并排、中间一道竖的虚线 */
 .xi{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:14px}
@@ -521,7 +548,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gt .zrow small{line-height:18px}
 /* 格子里的字居中，一列里上下对齐；「本气」「透」两个小字挂在它的右边，不占位置，每列够宽（页面 1100 以上）才显示 */
 .gt-c{position:relative;display:flex;width:fit-content;margin:0 auto;font:inherit;background:none;border:0;border-radius:999px;padding:2px;cursor:pointer}
-.gt-c i{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid transparent;border-radius:50%;font:700 16px/1 var(--display)}
+.gt-c i{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0 0 2px;border:1px solid transparent;border-radius:50%;font:700 16px/16px var(--display)}      /* 下面垫 2 像素：字往上托 1 像素才在圈的正中，和关系图里圈出来的字一样 */
 .gt-c.tou i{border-color:currentColor}
 .gt-c.ben i.wood{background:var(--wood-s)} .gt-c.ben i.fire{background:var(--fire-s)} .gt-c.ben i.earth{background:var(--earth-s)} .gt-c.ben i.metal{background:var(--metal-s)} .gt-c.ben i.water{background:var(--water-s)}
 .gt-c small{display:none;position:absolute;left:calc(100% + 5px);top:50%;transform:translateY(-50%);font-size:13px;line-height:1.25;text-align:left;color:var(--ink2);white-space:nowrap}
@@ -627,6 +654,9 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .pk .gz{font-size:23px}
   .rels{gap:10px}
   .rel{font-size:14.5px;padding:6px 15px;gap:7px}
+  .tg{font-size:14px;padding:5px 14px;gap:7px}
+  .tgrow{grid-template-columns:132px minmax(0,1fr);gap:8px 16px;align-items:start}
+  .tgrow h4{padding-top:8px}
   .rel b{font-size:17px}
   .rel small{font-size:13px}
   .none{font-size:14px}
@@ -698,8 +728,10 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .lk-t small{margin-left:5px;font-size:12px;color:var(--ink2)}
   .lk-l{position:absolute;left:calc(50%/var(--k));right:calc(50%/var(--k));bottom:15px;height:0;border-top:1px solid var(--ink3)}
   .lk.bad .lk-l{border-top-style:dashed}
-  /* 圈出来的字：和细盘的干支大字一样，字、边和淡底都是它自己五行的颜色 */
-  .lk>i{position:absolute;bottom:0;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid currentColor;border-radius:50%;background:var(--card);font:700 17px/1 var(--display)}
+  /* 圈出来的字：和细盘的干支大字一样，字、边和淡底都是它自己五行的颜色。
+     字要在圈的正中：汉字的墨迹比行框的中心低字号的百分之五上下（页面用到的三种宋体量出来都是这样），所以下面垫 2 像素把字往上托 1 像素；
+     字号用 18，圈里左右各剩整 5 像素，一倍的屏幕上不会因为半个像素偏到一边。2026-11-18 用户说「这些字不够居中」，原来是 17 像素、不垫 */
+  .lk>i{position:absolute;bottom:0;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0 0 2px;border:1px solid currentColor;border-radius:50%;background:var(--card);font:700 18px/18px var(--display)}
   .lk>i.wood{background:var(--wood-s)} .lk>i.fire{background:var(--fire-s)} .lk>i.earth{background:var(--earth-s)} .lk>i.metal{background:var(--metal-s)} .lk>i.water{background:var(--water-s)}
   /* 相邻的字之间的生克：一条细线，中间一个小圈写着生、克或者同，线头的小尖指向被生或被克的一方。相生是实线，相克是虚线，同类是很淡的实线、没有小尖。
      横的那种跨两列，线从左边那个字的右侧画到右边那个字的左侧；竖的在一列里，夹在天干和地支之间 */
@@ -719,6 +751,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .sk-x b,.sk-y b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border:1px solid var(--skc);border-radius:50%;background:var(--card);color:var(--ink2);font:500 12px/18px var(--body);text-align:center}
   .sk-x.ke b,.sk-y.ke b{border-style:dashed}
   .sk-x.tong b,.sk-y.tong b{color:var(--ink3)}
+  .sk-x b,.sk-y b{pointer-events:auto}      /* 线不挡下面的字，只有小圈能点 */
   .pform{padding:20px 22px 22px;gap:14px 16px}
   .pform label{font-size:14px}
   .pform .btn{font-size:14px;padding:5px 16px}
@@ -738,8 +771,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .qsrow .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:560px){
-  .tabbar{gap:0 9px}      /* 窄屏上标签不带图标：原局七个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行。原来是六个、间距 12，加了格局一页改成 9 */
-  .tab{font-size:16px}
+  .tabbar{gap:0 7px}      /* 窄屏上标签不带图标：原局八个、排盘四个标签在 360 到 560 像素宽时各排成一行，不让最后一个单独掉到第二行。原来是六个、间距 12，加了格局一页改成 9；六亲挪进来以后是八个，字号 16 改 15、间距改 7、左右不留边 */
+  .tab{font-size:15px;padding-left:0;padding-right:0}
   .tab .ic{display:none}
   .layers>div{grid-template-columns:1fr}
   .prow{grid-template-columns:1fr}
@@ -821,7 +854,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .pan .sm{font-size:10.5px}          /* 每列不到 36 像素：三个字的纳音之间留一点空 */
 }
 @media (max-width:345px){
-  .tabbar{gap:0 9px}      /* 320 宽时六个标签加五个间隔要放进 264 像素 */
   h1{flex-wrap:nowrap;gap:.1em .3em}      /* 标题的四柱不折成三柱加一柱 */
   /* 最窄的手机：每列不到 30 像素，三个字的纳音和神煞要再小一点才放得下 */
   .pan .sm,.hs,.pan .ss{font-size:9.5px}
@@ -847,6 +879,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <symbol id="i-t-wx" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2"/><circle cx="19.2" cy="9.8" r="2"/><circle cx="16.4" cy="18.2" r="2"/><circle cx="7.6" cy="18.2" r="2"/><circle cx="4.8" cy="9.8" r="2"/><path d="M13.7 5.8l3.8 2.8M18.6 11.7l-1.5 4.6M14.4 18.2H9.6M6.9 16.3l-1.5-4.6M6.5 8.6l3.8-2.8"/></symbol>
   <symbol id="i-t-gods" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.2"/><path d="M12 7.8v8.4M7.8 12h8.4"/></symbol>
   <symbol id="i-t-ys" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1"/></symbol>
+  <symbol id="i-t-lq" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><circle cx="6" cy="17.8" r="2.6"/><circle cx="18" cy="17.8" r="2.6"/><path d="M12 8.6v3.4M6 15.2V12h12v3.2"/></symbol>
   <symbol id="i-t-pan" viewBox="0 0 24 24"><rect x="3.6" y="5" width="16.8" height="14" rx="2.2"/><path d="M3.6 9.6h16.8M9.2 9.6V19M14.8 9.6V19"/></symbol>
   <symbol id="i-t-rel" viewBox="0 0 24 24"><circle cx="6.4" cy="14.4" r="2.6"/><circle cx="17.6" cy="14.4" r="2.6"/><path d="M9 14.4h6"/><path d="M6.4 11.8c1.6-4.4 9.6-4.4 11.2 0" stroke-dasharray="2.2 2.2"/></symbol>
   <symbol id="i-t-gt" viewBox="0 0 24 24"><path d="M12 12V5.6M12 8.2c-2.6-.2-4.1-1.6-4.3-4 2.5.1 4 1.4 4.3 4zM12 7c.3-2.2 1.7-3.4 4.1-3.6-.1 2.3-1.5 3.5-4.1 3.6z"/><path d="M4 12h16M12 12v7.6M12 14.4l-3.6 4.4M12 14.4l3.6 4.4"/></symbol>
@@ -918,6 +951,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <button class="tab" type="button" role="tab" id="h-gods" data-tab="natal:gods" aria-controls="p-gods" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-gods"/></svg>十神</button>
     <button class="tab" type="button" role="tab" id="h-gj" data-tab="natal:gj" aria-controls="p-gj" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-q-ge"/></svg>格局</button>
     <button class="tab" type="button" role="tab" id="h-ys" data-tab="natal:ys" aria-controls="p-ys" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-ys"/></svg>喜忌</button>
+    <button class="tab" type="button" role="tab" id="h-lq" data-tab="natal:lq" aria-controls="p-lq" aria-selected="false" tabindex="-1"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-t-lq"/></svg>六亲</button>
   </div>
   <div class="panel split keep" role="tabpanel" id="p-bz" aria-labelledby="h-bz">
     <div class="pane">
@@ -1003,12 +1037,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
     </div>
   </div>
-  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类）、用神变化、相神三行，中间是成败救应表（照归的格逐条核对，2026-11-18 加的），下面是格局组合（常说的十五个），最后是解读 -->
+  <!-- 格局一页：2026-11-17 用户要单开的。上面是格局参考（照《子平真诠》归类）、用神变化、相神三行，下面两个小标签「成败救应」「格局组合」各对着一张表，一次显示一张（2026-11-18），最后是解读 -->
   <div class="panel" role="tabpanel" id="p-gj" aria-labelledby="h-gj" hidden>
-    <p class="sub">格局是从月令出发给一张盘归类的办法。上面照《子平真诠》归类，看用神有没有变化、相神是哪几个字；中间照归的格逐条核对成、败、带忌、救应；下面是常说的十几个组合</p>
+    <p class="sub">格局是从月令出发给一张盘归类的办法。上面三行照《子平真诠》归类，看用神有没有变化、相神是哪几个字；下面两个小标签各是一张表</p>
     <div class="kvs" id="kv-gj"></div>
-    <div class="gjzblock">
-      <h3>成败救应 <small>照这张盘归的格，逐条核对《子平真诠》「论用神成败救应」</small></h3>
+    <div class="seg-top gj-seg" id="gj-seg"></div>
+    <div class="gjzblock" id="gjb-block">
       <p class="note" id="gjb-say"></p>
       <div class="tablewrap">
         <table class="gods gjz gjb">
@@ -1018,8 +1052,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
       <p class="note" id="note-gjb"></p>
     </div>
-    <div class="gjzblock">
-      <h3>格局组合 <small>常说的十几个组合，照书里的原文逐条核对</small></h3>
+    <div class="gjzblock" id="gjz-block" hidden>
       <div class="tablewrap">
         <table class="gods gjz">
           <thead><tr><th scope="col">组合</th><th scope="col">这张盘</th><th scope="col">分数</th><th scope="col">《子平真诠》在哪一格讲</th></tr></thead>
@@ -1034,7 +1067,33 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
     <div class="xi" id="xi"></div>
     <div class="kvs" id="kv2"></div>
+    <div class="gjzblock">
+      <h3>调候的情形 <small>《穷通宝鉴》在开头一句后面分的各种情形，只取条件；点一条看解释</small></h3>
+      <p class="note" id="thc-say"></p>
+      <div class="tgs" id="thc"></div>
+      <p class="note" id="note-thc"></p>
+    </div>
     <div class="read" id="rd-ys"></div>
+  </div>
+  <div class="panel" role="tabpanel" id="p-lq" aria-labelledby="h-lq" hidden>
+    <p class="sub">六亲指父母、兄弟姐妹、配偶、子女这些亲属。典籍里把亲属配到盘上有两种办法：一种照十神配，一种照四柱的位置配，叫宫位。页面只列位置，不下断语</p>
+    <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
+    <div class="beside">
+      <div class="tablewrap">
+        <table class="gods">
+          <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+          <tbody id="liuqin"></tbody>
+        </table>
+      </div>
+      <div class="side">
+        <p class="note" id="note-lq"></p>
+        <div class="read" id="rd-lq"></div>
+      </div>
+    </div>
+    <h3>宫位 <small>四柱各配一类亲属；每一柱里有哪些十神，和别的柱有什么关系</small></h3>
+    <div class="tablewrap" id="gwmap"></div>
+    <p class="note" id="note-gw"></p>
+    <div class="read" id="rd-gw"></div>
   </div>
 </section>
 
@@ -1115,27 +1174,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <div class="read" id="rd-tr"></div>
     <div class="read" id="rd-yun"></div>
   </div>
-</section>
-
-<section id="card-lq" aria-labelledby="h-lq">
-  <h2 id="h-lq">六亲 · 宫位 <small>典籍里给人事分类的两种办法：十神配亲属叫六亲，四柱配亲属叫宫位。它们不在强弱、格局、喜忌这条读盘的线上，所以单独放在最后；页面只列位置，不下断语</small></h2>
-  <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
-  <div class="beside">
-    <div class="tablewrap">
-      <table class="gods">
-        <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-        <tbody id="liuqin"></tbody>
-      </table>
-    </div>
-    <div class="side">
-      <p class="note" id="note-lq"></p>
-      <div class="read" id="rd-lq"></div>
-    </div>
-  </div>
-  <h3>宫位 <small>四柱各配一类亲属；每一柱里有哪些十神，和别的柱有什么关系</small></h3>
-  <div class="tablewrap" id="gwmap"></div>
-  <p class="note" id="note-gw"></p>
-  <div class="read" id="rd-gw"></div>
 </section>
 
 <footer>
