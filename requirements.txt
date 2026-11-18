@@ -1,5 +1,5 @@
 # 重新生成数据、核对神煞时需要
 lunar_python>=1.4.9
 
-# 只有截图脚本 tools/shot.py 需要；装完后如果本机没有 Google Chrome，再运行 playwright install chromium
+# 截图脚本 tools/shot.py 和图标脚本 tools/gen_icon.py 需要；装完后如果本机没有 Google Chrome，再运行 playwright install chromium
 playwright>=1.40
