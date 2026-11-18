@@ -47,18 +47,16 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 - 这份说明是 `CLAUDE.md`，Claude Code 和 Codex 共用。`AGENTS.md` 是指向它的符号链接，给读 `AGENTS.md` 的工具用，两个名字是同一份内容：只改 `CLAUDE.md`，不要把链接换回单独的文件。个人部分的说明只有 `private/CLAUDE.md` 一份。
   - 来历：`AGENTS.md` 原来是 Codex 桌面版 2026-11-14 打开这个项目时，照当时的 `CLAUDE.md` 抄出来的一份（只把文件名换了），之后没有人维护。2026-11-18 用户让「整理信息合并后换成链接」，逐句比过：它有而 `CLAUDE.md` 没有的 23 句，都是后来被用户的决定取代的旧说法（示例只放去世的历史人物、每次改动都跑全套检查、神煞 55 个、图标只用在三处等），没有要并回来的。
   - 这份文件很长。读不完整份的工具，先读到「内容规则」为止的前四节，那是规矩；「页面结构」是改页面时要查的细节，动哪一块读哪一条。
-  - 讲 artifact 的几条只有 Claude 用得上，别的工具跳过。
 - 页面的源文件在 `src/`：`page.tpl.html`（结构和样式）、`engine.js`（干支计算）、`chart.js`（页面内排盘）、`classics.js`（典籍引文）、`text.js`（解释文字）、`ui.js`（渲染、事件、人物管理）。`index.html` 和 `private/build/index.html` 是构建产物，不要手改。
 - 公开的页面发布在 <https://zhucongx.github.io/bazi-chart/>，由 GitHub Pages 从 `main` 分支的根目录托管，推送之后一两分钟生效。改了 `src/` 之后要重新构建并把 `index.html` 一起提交，否则线上还是旧的页面。
 - 核对按改动的大小来，不要每改一处都跑全套。2026-11-14 用户说「每次检查推送太复杂太慢了，是不是有点过度审核了」。
   - 平时改一处：构建公开页，跑 `node tests/check_page.js --quick`，截改到的那一页看一眼。
   - 提交之前：两份页面都构建，公开页跑完整的 `check_page.js`，个人页跑 `--quick`，再跑 `tools/check_private.py`（这一条不能省，有命中就不提交）。改了排盘（`chart.js`、`engine.js`、`tools/gen_data.py`）才跑 `tools/fuzz.py`；改了样式才用 `tools/shot.py` 截桌面、手机、深色。
   - 推送以后不用守着线上页面逐字节比对，GitHub Pages 一两分钟就会更新。
-  - 个人页面的 artifact 在一轮改完、用户要看的时候发布一次，不用每改一处就发。
   - 检查没过就不算完成。
 - 改了 `src/classics.js` 里的引文，运行 `node tools/check_quotes.js`，通过之后把 `data/quotes_check.json` 一起提交。不要为了核对去安装新的依赖；要装之前先问用户。
 - 改了取法，同步更新 `docs/取法约定.md`。改了某个人的事实，同步更新这个人的 `people/<id>.facts.json`（个人的在 `private/people/`）。
-- 用户要看效果时，把个人页面 `private/build/index.html` 发布成 artifact，链接记在 `private/CLAUDE.md` 里，之后的改动发布到同一个链接。公开的页面通过 GitHub Pages 发布，不发布成 artifact，除非用户要求。
+- 个人页面不发布成 artifact，要看就直接打开本地的 `private/build/index.html`。原来用户要看效果时把它发布到一个固定的 artifact 链接，2026-11-18 用户说「个人页面的 artifact 可以不保留」，那个 artifact 删掉了，链接已经失效。个人页面带着真实的出生信息，没有用户开口，不要发布到任何地方。公开的页面通过 GitHub Pages 发布，也不发布成 artifact，除非用户要求。
 - 页面必须是单个自包含文件。外部资源只允许 Google Fonts 的字体，其他样式、脚本、数据、图片全部内联。
 - 做 `docs/进度与待办.md` 里的待办之前先问用户要哪一项，不要自己挑着做。
 - 提交和推送都等用户开口。
