@@ -17,20 +17,58 @@ const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'bz',pan:'pan'}};    
 
 /* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
 const PEOPLE=DATA.people.slice();
-let LOCAL=[];                      // 保存在浏览器里的出生信息，格式见 chart.js
-let STORE_OK=true;                 // 这个环境能不能用 localStorage
+let LOCAL=[];                      // 能排盘的出生信息，格式见 chart.js
+let REJECTED=[];                   // 不能读取的旧记录：保留原值和原因，写入时一并保留
+let RAW_LOCAL=null;                // 整份 JSON 损坏或不是数组时保留原文，暂停写入，供导出恢复
+let STORE_OK=true;
 function readLocal(){
-  try{const v=JSON.parse(localStorage.getItem('bz-people')||'[]');
-    LOCAL=Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!checkInfo(x)).map(x=>x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x):[];   // 以前存下的手写解读也照现在的规矩再过一遍
-    const seen=new Set(DATA.people.map(p=>p.id));      // 缺编号、编号重复、和页面自带的人同名的，另起一个：不然编辑、删除会落到别人身上
+  LOCAL=[];REJECTED=[];RAW_LOCAL=null;BROKEN=[];
+  try{
+    const raw=localStorage.getItem('bz-people');
+    let v;
+    try{v=raw===null?[]:JSON.parse(raw);}catch(e){RAW_LOCAL=raw;STORE_OK=false;return;}
+    if(!Array.isArray(v)){RAW_LOCAL=raw;STORE_OK=false;return;}
+    STORE_OK=true;
+    v.forEach(x=>{
+      try{
+        const bad=!x||typeof x!=='object'||Array.isArray(x)?'这一项不是人物资料。'
+          :typeof x.birth!=='string'||['name','place','source'].some(k=>x[k]!==undefined&&typeof x[k]!=='string')?'日期、称呼、地点和出处需要用文字填写。'
+          :x.tz!==undefined&&x.tz!==null?'出生时间带有时区，页面只认北京时间。':checkInfo(x);
+        if(bad){REJECTED.push({value:x,reason:bad});return;}
+        LOCAL.push(x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x);
+      }catch(e){REJECTED.push({value:x,reason:'这一项的格式无法读取，原值已保留。'});}
+    });
+    const seen=new Set(DATA.people.map(p=>p.id));
     let fixed=false;
     LOCAL=LOCAL.map(x=>{const good=typeof x.id==='string'&&x.id&&!seen.has(x.id), o=good?x:Object.assign({},x,{id:newId()});if(!good) fixed=true;seen.add(o.id);return o;});
-    if(fixed) writeLocal();}
-  catch(e){LOCAL=[];STORE_OK=false;}
+    if(fixed) writeLocal();
+  }catch(e){STORE_OK=false;}
+  finally{renderRecovery();}
 }
+const localRecords=()=>LOCAL.concat(REJECTED.map(r=>r.value));
 function writeLocal(){
-  try{localStorage.setItem('bz-people',JSON.stringify(LOCAL));STORE_OK=true;}catch(e){STORE_OK=false;}
+  // 不能解析的原文件不覆盖。新加的人本次仍能看，也能单独导出。
+  if(RAW_LOCAL!==null){STORE_OK=false;return false;}
+  try{localStorage.setItem('bz-people',JSON.stringify(localRecords()));STORE_OK=true;}catch(e){STORE_OK=false;}
   return STORE_OK;
+}
+function renderRecovery(){
+  const box=$('pp-recovery');
+  box.hidden=RAW_LOCAL===null&&!REJECTED.length&&!BROKEN.length;
+  if(box.hidden){box.innerHTML='';return;}
+  const why=REJECTED.map((r,i)=>`${(r.value&&typeof r.value.name==='string'?r.value.name:'第 '+(i+1)+' 项').slice(0,30)}：${r.reason}`);
+  box.innerHTML='<p>'+esc(RAW_LOCAL!==null?'浏览器里的旧资料无法完整读取，原文已保留，暂不覆盖。新加的资料只在本次打开时有效，请用添加表单里的「导出」保存。':`有 ${REJECTED.length+BROKEN.length} 项旧资料暂未显示，原数据仍保留。添加或导入其他人不会删掉这些资料。`)
+    +'</p>'+(why.length?'<p>'+why.map(esc).join('；')+'</p>':'')
+    +(BROKEN.length?'<p>'+esc('排不出盘：'+BROKEN.join('、'))+'</p>':'')
+    +'<p>可以先导出备份，修正后再导入。同一编号的有效资料会替换对应的异常记录。</p><div class="row"><button type="button" class="pp" id="pp-recovery-export">导出保留的原数据</button></div><p id="pp-recovery-msg" aria-live="polite"></p>';
+}
+function downloadJSON(text,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function exportRecovery(){
+  try{downloadJSON(RAW_LOCAL!==null?RAW_LOCAL:JSON.stringify(localRecords(),null,1),'bazi-people-recovery.json');$('pp-recovery-msg').textContent='已生成备份文件。请确认下载成功后再整理原数据。';}
+  catch(e){$('pp-recovery-msg').textContent='这个环境不能下载文件，原数据仍保留在浏览器里。';}
 }
 /* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
 const HOUR_PICK=Object.create(null);      // 没有原型：编号叫 constructor、toString 的人不会读到继承来的东西（审阅报告 R4）
@@ -50,6 +88,7 @@ function rebuildPeople(){
   const at=p=>{const k=ORDER.indexOf(p.id);return k<0?Infinity:k;}, sorted=PEOPLE.map((p,i)=>[p,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(x=>x[0]);
   PEOPLE.length=0;PEOPLE.push(...sorted);
   if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
+  renderRecovery();
 }
 /* 照 order 重排 PEOPLE：order 是新的先后，每一项是原来的下标。选中的还是原来那一位，只重画人物那一排 */
 function applyOrder(order){
@@ -536,9 +575,9 @@ function renderSy(){
 /* 喜忌一页「调候的情形」：《穷通宝鉴》这个月开头一句后面分的各种情形，一种一枚可以点的小签，合的排在前面；点开是解释 */
 function renderThc(){
   const t=thNow();
-  const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${o.ok?'合':'不合'}</small></button>`;
+  const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${thState(o.ok)}</small></button>`;
   const row=(title,xs)=>xs.length?`<div class="tgrow"><h4>${title}</h4><div class="rels">${xs.map(tag).join('')}</div></div>`:'';
-  $('thc').innerHTML=row('这张盘合的',t.cases.filter(o=>o.ok))+row('没有合的',t.cases.filter(o=>!o.ok));
+  $('thc').innerHTML=row('已核对条件合的',t.cases.filter(o=>o.ok===true))+row('待核对节令前提',t.cases.filter(o=>o.ok===null))+row('没有合的',t.cases.filter(o=>o.ok===false));
   $('thc-say').innerHTML=thcSay();
   $('note-thc').textContent=noteThc();
 }
@@ -566,7 +605,7 @@ function renderGjz(){
 function renderGjb(){
   const r=gjbNow();
   const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${GJB_HW[o.id]}</small></th>`
-    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'定不了':o.ok?'合':'不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
+    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'待核对':o.ok?'本章条件合':'本章条件不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}${o.ok===true&&gjbCaveat(o)?'<br>'+gjbCaveat(o):''}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
   $('gjb-say').innerHTML=gjbSay();
@@ -673,7 +712,7 @@ function shareNow(){
   const q=new URLSearchParams(ok?linkOf(Object.assign({},info,{name:P.name})):'p='+encodeURIComponent(P.id));
   if(ok&&info.nohour) q.set('h',P.shichen);          // 时辰不详的，带上正在看的时辰，对方打开看到的是同一张盘
   q.set('tab',sel.tab.natal+','+sel.tab.pan);q.set('dy',String(sel.dy));q.set('y',String(sel.y));q.set('m',String(sel.m));q.set('d',isoDay(sel.d));
-  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
+  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun,MAPBY.gj].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
   return {url:SHARE_BASE+'#'+q.toString(),what:!ok?'这一位在页面里的编号，不含出生信息；只在页面自带这一位时打得开':info.nohour?'出生日期和正在看的时辰':info.shichen?'出生日期和时辰':'出生日期、时间和出生地的经度'};
 }
 function refreshShare(){
@@ -728,10 +767,10 @@ function pickHour(q,i){
 /* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
 function applyView(q){
   (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
-  // by：五行一页、十神一页的数法和选择器小卡的计分模式，照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
+  // by：五行、十神数法、小卡计分、格局子标签，前三项的旧链接保留当前格局子标签；照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
   const by=(q.get('by')||'').split(','); let mapped=false;
-  ['wx','gods','yun'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
-  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
+  ['wx','gods','yun','gj'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
+  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
   const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
   const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
   if(dy===null&&y===null&&m===null&&!d){if(mapped) renderDynamic();return;}
@@ -942,6 +981,7 @@ function importText(text){
     if(bad){errs.push(`${info.name}：${bad}`);return;}
     try{chartOf(info.nohour?Object.assign({},info,{shichen:'午'}):info);}catch(e){errs.push(`${info.name}：排不出盘（${e.message}）`);return;}   // 写入以前先试排一遍
     if(nb.n) errs.push(`${info.name}的手写解读里有 ${nb.n} 项格式不对，这几项没有导入`);
+    REJECTED=REJECTED.filter(r=>!(r.value&&typeof r.value.id==='string'&&r.value.id===info.id)); // 只有试排成功的同编号记录才能修复旧记录
     if(DATA.people.some(p=>p.id===info.id)) info.id=newId();      // 和页面自带的人重名的，另起一个编号
     const i=LOCAL.findIndex(o=>o.id===info.id);
     if(i>=0) LOCAL[i]=info; else LOCAL.push(info);                // 以前导入过的，这次顶替掉
@@ -951,13 +991,10 @@ function importText(text){
   return (n?`导入了 ${n} 个人。`:'没有导入任何人。')+(errs.length?'没导入的：'+errs.join('；'):'')+(n&&!STORE_OK?NO_STORE:'');
 }
 function exportLocal(){
-  if(!LOCAL.length){formMsg('浏览器里还没有保存的人，没有可以导出的。');return;}
+  if(!localRecords().length){formMsg('浏览器里还没有保存的人，没有可以导出的。');return;}
   try{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([JSON.stringify(LOCAL,null,1)],{type:'application/json'}));
-    a.download='bazi-people.json';document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    formMsg('已经生成 bazi-people.json。如果浏览器没有开始下载，说明这个环境不允许下载文件。');
+    downloadJSON(JSON.stringify(localRecords(),null,1),'bazi-people.json');
+    formMsg('已经生成 bazi-people.json。'+(REJECTED.length?'文件里也保留了暂未显示的旧记录。':'')+'如果浏览器没有开始下载，说明这个环境不允许下载文件。');
   }catch(e){formMsg('这个环境不能下载文件。');}
 }
 
@@ -985,6 +1022,7 @@ document.addEventListener('click',e=>{
     return;
   }
   if(b.id==='sheet-x'){closeSheet();return;}
+  if(b.id==='pp-recovery-export'){exportRecovery();return;}
   if(b.id==='pp-add'){openForm(null);return;}
   if(b.id==='pp-edit'){openForm(LOCAL.find(x=>x.id===P.id));return;}
   if(b.id==='pp-share'){openShare();return;}

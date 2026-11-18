@@ -505,6 +505,21 @@ console.log('成败救应、用神变化、相神');
     [badV.slice(0, 2), [...seenV].sort(), seenGe.size], [[], ['成', '带忌', '救应', '败', '都不合'].sort(), 8]);
 }
 
+// 补充条件不合或未核对时，汇总、表内、相神候选都不能给出完整成格的结论。
+{
+  const before = ev('sel.p');
+  const checks = [];
+  for(let i=0;i<people.length;i++){
+    pick(i);
+    checks.push(...JSON.parse(ev(`JSON.stringify(gjbNow().groups.flatMap(g=>g.rows.filter(o=>o.ok===true&&o.more.some(m=>m[1]!==true)).map(o=>({summary:gjbSay().includes(gjbCaveat(o)),row:document.getElementById('gjb').textContent.includes(gjbCaveat(o)),candidate:xiangRow().dd.includes('候选'),verdict:/结构是完整的|靠这几个字成/.test(gjbSay()+xiangRow().dd)}))))`)));
+  }
+  ok('有补充条件不合或待核对的命中项：汇总和表内显示限制，相神只列候选', checks.every(c=>c.summary&&c.row&&c.candidate&&!c.verdict), checks);
+  if(!priv) ok('公开示例确实覆盖本章条件相符而补充条件不合的情形', checks.length>0);
+  const caveat=ev("gjbCaveat({more:[['身强',null,'q'],['不透七杀',false,'q']],todo:'尚有前提未实现'})");
+  ok('补充条件的未知、不符、未编码三种状态分别交代', caveat.includes('补充条件待核对：身强')&&caveat.includes('补充条件不合：不透七杀')&&caveat.includes('未核对的条件'));
+  pick(before);
+}
+
 // ---------- 1a3. 调候的情形 ----------
 console.log('调候的情形');
 {
@@ -543,17 +558,25 @@ console.log('调候的情形');
     if (got.length !== cs.length) { badTh.push([ps.join(' '), '条数']); continue; }
     cs.forEach(([q, atoms], i) => { const w = atoms.map(a => atom2(a, ps)); nCase++; if (w.every(Boolean)) nHit++;
       atoms.forEach((a, j) => { const k = a.split(':')[0]; kinds[k] = kinds[k] || [0, 0]; kinds[k][w[j] ? 0 : 1]++; });
-      if (got[i][0] !== w.every(Boolean) || got[i][1].join() !== w.join() || !got[i][2]) badTh.push([ps.join(' '), q]); });
+      const pending = ps[2][0] === '乙' && (ps[1][1] === '酉' ? ['丙癸两透','生秋分后，有丙无癸','若有癸无丙','若四柱不见丙癸','或生上半月无癸，姑用壬水'].includes(q) : '子丑'.includes(ps[1][1]) && ['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(q));
+      if (got[i][0] !== (w.every(Boolean) ? pending ? null : true : false) || got[i][1].join() !== w.join() || !got[i][2]) badTh.push([ps.join(' '), q]); });
   }
   eq('调候的情形：1500 副随机的四柱，每一种情形合不合、每一个原子合不合，和照说明另算的相同', badTh.slice(0, 3), []);
   ok('调候的情形：随机的四柱里，十二种原子合和不合的都碰到了；合的情形占一小部分', ['tou', 'zang', 'has', 'no', 'notou', 'root', 'pai', 'ju', 'zhi', 'nozhi', 'el', 'noel', 'or'].every(k => !Object.values(th2).some(o => Object.values(o).some(e => e.cases.some(c => c[1].some(a => a.startsWith(k + ':'))))) || (kinds[k] && kinds[k][0] > 0 && kinds[k][1] > 0)) && nHit > 0 && nHit < nCase / 2, [kinds, nHit, nCase]);
   // 书里的头一个例子：正月甲木「癸藏丙透」「如无丙癸」
   const jia = ps => JSON.parse(ev(`JSON.stringify(thOf('甲',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}))).cases.filter(c=>c.ok).map(c=>c.q))`));
   eq('调候的情形：正月甲木，丙透在天干、癸只藏在地支的盘合「癸藏丙透」；丙、癸都没有的盘合「如无丙癸」', [jia(['丙子', '庚寅', '甲午', '乙丑']).includes('癸藏丙透'), jia(['戊午', '甲寅', '甲午', '己巳']).includes('癸藏丙透'), jia(['戊戌', '甲寅', '甲戌', '甲戌']).includes('如无丙癸')], [true, false, true]);
+  // 日期前提必须保留：秋分前的虚构日期不能命中「生秋分后」。承接的分支也不丢前提。
+  const autumn = JSON.parse(ev(`(()=>{const p=chartOf({name:'节令测试',gender:'男',birth:'1980-09-09',shichen:'寅'}), ps=p.pillars.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]})), r=thOf(ps[2].g,ps), c=r.cases.find(c=>c.q==='生秋分后，有丙无癸');return JSON.stringify([c.ok,c.pending,c.atoms.every(a=>a.ok),r.hit===r.cases.filter(c=>c.ok===true).length]);})()`));
+  eq('秋分前：干支条件都合，也只记待核对，不计作符合「生秋分后」', autumn, [null, '生于秋分之后', true, true]);
+  const timeRules = JSON.parse(ev(`JSON.stringify(Object.entries(TH_TIME).flatMap(([k,cs])=>Object.keys(cs).filter(q=>!TH2[k[0]][k[1]].cases.some(c=>c[0]===q))))`));
+  eq('每一项未核对的节令前提都有对应摘录，调整条目后不会失去对应', timeRules, []);
+  const winter = ps => JSON.parse(ev(`JSON.stringify(thOf('乙',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}))).cases.filter(c=>['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(c.q)).map(c=>[c.ok,c.pending]))`));
+  eq('冬至前提也传给「即丁出干」；已有干支条件不合时仍记不合', [winter(['丙寅','丁子','乙卯','戊辰']), winter(['庚申','丁子','乙酉','戊辰'])], [[[null,'生于冬至之后'],[null,'生于冬至之后']],[[false,'生于冬至之后'],[false,'生于冬至之后']]]);
   // 页面上的那一块
   const tn = JSON.parse(ev('JSON.stringify((t=>({n:t.cases.length,hit:t.hit,need:t.need.length}))(thNow()))'));
   eq('喜忌一页「调候的情形」：这个月收的每一种情形各一枚小标签，合的在前面；上面一句话写着收了几种、合几种',
-    [$('thc').querySelectorAll('.tg').length, $('thc').querySelectorAll('.tg.yes').length, tn.n ? txt($('thc-say')).includes(`收了 ${tn.n} 种，这张盘合 ${tn.hit} 种`) : txt($('thc-say')).includes('没有页面能照着数的')], [tn.n, tn.hit, true]);
+    [$('thc').querySelectorAll('.tg').length, $('thc').querySelectorAll('.tg.yes').length, tn.n ? txt($('thc-say')).includes(`收了 ${tn.n} 种，已核对条件合 ${tn.hit} 种`) : txt($('thc-say')).includes('没有页面能照着数的')], [tn.n, tn.hit, true]);
 }
 
 // ---------- 1a2. 打分法 ----------
@@ -1150,10 +1173,10 @@ people.forEach((id, pi) => {
     // 归了两格的盘，表里一格一段、照「格局参考」里的先后排，和 GJB 里定义的先后不一定相同，所以各条按名字排好了再比，另外核对每一段的标题。
     // 原来直接照 gjbNow().rows 的先后比，随机检查补了样本以后撞到一张两格的盘才露出来（2026-11-18）
     const byId = (x, y) => x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0, gGes = JSON.parse(ev('JSON.stringify(gjbNow().groups.map(g=>g.ge))'));
-    eq('成败救应：表里这张盘归的格的每一条各一行，写着合、不合或者定不了，书里的话下面是一句直白的解释；归了两格的一格一段，照格局参考里的先后',
+    eq('成败救应：表里这张盘归的格的每一条各一行，区分本章条件合、不合或者待核对，书里的话下面是一句直白的解释；归了两格的一格一段，照格局参考里的先后',
       [[...$('gjb').querySelectorAll('th[scope=row]')].map(th => [th.querySelector('.x').dataset.x, txt(th.querySelector('small')), txt(th.parentNode.querySelector('.gjz-st'))]).sort(byId),
         [...$('gjb').querySelectorAll('tr.gjz-h th')].map(txt).filter(t => gGes.includes(t))],
-      [gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '定不了' : o.ok ? '合' : '不合']).sort(byId), gGes.length > 1 ? gGes : []]);
+      [gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '待核对' : o.ok ? '本章条件合' : '本章条件不合']).sort(byId), gGes.length > 1 ? gGes : []]);
     eq('格局组合：组合名字下面是一句直白的解释', [...$('gjz').querySelectorAll('tr:not(.gjz-h):not(.gjz-no) th[scope=row] small')].map(txt), gj.list.filter(o => o.st !== '无').map(o => o.hua));
     click($('gjb').querySelector('th[scope=row] .x'));
     eq('成败救应：点书里的话，解释的头三段是含义、字面的意思、这张盘，后面有原文、名词；每一条都一样的怎么查、注意和这一格的含义不在解释里，在表上面那句话和表下面的说明里', [!$('sheet').hidden, [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 3).map(txt), ['原文', '名词', '这一格', '怎么查', '注意'].map(gp), txt($('note-gjb')).includes('只数年、月、时三个天干和四个地支的本气'), txt($('gjb-say')).includes('的含义：')], [true, ['含义', '字面的意思', '这张盘'], [true, true, false, false, false], true, true]);
@@ -1705,6 +1728,38 @@ console.log('导入、编辑、删除的边角情形');
   reset();
 }
 
+// 异常旧记录：启动时提示、写入时保留、导出原值，只有修复成功才替换。
+{
+  const broken={id:'broken-test',name:'<img src=x onerror=1>',gender:'男',birth:'2000-02-30 12:00',lon:120,extra:{keep:'原字段'}}, good={id:'good-test',name:'虚构正常记录',gender:'女',birth:'2001-01-02 09:00',lon:120};
+  const make=raw=>new JSDOM(fs.readFileSync(FILE,'utf8'),{runScripts:'dangerously',virtualConsole:vc,pretendToBeVisual:true,url:'https://bazi.test/',beforeParse(win){win.localStorage.setItem('bz-people',raw);}});
+  let a=make(JSON.stringify([broken])), aw=a.window, ae=x=>aw.eval(x), ad=aw.document;
+  eq('打开页面就提示异常旧记录，名称只当文字显示；原值完整保留', [ad.getElementById('pp-recovery').hidden,!!ad.querySelector('#pp-recovery img'),JSON.parse(ae('JSON.stringify(REJECTED.map(r=>r.value))'))], [false,false,[broken]]);
+  ae(`importText(${JSON.stringify(JSON.stringify(good))})`);
+  eq('导入正常资料不会清除异常旧记录，换人也不清除恢复提示', [JSON.parse(aw.localStorage.getItem('bz-people')),ad.getElementById('pp-recovery').hidden], [[{id:good.id,name:good.name,gender:good.gender,birth:good.birth,place:'',lon:good.lon},broken],false]);
+  // 导出按钮确实交出原来的无效字段，而非空数组。
+  ae("downloadJSON=(text,name)=>{window.__download={text,name};}");
+  ad.getElementById('pp-recovery-export').click();
+  const download=aw.__download;
+  eq('恢复入口导出包括异常原记录的备份', [download.name,JSON.parse(download.text).find(x=>x.id===broken.id)], ['bazi-people-recovery.json',broken]);
+  const saved=aw.localStorage.getItem('bz-people');aw.close();a=make(saved);aw=a.window;ae=x=>aw.eval(x);ad=aw.document;
+  eq('刷新页面后，异常记录和正常记录都还在', [ae('REJECTED.length'),ae('LOCAL.length'),ad.getElementById('pp-recovery').hidden], [1,1,false]);
+  ae(`importText(${JSON.stringify(JSON.stringify(broken))})`);
+  eq('修复文件仍无效，不清除旧记录', ae('REJECTED.length'), 1);
+  ae(`importText(${JSON.stringify(JSON.stringify({...broken,name:'已修正',birth:'2000-02-29 12:00'}))})`);
+  eq('同编号文件修复成功后替换异常记录，提示消失且不留重复编号', [ae('REJECTED.length'),ad.getElementById('pp-recovery').hidden,JSON.parse(aw.localStorage.getItem('bz-people')).filter(x=>x.id===broken.id).length], [0,true,1]);
+  aw.close();
+  const malformed={...broken,name:{toString:1,valueOf:1},birth:{toString:1,valueOf:1}}, mixed=make(JSON.stringify([malformed,good]));
+  mixed.window.eval('writeLocal()');
+  eq('旧记录的字段类型异常也逐项保留，后面的正常资料仍能读取，提示不执行对象转换', [mixed.window.eval('LOCAL.length'),mixed.window.eval('REJECTED.length'),mixed.window.document.getElementById('pp-recovery').hidden,JSON.parse(mixed.window.localStorage.getItem('bz-people')).find(x=>x.id===broken.id)], [1,1,false,malformed]);
+  mixed.window.close();
+  for(const raw of ['{bad json','{"old":"非数组格式"}']){
+    const b=make(raw), bw=b.window;
+    bw.eval(`importText(${JSON.stringify(JSON.stringify(good))})`);
+    eq('整份 JSON 损坏或不是数组：不覆盖原文，页面仍可使用', [bw.localStorage.getItem('bz-people'),bw.eval('STORE_OK'),bw.document.getElementById('pp-recovery').hidden], [raw,false,false]);
+    bw.close();
+  }
+}
+
 // ---------- 4d. 分享链接 ----------
 console.log('分享链接');
 {
@@ -1773,19 +1828,24 @@ console.log('分享链接');
   ok('点「关闭」收起分享框', $('share').hidden);
   { // 分享链接带上五行、十神两页的数法和选择器小卡的计分模式（by）；打开时照它恢复，旧链接和认不出的值不动（审阅报告 R3）
     pick(0);
-    const setModes = (wx, gods, yun) => ev(`MAPBY.wx='${wx}';MAPBY.gods='${gods}';MAPBY.yun='${yun}';renderBars();renderWxMap();renderGods();renderGodMap();renderDynamic()`);
+    const setModes = (wx, gods, yun, gj='gjb') => ev(`MAPBY.wx='${wx}';MAPBY.gods='${gods}';MAPBY.yun='${yun}';MAPBY.gj='${gj}';renderGjSeg();renderBars();renderWxMap();renderGods();renderGodMap();renderDynamic()`);
     const modes = () => JSON.parse(ev('JSON.stringify(MAPBY)')), scores = () => [...$('dayun').querySelectorAll('.mb b')].map(txt);
     const pressed = id => [...$(id).querySelectorAll('[data-map]')].filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.map);
-    setModes('face', 'nl', ev('yongNow().yong===null') ? 'fy' : 'sum');
+    setModes('face', 'nl', ev('yongNow().yong===null') ? 'fy' : 'sum', 'gjz');
     const want = modes(), hash = ev('shareNow().url').split('#')[1], sent = scores();
     setModes('nl', 'cnt', 'fy');
     ev(`openLink(${JSON.stringify('#' + hash)})`);
-    eq('分享链接带着三个模式；打开链接照它恢复，按钮选中态和小卡的分数都和发送方一样', [new URLSearchParams(hash).get('by'), modes(), pressed('wx-seg'), pressed('gods-seg'), pressed('sy-lg'), scores()],
-      [`${want.wx},${want.gods},${want.yun}`, want, [`wx:${want.wx}`], [`gods:${want.gods}`], [`yun:${want.yun}`], sent]);
-    const noBy = hash.replace(/(^|&)by=[^&]*/, ''), bad = hash.replace(/by=[^&]*/, 'by=xx%2Cyy%2Czz');
+    eq('分享链接带着四个模式；打开链接照它恢复，按钮选中态和小卡的分数都和发送方一样', [new URLSearchParams(hash).get('by'), modes(), pressed('wx-seg'), pressed('gods-seg'), pressed('sy-lg'), pressed('gj-seg'), $('gjb-block').hidden, $('gjz-block').hidden, scores()],
+      [`${want.wx},${want.gods},${want.yun},${want.gj}`, want, [`wx:${want.wx}`], [`gods:${want.gods}`], [`yun:${want.yun}`], [`gj:${want.gj}`], true, false, sent]);
+    const noBy = hash.replace(/(^|&)by=[^&]*/, ''), bad = hash.replace(/by=[^&]*/, 'by=xx%2Cyy%2Czz%2Cunknown');
     setModes('nl', 'cnt', 'fy'); ev(`openLink(${JSON.stringify('#' + noBy)})`); const a = modes();
     ev(`openLink(${JSON.stringify('#' + bad)})`); const b = modes();
     eq('没带 by 的旧链接、by 里认不出的值：都保持原来的模式', [a, b], [{ wx: 'nl', gods: 'cnt', yun: 'fy', gj: 'gjb' }, { wx: 'nl', gods: 'cnt', yun: 'fy', gj: 'gjb' }]);
+    setModes('nl','cnt','fy','gjz');
+    ev("applyView(new URLSearchParams('by=face,nl,fy'))");
+    eq('只有前三项的旧分享链接保留当前格局子标签', ev('MAPBY.gj'), 'gjz');
+    ev("applyView(new URLSearchParams('by=face,nl,fy,gjb'))");
+    eq('从格局组合恢复到成败救应：选中按钮和可见表格一致', [ev('MAPBY.gj'),pressed('gj-seg'),$('gjb-block').hidden,$('gjz-block').hidden], ['gjb',['gj:gjb'],false,true]);
     setModes('nl', 'cnt', 'fy'); ev("localStorage.setItem('bz-map',JSON.stringify(MAPBY))");
   }
   click($('h-bz'));

@@ -925,6 +925,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="people" id="people" role="group" aria-label="选择命盘"></div>
   <p class="hint" id="pp-hint" hidden></p>
+  <div class="pp-link" id="pp-recovery" role="status" hidden></div>
   <div class="pp-link" id="pp-link" hidden></div>
   <div class="share" id="share" hidden>
     <p class="share-t" id="share-t"></p>
@@ -2248,7 +2249,7 @@ const TH2={
       午:{need:["柱多金水，丙火为先，余皆用癸水为先","支成火局，洩乙精神，须用癸滋","凡五六月乙木，气退枯焦，用癸水切忌戊己杂乱","总之夏月之乙木，耑用癸水，丙火酌用，庚辛次之"],cases:[["先得丙透，支下又有丙火",["root:丙"]],["得一癸透",["root:丙","tou:癸"]],["或一派癸水，有丁无丙",["pai:水","has:丁","no:丙"]],["或一癸透干",["tou:癸"]],["癸居子辰",["zang:癸","or:zhi:子|zhi:辰"]],["或丙藏支下，癸透年干，己出月上",["zang:丙","tou:癸","tou:己"]],["又或重重癸水",["pai:水"]],["或支藏癸水",["zang:癸"]],["柱多金水",["or:pai:金|pai:水"]],["支成火局",["ju:火"]],["癸透有根",["root:癸"]],["或庚辛年上，癸透时干",["or:tou:庚|tou:辛","tou:癸"]],["无癸者",["no:癸"]],["若见丙透，支成火局",["tou:丙","ju:火"]],["无癸",["tou:丙","ju:火","no:癸"]],["见壬",["tou:丙","ju:火","no:癸","has:壬"]],["或火土太多",["or:pai:火|pai:土"]],["或甲木高透，制伏土神",["tou:甲","el:土"]],["土多乏甲",["pai:土","no:甲"]],["或丙癸两透，加以甲透制戊",["tou:丙","tou:癸","tou:甲","has:戊"]],["若不见丙癸，只有丁火",["no:丙","no:癸","has:丁"]],["有壬",["no:丙","no:癸","has:丁","has:壬"]],["或柱中无水，又无比劫出干",["noel:水","notou:甲","notou:乙"]],["或一派戊土出干，不见比肩",["pai:土","tou:戊","no:乙"]],["或丙辛化水",["tou:丙","tou:辛"]],["或一派乙木，不见丙癸",["pai:木","no:丙","no:癸"]],["又加支多辛金",["pai:木","no:丙","no:癸","has:辛"]],["或一派甲木，无癸无丙，又无庚金",["pai:木","has:甲","no:癸","no:丙","no:庚"]],["有庚制甲",["pai:木","has:甲","no:癸","no:丙","has:庚"]]],skip:2,note:"前八种出自三夏的总论；「或甲木高透」以下十二种原文说的是五六月，两个月各收一份。年上、时干这类位置没有算。要字的话最多四句，总论的「五六月先丙后癸，夏至前仍用癸水」没有收。"},
       未:{need:["木性且寒，柱多金水，丙火为尊","凡五六月乙木，气退枯焦，用癸水切忌戊己杂乱","总之夏月之乙木，耑用癸水，丙火酌用，庚辛次之"],cases:[["先得丙透，支下又有丙火",["root:丙"]],["得一癸透",["root:丙","tou:癸"]],["或一派癸水，有丁无丙",["pai:水","has:丁","no:丙"]],["癸居子辰",["zang:癸","or:zhi:子|zhi:辰"]],["或丙藏支下，癸透年干，己出月上",["zang:丙","tou:癸","tou:己"]],["又或重重癸水",["pai:水"]],["或支藏癸水",["zang:癸"]],["柱多金水",["or:pai:金|pai:水"]],["支成水局",["ju:水"]],["癸水透干",["tou:癸"]],["无癸",["no:癸"]],["或甲木高透，制伏土神",["tou:甲","el:土"]],["土多乏甲",["pai:土","no:甲"]],["或丙癸两透，加以甲透制戊",["tou:丙","tou:癸","tou:甲","has:戊"]],["若不见丙癸，只有丁火",["no:丙","no:癸","has:丁"]],["有壬",["no:丙","no:癸","has:丁","has:壬"]],["或柱中无水，又无比劫出干",["noel:水","notou:甲","notou:乙"]],["或一派戊土出干，不见比肩",["pai:土","tou:戊","no:乙"]],["或丙辛化水",["tou:丙","tou:辛"]],["或一派乙木，不见丙癸",["pai:木","no:丙","no:癸"]],["又加支多辛金",["pai:木","no:丙","no:癸","has:辛"]],["或一派甲木，无癸无丙，又无庚金",["pai:木","has:甲","no:癸","no:丙","no:庚"]],["有庚制甲",["pai:木","has:甲","no:癸","no:丙","has:庚"]]],skip:3,note:"前七种出自三夏的总论（「或一癸透干」和六月的「癸水透干」重复，留后一句）。未里藏着乙，「不见比肩」在六月对不上。"},
       申:{need:["或不见丙癸。己土必不可少"],cases:[["柱见庚多",["pai:金"]],["有己透、加丙",["tou:己","has:丙"]],["或不见丙癸",["no:丙","no:癸"]],["或癸透、丙藏、庚少",["tou:癸","zang:丙","has:庚"]],["无丙、有癸透者",["no:丙","tou:癸"]],["有支下庚多，癸又藏者，无丙己二神",["pai:金","zang:癸","no:丙","no:己"]]],skip:3,note:"「或丙透干，又加巳出埋金」的「巳」疑是「己」，没有收，它和下一句「有己透、加丙」几乎是同一种。「庚少」只照有庚算。"},
-      酉:{need:["三秋乙木，金神司令，先丙后癸","或支成金局，宜暗藏丁，无丁制金，恐木被金伤","或生上半月无癸，姑用壬水"],cases:[["丙癸两透",["tou:丙","tou:癸"]],["或支成金局，宜暗藏丁",["ju:金","zang:丁"]],["无丁制金",["ju:金","no:丁"]],["或得癸水",["ju:金","has:癸"]],["或丙癸两透，戊土杂出",["tou:丙","tou:癸","tou:戊"]],["生秋分后，有丙无癸",["has:丙","no:癸"]],["若有癸无丙",["has:癸","no:丙"]],["若四柱不见丙癸",["no:丙","no:癸"]],["或生上半月无癸，姑用壬水",["no:癸","has:壬"]],["又四柱多见戊己",["pai:土"]]],skip:4,note:"「生秋分后」「生上半月」页面数不了，只照后半句对。「若无水火」接在金局后面，金局的地支里总藏着水或火，对不上，没有收；「或得癸水」照上文的金局并进来。"},
+      酉:{need:["三秋乙木，金神司令，先丙后癸","或支成金局，宜暗藏丁，无丁制金，恐木被金伤","或生上半月无癸，姑用壬水"],cases:[["丙癸两透",["tou:丙","tou:癸"]],["或支成金局，宜暗藏丁",["ju:金","zang:丁"]],["无丁制金",["ju:金","no:丁"]],["或得癸水",["ju:金","has:癸"]],["或丙癸两透，戊土杂出",["tou:丙","tou:癸","tou:戊"]],["生秋分后，有丙无癸",["has:丙","no:癸"]],["若有癸无丙",["has:癸","no:丙"]],["若四柱不见丙癸",["no:丙","no:癸"]],["或生上半月无癸，姑用壬水",["no:癸","has:壬"]],["又四柱多见戊己",["pai:土"]]],skip:4,note:"「生秋分后」「生上半月」尚未计算，由 text.js 的 TH_TIME 连同承接分支标成待核对，不只照后半句判合。「若无水火」接在金局后面，金局的地支里总藏着水或火，对不上，没有收；「或得癸水」照上文的金局并进来。"},
       戌:{need:["惟九月耑用癸水，恐丙暖戊土为病也"],cases:[["若见癸水，又遇辛金发水之源",["has:癸","has:辛"]],["或有癸无辛",["has:癸","no:辛"]],["有辛无癸",["has:辛","no:癸"]],["或四柱壬多",["pai:水","has:壬"]],["或支多戊土，又逢天干",["pai:土","tou:戊"]],["无比劫",["pai:土","tou:戊","no:甲","no:乙"]],["一逢比劫",["pai:土","tou:戊","or:has:甲|has:乙"]]],skip:1,note:"戌里藏着辛，「又遇辛金」「有辛」在九月总是成立，「或有癸无辛」对不上。"},
       亥:{need:["支成木局，时值小阳，此又如春木同旺，若有癸出，须取戊为尊"],cases:[["丙戊两透",["tou:丙","tou:戊"]],["有丙无戊",["has:丙","no:戊"]],["或水多无戊",["pai:水","no:戊"]],["若不见丙巳",["pai:水","no:戊","no:丙","nozhi:巳"]],["或一点壬水，即多见戊土",["has:壬","pai:土"]],["得甲制戊",["has:壬","pai:土","has:甲"]],["支成木局",["ju:木"]],["若有癸出，须取戊为尊，加以丙透",["ju:木","tou:癸","has:戊","tou:丙"]],["若无丙戊二字",["ju:木","no:丙","no:戊"]]],skip:1,note:"「若不见丙巳」照上文的水多无戊并进来，「若无丙戊二字」照上文的木局并进来。亥里藏着壬、甲，「一点壬水」「得甲」总是成立。"},
       子:{need:["冬月之木，虽取戊制水，不可作用，耑取丙火则可","丁火有亦如无，丁乃灯烛之火，岂能解严寒之冻"],cases:[["或壬癸出干，有戊制",["or:tou:壬|tou:癸","has:戊"]],["即丙在支内",["or:tou:壬|tou:癸","has:戊","zang:丙"]],["若壬透无戊",["tou:壬","no:戊"]],["支成水局，干透壬癸，丙丁全无",["ju:水","or:tou:壬|tou:癸","no:丙","no:丁"]],["设无丙丁，戊土多见",["no:丙","no:丁","pai:土"]],["或有戊己无火",["or:has:戊|has:己","noel:火"]],["或一派丁火",["pai:火","has:丁"]],["如无甲引丁",["pai:火","has:丁","no:甲"]],["丁火见甲",["pai:火","has:丁","has:甲"]],["或成水局，壬癸两透",["ju:水","tou:壬","tou:癸"]],["得一戊救",["ju:水","tou:壬","tou:癸","has:戊"]],["生于冬至之后，坐下木局，得丙透干者",["ju:木","tou:丙"]],["即丁出干",["ju:木","tou:丁"]],["生于冬月，己土透干，又有丙透",["tou:己","tou:丙"]],["得一丙透，无癸出破格",["tou:丙","notou:癸"]],["丙火藏支",["zang:丙"]],["干支无丙",["no:丙"]],["或四柱多己，不逢比劫",["pai:土","no:甲","no:乙"]],["若见比劫",["pai:土","or:has:甲|has:乙"]],["虽或一派戊己，见甲",["pai:土","has:甲"]]],skip:4,note:"「有一二点丙火出干，无癸制者」「即丙藏支内」和后面的「得一丙透，无癸出破格」「丙火藏支」是同样两种，收后面的：子里藏着癸，「无癸」对不上。「冬至之后」页面数不了。"},
@@ -3406,7 +3407,7 @@ function tiaohouRow(){
     ['是什么',`调候是按出生的季节，看日主需要哪几个字来调节冷暖和干湿。《穷通宝鉴》把十个日干生在十二个月的情形逐一列了出来。书里的月份按节气算，${c.mz}月就是它说的${c.mon}。`],
     ['典籍',`《穷通宝鉴》论${c.mon}的${DMN}：${c.quote.map(s=>'「'+s+'」').join('，又说')}。`+(c.note?c.note+'。':'')],
     ['这张盘',`这一句点到${cn(c.stems.length)}个字。`+c.stems.map(x=>`${gN(x.s)}，${at(x)}`).join('；')+`。这里只查${c.stems.length>1?'它们':'它'}在不在、在哪里，有没有力量要另外权衡。`],
-    ['注意',`这里只引了原文里对一般情形的一句。原文后面还按盘里别的字分出很多种情形，下面「调候的情形」一块只取它们的条件，看这张盘合哪几种。用神指一张盘里拿来作主的字，调候只是找它的一种办法。《子平真诠》以月令的格局为主，同时也说${q('zp_qh')}两种办法的结论不一定相同。这一页只把原文列出来，不替这张盘下结论。`]]};
+    ['注意',`这里只引了原文里对一般情形的一句。原文后面还按盘里别的字分出很多种情形，下面「调候的情形」一块只取它们的条件，看哪些已编码条件相符、哪些前提还待核对。用神指一张盘里拿来作主的字，调候只是找它的一种办法。《子平真诠》以月令的格局为主，同时也说${q('zp_qh')}两种办法的结论不一定相同。这一页只把原文列出来，不替这张盘下结论。`]]};
 }
 /* ---------- 调候的要字和各种情形（classics.js 的 TH2） ----------
    《穷通宝鉴》每个月开头一句后面，接着讲用字的先后，再按盘里别的字分出很多种情形，每一种后面跟一句断语。
@@ -3427,38 +3428,49 @@ function thAtom(a,x){
     zhi:()=>({l:`地支有${v}`,ok:x.zs.includes(v)}),nozhi:()=>({l:`地支没有${v}`,ok:!x.zs.includes(v)}),
     el:()=>({l:`盘里有${v}`,ok:anyEl()}),noel:()=>({l:`盘里没有${v}`,ok:!anyEl()})})[k]();
 }
+/* 原文中的节令前提尚未编码。连同承接这句话的分支一起保留为待核对，不能只凭后半句判合。
+   对照《穷通宝鉴》乙木八月、冬月原文；键用摘录而不用数组下标，防止调整先后后串到别条。 */
+const TH_TIME={
+  乙酉:{'丙癸两透':'生于秋分之后','生秋分后，有丙无癸':'生于秋分之后','若有癸无丙':'生于秋分之后','若四柱不见丙癸':'生于秋分之后','或生上半月无癸，姑用壬水':'生于上半月'},
+  乙子:{'生于冬至之后，坐下木局，得丙透干者':'生于冬至之后','即丁出干':'生于冬至之后'},
+  乙丑:{'生于冬至之后，坐下木局，得丙透干者':'生于冬至之后','即丁出干':'生于冬至之后'}
+};
+const thState=v=>v===null?'待核对':v?'已核对条件合':'不合';
 function thOf(dm,ps){
   const o=(TH2[dm]||{})[ps[1].z]||{}, gan=[0,1,3].map(i=>ps[i].g), zs=ps.map(p=>p.z);
   const x={gan,zs,hid:[0,2,3].flatMap(i=>HID[zs[i]].split('')),all:zs.flatMap(z=>HID[z].split('')),seven:gan.concat(zs.map(z=>HID[z][0]))};      // hid 不含月支
-  const cases=(o.cases||[]).map(([q0,as],i)=>{const atoms=as.map(a=>thAtom(a,x));return {i,q:q0,atoms,ok:atoms.every(a=>a.ok)};});
-  return {need:o.need||[],cases,skip:o.skip||0,hit:cases.filter(c=>c.ok).length};
+  const cases=(o.cases||[]).map(([q0,as],i)=>{
+    const atoms=as.map(a=>thAtom(a,x)), pending=(TH_TIME[dm+ps[1].z]||{})[q0]||'';
+    return {i,q:q0,atoms,pending,ok:atoms.some(a=>!a.ok)?false:pending?null:true};
+  });
+  return {need:o.need||[],cases,skip:o.skip||0,hit:cases.filter(c=>c.ok===true).length,pending:cases.filter(c=>c.ok===null).length};
 }
 const thNow=()=>memo('th2',()=>thOf(DM,NATAL));
 /* 喜忌一页「调候的情形」那一块上面的一句话、下面的说明，和点一枚标签的解释 */
 function thcSay(){
   const c=tiaohou(), t=thNow();
   return `《穷通宝鉴》论${c.mon}的${DMN}，开头一句见上面「调候参考」一行。`+(t.need.length?`书里接着说：${t.need.map(x=>'「'+x+'」').join('，')}。`:'')
-    +(t.cases.length?`后面分的情形页面收了 ${t.cases.length} 种，这张盘合 <b>${t.hit}</b> 种。`:'后面分的情形里，没有页面能照着数的。');
+    +(t.cases.length?`后面分的情形页面收了 ${t.cases.length} 种，已核对条件合 <b>${t.hit}</b> 种${t.pending?`，另有 ${t.pending} 种待核对节令前提`:''}。`:'后面分的情形里，没有页面能照着数的。');
 }
 function noteThc(){
   const t=thNow();
-  return '书里每一种情形后面都跟着一句断语，讲富贵、贫贱一类。页面一概不引，只看这张盘合不合条件：合了哪一种，只说明这张盘是书里说到的那一种情形。条件照原文落成能数的几项，几项全合才算合；书里的制、破、伤这类关系，用两边的字在不在来近似。'
-    +'查法：「透出」看年、月、时三个天干；「藏在地支里」看年、日、时三个地支的藏干，月支是这个月本来就有的，不算；「盘里有」是透出或者藏着；「有三个以上」数三个天干加四个地支的本气；「成局」是三合局或者三会方三支全；上文的前提并进了每一种。调候只是找用神的一种办法，和格局、扶抑的结论不一定相同。'
+  return '书里每一种情形后面都跟着一句断语，讲富贵、贫贱一类。页面一概不引，只核对已经编码的条件。「已核对条件合」只说明这些条件相符，不能当作符合原文全部前提。秋分、冬至和上半月的前提尚未核对，相关条件都相符时标「待核对」，不计入合的数量；已有条件不符时标「不合」。书里的制、破、伤这类关系，用两边的字在不在来近似。'
+    +'查法：「透出」看年、月、时三个天干；「藏在地支里」看年、日、时三个地支的藏干，月支是这个月本来就有的，不算；「盘里有」是透出或者藏着；「有三个以上」数三个天干加四个地支的本气；「成局」是三合局或者三会方三支全；上文承接的前提仍需逐条复核。调候只是找用神的一种办法，和格局、扶抑的结论不一定相同。'
     +(t.skip?`这个月书里另有 ${t.skip} 种情形，条件里有页面数不了的东西（力量大小、行运、时辰），没有收。`:'');
 }
 function xThc(i){
   const c=tiaohou(), t=thNow(), o=t.cases[+i]; if(!o) return null;
-  return {t:`调候的情形 · ${o.ok?'合':'不合'}`,p:[
-    ['含义',`这种情形是：${o.atoms.map(x=>x.l).join('；')}。`],
+  return {t:`调候的情形 · ${thState(o.ok)}`,p:[
+    ['含义',`这种情形是：${(o.pending?[o.pending]:[]).concat(o.atoms.map(x=>x.l)).join('；')}。`],
     ['原文',`《穷通宝鉴》论${c.mon}的${DMN}，后面分的情形里有一种：「${o.q}」。这是讲条件的半句。`],
-    ['这张盘',o.atoms.map(a=>`${a.l}：${a.ok?'合':'不合'}`).join('；')+`。${o.atoms.length>1?'几项全合才算合，':''}这一种${o.ok?'合':'不合'}。`]]};      // 怎么查、注意两段每一种都一样，在小签下面的说明里说一次（noteThc）
+    ['这张盘',o.atoms.map(a=>`${a.l}：${a.ok?'合':'不合'}`).join('；')+`。${o.pending?o.pending+'：待核对。':''}这一种${thState(o.ok)}。`]]};      // 怎么查、注意两段每一种都一样，在小签下面的说明里说一次（noteThc）
 }
 function gejuRow(){
   const g=geju(), mz=g.mz, E=EL[gEl(DM)], hs=HID[mz].split('');
   const head=`格局是从月令出发给一张盘归类的办法。清代沈孝瞻的《子平真诠》说${q('zp_ys')}用神指一张盘里拿来作主的字。这句话的意思是拿日干去比月支，看月支是日主的什么十神，就归到哪一类。书里分八类来讲：正官、财、印绶、食神、偏官（就是七杀）、伤官、阳刃、建禄月劫。`;
   const tail=[
     ['名词',GJ_WORDS],
-    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}这一页的「成败救应」照这张盘归的格，把那一章的条件逐条核对；旁边的「格局组合」不分格，列常说的十几个组合。书里还要找相神，也就是辅佐用神的字：${q('zp_xs')}「相神」一行把成败救应表里合了的各条靠的字列了出来。`],
+    ['下一步',`归了类，书里接着要看成和败：${q('zp_cb')}这一页的「成败救应」照这张盘归的格，把那一章的条件逐条核对；旁边的「格局组合」不分格，列常说的十几个组合。书里还要找相神，也就是辅佐用神的字：${q('zp_xs')}「相神」一行把本章条件相符的各条涉及的字列作候选。`],
     ['注意',`这只是照书里的规则走的第一步。原文还讲到地支会合成局会让用神变化，见下面「用神变化」一行。别的书有别的办法：《穷通宝鉴》先看调候；《神峰通考》先找盘里的病和药，它说${q('sf_bing')}，又引旧诗${q('sf_shi')}几家的结论常常不同，这一页不替它们裁决。`]];
   if(g.kind==='建禄'||g.kind==='阳刃'||g.kind==='月劫'){
     const out=g.out.map(p=>`${p.k}干${p.g}（${god(p.g)}）`), cls=g.kind==='阳刃'?'阳刃':'建禄月劫';
@@ -3817,30 +3829,36 @@ const bianNow=()=>memo('bian',()=>bianOf(DM,NATAL));
 /* 成败救应照哪个格核对：会合让用神变了、月令的本气又没有透出来的，照变出来的格；别的照格局参考归的格 */
 function gjbGes(){const b=bianNow(), cur=gjzGe();return b.hit&&!b.benTou&&!cur.includes(b.ge)?{ges:[b.ge],bian:true}:{ges:cur,bian:false};}
 const gjbNow=()=>memo('gjb',()=>gjbOf(DM,NATAL,gjbGes().ges));
-const GJB_V={成:'重心有帮手，没有被搅，照这一章这个结构是完整的。',带忌:'重心有帮手，可是也有来搅局的字，照这一章是成中有败。',败:'重心被别的字搅坏了，或者缺了该有的帮手，照这一章这个结构不完整。',
-  救应:'有来搅局的字，又有别的字把它管住了，照这一章是败中有成。',都不合:'这一章给这一格列的条件一条也不合，书里没有说这种情形算成还是算败。'};
-const GJB_VN={成:'成格',带忌:'成中有败',败:'败格',救应:'败中有救应',都不合:'成败的条件都不合'};
+/* v 只归纳本章已编码条件的命中情况，不是全书的成败结论。 */
+const GJB_VN={成:'有成格条件相符',带忌:'有败格或带忌条件相符',败:'有败格条件相符',救应:'有救应条件相符',都不合:'本章已编码条件均未相符'};
+function gjbCaveat(o){
+  const no=o.more.filter(m=>m[1]===false).map(m=>m[0]), pending=o.more.filter(m=>m[1]===null).map(m=>m[0]);
+  return (no.length?'补充条件不合：'+no.join('、')+'。':'')+(pending.length?'补充条件待核对：'+pending.join('、')+'。':'')+(o.todo?'还有未核对的条件，见这一条的解释。':'');
+}
+function gjbLimits(g){
+  return g.rows.filter(o=>o.ok===true).map(o=>{const t=gjbCaveat(o);return t?'「'+o.t+'」：'+t:'';}).filter(Boolean).join('');
+}
 /* 成败救应那张表上面的一句话 */
 function gjbSay(){
   const r=gjbNow(), g0=gjbGes();
   return (g0.bian?`月令会合成局，用神有变化（见上面「用神变化」一行），下面照${g0.ges[0]}核对。`:'')
-    +r.groups.map(g=>`${g.ge}的含义：${GE_HUMAN[g.ge]}<br>照「论用神成败救应」逐条看${g.ge}：成格的条件合 ${g.cnt.成} 条，败格的合 ${g.cnt.败} 条，带忌的合 ${g.cnt.带忌} 条，救应的合 ${g.cnt.救应} 条`+(g.unsure?`，另有 ${g.unsure} 条要看强弱，强弱居中定不了`:'')+`。<b>${GJB_VN[g.v]}</b>：${GJB_V[g.v]}`).join('<br>');
+    +r.groups.map(g=>`${g.ge}的含义：${GE_HUMAN[g.ge]}<br>照「论用神成败救应」逐条看${g.ge}：成格的条件合 ${g.cnt.成} 条，败格的合 ${g.cnt.败} 条，带忌的合 ${g.cnt.带忌} 条，救应的合 ${g.cnt.救应} 条`+(g.unsure?`，另有 ${g.unsure} 条要看强弱，强弱居中定不了`:'')+`。<b>${GJB_VN[g.v]}</b>。${gjbLimits(g)}`).join('<br>');
 }
 function noteGjb(){
-  return '这张表只列这张盘归的那一格。书里的话下面一句是它的含义，点书里的话看解释。每一条照原文落成几项能数的条件，几项全合才算合，没有合的那一项后面标着「不合」。'
-    +'上面归纳的那一句照书里「成中有败，必是带忌；败中有成，全凭救应」来说；几条同时合的时候书里没有排先后，先后是页面的做法。'
+  return '这张表只列这张盘归的那一格。书里的话下面一句是它的含义，点书里的话看解释。每一条照原文落成几项能数的条件，几项全合才算合，没有合的那一项后面标着「不合」。相符只指本章已经编码的条件，补充条件不合或尚未核对时，不据此认定完整成格。'
+    +'汇总先列救应，再列败格或带忌，最后列成格条件，这是页面的显示先后。有救应条件相符，也不表示所有败格条件都已经得到化解。'
     +'查法是页面照原文定的，原文里没有逐字写：只数年、月、时三个天干和四个地支的本气；「盘里有」是透在天干上或者在地支的本气里；「相见」是两样都有，至少一样透出；「被合住」是透出的字被别的天干五合，年干和月干、月干和时干之间才算，日干自己合它不算；分数是十神的能量；身强、身弱照强弱计分。书里断盘还要看字的先后、远近和轻重，页面只照能数的几项走。';
 }
 /* 点成败救应表里的一条 */
 function xGjb(id){
   const r=gjbNow(), o=r.rows.find(x=>x.id===id); if(!o) return null;
-  const st=o.ok===null?'定不了':o.ok?'合':'不合', tx=v=>v===null?'定不了（强弱居中）':v?'合':'不合';
+  const st=o.ok===null?'待核对':o.ok?'本章条件合':'本章条件不合', tx=v=>v===null?'定不了（强弱居中）':v?'合':'不合';
   return {t:`${o.ge} · ${GJB_K.find(x=>x[0]===o.k)[1].split('：')[0]} · ${st}`,p:[
     ['含义',GJB_HW[o.id]],
     ['字面的意思',o.w],
-    ['这张盘',o.need.map(([l,v])=>`${l}：${tx(v)}`).join('；')+`。${o.need.length>1?'几项全合才算合，':''}这一条${st}。`+(o.xiang.length?`成这一条靠的是${gjzWhere(o.xiang)}，书里把这样的字叫相神，见上面「相神」一行。`:'')],
+    ['这张盘',o.need.map(([l,v])=>`${l}：${tx(v)}`).join('；')+`。${o.need.length>1?'几项全合才算合，':''}这一条${st}。`+(o.xiang.length?`这一条涉及的相神候选是${gjzWhere(o.xiang)}，见上面「相神」一行。`:'')],
     ['原文',`《子平真诠》「论用神成败救应」：${qs(o.q)}这一条是其中的「${o.t}」。`],
-    o.more.length?['同一格里另外的话',[...new Set(o.more.map(m=>m[2]))].map(qk=>`${q(qk)}，页面落成`+o.more.filter(m=>m[2]===qk).map(([l,v])=>`「${l}」：${tx(v)}`).join('，')).join('；')+'。这几项只列出来，不算进这一条合不合。']:null,
+    o.more.length?['同一格里另外的话',[...new Set(o.more.map(m=>m[2]))].map(qk=>`${q(qk)}，页面落成`+o.more.filter(m=>m[2]===qk).map(([l,v])=>`「${l}」：${tx(v)}`).join('，')).join('；')+'。这几项不改变本章条件的计数，但限制了能否据此认定成格；汇总和表内也会标出不合、待核对的项目。']:null,
     o.todo?['没有核对的',o.todo]:null,
     ['名词',GJ_WORDS+GJ_TERMS]]};      // 怎么查、注意两段每一条都一样，挪到了表下面的说明里（noteGjb），这一格的含义在表上面那句话里
 }
@@ -3863,15 +3881,15 @@ function bianRow(){
           :`${b.tou.length?`${b.name[0]}这一行透在${b.tou.map(o=>`${o.k}干${o.h}`).join('、')}，是${b.god}`:`这一行没有透干，照这一局旺支的本气算是${b.god}`}，归${b.ge}。下面的「成败救应」照${b.ge}核对。`)))],
     ['注意','只认三支全的三合。三会和只有两支的半合，这一章没有举例，页面不算。变了以后是好是坏，书里要通盘看，页面不判。三合局的旺支被冲时还合不合，这一章没有讲，页面照合论。']]};
 }
-/* 「相神」一行：成败救应表里合了的成格、救应各条，靠哪几个字成的 */
+/* 「相神」一行：本章条件相符的各条涉及的字，只列候选 */
 function xiangRow(){
   const r=gjbNow(), ge=gjbGes().ges, oks=r.rows.filter(o=>o.ok===true&&o.xiang.length);
-  const dd=r.xiang.length?`照「论相神紧要」，这张盘的${ge.join('和')}靠这几个字成：${gjzWhere(r.xiang)}`:`「成败救应」里成格、救应的条件一条也没有合，指不出相神`;
+  const dd=r.xiang.length?`照本章相符的条件列出相神候选：${gjzWhere(r.xiang)}；补充条件见下表`:`「成败救应」里成格、救应的条件一条也没有合，指不出相神`;
   return {k:'相神',dd,t:'相神',p:[
     ['含义',`相神是帮着这一格成立的那个字，好比主角旁边的帮手。《子平真诠》「论相神紧要」：${q('zp_xs')}又举例：${q('zp_xs2')}总起来说：${q('zp_xs3')}`],
-    ['这张盘',r.xiang.length?oks.map(o=>`「${o.t}」这一条合，靠的是${gjzWhere(o.xiang)}`).join('；')+'。书里把这样的字叫相神。'
+    ['这张盘',r.xiang.length?oks.map(o=>`「${o.t}」的本章条件相符，涉及${gjzWhere(o.xiang)}。${gjbCaveat(o)}`).join('；')+'这里只列候选，还不能据此认定成格。'
       :`下面「成败救应」里，${ge.join('和')}的成格、救应各条都没有合。书里的相神是成格所靠的那个字，这张盘照这里指不出来。`],
-    ['注意',`书里接着说${q('zp_xs4')}相神被合住、被克去，格就败了。相神有没有被伤，页面没有核对。这一行只是把「成败救应」里合了的各条靠的字列出来；书里找相神要通盘看，页面只照能数的条件走。`]]};
+    ['注意',`书里接着说${q('zp_xs4')}相神被合住、被克去，格就败了。相神有没有被伤，页面没有核对。这一行只是把「成败救应」里本章条件相符的各条涉及的字列作候选；书里找相神要通盘看，页面只照能数的条件走。`]]};
 }
 
 /* ---------- 顶部信息 ---------- */
@@ -4481,7 +4499,7 @@ function readGj(){
     `这张盘照《子平真诠》的办法归${ge.join('和')}，见上面「格局参考」一行。归类只是第一步，书里接着看成和败：${q('zp_cb')}`,
     (cg.length?`格局组合不分格，书里算成格的条件，这张盘有${say(cg)}`:'格局组合不分格，书里算成格的条件，这张盘一个也没有')+'；'+(bg.length?`算败格的有${say(bg)}。`:'算败格的一个也没有。')
       +(r.list.some(o=>o.st!=='无')?(inGe.length?`其中${inGe.join('、')}是书里在${ge.join('和')}下面讲的。`:`这几个都不是书里在${ge.join('和')}下面讲的。`):''),
-    `成和败常常同时出现。书里说${q('zp_dj')}带忌是成格的条件里又带着破它的字，救应是败格的条件里又有救它的字。「成败救应」照${gjbGes().ges.join('和')}把这一章的条件逐条核对，归纳下来是${gjbNow().groups.map(g=>GJB_VN[g.v]).join('、')}。这是照一本书、照能数的条件走出来的，书里断盘还要看字的先后和轻重。`,
+    `成和败常常同时出现。书里说${q('zp_dj')}带忌是成格的条件里又带着破它的字，救应是败格的条件里又有救它的字。「成败救应」照${gjbGes().ges.join('和')}把这一章的条件逐条核对，核对结果是${gjbNow().groups.map(g=>GJB_VN[g.v]).join('、')}。${gjbNow().groups.map(gjbLimits).join('')}这里只汇总已编码条件，不认定完整成格或已经化解所有败格条件。书里还要看字的先后和轻重。`,
     '两边力量谁大谁小，看「格局组合」表里的分数；书里没有给多少分算制得住。成格、败格是书里给格局分类的说法，讲的是盘里各字之间的生克，不是对人的判断，页面也不据此说这张盘的主人怎样。'])}</ul>`);
 }
 const READS={bz:readBz,pan:readPan,yun:readYun,rel:readRel,rel2:readRel2,wx:readWx,tk:readTk,qr:readQr,gods:readGods,gj:readGj,ys:readYs,lq:readLq,gt:readGT,gw:readGw,tr:readTr};
@@ -4938,20 +4956,58 @@ const sel={p:0,dy:0,y:0,m:0,d:TODAY,x:null,xn:0,tab:{natal:'bz',pan:'pan'}};    
 
 /* ---------- 人物：页面自带的，加上保存在这个浏览器里的 ---------- */
 const PEOPLE=DATA.people.slice();
-let LOCAL=[];                      // 保存在浏览器里的出生信息，格式见 chart.js
-let STORE_OK=true;                 // 这个环境能不能用 localStorage
+let LOCAL=[];                      // 能排盘的出生信息，格式见 chart.js
+let REJECTED=[];                   // 不能读取的旧记录：保留原值和原因，写入时一并保留
+let RAW_LOCAL=null;                // 整份 JSON 损坏或不是数组时保留原文，暂停写入，供导出恢复
+let STORE_OK=true;
 function readLocal(){
-  try{const v=JSON.parse(localStorage.getItem('bz-people')||'[]');
-    LOCAL=Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!checkInfo(x)).map(x=>x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x):[];   // 以前存下的手写解读也照现在的规矩再过一遍
-    const seen=new Set(DATA.people.map(p=>p.id));      // 缺编号、编号重复、和页面自带的人同名的，另起一个：不然编辑、删除会落到别人身上
+  LOCAL=[];REJECTED=[];RAW_LOCAL=null;BROKEN=[];
+  try{
+    const raw=localStorage.getItem('bz-people');
+    let v;
+    try{v=raw===null?[]:JSON.parse(raw);}catch(e){RAW_LOCAL=raw;STORE_OK=false;return;}
+    if(!Array.isArray(v)){RAW_LOCAL=raw;STORE_OK=false;return;}
+    STORE_OK=true;
+    v.forEach(x=>{
+      try{
+        const bad=!x||typeof x!=='object'||Array.isArray(x)?'这一项不是人物资料。'
+          :typeof x.birth!=='string'||['name','place','source'].some(k=>x[k]!==undefined&&typeof x[k]!=='string')?'日期、称呼、地点和出处需要用文字填写。'
+          :x.tz!==undefined&&x.tz!==null?'出生时间带有时区，页面只认北京时间。':checkInfo(x);
+        if(bad){REJECTED.push({value:x,reason:bad});return;}
+        LOCAL.push(x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x);
+      }catch(e){REJECTED.push({value:x,reason:'这一项的格式无法读取，原值已保留。'});}
+    });
+    const seen=new Set(DATA.people.map(p=>p.id));
     let fixed=false;
     LOCAL=LOCAL.map(x=>{const good=typeof x.id==='string'&&x.id&&!seen.has(x.id), o=good?x:Object.assign({},x,{id:newId()});if(!good) fixed=true;seen.add(o.id);return o;});
-    if(fixed) writeLocal();}
-  catch(e){LOCAL=[];STORE_OK=false;}
+    if(fixed) writeLocal();
+  }catch(e){STORE_OK=false;}
+  finally{renderRecovery();}
 }
+const localRecords=()=>LOCAL.concat(REJECTED.map(r=>r.value));
 function writeLocal(){
-  try{localStorage.setItem('bz-people',JSON.stringify(LOCAL));STORE_OK=true;}catch(e){STORE_OK=false;}
+  // 不能解析的原文件不覆盖。新加的人本次仍能看，也能单独导出。
+  if(RAW_LOCAL!==null){STORE_OK=false;return false;}
+  try{localStorage.setItem('bz-people',JSON.stringify(localRecords()));STORE_OK=true;}catch(e){STORE_OK=false;}
   return STORE_OK;
+}
+function renderRecovery(){
+  const box=$('pp-recovery');
+  box.hidden=RAW_LOCAL===null&&!REJECTED.length&&!BROKEN.length;
+  if(box.hidden){box.innerHTML='';return;}
+  const why=REJECTED.map((r,i)=>`${(r.value&&typeof r.value.name==='string'?r.value.name:'第 '+(i+1)+' 项').slice(0,30)}：${r.reason}`);
+  box.innerHTML='<p>'+esc(RAW_LOCAL!==null?'浏览器里的旧资料无法完整读取，原文已保留，暂不覆盖。新加的资料只在本次打开时有效，请用添加表单里的「导出」保存。':`有 ${REJECTED.length+BROKEN.length} 项旧资料暂未显示，原数据仍保留。添加或导入其他人不会删掉这些资料。`)
+    +'</p>'+(why.length?'<p>'+why.map(esc).join('；')+'</p>':'')
+    +(BROKEN.length?'<p>'+esc('排不出盘：'+BROKEN.join('、'))+'</p>':'')
+    +'<p>可以先导出备份，修正后再导入。同一编号的有效资料会替换对应的异常记录。</p><div class="row"><button type="button" class="pp" id="pp-recovery-export">导出保留的原数据</button></div><p id="pp-recovery-msg" aria-live="polite"></p>';
+}
+function downloadJSON(text,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function exportRecovery(){
+  try{downloadJSON(RAW_LOCAL!==null?RAW_LOCAL:JSON.stringify(localRecords(),null,1),'bazi-people-recovery.json');$('pp-recovery-msg').textContent='已生成备份文件。请确认下载成功后再整理原数据。';}
+  catch(e){$('pp-recovery-msg').textContent='这个环境不能下载文件，原数据仍保留在浏览器里。';}
 }
 /* 时辰不详的人现在看的是哪个时辰，按人的 id 记，默认午时。只记在这一次打开的页面里 */
 const HOUR_PICK=Object.create(null);      // 没有原型：编号叫 constructor、toString 的人不会读到继承来的东西（审阅报告 R4）
@@ -4971,6 +5027,7 @@ function rebuildPeople(){
   const at=p=>{const k=ORDER.indexOf(p.id);return k<0?Infinity:k;}, sorted=PEOPLE.map((p,i)=>[p,i]).sort((a,b)=>at(a[0])-at(b[0])||a[1]-b[1]).map(x=>x[0]);
   PEOPLE.length=0;PEOPLE.push(...sorted);
   if(TEMP){try{const p=one(TEMP.info);p.temp=true;PEOPLE.push(p);}catch(e){TEMP=null;}}
+  renderRecovery();
 }
 /* 照 order 重排 PEOPLE：order 是新的先后，每一项是原来的下标。选中的还是原来那一位，只重画人物那一排 */
 function applyOrder(order){
@@ -5457,9 +5514,9 @@ function renderSy(){
 /* 喜忌一页「调候的情形」：《穷通宝鉴》这个月开头一句后面分的各种情形，一种一枚可以点的小签，合的排在前面；点开是解释 */
 function renderThc(){
   const t=thNow();
-  const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${o.ok?'合':'不合'}</small></button>`;
+  const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${thState(o.ok)}</small></button>`;
   const row=(title,xs)=>xs.length?`<div class="tgrow"><h4>${title}</h4><div class="rels">${xs.map(tag).join('')}</div></div>`:'';
-  $('thc').innerHTML=row('这张盘合的',t.cases.filter(o=>o.ok))+row('没有合的',t.cases.filter(o=>!o.ok));
+  $('thc').innerHTML=row('已核对条件合的',t.cases.filter(o=>o.ok===true))+row('待核对节令前提',t.cases.filter(o=>o.ok===null))+row('没有合的',t.cases.filter(o=>o.ok===false));
   $('thc-say').innerHTML=thcSay();
   $('note-thc').textContent=noteThc();
 }
@@ -5487,7 +5544,7 @@ function renderGjz(){
 function renderGjb(){
   const r=gjbNow();
   const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${GJB_HW[o.id]}</small></th>`
-    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'定不了':o.ok?'合':'不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
+    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'待核对':o.ok?'本章条件合':'本章条件不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}${o.ok===true&&gjbCaveat(o)?'<br>'+gjbCaveat(o):''}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
   $('gjb-say').innerHTML=gjbSay();
@@ -5594,7 +5651,7 @@ function shareNow(){
   const q=new URLSearchParams(ok?linkOf(Object.assign({},info,{name:P.name})):'p='+encodeURIComponent(P.id));
   if(ok&&info.nohour) q.set('h',P.shichen);          // 时辰不详的，带上正在看的时辰，对方打开看到的是同一张盘
   q.set('tab',sel.tab.natal+','+sel.tab.pan);q.set('dy',String(sel.dy));q.set('y',String(sel.y));q.set('m',String(sel.m));q.set('d',isoDay(sel.d));
-  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
+  q.set('by',[MAPBY.wx,MAPBY.gods,MAPBY.yun,MAPBY.gj].join(','));      // 五行、十神两页的数法和选择器小卡的计分模式，对方打开看到的分数和图一样（审阅报告 R3）
   return {url:SHARE_BASE+'#'+q.toString(),what:!ok?'这一位在页面里的编号，不含出生信息；只在页面自带这一位时打得开':info.nohour?'出生日期和正在看的时辰':info.shichen?'出生日期和时辰':'出生日期、时间和出生地的经度'};
 }
 function refreshShare(){
@@ -5649,10 +5706,10 @@ function pickHour(q,i){
 /* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
 function applyView(q){
   (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
-  // by：五行一页、十神一页的数法和选择器小卡的计分模式，照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
+  // by：五行、十神数法、小卡计分、格局子标签，前三项的旧链接保留当前格局子标签；照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
   const by=(q.get('by')||'').split(','); let mapped=false;
-  ['wx','gods','yun'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
-  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
+  ['wx','gods','yun','gj'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
+  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
   const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
   const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
   if(dy===null&&y===null&&m===null&&!d){if(mapped) renderDynamic();return;}
@@ -5863,6 +5920,7 @@ function importText(text){
     if(bad){errs.push(`${info.name}：${bad}`);return;}
     try{chartOf(info.nohour?Object.assign({},info,{shichen:'午'}):info);}catch(e){errs.push(`${info.name}：排不出盘（${e.message}）`);return;}   // 写入以前先试排一遍
     if(nb.n) errs.push(`${info.name}的手写解读里有 ${nb.n} 项格式不对，这几项没有导入`);
+    REJECTED=REJECTED.filter(r=>!(r.value&&typeof r.value.id==='string'&&r.value.id===info.id)); // 只有试排成功的同编号记录才能修复旧记录
     if(DATA.people.some(p=>p.id===info.id)) info.id=newId();      // 和页面自带的人重名的，另起一个编号
     const i=LOCAL.findIndex(o=>o.id===info.id);
     if(i>=0) LOCAL[i]=info; else LOCAL.push(info);                // 以前导入过的，这次顶替掉
@@ -5872,13 +5930,10 @@ function importText(text){
   return (n?`导入了 ${n} 个人。`:'没有导入任何人。')+(errs.length?'没导入的：'+errs.join('；'):'')+(n&&!STORE_OK?NO_STORE:'');
 }
 function exportLocal(){
-  if(!LOCAL.length){formMsg('浏览器里还没有保存的人，没有可以导出的。');return;}
+  if(!localRecords().length){formMsg('浏览器里还没有保存的人，没有可以导出的。');return;}
   try{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([JSON.stringify(LOCAL,null,1)],{type:'application/json'}));
-    a.download='bazi-people.json';document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    formMsg('已经生成 bazi-people.json。如果浏览器没有开始下载，说明这个环境不允许下载文件。');
+    downloadJSON(JSON.stringify(localRecords(),null,1),'bazi-people.json');
+    formMsg('已经生成 bazi-people.json。'+(REJECTED.length?'文件里也保留了暂未显示的旧记录。':'')+'如果浏览器没有开始下载，说明这个环境不允许下载文件。');
   }catch(e){formMsg('这个环境不能下载文件。');}
 }
 
@@ -5906,6 +5961,7 @@ document.addEventListener('click',e=>{
     return;
   }
   if(b.id==='sheet-x'){closeSheet();return;}
+  if(b.id==='pp-recovery-export'){exportRecovery();return;}
   if(b.id==='pp-add'){openForm(null);return;}
   if(b.id==='pp-edit'){openForm(LOCAL.find(x=>x.id===P.id));return;}
   if(b.id==='pp-share'){openShare();return;}
