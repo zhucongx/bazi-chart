@@ -577,7 +577,7 @@ function renderThc(){
   const t=thNow();
   const tag=o=>`<button type="button" class="tg${o.ok?' yes':''}" data-x="thc|${o.i}">「${o.q}」<small>${thState(o.ok)}</small></button>`;
   const row=(title,xs)=>xs.length?`<div class="tgrow"><h4>${title}</h4><div class="rels">${xs.map(tag).join('')}</div></div>`:'';
-  $('thc').innerHTML=row('已核对条件合的',t.cases.filter(o=>o.ok===true))+row('待核对节令前提',t.cases.filter(o=>o.ok===null))+row('没有合的',t.cases.filter(o=>o.ok===false));
+  $('thc').innerHTML=row('这张盘合的',t.cases.filter(o=>o.ok===true))+row('待核对的',t.cases.filter(o=>o.ok===null))+row('没有合的',t.cases.filter(o=>o.ok===false));
   $('thc-say').innerHTML=thcSay();
   $('note-thc').textContent=noteThc();
 }
@@ -605,7 +605,7 @@ function renderGjz(){
 function renderGjb(){
   const r=gjbNow();
   const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${GJB_HW[o.id]}</small></th>`
-    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'待核对':o.ok?'本章条件合':'本章条件不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}${o.ok===true&&gjbCaveat(o)?'<br>'+gjbCaveat(o):''}</span></td></tr>`;
+    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'定不了':o.ok?'合':'不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}${o.ok===true&&gjbCaveat(o)?'<br>'+gjbCaveat(o):''}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
   $('gjb-say').innerHTML=gjbSay();
