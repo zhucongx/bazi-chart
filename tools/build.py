@@ -79,6 +79,11 @@ def make_page(data):
     title = data.get('title') if isinstance(data, dict) else None
     if not isinstance(title, str) or not title:
         raise SystemExit('人物数据里没有 title。重新运行 tools/gen_data.py。')
+    people = data.get('people')
+    if not isinstance(people, list) or not people or not all(isinstance(p, dict) and p.get('pillars') and p.get('dayun') for p in people):
+        raise SystemExit('人物数据里没有排好的人（people）。重新运行 tools/gen_data.py。')
+    if not isinstance(data.get('nayin'), dict):
+        raise SystemExit('人物数据里没有纳音表（nayin）。重新运行 tools/gen_data.py。')
     tables_file = ROOT / 'data' / 'tables.json'
     if not tables_file.exists():
         raise SystemExit('找不到 data/tables.json。先运行 .venv/bin/python tools/gen_tables.py。')

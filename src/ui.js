@@ -21,7 +21,11 @@ let LOCAL=[];                      // 保存在浏览器里的出生信息，格
 let STORE_OK=true;                 // 这个环境能不能用 localStorage
 function readLocal(){
   try{const v=JSON.parse(localStorage.getItem('bz-people')||'[]');
-    LOCAL=Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!checkInfo(x)).map(x=>x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x):[];}   // 以前存下的手写解读也照现在的规矩再过一遍
+    LOCAL=Array.isArray(v)?v.filter(x=>x&&typeof x==='object'&&!checkInfo(x)).map(x=>x.notes?Object.assign({},x,{notes:cleanNotes(x.notes)}):x):[];   // 以前存下的手写解读也照现在的规矩再过一遍
+    const seen=new Set(DATA.people.map(p=>p.id));      // 缺编号、编号重复、和页面自带的人同名的，另起一个：不然编辑、删除会落到别人身上
+    let fixed=false;
+    LOCAL=LOCAL.map(x=>{const good=typeof x.id==='string'&&x.id&&!seen.has(x.id), o=good?x:Object.assign({},x,{id:newId()});if(!good) fixed=true;seen.add(o.id);return o;});
+    if(fixed) writeLocal();}
   catch(e){LOCAL=[];STORE_OK=false;}
 }
 function writeLocal(){
@@ -106,15 +110,19 @@ function usePerson(i){
   // 今天不在大运范围里的人，从起运的那一天看起：起运日落在第一年的哪个流月，就停在那个月的那一天。起运日在那一年立春以前的，照旧停在第一个月
   if(!inRange){const s0=dyStart(0);for(let m=0;m<12;m++){if(monthDays(Y_MIN,m).includes(s0)){sel.m=m;sel.d=s0;}}}
   $('sheet').hidden=true;
-  try{localStorage.setItem('bz-person',P.id);}catch(e){}
-  renderPerson();
+  renderPerson();markOn();      // 模板里写死的表头不随换人重画，「解释正开着」的标记要另外消掉
+  if(!P.temp){try{localStorage.setItem('bz-person',P.id);}catch(e){}}      // 画完再记；来自链接、还没保存的人不记
 }
 
 /* ---------- 解释卡片：贴在所点的字旁边 ---------- */
 function markOn(){document.querySelectorAll('[data-x]').forEach(n=>n.classList.toggle('on',n.dataset.x===sel.x));}
 function closeSheet(){sel.x=null;$('sheet').hidden=true;markOn();}
-/* 同一个解释可能挂在两个字上（主星和天干指的是同一个字），所以记下点的是第几个 */
-function anchorOf(key,n){const all=[...document.querySelectorAll('[data-x]')].filter(x=>x.dataset.x===key);return all[n]||all[0]||null;}
+/* 同一个解释可能挂在几个字上（主星和天干指的是同一个字，同一个字也可能在好几页里），所以记下点的那一个在哪一页（home，标签页的 id，
+   不在标签页里的是空）、是这一页里第几个同名的字。只在这一页里数：原来在整个页面里数，换了大运、流年以后同名的字个数一变，
+   就认到别的字上，有时是没显示的那一页里的，卡片跳到屏幕左上角（2026-11-18 审阅）。这一页里已经没有这个字了，返回 null，卡片收起 */
+const homeOf=el=>{const h=el&&el.closest?el.closest('[role="tabpanel"]'):null;return h?h.id:'';};
+function sameKey(key,home){return [...(home&&$(home)?$(home):document).querySelectorAll('[data-x]')].filter(x=>x.dataset.x===key&&homeOf(x)===(home||''));}
+function anchorOf(key,n,home){const all=sameKey(key,home);return all[n]||all[0]||null;}
 /* 把卡片摆到 el 的下面；下面放不下而上面更宽裕时摆到上面。左右不出屏幕，小三角对准 el。 */
 function placeSheet(el){
   const s=$('sheet'), inn=s.firstElementChild;
@@ -134,17 +142,18 @@ function placeSheet(el){
 function openSheet(key,el){
   const r=X(key); if(!r){closeSheet();return;}
   sel.x=key;
-  if(el) sel.xn=Math.max(0,[...document.querySelectorAll('[data-x]')].filter(x=>x.dataset.x===key).indexOf(el));
+  if(el){sel.xh=homeOf(el);sel.xn=Math.max(0,sameKey(key,sel.xh).indexOf(el));}
   $('sheet-t').textContent=r.t;
   $('sheet-b').innerHTML=r.p.filter(Boolean).map(([l,t])=>`<p><span class="lb">${l}</span><span class="tx">${t}</span></p>`).join('');
   $('sheet').hidden=false;markOn();
   $('sheet').firstElementChild.scrollTop=0;
-  placeSheet(el||anchorOf(key,sel.xn));
+  placeSheet(el||anchorOf(key,sel.xn,sel.xh));
 }
 function refreshSheet(){
   refreshShare();
   if(!sel.x) return;
-  if(anchorOf(sel.x,sel.xn)) openSheet(sel.x,null); else closeSheet();
+  const el=anchorOf(sel.x,sel.xn,sel.xh);
+  if(el&&!el.closest('[role="tabpanel"][hidden]')) openSheet(sel.x,null); else closeSheet();
 }
 /* ---------- 标签栏 ----------
    两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、格局、喜忌、六亲，大运流年是四柱细盘、干支关系、根和透、计分。
@@ -162,7 +171,7 @@ function setTab(card,id,focus){
   try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}
   refreshShare();
   if(sel.x){                                   // 打开的解释所指的字要是在换下去的那一页里，就收起来；还在的话重新摆位置
-    const el=anchorOf(sel.x,sel.xn);
+    const el=anchorOf(sel.x,sel.xn,sel.xh);
     if(!el||el.closest('[role="tabpanel"][hidden]')) closeSheet(); else placeSheet(el);
   }
   reveal();
@@ -194,8 +203,8 @@ function relChips(list){
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
     return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
-/* kvRows 的几行按先后分段放到各页：「强弱参考」以前的（月令、根、印、月令透干）在「强弱」一页的最上面，
-   从「强弱参考」起在「强弱」一页的卡片下面，从「格局参考」起在「十神」，从「调候参考」起在「喜忌」。
+/* kvRows 的几行按先后分段放到各页：「强弱参考」以前的月令透干在「强弱」一页强弱分析卡片的下面（月令、根、印三行并进了四张卡片，不单独显示），
+   从「强弱参考」起在「强弱」一页四张卡片的下面，从「格局参考」起在「格局」一页，从「调候参考」起在「喜忌」。
    手写解读另加的行插在哪一行后面，就跟着那一行进哪一页；没写插在哪里的排在最后，在「喜忌」。
    日主、阴阳不在这里列，在「日主」一页的四项里；强弱计分画成「强弱」一页的卡片。 */
 const KV_FROM={'强弱参考':'kv-qr','格局参考':'kv-gj','调候参考':'kv2'}, KV_ELSEWHERE=['日主','阴阳','强弱计分','月令','根','印'];      // 月令、根、印三行并进了「强弱」一页最上面的四张卡片
@@ -343,7 +352,7 @@ function renderPan(){
   $('hd-ln').innerHTML=sel.y+'<span class="wide"> 年</span>';
   $('hd-dy').textContent=dy.y0+'–'+dy.y1;
 }
-/* 选择器小卡底下的条：这一柱带来的 13 分里喜用占几分（xiPillar），一段一种五行，后面是分数；不定喜用时画帮日主的两行。
+/* 选择器小卡底下的条：这一柱带来的 13 分里喜用占几分（xiPillar），一段一种五行，后面是分数。
    照哪一种看法见 text.js 的 yunBasis：两种相加时满分 26，前一段扶抑、后一段用神和喜神，后一段的第一格带 cut，前面空一道缝。
    条带 data-x（key 见 text.js 的 xPk），点它打开这一柱的明细，不换选择；点小卡别的地方才是换选择 */
 function mbar(gz,key){
@@ -371,11 +380,12 @@ function renderLiuyue(){
 function renderLiuri(){
   const days=monthDays(sel.y,sel.m), W='日一二三四五六'; let h='';
   days.forEach(t=>{const gz=dayGZ(t);
-    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}<span class="ag">周${W[new Date(t).getUTCDay()]}</span></span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
+    h+=`<button class="pk${t===TODAY?' now':''}" aria-pressed="${t===sel.d}" data-d="${t}"><span class="yr">${mdText(t)}<span class="ag"><i>周</i>${W[new Date(t).getUTCDay()]}</span></span><span class="gz">${gzSpan(gz)}</span><span class="gd">${god(gz[0])}·${godZ(gz[1])}</span>${mbar(gz,`pk|流日|${gz}|${t}`)}</button>`;});
   $('liuri').innerHTML=h;
   $('h-lr').innerHTML=`流日<small>${monthGZ(sel.y,sel.m)}月</small>`;
 }
 function renderYunRead(){
+  if(!$('layers')) return;      // 手写的解读顶替了这一段、里面又没有 #layers 时不画，免得整页报错
   const d=P.dayun[sel.dy];
   const rows=[
     ['大运',d.gz,`${d.y0}–${d.y1} 年 · ${d.a0}–${d.a1} 岁`],
@@ -495,7 +505,7 @@ function renderGw(){
   $('gwmap').innerHTML=`<table class="gods gw"><thead><tr><th></th>${cs.map(c=>`<th scope="col">${xb('x','col|'+c.k,c.k+'柱')}</th>`).join('')}</tr></thead><tbody>`
     +row('配谁',c=>c.who)
     +row('干支',c=>`<span class="gz">${xb('x','gz|'+c.k,gzSpan(c.g+c.z))}</span>`)      // 干支成对出现的地方，点开是这一柱合起来的解释（gz|），不拆成天干、地支两条。2026-11-18 用户要的
-    +row('十神',c=>`天干${c.g}：${tg(c.god)}<br>地支${c.z}里：${c.hid.map(([h,gd])=>`${h} ${tg(gd)}`).join('、')}`)
+    +row('十神',c=>`天干${c.g}：${tg(c.god)}<br>地支${c.z}里：${c.hid.map(([h,gd],j,a)=>`<span class="nb">${h} ${tg(gd)}${j<a.length-1?'、':''}</span>`).join('')}`)
     +row('配的亲属',c=>c.kin.length?c.kin.map(r=>`${r.who}看${tg(r.god)}：${r.at.length?'在这一柱，'+r.at.join('、'):'不在这一柱'}`).join('<br>'):'六亲表里没有配祖上的十神')
     +row('和别的柱',c=>c.rel.length?c.rel.map(r=>`和${r.others.join('、')}${xb('x',r.key,r.t)}${r.n?`（${r.n}）`:''}`).join('<br>'):'和另外三柱之间没有合、冲、刑、害')
     +row('十二长生',c=>`${c.g}坐${c.z}是${xb('x','zz|'+c.k,c.zz)}`+(c.day?'':`<br>日主到${c.z}是${xb('x','st|'+c.k,c.st)}`))
@@ -506,7 +516,7 @@ function renderGw(){
 /* 计分一页：一行一层的表（nlLayers），表下面的说明和解读；选择器上方的图例。小卡底下的条由 mbar() 画在选择器里，跟着选择器一起重画 */
 function renderSy(){
   const L=nlLayers(), x=xiNow(), de=gEl(DM), se=(de+4)%5, n=(v,plus)=>(plus?'+':'')+v;
-  const want=x.xi||[se,de], mark=g=>x.xi&&g.every(e=>x.xi.includes(e))?' · 喜用':'';
+  const mark=g=>x.xi&&g.every(e=>x.xi.includes(e))?' · 喜用':'';
   $('sy-h').innerHTML=`<tr><th scope="col">层</th>${[...EL].map((e,i)=>`<th scope="col" class="${ELC[i]}">${e}</th>`).join('')}<th scope="col">帮日主<small>${EL[de]}、${EL[se]}${mark([se,de])}</small></th><th scope="col">另外三类<small>${[1,2,3].map(k=>EL[(de+k)%5]).join('、')}${mark([(de+1)%5,(de+2)%5,(de+3)%5])}</small></th><th scope="col">加到这一层<small>帮日主的占</small></th></tr>`;
   const tr=(r,plus,cls)=>`<tr${cls?` class="${cls}"`:''}><th scope="row">${xb('x','nly|'+r.k,r.k)}${r.gz?`<span class="gz">${gzSpan(r.gz)}</span>`:''}</th>${r.sum.map(v=>`<td>${v?n(v,plus):''}</td>`).join('')}<td>${n(r.help,plus)}</td><td>${n(r.rest,plus)}</td><td>${r.acc}</td></tr>`;
   $('sy').innerHTML=L.rows.map((r,i)=>tr(r,i>0)).join('')+tr(L.tot,false,'sum');
@@ -543,7 +553,7 @@ function renderGjSeg(){
 function renderGjz(){
   const r=gjzNow(), ge=gjzGe();
   const bar=o=>o.sides?`<span class="gjz-sc"><span class="gjz-bar">${o.sides.map(x=>`<i class="${ELC[x.e]}" style="flex:${x.n}"></i>`).join('')}</span><span class="gjz-n">${o.sides.map(x=>`${x.say} ${x.n}`).join(' · ')}</span></span>`:'<span class="gjz-n">不比分数</span>';
-  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.hua}</small></th><td><span class="gjz-st${o.st==='透'?' t':''}">${o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着'}</span><span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
+  const row=o=>`<tr><th scope="row">${xb('x','gjz|'+o.n,o.n)}<small>${o.hua}</small></th><td>${xb('gjz-st'+(o.st==='透'?' t':''),'gjz|'+o.n,o.n==='合财合官'?'合':o.st==='透'?'透出':'藏着')}<span class="gjz-w">${gjzBrief(o)}</span></td><td>${bar(o)}</td>`
     +`<td class="gjz-ge">${o.ge.length?o.ge.map(g=>ge.includes(g)?`<b>${g}</b>`:g).join('、'):'不分格局'}</td></tr>`;
   const grp=(c,title)=>{const yes=r.list.filter(o=>o.c===c&&o.st!=='无'), no=r.list.filter(o=>o.c===c&&o.st==='无');
     return `<tr class="gjz-h"><th colspan="4" scope="colgroup">${title}</th></tr>`+yes.map(row).join('')+(no.length?`<tr class="gjz-no"><td colspan="4">这张盘没有：${no.map(o=>xb('x','gjz|'+o.n,o.n)).join('、')}</td></tr>`:'');};
@@ -556,7 +566,7 @@ function renderGjz(){
 function renderGjb(){
   const r=gjbNow();
   const row=o=>`<tr${o.ok===true?'':' class="gjb-off"'}><th scope="row">${xb('x','gjb|'+o.id,'「'+o.t+'」')}<small>${GJB_HW[o.id]}</small></th>`
-    +`<td><span class="gjz-st${o.ok===true?' t':''}">${o.ok===null?'定不了':o.ok?'合':'不合'}</span><span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
+    +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'定不了':o.ok?'合':'不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
   $('gjb-say').innerHTML=gjbSay();
@@ -620,7 +630,7 @@ function renderBars(){
   $('wxt').innerHTML=[0,1,2,3,4].map(i=>{const k=(i-de+5)%5;
     return `<tr><td class="${ELC[i]}">${xb('x',key(i),`<span class="el">${ic(i)}${EL[i]}</span>`)}</td><td>${CAT[k][1]}<span class="gp">${xb('x','grp|'+k,GRP[k])}</span><small class="mn">${GOD_MEAN[k]}</small></td>`
       +`<td class="${ELC[i]}"><span class="wn"><b>${v[i]} ${u}</b><span class="track${by==='nl'?' avg':''}"${by==='nl'?` style="--avg:${(tot/5/mx*100).toFixed(2)}%"`:''}><span class="fill" style="width:${Math.round(v[i]/mx*100)}%"></span></span></span></td>`
-      +`<td>${pct(v[i],tot)}</td><td><span class="st">${wxState(i)}</span></td><td class="wh">${wxWhere(i,by)}</td></tr>`;}).join('');
+      +`<td>${pct(v[i],tot)}</td><td>${xb('st','wst|'+i,wxState(i))}</td><td class="wh">${wxWhere(i,by)}</td></tr>`;}).join('');
   $('note-nl').textContent=by==='nl'?noteNl():by==='cnt'?'含藏干数：四个天干，加上地支里藏的每一个天干各算一个，不分主次，月支也不加倍。':'五行个数：四个天干，加上四个地支各按自己的五行算一个，不看地支里藏的天干。';
   $('note-wx').textContent=noteWx();
 }
@@ -809,7 +819,7 @@ function placeSel(s){
   s=String(s||'').trim(); if(!s) return {p:'',c:''};
   const bare=n=>n.replace(/市$/,'');
   const c=CITIES.find(x=>[x[0],(x[1]||'')+x[0],bare(x[0]),(x[1]||'')+bare(x[0])].includes(s))
-    ||CITIES.find(x=>x[1]&&s.startsWith(x[1].slice(0,2))&&s.includes(bare(x[0])));
+    ||CITIES.filter(x=>x[1]&&s.startsWith(x[1].slice(0,2))&&s.slice(2).includes(bare(x[0]))).sort((a,b)=>b[0].length-a[0].length)[0];      // 省名后面的部分里有市名才算；原来「吉林长春」认成了吉林市
   return c?{p:provOf(c),c:c[0]}:{p:'其他',c:'',t:s};
 }
 /* 两种填法：按出生时间，或者直接输入八字。换着显示各自的那几项 */
@@ -881,6 +891,7 @@ function cleanHTML(s,layers){
 }
 /* 导入的手写解读：先照 docs/数据格式.md 的格式核对形状，不对的项丢掉，bad.n 记丢了几项；留下的每一段字都过一遍 cleanHTML。
    形状不对的留着，页面换到这一位时会出错，所以宁可丢掉 */
+const hasLayers=h=>{const t=document.createElement('template');t.innerHTML=h;return !!t.content.querySelector('#layers');};
 function cleanNotes(v,bad){
   bad=bad||{n:0};
   const str=x=>typeof x==='string', obj=x=>!!x&&typeof x==='object'&&!Array.isArray(x), ok=t=>{if(!t) bad.n++;return !!t;}, out={};
@@ -890,20 +901,20 @@ function cleanNotes(v,bad){
   if(v.read!==undefined&&ok(obj(v.read))){
     out.read={};
     Object.entries(v.read).forEach(([k,x])=>{
-      if(!ok(!!READS[k]&&str(x))) return;
+      if(!ok(Object.prototype.hasOwnProperty.call(READS,k)&&str(x))) return;      // 只认 READS 自己的名字，constructor、toString 这类不算
       const h=cleanHTML(x,k==='yun');
-      if(ok(k!=='yun'||/id="layers"/.test(h))) out.read[k]=h;      // 顶替 yun 的那一段里要有 #layers
+      if(ok(k!=='yun'||hasLayers(h))) out.read[k]=h;      // 顶替 yun 的那一段里要有 #layers 这个元素：只在文字里写着 id="layers" 不算
     });
   }
-  if(v.x!==undefined&&ok(obj(v.x))){out.x={};Object.entries(v.x).forEach(([k,a])=>{if(ok(Array.isArray(a))) out.x[k]=paras(a);});}
-  if(v.rel!==undefined&&ok(obj(v.rel))){out.rel={};Object.entries(v.rel).forEach(([k,x])=>{if(ok(str(x))) out.rel[k]=cleanHTML(x);});}
+  if(v.x!==undefined&&ok(obj(v.x))){out.x={};Object.entries(v.x).forEach(([k,a])=>{if(ok(k!=='__proto__'&&Array.isArray(a))) out.x[k]=paras(a);});}
+  if(v.rel!==undefined&&ok(obj(v.rel))){out.rel={};Object.entries(v.rel).forEach(([k,x])=>{if(ok(k!=='__proto__'&&str(x))) out.rel[k]=cleanHTML(x);});}
   ['meta','kv'].forEach(key=>{
     if(v[key]===undefined||!ok(Array.isArray(v[key]))) return;
     out[key]=v[key].filter(r=>ok(row(r))).map(r=>{
       const o={k:cleanHTML(r.k),dd:cleanHTML(r.dd)};
       if(r.after!==undefined) o.after=cleanHTML(r.after);
-      if(r.t!==undefined) o.t=cleanHTML(r.t);
-      if(r.p!==undefined) o.p=paras(r.p);
+      o.t=r.t!==undefined?cleanHTML(r.t):o.k;      // 没写标题的拿行名当标题，没写段落的是空的：原来留着 undefined，点开这一行就报错
+      o.p=r.p!==undefined?paras(r.p):[];
       return o;});
   });
   return out;
@@ -917,6 +928,7 @@ function importText(text){
   let n=0,last=null;
   list.forEach(x=>{
     if(!x||typeof x!=='object'){errs.push('有一项不是人物数据');return;}
+    if(!Array.isArray(x.clock)&&x.tz!==undefined&&x.tz!==null){errs.push(`${String(x.name||'未命名').slice(0,20)}：文件里写着 tz，出生时间是当地时间，页面只认北京时间；先换成北京时间、去掉 tz 再导入`);return;}      // 原来照北京时间排了，时柱甚至日柱都是错的，也不提示（2026-11-18 审阅）
     const src=Array.isArray(x.clock)?infoFrom(x):x;      // 排好的人，取回出生信息；本来就是出生信息的照用
     const info={id:typeof src.id==='string'&&src.id?src.id:newId(),name:String(src.name||'未命名').slice(0,20),gender:src.gender,
       birth:src.birth,place:String(src.place||'').slice(0,30)};
@@ -985,7 +997,7 @@ document.addEventListener('click',e=>{
   if(b.id==='pf-export'){exportLocal();return;}
   if(b.dataset.x){
     // 再点一次同一个字收起；同一条解释挂在别的字上（比如主星和天干是同一个字），点那个字是把卡片挪过去
-    if(sel.x===b.dataset.x&&!$('sheet').hidden&&anchorOf(sel.x,sel.xn)===b) closeSheet(); else openSheet(b.dataset.x,b);
+    if(sel.x===b.dataset.x&&!$('sheet').hidden&&anchorOf(sel.x,sel.xn,sel.xh)===b) closeSheet(); else openSheet(b.dataset.x,b);
     return;
   }
   if(b.dataset.p!==undefined){
@@ -1023,10 +1035,10 @@ function pickLayer(b){
     renderDynamic();
   }else if(b.dataset.m!==undefined){
     sel.m=Number(b.dataset.m);
-    fixDay();renderPan();renderLiuyue();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();
+    fixDay();renderPan();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
-    renderPan();renderLiuri();renderRelations();renderGT();renderSy();renderYunRead();refreshSheet();
+    renderPan();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();refreshSheet();      // 选中的日子在不在选中的那一步大运里，跟着流月、流日变
   }else return false;
   return true;
 }
@@ -1050,7 +1062,7 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();
   setTab(card,e.key==='Home'?list[0]:e.key==='End'?list[list.length-1]:list[(i+(e.key==='ArrowRight'?1:list.length-1))%list.length],true);
 });
-window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn));});
+window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn,sel.xh));});
 /* 拖动人物那一排的名字调整先后。鼠标按住拖动超过 5 像素就开始拖；手指要按住 0.35 秒再拖，在这之前挪动超过 8 像素就当是滚动页面，不拖。
    拖的时候把这个按钮在那一排里挪到指针最近的那个名字前面或后面，松手时照按钮的新先后排 PEOPLE（applyOrder），记进 bz-order。
    来自链接的那一位排在最后，不能拖，别的名字也挪不到它后面 */
@@ -1063,16 +1075,19 @@ function dragDone(keep){
   const d=DRAG; DRAG=null; if(!d) return;
   clearTimeout(d.timer); if(!d.on) return;
   d.b.classList.remove('dragging');$('people').classList.remove('sorting');
-  NOCLICK=true;setTimeout(()=>{NOCLICK=false;},0);
-  if(!keep||!applyOrder([...$('people').querySelectorAll('.pp[data-p]')].map(c=>+c.dataset.p))) renderPeopleRow();
+  const order=[...$('people').querySelectorAll('.pp[data-p]')].map(c=>+c.dataset.p), movedAt=order.some((v,i)=>v!==i);
+  if(movedAt||!d.touch){NOCLICK=true;setTimeout(()=>{NOCLICK=false;},0);}      // 手指按住没有挪动就松手的，这一下照样算点击（原来不算，换不了人）
+  if(!keep||!applyOrder(order)) renderPeopleRow();
 }
 $('people').addEventListener('pointerdown',e=>{
+  if(DRAG) dragDone(false);      // 上一次没有收尾的（鼠标松开在这一排外面），先收掉
   const b=e.target.closest('.pp[data-p]'); if(!b||e.button>0||!PEOPLE[+b.dataset.p]||PEOPLE[+b.dataset.p].temp) return;
   DRAG={b,id:e.pointerId,x:e.clientX,y:e.clientY,on:false,touch:e.pointerType!=='mouse',timer:0};
   if(DRAG.touch) DRAG.timer=setTimeout(()=>{if(DRAG&&!DRAG.on) dragOn();},350);
 });
 $('people').addEventListener('pointermove',e=>{
   if(!DRAG||e.pointerId!==DRAG.id) return;
+  if(!DRAG.touch&&e.buttons===0){dragDone(DRAG.on);return;}      // 鼠标键已经松开了：在这一排外面松的手，这里收尾
   const far=Math.hypot(e.clientX-DRAG.x,e.clientY-DRAG.y);
   if(!DRAG.on){ if(DRAG.touch){if(far>8){clearTimeout(DRAG.timer);DRAG=null;}return;} if(far<5) return; dragOn(); }
   e.preventDefault();
@@ -1104,7 +1119,7 @@ F('file').addEventListener('change',e=>{
   r.readAsText(f);
 });
 readLocal();readOrder();rebuildPeople();
-if(BROKEN.length) say(`浏览器里存的 ${BROKEN.length} 个人排不出盘，没有显示：${BROKEN.map(esc).join('、')}。`);
+if(BROKEN.length) say(`浏览器里存的 ${BROKEN.length} 个人排不出盘，没有显示：${BROKEN.join('、')}。`);      // say() 写进 textContent，不用再转义
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);

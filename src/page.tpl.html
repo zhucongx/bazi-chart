@@ -10,9 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;display=swap" rel="stylesheet">
 <style>
 :root{
-  /* 版面：从上到下三张白色卡片。第一张讲原局，带标签栏：八字、日主、五行、强弱、十神、喜忌，一次看一页。
+  /* 版面：从上到下两张白色卡片。第一张讲原局，带标签栏：八字、日主、五行、强弱、十神、格局、喜忌、六亲，一次看一页。
      第二张是大运流年：上面四行选择器，下面跟着选择器走的标签栏：四柱细盘、干支关系、根和透、计分。前三页都是八列，前四列是选中的流日、流月、流年、大运；
-     计分一页是一张一行一层的计分表。第三张是六亲和宫位，不带标签栏。
+     计分一页是一张一行一层的计分表。六亲和宫位是原局的最后一页。
      每一页带一个淡色的解读框。能点开解释的元素只有一套样子（见 .x 那一段），解释出现在所点的那一处旁边。
      配色取青花瓷：冷白的底，靛青的字，钴蓝作强调色；朱砂只用在「当前」「今天」两枚小印上。
      五行各用一种矿物颜料的颜色，另有一份很淡的同色底，垫在干支大字下面。
@@ -20,7 +20,7 @@
   --paper:#f2f4f8; --card:#ffffff; --wash:#f4f6fb; --ink:#131a2a; --ink2:#48546a; --ink3:#657084; --line:#dfe4ec;
   --accent:#1d3f94; --accent-soft:#e7edf9; --warn:#96392b; --warn-soft:#f8ebe7; --seal:#b23a2c; --seal-ink:#ffffff; --tint:rgba(29,63,148,.07); --tint-ring:rgba(29,63,148,.3);
   --wood:#2c7a57; --fire:#bd3b2d; --earth:#7a4523; --metal:#8f7300; --water:#2360ad;
-  --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6ece4; --metal-s:#faf4d6; --water-s:#eaf1fb;
+  --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6ece4; --metal-s:#faf4d6; --water-s:#e0ebfb;
   --shadow:0 1px 2px rgba(19,26,42,.04),0 6px 20px rgba(19,26,42,.05);
   --pop:0 2px 6px rgba(19,26,42,.08),0 14px 36px rgba(19,26,42,.18);
   --display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
@@ -31,7 +31,7 @@
     --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
     --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
     --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
-    --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#152337;
+    --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#12284a;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
     --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
     color-scheme:dark;
@@ -41,7 +41,7 @@
   --paper:#0e121c; --card:#161b28; --wash:#1c2232; --ink:#e9ecf3; --ink2:#aab3c4; --ink3:#8690a3; --line:#2a3142;
   --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
   --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
-  --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#152337;
+  --wood-s:#15261e; --fire-s:#2d1b19; --earth-s:#2b2018; --metal-s:#2a2711; --water-s:#12284a;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
   --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
   color-scheme:dark;
@@ -55,7 +55,7 @@ main{max-width:1000px;margin:0 auto;padding:32px 16px 56px;display:flex;flex-dir
    悬停：垫一层很淡的钴蓝。点开：淡蓝底加一圈钴蓝细框；干支大字和合冲的小签保留自己的底色，只加这一圈。
    「选中」是另一回事：人物、大运、流年、流月、流日是整张卡片换成钴蓝的边框，见 .pp 和 .pk。 */
 .x{font:inherit;color:inherit;background:none;border:0;border-radius:6px;padding:1px 4px;margin:-1px -4px;cursor:pointer;text-align:inherit}
-th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
+th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x,.sd-h .x,.lg .x,.qs-li .cx,.layers dt .cx{text-decoration:underline dotted var(--ink3);text-underline-offset:3px}
 .x.on,.hs.on,.gt-c.on{background-color:var(--accent-soft);text-decoration:none}
 .x.on,.hs.on,.gt-c.on,.glyph.on,.rel.on,.lk-t.on,.tg.on{box-shadow:0 0 0 1.5px var(--accent)}
 @media (hover:hover){
@@ -96,7 +96,7 @@ h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:c
 h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
 h1 .dm{position:relative}
 h1 .gd{position:relative}
-h1 .gd::before{content:attr(data-g);position:absolute;left:50%;top:-12px;transform:translateX(-50%);font:400 10.5px/1 var(--body);letter-spacing:.04em;white-space:nowrap;color:var(--ink3)}
+h1 .gd::before{content:attr(data-g);position:absolute;left:50%;top:-12px;transform:translateX(-50%);font:400 11px/1 var(--body);letter-spacing:.04em;white-space:nowrap;color:var(--ink3)}
 h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:translateX(-50%);font:600 10.5px/1 var(--body);letter-spacing:.06em;white-space:nowrap;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:3px 5px}
 .meta{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:0 32px}
 .meta div{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding:7px 0}
@@ -118,7 +118,7 @@ h1 .dm::before{content:"日主";position:absolute;left:50%;top:-15px;transform:t
 .share[hidden],.pp-link[hidden]{display:none}
 .share-t,.pp-link p{margin:0;font-size:13px;color:var(--ink2)}
 .share-row,.pp-link .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
-.share-row input{flex:1 1 240px;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.share-row input{flex:1 1 150px;min-width:0;font:inherit;font-size:12.5px;color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .pp-link label{font-size:13px;color:var(--ink2)}
 .pp-link select{font:inherit;font-size:13px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px 6px}
 .hint{margin:0;font-size:12px;color:var(--ink3)}
@@ -162,8 +162,9 @@ h3{margin:0;font-size:13px;font-weight:600;color:var(--ink2)}
 h3 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 p{margin:0}
 .note{font-size:13px;color:var(--ink2)}
+dd,td,.note,.sub,.read p,.read li{text-wrap:pretty}      /* 尽量不让一两个字单独掉到下一行 */
 #note-dy{color:var(--ink);margin-bottom:6px}      /* 选中的日子不在选中的那一步大运里时的一句说明，字比别的说明深一档 */
-/* 带标签栏的卡片有两张：原局（日主、五行、强弱、十神、喜忌）和排盘（四柱细盘、干支关系、根和透、大运流年），各自一次显示一页。
+/* 带标签栏的卡片有两张：原局（八字、日主、五行、强弱、十神、格局、喜忌、六亲）和排盘（四柱细盘、干支关系、根和透、计分），各自一次显示一页。
    标签就是卡片的标题，所以用宋体：选中的是墨色，下面一道钴蓝的线；其余的是淡墨色。换页由 ui.js 的 setTab 完成。
    每一页开头一行小字（.sub）说这一页讲什么 */
 .tabbar{display:flex;flex-wrap:wrap;gap:0 22px;border-bottom:1px solid var(--line)}
@@ -209,7 +210,7 @@ table{border-collapse:collapse;width:100%}
 .pan thead th:first-child{width:52px}
 .pan thead .x{font-weight:600}
 .pan thead small{display:block;font-size:12px;font-weight:400;color:var(--ink3)}
-.pan thead .nb,.gt thead .nb{white-space:nowrap}
+.pan thead .nb,.gt thead .nb,.gw .nb{white-space:nowrap}
 .pan tbody th{padding:8px 0 8px 6px;text-align:left;font-size:12px;font-weight:400;color:var(--ink3);white-space:nowrap}
 .pan td{padding:3px 2px}
 .pan td>.x,.pan .ss .x{display:block;width:100%;margin:0}
@@ -226,13 +227,13 @@ table{border-collapse:collapse;width:100%}
 .pan .ss .no{color:var(--ink3)}
 .pan.bz{min-width:0}      /* 八字一页只有原局四列，不用撑到八列的宽度 */
 /* 干支大字：一块淡色的底，右上角是五行的小图标，地支的右下角是生肖 */
-.glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;border:0;border-radius:12px;padding:0;cursor:pointer}
+.glyph{position:relative;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;font-family:var(--display);font-weight:700;font-size:32px;line-height:1;border:0;border-radius:12px;padding:0 0 .1em;cursor:pointer}
 .glyph.wood{background:var(--wood-s)} .glyph.fire{background:var(--fire-s)} .glyph.earth{background:var(--earth-s)} .glyph.metal{background:var(--metal-s)} .glyph.water{background:var(--water-s)}
 .glyph .ic{position:absolute;top:5px;right:5px;width:13px;height:13px;opacity:.8}
 .glyph[data-z]::after{content:attr(data-z);position:absolute;right:6px;bottom:5px;font:500 10px/1 var(--body);opacity:.75}
 .hs{display:block;width:100%;margin:0;font:inherit;font-size:13px;background:none;border:0;border-radius:6px;padding:2px 4px;cursor:pointer;white-space:nowrap}
 .hs small{font-size:12px;color:var(--ink2);margin-left:5px}
-button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* 四行选择器：每行一条横着排的带子，放不下就横向滚动 */
 .prow{display:grid;grid-template-columns:86px minmax(0,1fr);gap:4px 12px;align-items:center}
@@ -250,6 +251,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pk .gd{font-size:11.5px;color:var(--ink2);white-space:nowrap}
 .pk .ag{font-size:11.5px;color:var(--ink3)}
 .pk .yr .ag{margin-left:4px}
+.pk .yr .ag i{font-style:normal}
 .pk[aria-pressed="true"] .ag{color:var(--ink2)}      /* 选中的卡是淡蓝底，浅灰字对比度不够 */
 /* 选择器小卡底下的条（ui.js 的 mbar）：这一柱带来的 13 分里喜用占几分，满分 13，一段一种五行，后面是分数；两种相加时满分 26，两种之间空一道缝（.cut）。原来是计分一页上的四排柱子，2026-11-14 和选择器合在一起 */
 /* 小卡底下的条能点开明细：和别处夹在文字里的可点词一样，分数带虚线下划线，悬停垫淡钴蓝，点开淡蓝底加一圈钴蓝。
@@ -307,7 +309,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wxt .wn b{min-width:3.2em;font-weight:500;color:var(--ink2)}
 .wxt .track{display:block;width:clamp(70px,14vw,170px);height:10px;border-radius:5px;background:var(--wash);overflow:hidden}
 .wxt .fill{display:block;height:100%;border-radius:5px;background:currentColor}
-.wxt .st{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:999px;padding:0 8px;white-space:nowrap}
+.wxt .st{font:inherit;font-size:12px;color:var(--ink3);background:none;border:1px solid var(--line);border-radius:999px;padding:0 8px;white-space:nowrap;cursor:pointer}
 .wxt .wh{font-size:13px;color:var(--ink2)}
 @media (max-width:600px){
   .wxt th:nth-child(6),.wxt td:nth-child(6){display:none}      /* 手机上「在哪里」一列挤不下，藏起来；点五行的名字照样看得到每一笔在哪里 */
@@ -334,7 +336,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .gjz th[scope=row] .x{font-weight:600}
 .gjz th[scope=row] small{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--ink3)}
 .gjz .gjz-h th{padding-top:14px;font-size:12px;font-weight:600;color:var(--ink2)}
-.gjz .gjz-st{display:inline-block;margin-right:6px;padding:0 7px;border:1px solid var(--line);border-radius:999px;font-size:12px;white-space:nowrap;color:var(--ink2)}
+.gjz .gjz-st{display:inline-block;margin-right:6px;padding:0 7px;border:1px solid var(--line);border-radius:999px;font:inherit;font-size:12px;white-space:nowrap;color:var(--ink2);background:none;cursor:pointer}
 .gjz .gjz-st.t{border-color:var(--accent);color:var(--accent)}
 .gjz .gjz-w{font-size:13px;color:var(--ink2)}
 .gjz .gjz-v{margin:0 4px;font-weight:600;color:var(--accent)}
@@ -401,7 +403,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .qs{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 22px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
 .qs-dm{display:flex;flex-direction:column;align-items:center;gap:6px}
 .qs-dm span,.qs-dm small{font-size:12px;color:var(--ink3)}
-.qs-dm b{display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:14px;font-family:var(--display);font-size:34px;line-height:1}
+.qs-dm b{display:flex;align-items:center;justify-content:center;width:64px;height:64px;padding-bottom:.1em;border-radius:14px;font-family:var(--display);font-size:34px;line-height:1}
 .qs-dm b.wood,.qx b span.wood{background:var(--wood-s)} .qs-dm b.fire,.qx b span.fire{background:var(--fire-s)} .qs-dm b.earth,.qx b span.earth{background:var(--earth-s)} .qs-dm b.metal,.qx b span.metal{background:var(--metal-s)} .qs-dm b.water,.qx b span.water{background:var(--water-s)}
 .qs-main{display:flex;flex-direction:column;gap:12px;min-width:0}
 .qs-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
@@ -457,7 +459,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .xi-g+.xi-g{border-top:1px dashed var(--line)}
 .xi-g h4{margin:0;font:600 13.5px/1.4 var(--body);color:var(--ink)}
 .xi-g h4 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
-.xi-r{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-end}
+.xi-r{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-start}
 .xi .sub{margin:0}
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
 .qx>span,.qx small{font-size:12px;color:var(--ink3)}
@@ -488,7 +490,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wxmap .ct{font:400 9.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 .wxmap .sx{font:400 9.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
 #godmap svg{max-width:470px}
-.wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central;transform:translateY(-.08em)}      /* 往上托一点：字的墨迹比基线算出来的中心低 */
 .wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
 .wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
 /* 生克图上方的按钮：圈照什么数。选中的和人物、大运这些「选中」一样，是钴蓝的边框和淡蓝底；下面一行小字说这种数法数的是什么 */
@@ -599,7 +601,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 图和右边一栏（说明和解读）并排：图占 400 像素，右边一栏占剩下的。表和右边一栏要到 1100 像素宽才并排，见下面。
      十神生克图有两圈、十五个圈，400 像素里字和线太挤，这一页图占 480 像素（2026-11-18 排版审阅） */
   .beside.fig{grid-template-columns:400px minmax(0,1fr)}
-  .beside.fig.god{grid-template-columns:480px minmax(0,1fr)}
   .xi{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
   .xi-g+.xi-g{border-top:0;border-left:1px dashed var(--line)}
   .side{gap:18px}
@@ -641,10 +642,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .prow{grid-template-columns:104px minmax(0,1fr);gap:4px 16px}
   .prow h3{font-size:15.5px}
   .prow h3 small{font-size:13px}
-  .picker{gap:8px;padding:12px 2px 10px}
-  .pk{flex-basis:96px;padding:8px 4px 9px;border-radius:12px;gap:2px}
+  .picker{gap:8px;padding:12px 5px 10px}
+  .pk{flex:1 1 96px;min-width:68px;padding:8px 4px 9px;border-radius:12px;gap:2px}      /* 电脑上小卡可以缩到 68 像素：原来不让缩，九百到一千二的宽度流年、流月要横向滚动，前几张看不见（2026-11-18 审阅） */
   #liunian .pk{flex-basis:88px}
-  #liuyue .pk{flex-basis:78px}
+  #liuyue .pk{flex-basis:78px;min-width:66px}
+  .seg button{font-size:13.5px}
+  .seg-s{font-size:13px}
   /* 流日：一个月二十九到三十二天，电脑上不横向滚动，固定十一列，排成三行全部露出来。
      原来排两行，每张小卡不到六十像素，加了喜用分的条以后太挤（用户说「流日太挤了，不行改成三行」） */
   #liuri{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:10px 6px;overflow:visible}      /* 行距 10：「今天」小印伸出卡片上沿 8 像素，不压到上一行 */
@@ -757,7 +760,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .pform .btn{font-size:14px;padding:5px 16px}
   .hint{font-size:13px}
 }
+@media (min-width:1100px){
+  .beside.fig.god{grid-template-columns:480px minmax(0,1fr)}      /* 再窄右边一栏只剩两百多像素，解读一行不到十个字，照 400 像素排 */
+}
+@media (min-width:560px) and (max-width:1059px){
+  .sd{grid-template-columns:repeat(2,minmax(0,1fr))}      /* 四张卡片两张一排：自动排会排成三张加一张 */
+}
+@media (max-width:719px){
+  .tab .ic{display:none}      /* 原局八个标签带着图标要六百四十多像素，卡片窄于这个数就不带图标 */
+}
+@media (max-width:599px){
+  .wxt .mn{display:none}      /* 五行表「关系和合称」下面的含义：手机上这一列只有两三个字宽，一两个字一行，不显示；点名字照样看得到 */
+}
+@media (min-width:900px) and (max-width:1059px){
+  #liuri .pk .yr .ag i{display:none}      /* 每张卡五十多像素，「11/10 周二」比卡片宽，星期只留一个字 */
+  #liuri .pk .yr .ag{margin-left:3px}
+}
 @media (min-width:900px) and (max-width:979px){
+  .tabbar{gap:0 26px}      /* 原局八个标签在这个宽度要一行排完 */
   #liuri{column-gap:4px}
   #liuri .pk .gd{font-size:10.5px}      /* 这个宽度每张卡五十多像素，「食神·正官」四个字要小一号才不贴边 */
 }
@@ -832,7 +852,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gt-z{font-size:18px;line-height:24px}
   .gt .zrow small{line-height:14px}
   .gt-c{padding:1px}
-  .gt-c i{width:22px;height:22px;font-size:13px}
+  .gt-c i{width:22px;height:22px;padding-bottom:1px;font-size:13px;line-height:13px}
 }
 @media (min-width:601px) and (max-width:719px){
   /* 601 到 719 宽：八列每列五十多到七十多像素，去掉最小宽度，八列全部露出来，只把干支的色块缩一档 */
@@ -925,7 +945,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="wide hint m-time">出生地先选省份，再选城市，经度会自动填上；列表里没有的地方选「其他地方」，自己写地名，在地图软件里查到经度填上，西经填负数。经度用来把钟表时间换算成真太阳时，填 120 等于不做经度修正。只知道时辰的，在「只知道时辰」里选，时间和出生地就不用填了：页面取这个时辰的中点来排。只支持 1900 到 2100 年、按北京时间记录的出生时间。填的内容只保存在这个浏览器里，不会上传。</p>
     <label class="wide m-bazi" hidden>八字：年、月、日、时四柱<input type="text" id="pf-bazi" maxlength="24" placeholder="比如：甲子 丙寅 戊辰 庚申"></label>
     <div class="wide m-bazi dates" id="pf-dates" hidden></div>
-    <p class="wide hint m-bazi" hidden>页面在 1900 到 2100 年里找出四柱都对得上的日子。排大运要用出生日期，同一副八字隔几十年会重复一次，选你要的那一个。时辰取中点来排，和「只知道时辰」一样，不用填出生地。填的内容只保存在这个浏览器里，不会上传。</p>
+    <p class="wide hint m-bazi" hidden>页面在 1900 到 2100 年里找出四柱都对得上的日子。排大运要用出生日期，同一副八字隔几十年会重复一次，选要的那一个。时辰取中点来排，和「只知道时辰」一样，不用填出生地。填的内容只保存在这个浏览器里，不会上传。</p>
     <p class="wide msg" id="pf-msg" hidden></p>
     <div class="wide row">
       <button type="submit" class="btn main" id="pf-save">保存</button>
@@ -1098,7 +1118,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 </section>
 
 <section id="card-pan" aria-labelledby="h-yun">
-  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选，选中的四层排在下面各页的前四列；每张小卡底下的条是那一柱的喜用分，不定喜用的盘画的是帮日主的分</small></h2>
+  <h2 id="h-yun">大运 · 流年 · 流月 · 流日 <small>先在这里选，选中的四层排在下面各页的前四列；每张小卡底下的条是那一柱的喜用分</small></h2>
   <p class="lg" id="sy-lg"></p>
   <div class="prow"><h3 id="h-dy">大运<small>十年一步</small></h3><div class="picker" id="dayun" role="group" aria-label="大运"></div></div>
   <dl class="meta" id="meta-yun"></dl>

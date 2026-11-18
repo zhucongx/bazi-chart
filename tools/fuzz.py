@@ -79,6 +79,17 @@ def make_people(n, seed):
     add(datetime.datetime(2100, 12, 31, 23, 59), 75.0, '女')
     add(datetime.datetime(2025, 12, 31, 23, 59), 121.5, '男')
     add(datetime.datetime(1988, 7, 1, 10, 0), 113.3, '女', dst=True)
+    # 2026-11-18 审阅以后补的几类。立春以外的十一个节，各在某一年取前后一分钟：原来只挑了立春和一个清明
+    for k, nm in enumerate(('惊蛰', '清明', '立夏', '芒种', '小暑', '立秋', '白露', '寒露', '立冬', '大雪', '小寒')):
+        t = jie_time(1950 + 7 * k, nm)
+        add(t - MIN, 100.0 + k, '男')
+        add(t + MIN, 100.0 + k, '女')
+    # 夏令时：零点以后（减一小时退到前一天）、晚上 11 点以后、平常的时刻。页面的检查从排好的人取回出生信息再排一遍，会走到 chartOf 的夏令时分支
+    for y, mo, d, hh, mm in ((1986, 6, 1, 0, 20), (1987, 8, 8, 13, 5), (1989, 5, 5, 23, 40), (1990, 9, 1, 0, 59), (1991, 7, 7, 7, 7)):
+        add(datetime.datetime(y, mo, d, hh, mm), 114.0, '男' if y % 2 else '女', dst=True)
+    # 除夕、春节、闰月里的日子
+    for y, mo, d in ((1985, 2, 19), (1985, 2, 20), (2004, 3, 25), (2023, 4, 5), (2033, 12, 25)):
+        add(datetime.datetime(y, mo, d, 11, 11), 118.0, '女')
     # 随机
     start = datetime.datetime(1900, 1, 1)
     days = (datetime.datetime(2101, 1, 1) - start).days

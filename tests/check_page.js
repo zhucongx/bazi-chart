@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 页面检查。
 //
-//   node tests/check_page.js            检查公开的示例页面 index.html，约半分钟
+//   node tests/check_page.js            检查公开的示例页面 index.html，约五分钟
 //   node tests/check_page.js --private  检查个人页面 private/build/index.html
 //   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），几秒钟
 //   加 --base <目录>                    检查 <目录>/index.html，预期也从这个目录里找（tools/fuzz.py 在用）
@@ -741,7 +741,7 @@ people.forEach((id, pi) => {
       const a = key.split('|'), where = a[4].split('、'), top = +a[5];
       const p = JSON.parse(ev(`JSON.stringify(X(${JSON.stringify(key)}).p)`)), row = k => (p.find(r => r[0] === k) || [])[1] || '';
       const here = row('这一条');
-      if (top === 0 ? where.some(w => !here.includes(w.replace(/–/g, '和') + '之间')) || (where.length > 1) !== /^原局里有.处：/.test(here) : where.some(w => !here.includes(w))) return true;
+      if (top === 0 ? where.some(w => !here.includes((w.split('–').length > 2 ? w.replace(/–/g, '、') : w.replace(/–/g, '和')) + '之间')) || (where.length > 1) !== /^原局里有.处：/.test(here) : where.some(w => !here.includes(w))) return true;
       if (a[6] !== 'g' || !a[2].includes(dm)) return false;
       const toks = a[4].split(/[、–]/), gods = row('涉及的十神');
       const elsewhere = toks.some(t => t !== '日干' && stemOf[t] === dm) || (top > 0 && stemOf[LAYERS[top]] === dm);
@@ -776,7 +776,7 @@ people.forEach((id, pi) => {
   // 十神的个数、六亲表
   eq('十神对照里的个数加起来，等于三个天干加地支里藏的天干', [...d.querySelectorAll('#gods .gn')].map(el => parseInt(txt(el), 10) || 0).reduce((a, b) => a + b, 0), ev('natalStems().length+natalHidden().length'));
   eq('六亲表有六行，位置一栏和各个十神自己的解释里列的相同', [d.querySelectorAll('#liuqin tr').length, ev("liuqinRows().every(r=>r.at===(whereGod(g=>god(g)===r.god).join('、')||'原局里没有'))"), [...d.querySelectorAll('#liuqin tr')].map(tr => txt(tr.cells[1])).join()], [6, true, ev('P.gender') ? '偏财,正印,比肩,正财,七杀,正官' : '偏财,正印,比肩,正官,食神,伤官']);
-  // 版面：原局一张卡片照读盘的先后排（八字、日主、五行、强弱、十神、喜忌），大运流年一张卡片：选择器和四个标签（四柱细盘、干支关系、根和透、计分）。六亲和宫位是原局的最后一页：原来是页面最下面单独的一张卡片，2026-11-18 挪进了标签栏
+  // 版面：原局一张卡片照读盘的先后排（八字、日主、五行、强弱、十神、格局、喜忌，最后是六亲），大运流年一张卡片：选择器和四个标签（四柱细盘、干支关系、根和透、计分）。六亲和宫位是原局的最后一页：原来是页面最下面单独的一张卡片，2026-11-18 挪进了标签栏
   eq('版块的先后：原局的八个标签（十神和喜忌中间是格局，最后是六亲）、选择器、排盘的四个标签；六亲和宫位两张表都在「六亲」一页里，页面最下面不再有单独的卡片', [['h-bz', 'h-tk', 'h-wx', 'h-qr', 'h-gods', 'h-gj', 'h-ys', 'h-lq', 'h-yun', 'h-pan', 'h-rel', 'h-gt', 'h-sy'].map(id => $(id)).every((el, i, a) => !!el && (!i || (a[i - 1].compareDocumentPosition(el) & 4) === 4)), $('h-lq').getAttribute('role'), txt($('h-lq')), $('p-lq').contains($('liuqin')) && $('p-lq').contains($('gwmap')), $('card-natal').contains($('p-lq')), $('card-lq')], [true, 'tab', '六亲', true, true, null]);
   eq('每个标签对着自己的那一页，里面的东西各归各位', [['bz', 'bz'], ['tk', 'quad'], ['wx', 'wxt'], ['qr', 'kv'], ['qr', 'qs'], ['gods', 'gods'], ['gj', 'kv-gj'], ['gj', 'gjz'], ['gj', 'rd-gj'], ['ys', 'xi'], ['ys', 'kv2'], ['lq', 'liuqin'], ['lq', 'gwmap'], ['lq', 'rd-lq'], ['lq', 'rd-gw'], ['pan', 'pan'], ['rel', 'lkmap'], ['gt', 'gtmap'], ['sy', 'sy']].filter(([t, inner]) => { const b = $('h-' + t), pn = $('p-' + t); return !(b && pn && b.getAttribute('role') === 'tab' && b.getAttribute('aria-controls') === pn.id && pn.getAttribute('aria-labelledby') === b.id && pn.contains($(inner))); }).map(x => x[0]), []);
   // 日主一页只有四项（日主属性、阴阳参考就是「日主」「阴阳」两行；旺衰参考、格局参考是强弱、格局两页的结论）；月令、根、印、月令透干在强弱一页的最上面
@@ -1126,7 +1126,7 @@ people.forEach((id, pi) => {
     eq('强弱计分的条：涂色到这张盘的分数，两段是印和比劫各自的分数；两道竖线在 60 分里的 25 分和 30 分；分数标在涂色的末端', [qg.querySelector('.qg-fill').getAttribute('style'), [...qg.querySelectorAll('.qg-fill i')].map(i => [ELCN.find(c => i.classList.contains(c)), +(i.getAttribute('style').match(/flex:(\d+)/) || [])[1]]), [...qg.querySelectorAll('.qg-tk')].map(t => t.getAttribute('style')), qg.querySelector('.qg-v').getAttribute('style') + ' ' + txt(qg.querySelector('.qg-v'))], [`width:${w}`, [se, de].filter(e => nat[e]).map(e => [ELCN[e], nat[e]]), ['left:41.67%', 'left:50.00%'], `left:${w} ${hp} 分`]);
     eq('宫位里每一柱的小条：各段照这一柱的分数，条的宽度照这一柱的合计（月柱 21 分最宽）', rowOf('五行能量').map(td => [segs(td.querySelector('.stk')), td.querySelector('.stkw').getAttribute('style')]), nlWant.map(s2 => [segWant(s2), `width:${Math.round(s2.reduce((a, b) => a + b, 0) / 21 * 100)}%`]));
   }
-  { // 格局组合（十神一页最下面）
+  { // 格局组合（「格局」一页的第二个小标签）
     const gj = JSON.parse(ev('JSON.stringify(gjzNow())'));
     eq('格局组合：表里一行一个有的组合，没有的并在「这张盘没有」一行里，最后一行指向从格', [[...$('gjz').querySelectorAll('tr:not(.gjz-h):not(.gjz-no) th[scope=row] .x')].map(txt), [...$('gjz').querySelectorAll('.gjz-no .x')].map(txt)],
       [gj.list.filter(o => o.st !== '无').map(o => o.n), gj.list.filter(o => o.st === '无').map(o => o.n).concat('从格')]);
@@ -1143,16 +1143,20 @@ people.forEach((id, pi) => {
     const first = $('gjz').querySelector('th[scope=row] .x') || $('gjz').querySelector('.gjz-no .x');
     click(first);
     const gp = l => !![...$('sheet-b').querySelectorAll('p')].find(p => txt(p.querySelector('.lb')) === l);
-    eq('格局组合：点组合的名字，解释里有这张盘、怎么查、和格局、典籍、名词、注意，头三段是含义、为什么算成格或者败格、这张盘', [!$('sheet').hidden, ['这张盘', '怎么查', '和格局', '典籍', '名词', '注意'].map(gp), [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 3).map(txt).map(x => x.replace(/为什么算(成|败)格/, '为什么'))], [true, [true, true, true, true, true, true], ['含义', '为什么', '这张盘']]);
+    eq('格局组合：点组合的名字，解释里有这张盘、怎么查、和格局、典籍、名词，头三段是含义、为什么算成格或者败格、这张盘；每个组合都一样的「注意」不在解释里，在表下面的说明里', [!$('sheet').hidden, ['这张盘', '怎么查', '和格局', '典籍', '名词', '注意'].map(gp), [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 3).map(txt).map(x => x.replace(/为什么算(成|败)格/, '为什么')), txt($('note-gjz')).includes('富贵贫贱一类断语，页面一概不引')], [true, [true, true, true, true, true, false], ['含义', '为什么', '这张盘'], true]);
     ev('closeSheet()');
     // 成败救应：一行一条；两张表一次只显示一张，上面两个小标签切换
     const gb = JSON.parse(ev("JSON.stringify(gjbNow().rows.map(o=>({id:o.id,ok:o.ok,hw:GJB_HW[o.id]})))"));
-    eq('成败救应：表里这张盘归的格的每一条各一行，写着合、不合或者定不了，书里的话下面是一句直白的解释',
-      [...$('gjb').querySelectorAll('th[scope=row]')].map(th => [th.querySelector('.x').dataset.x, txt(th.querySelector('small')), txt(th.parentNode.querySelector('.gjz-st'))]),
-      gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '定不了' : o.ok ? '合' : '不合']));
+    // 归了两格的盘，表里一格一段、照「格局参考」里的先后排，和 GJB 里定义的先后不一定相同，所以各条按名字排好了再比，另外核对每一段的标题。
+    // 原来直接照 gjbNow().rows 的先后比，随机检查补了样本以后撞到一张两格的盘才露出来（2026-11-18）
+    const byId = (x, y) => x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0, gGes = JSON.parse(ev('JSON.stringify(gjbNow().groups.map(g=>g.ge))'));
+    eq('成败救应：表里这张盘归的格的每一条各一行，写着合、不合或者定不了，书里的话下面是一句直白的解释；归了两格的一格一段，照格局参考里的先后',
+      [[...$('gjb').querySelectorAll('th[scope=row]')].map(th => [th.querySelector('.x').dataset.x, txt(th.querySelector('small')), txt(th.parentNode.querySelector('.gjz-st'))]).sort(byId),
+        [...$('gjb').querySelectorAll('tr.gjz-h th')].map(txt).filter(t => gGes.includes(t))],
+      [gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '定不了' : o.ok ? '合' : '不合']).sort(byId), gGes.length > 1 ? gGes : []]);
     eq('格局组合：组合名字下面是一句直白的解释', [...$('gjz').querySelectorAll('tr:not(.gjz-h):not(.gjz-no) th[scope=row] small')].map(txt), gj.list.filter(o => o.st !== '无').map(o => o.hua));
     click($('gjb').querySelector('th[scope=row] .x'));
-    eq('成败救应：点书里的话，解释的头四段是含义、字面的意思、这一格、这张盘，后面有原文、名词、怎么查、注意', [!$('sheet').hidden, [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 4).map(txt), ['原文', '名词', '怎么查', '注意'].map(gp)], [true, ['含义', '字面的意思', '这一格', '这张盘'], [true, true, true, true]]);
+    eq('成败救应：点书里的话，解释的头三段是含义、字面的意思、这张盘，后面有原文、名词；每一条都一样的怎么查、注意和这一格的含义不在解释里，在表上面那句话和表下面的说明里', [!$('sheet').hidden, [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 3).map(txt), ['原文', '名词', '这一格', '怎么查', '注意'].map(gp), txt($('note-gjb')).includes('只数年、月、时三个天干和四个地支的本气'), txt($('gjb-say')).includes('的含义：')], [true, ['含义', '字面的意思', '这张盘'], [true, true, false, false, false], true, true]);
     const segNow = () => [...$('gj-seg').querySelectorAll('button')].map(b => [txt(b), b.getAttribute('aria-pressed')]);
     const seg0 = [segNow(), $('gjb-block').hidden, $('gjz-block').hidden];
     click($('gj-seg').querySelector('[data-map="gj:gjz"]'));
@@ -1393,7 +1397,7 @@ pick(0);
   const byKey = {}; d.querySelectorAll('#p-bz [data-x]').forEach(n => (byKey[n.dataset.x] = byKey[n.dataset.x] || []).push(n));
   const pair = Object.values(byKey).find(a => a.length >= 2);
   click(pair[0]); click(pair[1]);
-  const moved = !$('sheet').hidden && ev('anchorOf(sel.x,sel.xn)') === pair[1];
+  const moved = !$('sheet').hidden && ev('anchorOf(sel.x,sel.xn,sel.xh)') === pair[1];
   click(pair[1]);
   eq('同一条解释挂在两个字上：点了一个再点另一个，卡片挪到后一个字旁边；再点同一个字才收起', [!!pair, moved, $('sheet').hidden], [true, true, true]);
   // 选择器、人物这几排按钮点了以后整排重画，焦点放回新的同一个按钮上，不掉到页面上
@@ -1669,6 +1673,35 @@ console.log('导入、编辑、删除的边角情形');
     [mz.includes('出生那天交节气，月柱也跟着时辰变'), mz.includes(`从 ${mz0}`) && mz.includes(`到 ${mz1}`), mz.includes('起运就差了十年上下'), mz.includes('最多差几个月')], [true, true, true, false]);
   eq('时辰不详、生在立春那天：说年柱和月柱都跟着时辰变，大运的顺逆也跟着变',
     [lc.includes('出生那天交立春，年柱和月柱都跟着时辰变'), lc.includes('大运的顺逆也跟着变'), lc.includes(`从 ${lc0}`) && lc.includes(`到 ${lc1}`)], [true, true, true]);
+  reset();
+  // ---- 2026-11-18 全面审阅以后补的 ----
+  // 带 tz 的出生信息文件（people/ 下生在国外的人的写法）：birth 是当地时间，页面只认北京时间，导入时跳过并说明。原来照北京时间排了，不提示
+  const msgTz = ev(`importText(${JSON.stringify(JSON.stringify([{ id: 'tz-one', name: '带时区', gender: '男', birth: '1955-02-24 19:15', place: '虚构的地方', lon: -122.42, tz: -8 }, { name: '不带时区', gender: '女', birth: '1993-10-10 09:30', place: '成都市', lon: 104.07 }]))})`);
+  eq('导入带 tz 的出生信息：这一位跳过并说明原因，同一个文件里别的人照常导入', [msgTz.includes('导入了 1 个人'), /带时区：文件里写着 tz/.test(msgTz), ev("LOCAL.some(x=>x.name==='带时区')"), ev("LOCAL.some(x=>x.name==='不带时区')")], [true, true, false, true]);
+  reset();
+  // 夏令时：chartOf 带 dst 排出来的，和把时间减一小时、不带 dst 排出来的逐项相同；从排好的人取回出生信息，时间加回一小时、照样标 dst，再排还是同一张盘
+  const dstBad = [['1988-07-01 00:30', 113.3, '女'], ['1986-06-01 00:20', 114, '男'], ['1989-05-05 23:40', 121.5, '女'], ['1991-07-07 07:07', 87.6, '男'], ['1990-02-04 11:14', 116.4, '男']].filter(([b, lon, g]) => {
+    const r = JSON.parse(ev(`(()=>{const A=chartOf({id:'d',name:'夏',gender:${JSON.stringify(g)},birth:${JSON.stringify(b)},lon:${lon},dst:true}), c=A.clock, pad=n=>String(n).padStart(2,'0');
+      const B=chartOf({id:'d',name:'夏',gender:${JSON.stringify(g)},birth:c[0]+'-'+pad(c[1])+'-'+pad(c[2])+' '+pad(c[3])+':'+pad(c[4]),lon:${lon}}), back=infoFrom(A), C=chartOf(back);
+      const key=o=>JSON.stringify([o.clock,o.tst,o.pillars,o.dayun,o.yun,o.taiyuan,o.minggong]);
+      const t=${JSON.stringify(b)}.match(/\\d+/g).map(Number), h=Date.UTC(t[0],t[1]-1,t[2],t[3],t[4])-Date.UTC(c[0],c[1]-1,c[2],c[3],c[4]);
+      return JSON.stringify({same:key(A)===key(B),round:key(A)===key(C),hour:h,flag:A.dst===true&&B.dst===undefined&&back.dst===true,birth:back.birth.slice(0,16)});})()`));
+    return !(r.same && r.round && r.hour === 3600000 && r.flag && r.birth === b);
+  });
+  eq('夏令时：带 dst 排的盘等于减一小时以后排的盘，钟表时间正好早一小时；取回出生信息再排，时间和 dst 都还在', dstBad, []);
+  // 手写的 yun 解读：只在文字里写着 id="layers"、没有这个元素的，不收；kv 的行没写 t、p 的，补上以后点开不报错
+  const msgY = ev(`importText(${JSON.stringify(JSON.stringify([{ id: 'yun-fake', name: '假的层', gender: '男', birth: '2000-01-01 12:00', place: '北京市', lon: 116.4, notes: { read: { yun: '<p>id="layers"</p>' }, kv: [{ k: '我的一行', dd: '只有值' }] } }]))})`);
+  const nY = JSON.parse(ev("JSON.stringify(LOCAL.find(x=>x.id==='yun-fake').notes)"));
+  const rowX = ev(`JSON.stringify(X('kv|我的一行'))`);
+  eq('手写解读：yun 里没有 #layers 这个元素的丢掉并说明，「现在选中的四层」照常画；kv 的行没写标题和段落的，点开是一张只有标题的解释', [msgY.includes('有 1 项格式不对'), 'yun' in (nY.read || {}), $('layers').children.length, nY.kv[0].t, nY.kv[0].p, JSON.parse(rowX).t], [true, false, 4, '我的一行', [], '我的一行']);
+  reset();
+  // 出生地：「省名去掉省字加市名」的写法认回原来的城市。原来第二条规则先碰到名字和省名相同的吉林市
+  eq('出生地认回省份和城市：吉林长春是长春市，吉林吉林是吉林市，全称照旧', JSON.parse(ev("JSON.stringify(['吉林长春','吉林吉林','黑龙江哈尔滨','四川成都','四川省成都市'].map(s=>placeSel(s).c))")), ['长春市', '吉林市', '哈尔滨市', '成都市', '成都市']);
+  // 浏览器里存的人缺编号、编号重复、和页面自带的人同名：读的时候另起编号，编辑、删除不会落到别人身上
+  w.localStorage.setItem('bz-people', JSON.stringify([{ id: people[0], name: '撞自带的', gender: '男', birth: '2000-01-01 12:00', lon: 116.4 }, { id: 'dup', name: '重复甲', gender: '男', birth: '2000-01-02 12:00', lon: 116.4 }, { id: 'dup', name: '重复乙', gender: '女', birth: '2000-01-03 12:00', lon: 116.4 }, { name: '没编号', gender: '女', birth: '2000-01-04 12:00', lon: 116.4 }]));
+  ev('readLocal();rebuildPeople();');
+  const idsNow = JSON.parse(ev('JSON.stringify(PEOPLE.map(p=>p.id))')), stored = JSON.parse(w.localStorage.getItem('bz-people')).map(x => x.id);
+  eq('浏览器里存的人：编号缺的、重复的、和自带的人相同的另起一个，页面上每个人的编号都不相同，改过的写回浏览器', [new Set(idsNow).size === idsNow.length, idsNow.filter(id => id === people[0]).length, stored.every(id => typeof id === 'string' && !!id), new Set(stored).size, stored.includes('dup')], [true, 1, true, 4, true]);
   reset();
 }
 

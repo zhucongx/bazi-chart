@@ -231,13 +231,15 @@ function infoKey(x){
   const a=(x.shichen||x.nohour?parseDay:parseBirth)(x.birth)||[];
   return [x.gender,a.join('-'),x.shichen||'',x.nohour?1:0,x.shichen||x.nohour?'':Number(x.lon),x.dst?1:0].join('|');
 }
-/* 反过来：从一个排好的人取回出生信息。clock 已经扣过夏令时，所以这里不再标 dst。 */
+/* 反过来：从一个排好的人取回出生信息。clock 是扣过夏令时的；标着 dst 的人把那一小时加回去、照样标 dst，取回的就是当初填的时间。
+   原来不加回去也不标：排出来一样，可是同一个人和带 dst 的分享链接认不成同一位，chartOf 的夏令时分支也没有哪条检查走得到（2026-11-18 审阅） */
 function infoFrom(p){
-  const c=p.clock, pad=n=>String(n).padStart(2,'0');
+  const dst=!!p.dst&&!p.shichen&&!p.nohour, c=dst?addHours(p.clock,1):p.clock, pad=n=>String(n).padStart(2,'0');
   const day=`${c[0]}-${pad(c[1])}-${pad(c[2])}`;
   const info=p.nohour?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,nohour:true,place:p.place||''}
     :p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
     :{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${day} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
+  if(dst) info.dst=true;
   if(p.source) info.source=p.source;
   if(p.notes) info.notes=p.notes;
   return info;

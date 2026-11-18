@@ -253,7 +253,12 @@ def load_people(src_dir):
     people = []
     for f in files:
         name = str(f.relative_to(ROOT))
-        src = json.loads(f.read_text(encoding='utf-8'))
+        try:
+            src = json.loads(f.read_text(encoding='utf-8'))
+        except ValueError as e:
+            raise SystemExit(f'{name} 不是合法的 JSON：{e}')
+        if not isinstance(src, dict):
+            raise SystemExit(f'{name} 里应当是一个人的出生信息（一个对象）')
         missing = [k for k in REQUIRED if k not in src]
         if missing:
             raise SystemExit(f'{name} 缺少字段：{missing}')
@@ -263,12 +268,14 @@ def load_people(src_dir):
         if src['gender'] not in ('男', '女'):
             raise SystemExit(f'{name} 的 gender 应当是 "男" 或 "女"，现在是 {src["gender"]!r}')
         if 'shichen' in src:
-            if src['shichen'] not in Z:
+            if not isinstance(src['shichen'], str) or len(src['shichen']) != 1 or src['shichen'] not in Z:      # 一个字：原来只查是不是 Z 的子串，「子丑」也过
                 raise SystemExit(f'{name} 的 shichen 应当是十二地支之一，现在是 {src["shichen"]!r}')
         elif 'lon' not in src:
             raise SystemExit(f'{name} 缺少字段：lon（只记到时辰的写 shichen，可以不写 lon）')
         elif isinstance(src['lon'], bool) or not isinstance(src['lon'], (int, float)) or not -180 <= src['lon'] <= 180:
             raise SystemExit(f'{name} 的 lon 应当是经度的度数（东经为正），现在是 {src["lon"]!r}')
+        if 'dst' in src and not isinstance(src['dst'], bool):
+            raise SystemExit(f'{name} 的 dst 应当是 true 或 false，现在是 {src["dst"]!r}')
         if 'tz' in src:
             tz = src['tz']
             if 'shichen' in src or 'dst' in src:
@@ -279,8 +286,8 @@ def load_people(src_dir):
             raise SystemExit(f'{name}：写了 tzName 却没有写 tz')
         if isinstance(src['order'], bool) or not isinstance(src['order'], (int, float)):
             raise SystemExit(f'{name} 的 order 应当是数字，现在是 {src["order"]!r}')
-        if not isinstance(src['id'], str) or not src['id']:
-            raise SystemExit(f'{name} 的 id 应当是一段文字，现在是 {src["id"]!r}')
+        if not isinstance(src['id'], str) or not src['id'] or '/' in src['id'] or '\\' in src['id']:
+            raise SystemExit(f'{name} 的 id 应当是一段文字，不带斜杠，现在是 {src["id"]!r}')
         if f.stem != src['id']:
             print(f'提醒：{name} 的文件名和 id（{src["id"]}）不一致。备注文件按 id 找：{src["id"]}.notes.json')
         notes_file = f.with_name(f'{src["id"]}.notes.json')
@@ -322,6 +329,8 @@ def chart(name, src, notes, nayin_el):
             clock = birth - datetime.timedelta(hours=1) if src.get('dst') else birth
         dlon, eot, tst = true_solar_time(clock, src['lon'])
 
+    if not 1645 <= clock.year <= 2100:      # 1645 年起历书改用定气，页面的节气表也从那时起；更早的人能排出来，放进页面一打开就报错
+        raise SystemExit(f'{name} 出生在 {clock.year} 年。示例人物只收 1645 到 2100 年出生的（见 docs/取法约定.md「时间」一节）。')
     # 四柱：年柱、月柱照钟表时间（出生的那一刻在交节之前还是之后），日柱、时柱照真太阳时，见 MixedLunar。另外整个按钟表时间排一遍。
     lunar = solar_of(tst).getLunar()
     lunar_clock = solar_of(clock).getLunar()
