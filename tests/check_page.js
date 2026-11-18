@@ -516,7 +516,12 @@ console.log('成败救应、用神变化、相神');
   ok('有补充条件不合或待核对的命中项：汇总和表内显示限制，相神只列候选', checks.every(c=>c.summary&&c.row&&c.candidate&&!c.verdict), checks);
   if(!priv) ok('公开示例确实覆盖本章条件相符而补充条件不合的情形', checks.length>0);
   const caveat=ev("gjbCaveat({more:[['身强',null,'q'],['不透七杀',false,'q']],todo:'尚有前提未实现'})");
-  ok('补充条件的未知、不符、未编码三种状态分别交代', caveat.includes('补充条件待核对：身强')&&caveat.includes('补充条件不合：不透七杀')&&caveat.includes('未核对的条件'));
+  ok('补充条件的定不了、不合、没有核对三种状态分别交代', caveat.includes('补充条件定不了（强弱居中）：身强')&&caveat.includes('补充条件不合：不透七杀')&&caveat.includes('没有核对的条件'));
+  // 每张盘都给一个归纳的词和一句人话；合了成格的条件、书里另外的条件没有全合的，写「成格的条件合，另外的条件没有全合」，不写成完整的成格
+  const vs = [];
+  for(let i=0;i<people.length;i++){ pick(i); vs.push(...JSON.parse(ev(`JSON.stringify(gjbNow().groups.map(g=>({v:g.v,short:g.rows.some(o=>o.ok===true&&o.more.some(m=>m[1]!==true)),name:GJB_VN[gjbV(g)],say:GJB_V[gjbV(g)],shown:gjbSay().includes('<b>'+GJB_VN[gjbV(g)]+'</b>：'+GJB_V[gjbV(g)])})))`))); }
+  ok('成败救应上面那句话：每一格都有归纳的词和一句人话；成格而另外的条件没有全合的不写成格', vs.length>0&&vs.every(o=>o.name&&o.say&&o.shown&&(o.v==='成'&&o.short)===(o.name==='成格的条件合，另外的条件没有全合')&&!(o.short&&o.name==='成格')), vs.filter(o=>!(o.name&&o.say&&o.shown)));
+  ok('页面的文字里没有「已编码」「本章条件」这类写程序的话', !/已编码|本章条件|未编码/.test(ev("gjbSay()+noteGjb()+noteThc()+thcSay()+document.getElementById('gjb').textContent+document.getElementById('thc').textContent+document.getElementById('rd-gj').textContent")));
   pick(before);
 }
 
@@ -558,7 +563,7 @@ console.log('调候的情形');
     if (got.length !== cs.length) { badTh.push([ps.join(' '), '条数']); continue; }
     cs.forEach(([q, atoms], i) => { const w = atoms.map(a => atom2(a, ps)); nCase++; if (w.every(Boolean)) nHit++;
       atoms.forEach((a, j) => { const k = a.split(':')[0]; kinds[k] = kinds[k] || [0, 0]; kinds[k][w[j] ? 0 : 1]++; });
-      const pending = ps[2][0] === '乙' && (ps[1][1] === '酉' ? ['丙癸两透','生秋分后，有丙无癸','若有癸无丙','若四柱不见丙癸','或生上半月无癸，姑用壬水'].includes(q) : '子丑'.includes(ps[1][1]) && ['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(q));
+      const pending = ps[2][0] === '乙' && (ps[1][1] === '酉' ? ['丙癸两透','生秋分后，有丙无癸','若有癸无丙','若四柱不见丙癸','或生上半月无癸，姑用壬水'].includes(q) : ps[1][1] === '子' && ['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(q));      // 丑月整个月都在冬至之后，不用待核对
       if (got[i][0] !== (w.every(Boolean) ? pending ? null : true : false) || got[i][1].join() !== w.join() || !got[i][2]) badTh.push([ps.join(' '), q]); });
   }
   eq('调候的情形：1500 副随机的四柱，每一种情形合不合、每一个原子合不合，和照说明另算的相同', badTh.slice(0, 3), []);
@@ -573,10 +578,11 @@ console.log('调候的情形');
   eq('每一项未核对的节令前提都有对应摘录，调整条目后不会失去对应', timeRules, []);
   const winter = ps => JSON.parse(ev(`JSON.stringify(thOf('乙',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}))).cases.filter(c=>['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(c.q)).map(c=>[c.ok,c.pending]))`));
   eq('冬至前提也传给「即丁出干」；已有干支条件不合时仍记不合', [winter(['丙寅','丁子','乙卯','戊辰']), winter(['庚申','丁子','乙酉','戊辰'])], [[[null,'生于冬至之后'],[null,'生于冬至之后']],[[false,'生于冬至之后'],[false,'生于冬至之后']]]);
+  eq('丑月整个月都在冬至之后：「生于冬至之后」不用待核对，别的条件合就是合', winter(['丙寅','丁丑','乙卯','戊辰']), [[true,''],[true,'']]);
   // 页面上的那一块
   const tn = JSON.parse(ev('JSON.stringify((t=>({n:t.cases.length,hit:t.hit,need:t.need.length}))(thNow()))'));
   eq('喜忌一页「调候的情形」：这个月收的每一种情形各一枚小标签，合的在前面；上面一句话写着收了几种、合几种',
-    [$('thc').querySelectorAll('.tg').length, $('thc').querySelectorAll('.tg.yes').length, tn.n ? txt($('thc-say')).includes(`收了 ${tn.n} 种，已核对条件合 ${tn.hit} 种`) : txt($('thc-say')).includes('没有页面能照着数的')], [tn.n, tn.hit, true]);
+    [$('thc').querySelectorAll('.tg').length, $('thc').querySelectorAll('.tg.yes').length, tn.n ? txt($('thc-say')).includes(`收了 ${tn.n} 种，这张盘合 ${tn.hit} 种`) : txt($('thc-say')).includes('没有页面能照着数的')], [tn.n, tn.hit, true]);
 }
 
 // ---------- 1a2. 打分法 ----------
@@ -1173,10 +1179,10 @@ people.forEach((id, pi) => {
     // 归了两格的盘，表里一格一段、照「格局参考」里的先后排，和 GJB 里定义的先后不一定相同，所以各条按名字排好了再比，另外核对每一段的标题。
     // 原来直接照 gjbNow().rows 的先后比，随机检查补了样本以后撞到一张两格的盘才露出来（2026-11-18）
     const byId = (x, y) => x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0, gGes = JSON.parse(ev('JSON.stringify(gjbNow().groups.map(g=>g.ge))'));
-    eq('成败救应：表里这张盘归的格的每一条各一行，区分本章条件合、不合或者待核对，书里的话下面是一句直白的解释；归了两格的一格一段，照格局参考里的先后',
+    eq('成败救应：表里这张盘归的格的每一条各一行，写着合、不合或者定不了，书里的话下面是一句直白的解释；归了两格的一格一段，照格局参考里的先后',
       [[...$('gjb').querySelectorAll('th[scope=row]')].map(th => [th.querySelector('.x').dataset.x, txt(th.querySelector('small')), txt(th.parentNode.querySelector('.gjz-st'))]).sort(byId),
         [...$('gjb').querySelectorAll('tr.gjz-h th')].map(txt).filter(t => gGes.includes(t))],
-      [gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '待核对' : o.ok ? '本章条件合' : '本章条件不合']).sort(byId), gGes.length > 1 ? gGes : []]);
+      [gb.map(o => ['gjb|' + o.id, o.hw, o.ok === null ? '定不了' : o.ok ? '合' : '不合']).sort(byId), gGes.length > 1 ? gGes : []]);
     eq('格局组合：组合名字下面是一句直白的解释', [...$('gjz').querySelectorAll('tr:not(.gjz-h):not(.gjz-no) th[scope=row] small')].map(txt), gj.list.filter(o => o.st !== '无').map(o => o.hua));
     click($('gjb').querySelector('th[scope=row] .x'));
     eq('成败救应：点书里的话，解释的头三段是含义、字面的意思、这张盘，后面有原文、名词；每一条都一样的怎么查、注意和这一格的含义不在解释里，在表上面那句话和表下面的说明里', [!$('sheet').hidden, [...$('sheet-b').querySelectorAll('p .lb')].slice(0, 3).map(txt), ['原文', '名词', '这一格', '怎么查', '注意'].map(gp), txt($('note-gjb')).includes('只数年、月、时三个天干和四个地支的本气'), txt($('gjb-say')).includes('的含义：')], [true, ['含义', '字面的意思', '这张盘'], [true, true, false, false, false], true, true]);
