@@ -108,9 +108,28 @@ function checkInfo(info){
   if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX) return `只支持 ${BIRTH_MIN} 到 ${BIRTH_MAX} 年出生。`;
   if(info.gender!=='男'&&info.gender!=='女') return '性别要填男或女。';
   if(!sh&&!no&&(typeof info.lon!=='number'||!isFinite(info.lon)||info.lon<-180||info.lon>180)) return '经度要填一个数，东经为正。';
+  if(info.jie!==undefined&&!(sh&&!no&&(info.jie==='before'||info.jie==='after'))) return '交节的前后（jie）只能写 before 或 after，而且只和时辰一起用。';
   return '';
 }
-/* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同。 */
+/* 只知道时辰的人：这个时辰的两小时里（中点前后各一小时）有没有交节。有就返回这个节在 JIE_T 里的序号，没有返回 -1。c 是时辰的中点（秒）。
+   时辰本来是照当地太阳定的，页面把中点当钟表时间去比节气表（见 chartOf），这里也照这个近似。
+   子时只看零点以后的一小时：页面的子时取零点、日柱算记载的那一天，前一晚 11 点以后的那一半日柱算法不同，不在这里 */
+const hourFrom=c=>fromSec(c)[3]===0?c:c-3600;
+function jieInHour(c){
+  const lo=hourFrom(c);
+  for(let k=Math.max(0,pillarsAt(fromSec(lo)).i);k<JIE_T.length&&JIE_T[k]<c+3600;k++){if(JIE_T[k]>=lo) return k;}
+  return -1;
+}
+/* 只知道时辰、交节又落在这个时辰里的：出生在交节之前还是之后定不了，年柱、月柱和大运两边不一样。平常照时辰的中点排；
+   出生信息里写了 jie（'before' 交节之前，'after' 交节之后）、中点又在另一边的，年柱、月柱和大运改照那一边排：
+   取这个时辰里那一边的中点当出生的时刻。日柱、时柱不受影响。返回 {k, cj, side}；用不上时 k 是 -1、cj 就是 c。
+   直接输入八字反查日期时要用它（datesOf）：正排在交节那一边的四柱，照中点排是找不回来的（2026-11-21 复核报告第 4 条） */
+function jieSide(c,jie){
+  const k=jie==='before'||jie==='after'?jieInHour(c):-1; if(k<0) return {k:-1,cj:c,side:''};
+  const T=JIE_T[k], mid=c>=T?'after':'before'; if(mid===jie) return {k:-1,cj:c,side:''};      // 中点本来就在这一边
+  return {k,side:jie,cj:jie==='after'?T+Math.floor((c+3600-T)/2):Math.min(T-1,T-Math.floor((T-hourFrom(c))/2))};
+}
+/* 排盘。返回的对象和 tools/gen_data.py 写进 people.json 的每个人字段相同（jie、jieClock 两项只有页面上有，见 jieSide）。 */
 function chartOf(info){
   const bad=checkInfo(info); if(bad) throw new Error(bad);
   const sh=info.shichen||(info.nohour?'午':'');            // 时辰不详而没有另给时辰的，先按午时排
@@ -121,7 +140,8 @@ function chartOf(info){
   // 年柱、月柱看出生的那一刻在交节之前还是之后。交节是一个确定的时刻，节气表存的是北京时间，所以拿钟表时间（也是北京时间）去比；
   // 日柱、时柱照当地的真太阳时。原来四柱都照真太阳时，交节前后同一个时刻换个经度就换了年柱、月柱，而且和按钟表时间排的大运接不上
   // （2026-11-17 内容审阅 C1，用户说改）。pillarsClock 是整个按钟表时间排的，留着对照日柱、时柱
-  const A=pillarsAt(tst), B=pillarsAt(clock);
+  const js=sh&&!info.nohour?jieSide(c,info.jie):{k:-1,cj:c,side:''}, cj=js.cj, jclock=fromSec(cj);      // 年柱、月柱和大运用的时刻：平常就是 c
+  const A=pillarsAt(tst), B=pillarsAt(jclock);
   const [yp,mp]=B.p, dp=A.p[2], hp=A.p[3], yg=G.indexOf(yp[0]);
   const jieAt=i=>({name:JIE[i%12],at:fromSec(JIE_T[i])});
   // 胎元、命宫、身宫、胎息。月支和时支都换成「寅是 1、丑是 12」的序号来算
@@ -130,15 +150,16 @@ function chartOf(info){
   const ming=mzi+tzi>=14?26-mzi-tzi:14-mzi-tzi, shen=mzi+Z.indexOf(hp[1])+1;
   // 大运也按钟表时间，和年柱、月柱是同一个基准：阳年男、阴年女顺排，数到下一个节；阴年男、阳年女逆排，数到上一个节
   const man=info.gender==='男', forward=(yg%2===0)===man, yj=forward?B.i+1:B.i;
-  const gapMin=forward?Math.floor(JIE_T[yj]/60)-Math.floor(c/60):Math.floor(c/60)-Math.floor(JIE_T[yj]/60);
+  const gapMin=forward?Math.floor(JIE_T[yj]/60)-Math.floor(cj/60):Math.floor(cj/60)-Math.floor(JIE_T[yj]/60);
   let rest=gapMin; const y=Math.floor(rest/4320); rest-=y*4320;
   const m=Math.floor(rest/360); rest-=m*360;
   const d=Math.floor(rest/12); rest-=d*12;
-  const h=rest*2, start=addHours(addDays(addMonths(addYears(clock,y),m),d),h);
+  const h=rest*2, start=addHours(addDays(addMonths(addYears(jclock,y),m),d),h);
   const mi=gz60(mp[0],mp[1]), dayun=[];
   for(let k=1;k<=8;k++){const y0=start[0]+(k-1)*10, a0=y0-clock[0]+1;dayun.push({gz:JZ(((mi+(forward?k:-k))%60+60)%60),y0,y1:y0+9,a0,a1:a0+9});}
   const p={id:info.id,name:info.name,gender:man?1:0,clock};
   if(sh) p.shichen=sh;
+  if(js.side){p.jie=js.side;p.jieClock=jclock;}
   if(info.nohour) p.nohour=true;
   if(info.dst&&!sh) p.dst=true;
   if(info.source) p.source=info.source;
@@ -146,9 +167,9 @@ function chartOf(info){
   if(!sh) p.lon=info.lon;
   Object.assign(p,{dlonSec,eotSec,tst,
     lunar:lunarOf(tst[0],tst[1],tst[2]),xingzuo:xingzuoOf(tst[1],tst[2]),
-    pillars:[yp,mp,dp,hp],pillarsClock:B.p,
-    prevJie:Object.assign(jieAt(B.i),{min:Math.floor((c-JIE_T[B.i])/60)}),
-    nextJie:Object.assign(jieAt(B.i+1),{min:Math.floor((JIE_T[B.i+1]-c)/60)}),
+    pillars:[yp,mp,dp,hp],pillarsClock:js.side?[yp,mp,dp,hp]:B.p,
+    prevJie:Object.assign(jieAt(B.i),{min:Math.floor((cj-JIE_T[B.i])/60)}),
+    nextJie:Object.assign(jieAt(B.i+1),{min:Math.floor((JIE_T[B.i+1]-cj)/60)}),
     taiyuan:G[(G.indexOf(mp[0])+1)%10]+Z[(Z.indexOf(mp[1])+3)%12],
     minggong:pick(ming),shengong:pick(shen>12?shen-12:shen),
     taixi:gHe(dp[0])+Z[(13-Z.indexOf(dp[1]))%12],
@@ -177,7 +198,9 @@ function baziCheck(text){
   return {msg:'',p:ps};
 }
 /* 四柱都对得上的日子，年份在 BIRTH_MIN 到 BIRTH_MAX 之间。先按年柱、月柱找出那个月的几天，再看日柱；
-   时辰取中点（子时取零点），和「只知道时辰」排盘的办法相同，每一个都拿 pillarsAt 再排一遍核对。返回 [{birth:'YYYY-MM-DD', shichen}]，按日期先后 */
+   时辰取中点（子时取零点），和「只知道时辰」排盘的办法相同，每一个都拿 pillarsAt 再排一遍核对。
+   交节正落在这个时辰里的那一天，中点对不上就再试交节的另一边（jieSide）：对得上的带着 jie，存下来以后照那一边排。
+   返回 [{birth:'YYYY-MM-DD', shichen, jie?}]，按日期先后 */
 function datesOf(ps){
   const out=[], hi=Z.indexOf(ps[3][1]), mi=(Z.indexOf(ps[1][1])+10)%12, pad=n=>String(n).padStart(2,'0');
   for(let y=BIRTH_MIN-1;y<=BIRTH_MAX;y++){
@@ -186,7 +209,11 @@ function datesOf(ps){
     for(let t=Math.floor(JIE_T[i]/86400)*86400;t<=JIE_T[i+1];t+=86400){
       const a=fromSec(t);
       if(a[0]<BIRTH_MIN||a[0]>BIRTH_MAX||JZ(dayIndex(a[0],a[1],a[2]))!==ps[2]) continue;
-      if(pillarsAt([a[0],a[1],a[2],2*hi,0,0]).p.join()===ps.join()) out.push({birth:`${a[0]}-${pad(a[1])}-${pad(a[2])}`,shichen:Z[hi]});
+      const birth=`${a[0]}-${pad(a[1])}-${pad(a[2])}`, c=toSec(a[0],a[1],a[2],2*hi), mid=pillarsAt(fromSec(c)).p;
+      if(mid.join()===ps.join()){out.push({birth,shichen:Z[hi]});continue;}
+      const k=jieInHour(c); if(k<0) continue;
+      const jie=c>=JIE_T[k]?'before':'after', B=pillarsAt(fromSec(jieSide(c,jie).cj)).p;
+      if([B[0],B[1],mid[2],mid[3]].join()===ps.join()) out.push({birth,shichen:Z[hi],jie});
     }
   }
   return out;
@@ -200,7 +227,7 @@ function linkOf(info){
   const q=new URLSearchParams(), pad=n=>String(n).padStart(2,'0');
   q.set('n',String(info.name||'')); q.set('g',info.gender==='女'?'f':'m');
   if(info.nohour){q.set('b',info.birth);q.set('nh','1');}
-  else if(info.shichen){q.set('b',info.birth);q.set('sh',info.shichen);}
+  else if(info.shichen){q.set('b',info.birth);q.set('sh',info.shichen);if(info.jie) q.set('jq',info.jie==='after'?'a':'b');}
   else{
     const a=parseBirth(info.birth);
     q.set('b',`${a[0]}-${pad(a[1])}-${pad(a[2])}T${pad(a[3])}:${pad(a[4])}`+(a[5]?':'+pad(a[5]):''));
@@ -215,9 +242,9 @@ function linkInfo(q){
     const r=baziCheck(q.get('bz')); if(!r.p) return {err:r.msg||'八字认不出来。'};
     dates=datesOf(r.p); if(!dates.length) return {err:'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。'};
     const d=dates.find(x=>x.birth===q.get('b'))||dates[0];
-    info.birth=d.birth; info.shichen=d.shichen;
+    info.birth=d.birth; info.shichen=d.shichen; if(d.jie) info.jie=d.jie;
   }else if(q.get('nh')==='1'){info.birth=String(q.get('b')||''); info.nohour=true;}
-  else if(q.has('sh')){info.birth=String(q.get('b')||''); info.shichen=String(q.get('sh'));}
+  else if(q.has('sh')){info.birth=String(q.get('b')||''); info.shichen=String(q.get('sh')); if(q.get('jq')==='a'||q.get('jq')==='b') info.jie=q.get('jq')==='a'?'after':'before';}
   else{
     info.birth=String(q.get('b')||'').replace('T',' ');
     info.lon=(q.get('lon')||'').trim()===''?NaN:Number(q.get('lon'));
@@ -229,7 +256,7 @@ function linkInfo(q){
 /* 两份出生信息是不是同一个人：性别、出生的时刻或日期和时辰、经度、夏令时都相同。称呼不算 */
 function infoKey(x){
   const a=(x.shichen||x.nohour?parseDay:parseBirth)(x.birth)||[];
-  return [x.gender,a.join('-'),x.shichen||'',x.nohour?1:0,x.shichen||x.nohour?'':Number(x.lon),x.dst?1:0].join('|');
+  return [x.gender,a.join('-'),x.shichen||'',x.nohour?1:0,x.shichen||x.nohour?'':Number(x.lon),x.dst?1:0,x.jie||''].join('|');
 }
 /* 反过来：从一个排好的人取回出生信息。clock 是扣过夏令时的；标着 dst 的人把那一小时加回去、照样标 dst，取回的就是当初填的时间。
    原来不加回去也不标：排出来一样，可是同一个人和带 dst 的分享链接认不成同一位，chartOf 的夏令时分支也没有哪条检查走得到（2026-11-18 审阅） */
@@ -237,7 +264,7 @@ function infoFrom(p){
   const dst=!!p.dst&&!p.shichen&&!p.nohour, c=dst?addHours(p.clock,1):p.clock, pad=n=>String(n).padStart(2,'0');
   const day=`${c[0]}-${pad(c[1])}-${pad(c[2])}`;
   const info=p.nohour?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,nohour:true,place:p.place||''}
-    :p.shichen?{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''}
+    :p.shichen?Object.assign({id:p.id,name:p.name,gender:p.gender?'男':'女',birth:day,shichen:p.shichen,place:p.place||''},p.jie?{jie:p.jie}:{})
     :{id:p.id,name:p.name,gender:p.gender?'男':'女',birth:`${day} ${pad(c[3])}:${pad(c[4])}:${pad(c[5])}`,place:p.place||'',lon:p.lon};
   if(dst) info.dst=true;
   if(p.source) info.source=p.source;

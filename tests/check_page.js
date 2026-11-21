@@ -431,7 +431,7 @@ console.log('典籍引文');
   // 虚构的出生时间，两边都有：辰月离立夏 17 天和 19 天，寅月离惊蛰不到 18 天（寅月不算土当令）；再加页面自带的三位
   const tuCases = JSON.parse(ev(`JSON.stringify((()=>{const keep=[P,DM,DMN,NATAL,MEMO], out=[];
     const one=p=>{P=p;DM=P.pillars[2][0];DMN=gN(DM);NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));MEMO={};
-      const tu='辰未戌丑'.includes(NATAL[1].z)&&P.nextJie.min<=18*1440, r=qrNow(), w=qrOf(DM,P.pillars,tu);
+      const sec=a=>Date.UTC(a[0],a[1]-1,a[2],a[3],a[4],a[5]||0)/1000, tu='辰未戌丑'.includes(NATAL[1].z)&&sec(P.nextJie.at)-sec(P.clock)<=18*86400, r=qrNow(), w=qrOf(DM,P.pillars,tu);
       out.push([P.name, NATAL[1].z, Math.round(P.nextJie.min/1440), tu, r.tier===w.tier&&r.deLing===w.deLing]);};
     [['辰月 17 天','2001-04-18 12:00'],['辰月 19 天','2001-04-16 12:00'],['寅月','1990-02-20 10:00'],['丑月 10 天','1995-01-25 12:00']].forEach(([n,b])=>one(chartOf({id:'tu',name:n,gender:'男',birth:b,lon:120})));
     DATA.people.forEach(one);
@@ -521,6 +521,13 @@ console.log('成败救应、用神变化、相神');
   const vs = [];
   for(let i=0;i<people.length;i++){ pick(i); vs.push(...JSON.parse(ev(`JSON.stringify(gjbNow().groups.map(g=>({v:g.v,short:g.rows.some(o=>o.ok===true&&o.more.some(m=>m[1]!==true)),name:GJB_VN[gjbV(g)],say:GJB_V[gjbV(g)],shown:gjbSay().includes('<b>'+GJB_VN[gjbV(g)]+'</b>：'+GJB_V[gjbV(g)])})))`))); }
   ok('成败救应上面那句话：每一格都有归纳的词和一句人话；成格而另外的条件没有全合的不写成格', vs.length>0&&vs.every(o=>o.name&&o.say&&o.shown&&(o.v==='成'&&o.short)===(o.name==='成格的条件合，另外的条件没有全合')&&!(o.short&&o.name==='成格')), vs.filter(o=>!(o.name&&o.say&&o.shown)));
+  { // 2026-11-21 复核报告第 6 条：一条也没有确认合、可是有的条件强弱居中定不了的，不说「成败的条件都不合」
+    const before2 = ev('sel.p');
+    ev(`LOCAL=[{id:'gj-unsure',name:'虚构',gender:'男',birth:'1992-01-03',shichen:'未'}];rebuildPeople();usePerson(PEOPLE.findIndex(p=>p.id==='gj-unsure'))`);
+    const g0 = JSON.parse(ev('JSON.stringify(gjbNow().groups.map(g=>[g.v,g.unsure,GJB_VN[gjbV(g)]]))')), say0 = strip(ev('gjbSay()'));
+    eq('成败救应的归纳：没有一条确认合、又有定不了的，写「没有一条确认合的，有的还定不了」，不写都不合', [g0, say0.includes('成败的条件都不合'), say0.includes('没有一条确认合的，有的还定不了')], [[['都不合', 1, '没有一条确认合的，有的还定不了']], false, true]);
+    ev('LOCAL=[];rebuildPeople();'); pick(before2);
+  }
   ok('页面的文字里没有「已编码」「本章条件」这类写程序的话', !/已编码|本章条件|未编码/.test(ev("gjbSay()+noteGjb()+noteThc()+thcSay()+document.getElementById('gjb').textContent+document.getElementById('thc').textContent+document.getElementById('rd-gj').textContent")));
   pick(before);
 }
@@ -530,7 +537,7 @@ console.log('调候的情形');
 {
   const G = '甲乙丙丁戊己庚辛壬癸', Z = '子丑寅卯辰巳午未申酉戌亥', E = '木火土金水';
   const th2 = JSON.parse(ev('JSON.stringify(TH2)'));
-  const one = `(?:(?:tou|zang|has|no|notou|root):[${G}]|(?:pai|ju|el|noel):[${E}]|(?:zhi|nozhi):[${Z}])`, ATOM = new RegExp(`^(?:${one}|or:${one}(?:\\|${one})+)$`);
+  const one = `(?:(?:tou|zang|has|no|notou|root|n2):[${G}]|(?:pai|ju|el|noel):[${E}]|(?:zhi|nozhi):[${Z}]|(?:at|all):[年月时]{1,3}:[${G}])`, ATOM = new RegExp(`^(?:${one}|or:${one}(?:\\|${one})+)$`);
   const all = Object.entries(th2).flatMap(([g, o]) => Object.entries(o).map(([z, e]) => [g + z, e]));
   eq('调候的情形：十个日干、十二个月支都有一项；每一种情形是条件的原文加几个原子，原子的写法都认得',
     [Object.keys(th2).sort().join(''), all.length, all.filter(([k, e]) => !Array.isArray(e.need) || !Array.isArray(e.cases) || !Number.isInteger(e.skip || 0) || e.cases.some(c => !(typeof c[0] === 'string' && c[0] && Array.isArray(c[1]) && c[1].length && c[1].every(a => ATOM.test(a))))).map(x => x[0])],
@@ -544,6 +551,12 @@ console.log('调候的情形');
   const JU = { 水: ['申子辰', '亥子丑'], 木: ['亥卯未', '寅卯辰'], 火: ['寅午戌', '巳午未'], 金: ['巳酉丑', '申酉戌'], 土: [] }, elOf = g => Math.floor(G.indexOf(g) / 2);
   function atom2(a, ps) {
     if (a.startsWith('or:')) return a.slice(3).split('|').some(b => atom2(b, ps));
+    {      // 指定柱位、数量的三种（2026-11-21 加的），照四柱另算：ps 是 [年柱, 月柱, 日柱, 时柱]
+      const t = a.split(':'), stem = c => ps['年月日时'.indexOf(c)][0];
+      if (t[0] === 'at') return [...t[1]].some(c => stem(c) === t[2]);
+      if (t[0] === 'all') return [...t[1]].every(c => stem(c) === t[2]);
+      if (t[0] === 'n2') return [ps[0][0], ps[1][0], ps[3][0]].filter(g => g === t[1]).length >= 2;
+    }
     const [k, v] = a.split(':'), gan = [ps[0][0], ps[1][0], ps[3][0]], zs = ps.map(p => p[1]), all = [...zs.map(z => HIDT[z]).join('')], hid = [...[0, 2, 3].map(i => HIDT[zs[i]]).join('')], e = E.indexOf(v);      // hid 不含月支：月支是这个月本来就有的
     switch (k) {
       case 'tou': return gan.includes(v); case 'zang': return !gan.includes(v) && hid.includes(v); case 'has': return gan.includes(v) || hid.includes(v);
@@ -574,6 +587,17 @@ console.log('调候的情形');
   // 日期前提必须保留：秋分前的虚构日期不能命中「生秋分后」。承接的分支也不丢前提。
   const autumn = JSON.parse(ev(`(()=>{const p=chartOf({name:'节令测试',gender:'男',birth:'1980-09-09',shichen:'寅'}), ps=p.pillars.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]})), r=thOf(ps[2].g,ps), c=r.cases.find(c=>c.q==='生秋分后，有丙无癸');return JSON.stringify([c.ok,c.pending,c.atoms.every(a=>a.ok),r.hit===r.cases.filter(c=>c.ok===true).length]);})()`));
   eq('秋分前：干支条件都合，也只记待核对，不计作符合「生秋分后」', autumn, [null, '生于秋分之后', true, true]);
+  // 2026-11-21 复核报告第 5 条：原文指定了柱位、数量的，条件里要有。反例和正例都用虚构的四柱
+  const thCase = (dm, ps, q) => JSON.parse(ev(`JSON.stringify((c=>c?[c.ok,c.atoms.map(a=>a.l)]:null)(thOf('${dm}',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}))).cases.find(c=>c.q===${JSON.stringify(q)})))`));
+  eq('调候「年月透辛金者」：辛只在时干不算合；辛在年干或者月干才算',
+    [thCase('戊', ['壬申', '壬子', '戊午', '辛酉'], '年月透辛金者'), thCase('戊', ['辛未', '庚子', '戊午', '壬子'], '年月透辛金者')[0], thCase('戊', ['壬申', '辛丑', '戊午', '壬子'], '年月透辛金者')[0]],
+    [[false, ['辛透在年干或者月干']], true, true]);
+  eq('调候「或无癸，有两丙透者」：只有一个丙不算合；年、月、时三干里有两个丙才算',
+    [thCase('己', ['乙亥', '丙戌', '己卯', '辛未'], '或无癸，有两丙透者'), thCase('己', ['丙午', '戊戌', '己卯', '丙寅'], '或无癸，有两丙透者')[0]],
+    [[false, ['盘里没有癸', '丙透出两个以上']], true]);
+  eq('调候「如月时皆丙」「时月出癸」：皆是两柱都要，出是任一柱',
+    [thCase('辛', ['壬申', '丙辰', '辛卯', '丙申'], '如月时皆丙')[0], thCase('辛', ['丙申', '壬辰', '辛卯', '丙申'], '如月时皆丙')[0], thCase('丙', ['癸未', '甲寅', '丙午', '甲午'], '时月出癸')[0], thCase('丙', ['甲申', '丙寅', '丙午', '癸巳'], '时月出癸')[0]],
+    [true, false, false, true]);
   const timeRules = JSON.parse(ev(`JSON.stringify(Object.entries(TH_TIME).flatMap(([k,cs])=>Object.keys(cs).filter(q=>!TH2[k[0]][k[1]].cases.some(c=>c[0]===q))))`));
   eq('每一项未核对的节令前提都有对应摘录，调整条目后不会失去对应', timeRules, []);
   const winter = ps => JSON.parse(ev(`JSON.stringify(thOf('乙',${JSON.stringify(ps)}.map((x,i)=>({k:'年月日时'[i],g:x[0],z:x[1]}))).cases.filter(c=>['生于冬至之后，坐下木局，得丙透干者','即丁出干'].includes(c.q)).map(c=>[c.ok,c.pending]))`));
@@ -1732,6 +1756,51 @@ console.log('导入、编辑、删除的边角情形');
   const idsNow = JSON.parse(ev('JSON.stringify(PEOPLE.map(p=>p.id))')), stored = JSON.parse(w.localStorage.getItem('bz-people')).map(x => x.id);
   eq('浏览器里存的人：编号缺的、重复的、和自带的人相同的另起一个，页面上每个人的编号都不相同，改过的写回浏览器', [new Set(idsNow).size === idsNow.length, idsNow.filter(id => id === people[0]).length, stored.every(id => typeof id === 'string' && !!id), new Set(stored).size, stored.includes('dup')], [true, 1, true, 4, true]);
   reset();
+  // ---- 2026-11-21 复核报告的几条 ----
+  // 第 2 条：导入时没写、空着、写成 null 或 false 的经度不能当成 0 度；写明 0 度的照样能用
+  const lonGot = [null, '', '   ', false, 0, '0', 120].map(lon => { const m = ev(`importText(${JSON.stringify(JSON.stringify({ id: 'lon-t', name: '经度', gender: '男', birth: '2000-06-05 01:00', lon }))})`), x = JSON.parse(ev("JSON.stringify(LOCAL.find(x=>x.id==='lon-t')||null)")); reset(); return x ? x.lon : /经度要填一个数/.test(m) ? '拒绝' : m; });
+  eq('导入的经度：空的、null、false 被拒绝并说明原因，不当成 0 度；写明的 0 度和 120 度照常导入', lonGot, ['拒绝', '拒绝', '拒绝', '拒绝', 0, 0, 120]);
+  // 第 1 条：两个标签页各存一人。另一页存的人直接写进 localStorage 来模拟，这一页再存、再删
+  const other = add => w.localStorage.setItem('bz-people', JSON.stringify(JSON.parse(w.localStorage.getItem('bz-people') || '[]').concat(add)));
+  const P1 = id => ({ id, name: '页' + id, gender: '男', birth: '2000-01-01 12:00', lon: 120 }), idsIn = () => JSON.parse(w.localStorage.getItem('bz-people') || '[]').map(x => x.id).join(',');
+  ev(`importText(${JSON.stringify(JSON.stringify(P1('tabA')))})`); other([P1('tabB')]);
+  const m2 = ev(`importText(${JSON.stringify(JSON.stringify(P1('tabC')))})`);
+  eq('两个标签页各存一人：后存的不盖掉先存的，三个人都在；别的页存的人这一页也有了', [m2.includes('导入了 1 个人'), idsIn(), ev("LOCAL.map(x=>x.id).join(',')"), ev("PEOPLE.some(p=>p.id==='tabB')")], [true, 'tabA,tabB,tabC', 'tabA,tabB,tabC', true]);
+  w.localStorage.setItem('bz-people', JSON.stringify(JSON.parse(w.localStorage.getItem('bz-people')).filter(x => x.id !== 'tabA')));      // 另一页删了 A
+  ev(`importText(${JSON.stringify(JSON.stringify(P1('tabD')))})`);
+  eq('另一页删掉的人，这一页再存别人的时候不会写回去', idsIn(), 'tabB,tabC,tabD');
+  w.localStorage.setItem('bz-people', JSON.stringify(JSON.parse(w.localStorage.getItem('bz-people')).map(x => x.id === 'tabB' ? Object.assign({}, x, { name: '另一页改的' }) : x)));      // 另一页改了 B 的称呼
+  ev(`editing='tabC';LOCAL[LOCAL.findIndex(x=>x.id==='tabC')]=Object.assign({},LOCAL.find(x=>x.id==='tabC'),{name:'这一页改的'});writeLocal();rebuildPeople();`);
+  eq('两页各改一个人：各自的改动都留着', JSON.parse(w.localStorage.getItem('bz-people')).map(x => x.id + ':' + x.name).join(','), 'tabB:另一页改的,tabC:这一页改的,tabD:页tabD');
+  ev(`LOCAL=LOCAL.filter(x=>x.id!=='tabD');writeLocal();rebuildPeople();`); other([P1('tabE')]);
+  ev(`LOCAL=LOCAL.filter(x=>x.id!=='tabC');writeLocal();rebuildPeople();`);
+  eq('这一页删人，别的页同时加人：删的删掉，加的留着', idsIn(), 'tabB,tabE');
+  w.localStorage.setItem('bz-people', '[]'); ev('readLocal();rebuildPeople();usePerson(0)'); reset();
+  // 第 3 条：时辰不详、当天晚上十点以后才交节的，十二个中点都在交节之前，要说出交节以后是另一种排法
+  ev(`LOCAL=[{id:'late-jie',name:'虚构',gender:'男',birth:'2021-02-03',nohour:true}];writeLocal();rebuildPeople();usePerson(PEOPLE.findIndex(p=>p.id==='late-jie'));`);
+  const lateTxt = txt($('hours')), afterJ = JSON.parse(ev(`JSON.stringify((p=>[p.pillars[0],p.pillars[1],p.yun.forward])(chartOf({id:'x',name:'x',gender:'男',birth:'2021-02-03 23:30',lon:120})))`));
+  eq('时辰不详、深夜交立春：说明里写出交节的时刻、交节以后的年柱和月柱、大运的顺逆，和按钟表时间排出来的相同', [/22:58 才交立春/.test(lateTxt), lateTxt.includes(`年柱是${afterJ[0]}、月柱是${afterJ[1]}`), lateTxt.includes(`大运改成${afterJ[2] ? '顺' : '逆'}排`)], [true, true, true]);
+  ev(`LOCAL=[{id:'late-jie',name:'虚构',gender:'男',birth:'2021-02-10',nohour:true}];writeLocal();rebuildPeople();usePerson(PEOPLE.findIndex(p=>p.id==='late-jie'));`);
+  eq('时辰不详、当天不交节：没有这一句', /才交/.test(txt($('hours'))), false);
+  reset();
+  // 第 4 条：正排在交节那一边的四柱，反查要找得回原来的日子；选中、保存、再排，还是原来的四柱和大运
+  const clk = JSON.parse(ev(`JSON.stringify((p=>({ps:p.pillars,fw:p.yun.forward,dy:p.dayun.map(d=>d.gz).join()}))(chartOf({id:'x',name:'x',gender:'男',birth:'2021-02-03 22:59:30',lon:120})))`));
+  const found = JSON.parse(ev(`JSON.stringify(datesOf(${JSON.stringify(clk.ps)}))`)), hit = found.find(x => x.birth === '2021-02-03');
+  const back = hit ? JSON.parse(ev(`JSON.stringify((p=>({ps:p.pillars,fw:p.yun.forward,dy:p.dayun.map(d=>d.gz).join(),jie:p.jie,clock:p.clock.slice(0,4),round:infoFrom(p).jie==='after'&&infoKey(infoFrom(p))===infoKey(Object.assign({id:'x',name:'x',gender:'男'},${JSON.stringify(hit)})),link:linkInfo(new URLSearchParams(linkOf(Object.assign({id:'x',name:'x',gender:'男'},${JSON.stringify(hit)})))).info.jie}))(chartOf(Object.assign({id:'x',name:'x',gender:'男'},${JSON.stringify(hit)}))))`)) : null;
+  eq('四柱反查：交节落在这个时辰里的日子两边都试，找得回原来的日子；照它排出来的四柱、大运和按钟表时间排的相同，取回出生信息、写成链接再读回来都带着是哪一边',
+    [found.map(x => x.birth + (x.jie || '')), back && [back.ps, back.fw, back.dy, back.jie, back.clock, back.round, back.link]], [['1901-03-05', '1961-02-18', '2021-02-03after'], [clk.ps, clk.fw, clk.dy, 'after', [2021, 2, 3, 22], true, 'after']]);
+  eq('交节的前后只和时辰一起用，只认 before、after；中点本来就在那一边的不改排法', [ev(`checkInfo({id:'x',name:'x',gender:'男',birth:'2021-02-03',shichen:'亥',jie:'x'})`) !== '', ev(`checkInfo({id:'x',name:'x',gender:'男',birth:'2021-02-03 22:00',lon:120,jie:'after'})`) !== '', ev(`chartOf({id:'x',name:'x',gender:'男',birth:'2021-02-03',shichen:'亥',jie:'before'}).jie`), ev(`chartOf({id:'x',name:'x',gender:'男',birth:'2021-02-10',shichen:'亥',jie:'after'}).jie`)], [true, true, undefined, undefined]);
+  // 正排、反查来回：随机取交节前后一小时里的时刻，排出四柱，反查都要能找回那一天
+  const lost = JSON.parse(ev(`(()=>{const out=[];let seed=20261121;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
+    for(let n=0;n<240;n++){const k=(1900-TABLES.jieFrom)*12+Math.floor(rnd()*200*12), t=JIE_T[k]+Math.floor((rnd()-.5)*7000), a=fromSec(t); if(a[0]<1900||a[0]>2100||a[3]===23) continue;
+      const pad=x=>String(x).padStart(2,'0'), day=a[0]+'-'+pad(a[1])+'-'+pad(a[2]), sh=Z[Math.floor((a[3]+1)/2)%12], c=toSec(a[0],a[1],a[2],2*Z.indexOf(sh)), B=pillarsAt(a).p, M=pillarsAt(fromSec(c)).p, ps=[B[0],B[1],M[2],M[3]];
+      if(!datesOf(ps).some(x=>x.birth===day)) out.push(day+' '+pad(a[3])+':'+pad(a[4])+' '+ps.join(''));}
+    return JSON.stringify(out);})()`));
+  eq('交节前后一小时里随机取的时刻：排出来的四柱反查都找得回那一天', lost, []);
+  // 第 7 条：四立前十八天照秒算。2024 年立夏是 5 月 5 日 08:10:05，分界是 4 月 17 日 08:10:05
+  const tu18 = ['08:09:05', '08:09:06', '08:10:04', '08:10:05', '08:10:06'].map(t => { ev(`LOCAL=[{id:'tu18',name:'虚构',gender:'男',birth:'2024-04-17 ${t}',lon:120}];writeLocal();rebuildPeople();usePerson(PEOPLE.findIndex(p=>p.id==='tu18'));`); return ev('qrNow().tu'); });
+  eq('四立前十八天的分界照秒算：分界前一秒不算，正好在分界上和以后都算', [ev('JSON.stringify(P.nextJie.at)'), tu18], ['[2024,5,5,8,10,5]', [false, false, false, true, true]]);
+  reset();
 }
 
 // 异常旧记录：启动时提示、写入时保留、导出原值，只有修复成功才替换。
@@ -1741,7 +1810,7 @@ console.log('导入、编辑、删除的边角情形');
   let a=make(JSON.stringify([broken])), aw=a.window, ae=x=>aw.eval(x), ad=aw.document;
   eq('打开页面就提示异常旧记录，名称只当文字显示；原值完整保留', [ad.getElementById('pp-recovery').hidden,!!ad.querySelector('#pp-recovery img'),JSON.parse(ae('JSON.stringify(REJECTED.map(r=>r.value))'))], [false,false,[broken]]);
   ae(`importText(${JSON.stringify(JSON.stringify(good))})`);
-  eq('导入正常资料不会清除异常旧记录，换人也不清除恢复提示', [JSON.parse(aw.localStorage.getItem('bz-people')),ad.getElementById('pp-recovery').hidden], [[{id:good.id,name:good.name,gender:good.gender,birth:good.birth,place:'',lon:good.lon},broken],false]);
+  eq('导入正常资料不会清除异常旧记录，换人也不清除恢复提示', [JSON.parse(aw.localStorage.getItem('bz-people')),ad.getElementById('pp-recovery').hidden], [[broken,{id:good.id,name:good.name,gender:good.gender,birth:good.birth,place:'',lon:good.lon}],false]);      // 读不了的旧记录留在原来的位置，新加的排在后面
   // 导出按钮确实交出原来的无效字段，而非空数组。
   ae("downloadJSON=(text,name)=>{window.__download={text,name};}");
   ad.getElementById('pp-recovery-export').click();

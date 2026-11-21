@@ -265,6 +265,8 @@ def load_people(src_dir):
         extra = [k for k in src if k not in REQUIRED + OPTIONAL]
         if extra:
             print(f'提醒：{name} 里有不认识的字段 {extra}，已忽略。')
+        if 'jie' in src:        # 页面里「只知道时辰」的人才有的一项（交节在这个时辰里，出生在哪一边）；这里不认，照中点排会和页面排的不一样
+            raise SystemExit(f'{name}：jie（交节的前后）只用在页面上添加的人身上，people/ 下的文件不支持')
         if src['gender'] not in ('男', '女'):
             raise SystemExit(f'{name} 的 gender 应当是 "男" 或 "女"，现在是 {src["gender"]!r}')
         if 'shichen' in src:
