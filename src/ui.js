@@ -21,14 +21,12 @@ let LOCAL=[];                      // 能排盘的出生信息，格式见 chart
 let REJECTED=[];                   // 不能读取的旧记录：保留原值和原因，写入时一并保留
 let RAW_LOCAL=null;                // 整份 JSON 损坏或不是数组时保留原文，暂停写入，供导出恢复
 let STORE_OK=true;
-function readLocal(){
-  LOCAL=[];REJECTED=[];RAW_LOCAL=null;BROKEN=[];
-  try{
-    const raw=localStorage.getItem('bz-people');
-    let v;
-    try{v=raw===null?[]:JSON.parse(raw);}catch(e){RAW_LOCAL=raw;STORE_OK=false;return;}
-    if(!Array.isArray(v)){RAW_LOCAL=raw;STORE_OK=false;return;}
-    STORE_OK=true;
+/* 上一次读、写浏览器的时候，每个编号的记录是什么样（JSON 文本）。写的时候拿它看这一页自己改了哪几个人（writeLocal）。 */
+let SYNCED=new Map();
+const snapshot=()=>{SYNCED=new Map(LOCAL.map(x=>[x.id,JSON.stringify(x)]));};
+/* 把浏览器里存的那个数组分成能排盘的（LOCAL）和读不了的（REJECTED）；缺编号、编号重复、和页面自带的人同名的另起编号。返回有没有改过编号 */
+function loadRecords(v){
+  LOCAL=[];REJECTED=[];
     v.forEach(x=>{
       try{
         const bad=!x||typeof x!=='object'||Array.isArray(x)?'这一项不是人物资料。'
@@ -41,15 +39,49 @@ function readLocal(){
     const seen=new Set(DATA.people.map(p=>p.id));
     let fixed=false;
     LOCAL=LOCAL.map(x=>{const good=typeof x.id==='string'&&x.id&&!seen.has(x.id), o=good?x:Object.assign({},x,{id:newId()});if(!good) fixed=true;seen.add(o.id);return o;});
-    if(fixed) writeLocal();
+  return fixed;
+}
+function readLocal(){
+  LOCAL=[];REJECTED=[];RAW_LOCAL=null;BROKEN=[];SYNCED=new Map();
+  try{
+    const raw=localStorage.getItem('bz-people');
+    let v;
+    try{v=raw===null?[]:JSON.parse(raw);}catch(e){RAW_LOCAL=raw;STORE_OK=false;return;}
+    if(!Array.isArray(v)){RAW_LOCAL=raw;STORE_OK=false;return;}
+    STORE_OK=true;
+    if(loadRecords(v)) forceWrite();      // 刚读出来就改了编号：这一份就是浏览器里现在的，直接写回去
+    snapshot();
   }catch(e){STORE_OK=false;}
   finally{renderRecovery();}
 }
 const localRecords=()=>LOCAL.concat(REJECTED.map(r=>r.value));
+function forceWrite(){try{localStorage.setItem('bz-people',JSON.stringify(localRecords()));STORE_OK=true;}catch(e){STORE_OK=false;}}
+/* 把这一页的改动存进浏览器。同一个浏览器里可能开着几个标签页，各自在打开的时候读过一遍：不能把这一页记着的整个名单写回去，
+   那样会盖掉别的标签页后来存的人（2026-11-21 复核报告第 1 条：两页各导入一人，都提示成功，刷新以后先存的那一位没了）。
+   做法：先读回浏览器里现在的名单，只把这一页自己动过的并进去。新加的、改过的（和 SYNCED 记的不一样）用这一页的；
+   这一页删掉的（SYNCED 里有、LOCAL 里没有了）从名单里去掉；这一页没动过的照浏览器里现在的，别的标签页加的人留着、删的人不写回去。
+   两页改同一个人，后存的算数。写完照并好的名单重新认一遍，别的标签页加的人这一页也就有了。读不了的旧记录原样留着 */
 function writeLocal(){
   // 不能解析的原文件不覆盖。新加的人本次仍能看，也能单独导出。
   if(RAW_LOCAL!==null){STORE_OK=false;return false;}
-  try{localStorage.setItem('bz-people',JSON.stringify(localRecords()));STORE_OK=true;}catch(e){STORE_OK=false;}
+  try{
+    const raw=localStorage.getItem('bz-people'); let cur;
+    try{cur=raw===null?[]:JSON.parse(raw);}catch(e){cur=null;}
+    if(!Array.isArray(cur)){RAW_LOCAL=raw;STORE_OK=false;renderRecovery();return false;}      // 别的标签页留下了读不了的东西：不覆盖
+    const idOf=x=>x&&typeof x==='object'&&!Array.isArray(x)&&typeof x.id==='string'&&x.id?x.id:null;
+    const mine=new Map(LOCAL.map(x=>[x.id,x])), touched=id=>!SYNCED.has(id)||SYNCED.get(id)!==JSON.stringify(mine.get(id));
+    const gone=new Set([...SYNCED.keys()].filter(id=>!mine.has(id))), out=[], seen=new Set();
+    cur.forEach(x=>{
+      const id=idOf(x);
+      if(id===null||seen.has(id)){out.push(x);return;}      // 没有编号、编号重复的旧记录原样留着
+      if(gone.has(id)) return;
+      seen.add(id);out.push(mine.has(id)&&touched(id)?mine.get(id):x);
+    });
+    LOCAL.forEach(x=>{if(!seen.has(x.id)&&touched(x.id)){seen.add(x.id);out.push(x);}});
+    localStorage.setItem('bz-people',JSON.stringify(out));STORE_OK=true;
+    if(loadRecords(out)) forceWrite();
+    snapshot();
+  }catch(e){STORE_OK=false;}
   return STORE_OK;
 }
 function renderRecovery(){
@@ -292,9 +324,15 @@ function renderHours(){
   const rows=Z.split('').map(h=>{const c=chartOf(Object.assign({},info,{shichen:h}));
     const ps=c.pillars.map((gz,j)=>({k:'年月日时'[j],g:gz[0],z:gz[1],day:j===2})), q=qsOf(c.pillars[2][0],ps,true), x=xiOf(c.pillars[2][0],ps,true);
     return {h,p:c.pillars,help:q.help,tier:q.tier,xi:x.xi,dy:c.dayun.map(d=>d.gz).join(),fw:c.yun.forward,st:c.yun.start};});
+  // 这一天晚上十点以后才交节的：十二个时辰照中点排（最晚是亥时的 22 点）都在交节之前，交节以后出生的那一种排法一个也没有排到。
+  // 找出来交给 hoursSay 说明（2026-11-21 复核报告第 3 条：原来照十二个中点一比，说年柱、月柱和大运都不变）
+  const d0=toSec(...parseDay(info.birth)); let late=null;
+  for(let k=Math.max(0,pillarsAt(fromSec(d0)).i);k<JIE_T.length&&JIE_T[k]<d0+86400;k++){
+    if(JIE_T[k]>d0+22*3600){const B=pillarsAt(fromSec(JIE_T[k])).p;late={name:JIE[k%12],at:fromSec(JIE_T[k]),yp:B[0],mp:B[1],fw:(G.indexOf(B[0][0])%2===0)===(info.gender==='男')};}
+  }
   box.innerHTML=`<p class="hours-h"><b>时辰不详</b>现在按${P.shichen}时排，点别的时辰换着看</p>`
     +`<div class="hours-b" role="group" aria-label="选一个时辰">${rows.map(r=>`<button type="button" class="hr" data-hour="${r.h}" aria-pressed="${r.h===P.shichen}"><b>${r.h}时</b><span class="gz">${gzSpan(r.p[3])}</span></button>`).join('')}</div>`
-    +`<p class="note">${hoursSay(rows)}</p>`;
+    +`<p class="note">${hoursSay(rows,late)}</p>`;
 }
 /* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
    箭头指向被生、被克的一方。每个圈旁边是这一类十神对日主的合称，日主所属的那一行圈加粗 */
@@ -785,12 +823,13 @@ function renderLinkBar(){
   const bar=$('pp-link'); bar.hidden=!P.temp; if(!P.temp){bar.innerHTML='';return;}
   const ds=TEMP.dates&&TEMP.dates.length>1?TEMP.dates:null;
   bar.innerHTML=`<p>这一位来自链接，只在这一次打开的页面里，没有存进这个浏览器。</p><div class="row">`
-    +(ds?`<label>这副八字对得上的日子 <select id="pp-dates">${ds.map((x,i)=>`<option value="${i}"${x.birth===TEMP.info.birth?' selected':''}>${x.birth} ${x.shichen}时</option>`).join('')}</select></label>`:'')
+    +(ds?`<label>这副八字对得上的日子 <select id="pp-dates">${ds.map((x,i)=>`<option value="${i}"${x.birth===TEMP.info.birth&&(x.jie||'')===(TEMP.info.jie||'')?' selected':''}>${x.birth} ${x.shichen}时${jieSay(x)}</option>`).join('')}</select></label>`:'')
     +'<button type="button" class="pp" id="pp-save">保存到这个浏览器</button></div>';
 }
 function pickTempDate(i){
   if(!TEMP||!TEMP.dates||!TEMP.dates[i]) return;
   TEMP.info.birth=TEMP.dates[i].birth;TEMP.info.shichen=TEMP.dates[i].shichen;
+  if(TEMP.dates[i].jie) TEMP.info.jie=TEMP.dates[i].jie; else delete TEMP.info.jie;
   rebuildPeople();usePerson(PEOPLE.length-1);
 }
 function saveTemp(){
@@ -872,6 +911,12 @@ function setMode(m){
   formMsg('');
   if(m==='bazi') onBazi();
 }
+/* 反查出来的日子带着 jie 的：交节正落在这个时辰里，四柱对得上的是交节的那一边。列出来的时候写明是哪个节的之前还是之后 */
+function jieSay(d){
+  if(!d.jie) return '';
+  const k=jieInHour(toSec(...parseDay(d.birth),2*Z.indexOf(d.shichen)));
+  return k<0?'':`，${JIE[k%12]}${d.jie==='after'?'之后':'之前'}`;
+}
 /* 直接输入八字：认出四柱，查出 1900 到 2100 年里四柱都对得上的日子（chart.js 的 datesOf），列出来选一个，默认选第一个 */
 function onBazi(){
   const r=baziCheck(F('bazi').value), box=F('dates');
@@ -880,7 +925,7 @@ function onBazi(){
   if(!baziFound.length){box.innerHTML='<p class="msg">1900 到 2100 年里没有四柱都对得上的日子。</p>';return;}
   box.innerHTML=`<p class="hint">找到 ${baziFound.length} 个四柱都对得上的日子，选一个：</p>`+baziFound.map((d,i)=>{
     const [y,m,dd]=d.birth.split('-').map(Number), L=lunarOf(y,m,dd);
-    return `<label class="check"><input type="radio" name="pf-pick" value="${i}"${i===0?' checked':''}>${y} 年 ${m} 月 ${dd} 日，${d.shichen}时${L?`<small>农历${L.year}年${L.month}月${L.day}</small>`:''}</label>`;}).join('');
+    return `<label class="check"><input type="radio" name="pf-pick" value="${i}"${i===0?' checked':''}>${y} 年 ${m} 月 ${dd} 日，${d.shichen}时${jieSay(d)}${L?`<small>农历${L.year}年${L.month}月${L.day}</small>`:''}</label>`;}).join('');
 }
 function newId(){let id;do{id='u'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);}while(PEOPLE.some(p=>p.id===id)||LOCAL.some(x=>x.id===id));return id;}
 function saveForm(){
@@ -892,6 +937,7 @@ function saveForm(){
     if(!d){formMsg(baziFound.length?'从找到的日子里选一个。':'1900 到 2100 年里没有四柱都对得上的日子，排不了大运。');return;}
     info=Object.assign({},old,base,{birth:d.birth,shichen:d.shichen,place:''});
     delete info.lon;delete info.dst;delete info.nohour;
+    if(d.jie) info.jie=d.jie; else delete info.jie;      // 交节落在这个时辰里、四柱对得上的是交节的那一边：记下来，排盘照那一边
   }else{
     const t=F('time').value, ts=F('time').dataset, hms=t&&ts.sec&&t===ts.orig?`${t}:${ts.sec}`:t;
     info=Object.assign({},old,base,{birth:`${F('date').value} ${hms}`,place:placeOf(),lon:F('lon').value.trim()===''?NaN:Number(F('lon').value)});
@@ -899,6 +945,7 @@ function saveForm(){
     if(F('shichen').value==='none'){info.nohour=true;info.birth=F('date').value;delete info.shichen;delete info.lon;delete info.dst;}   // 不知道时辰：只存日期
     else if(F('shichen').value){info.shichen=F('shichen').value;info.birth=F('date').value;delete info.lon;delete info.dst;delete info.nohour;}   // 只知道时辰：时间和经度都不用
     else{delete info.shichen;delete info.nohour;}
+    if(!(old&&old.jie&&info.shichen&&old.shichen===info.shichen&&old.birth===info.birth)) delete info.jie;      // 日子和时辰没有改的，交节那一边照旧；改了就不留
   }
   const bad=checkInfo(info);
   if(bad){formMsg(bad);return;}
@@ -972,7 +1019,8 @@ function importText(text){
     const info={id:typeof src.id==='string'&&src.id?src.id:newId(),name:String(src.name||'未命名').slice(0,20),gender:src.gender,
       birth:src.birth,place:String(src.place||'').slice(0,30)};
     if(src.nohour===true) info.nohour=true;                       // 时辰不详的：只有日期，不要经度
-    else if(src.shichen) info.shichen=src.shichen; else info.lon=typeof src.lon==='number'?src.lon:Number(src.lon);
+    else if(src.shichen){info.shichen=src.shichen;if(src.jie!==undefined) info.jie=src.jie;}
+    else info.lon=typeof src.lon==='number'?src.lon:typeof src.lon==='string'&&src.lon.trim()!==''?Number(src.lon):NaN;      // 没写、空着、写成 null 或 false 的经度不是 0 度：原来 Number() 一转都成了 0，照本初子午线排，日柱时柱都会错（2026-11-21 复核报告第 2 条）
     if(src.dst===true&&!src.shichen&&!src.nohour) info.dst=true;
     if(typeof src.source==='string'&&src.source) info.source=src.source.slice(0,120);
     const nb={n:0};
@@ -1162,6 +1210,17 @@ let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-p
 if(!openLink(location.hash,startAt)) usePerson(startAt);
 setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);
 window.addEventListener('hashchange',()=>{openLink(location.hash);setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);});
+// 别的标签页存了人、删了人：这一页的名单跟着更新。正在看的人没有变就只重画人物那一排，选中的大运、年、月、日都不动；
+// 正在看的人被改了就照新的重排，被删了就换到第一位。来自链接、还没保存的那一位不受影响
+window.addEventListener('storage',e=>{
+  if(e.key!==null&&e.key!=='bz-people') return;
+  const was=P, before=JSON.stringify(P);
+  readLocal();rebuildPeople();
+  const i=PEOPLE.findIndex(p=>p.id===was.id&&!!p.temp===!!was.temp);
+  if(i<0){usePerson(0);return;}
+  if(JSON.stringify(PEOPLE[i])!==before){usePerson(i);return;}
+  sel.p=i;P=PEOPLE[i];renderPeopleRow();
+});
 document.addEventListener('change',e=>{
   if(!e.target||e.target.id!=='pp-dates') return;
   pickTempDate(Number(e.target.value));

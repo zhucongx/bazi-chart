@@ -755,9 +755,13 @@ function qrOf(dm,ps,tu){
   return {mz,ling,tu,st,deLing,gan,fu,bang,zhi,sheng,qi,tier};
 }
 /* 这张盘的强弱。辰未戌丑四个月，要看出生时离下一个节（立夏、立秋、立冬、立春）是不是在十八天以内 */
+/* 离下一个节还有多少秒：拿交节的时刻和出生的时刻（只知道时辰、照交节那一边排的人用 jieClock）直接比。
+   十八天的分界照秒算：原来拿舍去秒的分钟数去比 18 天的分钟数，分界提前了最多 59 秒（2026-11-21 复核报告第 7 条）。正好在分界上的算在十八天里 */
+const secOf=a=>Date.UTC(a[0],a[1]-1,a[2],a[3],a[4],a[5]||0)/1000;
+const inTu18=p=>'辰未戌丑'.includes(p.pillars[1][1])&&secOf(p.nextJie.at)-secOf(p.jieClock||p.clock)<=18*86400;
 function qrNow(){
   const four='辰未戌丑'.includes(NATAL[1].z), nj=P.nextJie;
-  return Object.assign(qrOf(DM,NATAL.map(p=>p.g+p.z),four&&nj.min<=18*1440),{four,nj});
+  return Object.assign(qrOf(DM,NATAL.map(p=>p.g+p.z),inTu18(P)),{four,nj});
 }
 const qrName=r=>r.tier==='中'?'中强，也叫中弱':r.tier;
 /* 「强弱」一页最上面的四张卡片：常说的得令、得地、得势、得气。古书里没有把这四个词当成一套定义（见 docs/取法约定.md「强弱」一节），页面各照一家：
@@ -1052,18 +1056,23 @@ function tiaohouRow(){
      tou:X 年、月、时三个天干里有 X；zang:X 天干里没有、地支的藏干里有；has:X 透出或者藏着；no:X 都没有；notou:X 不透；
      root:X 透出，地支的藏干里又有同一五行的字；pai:E 三个天干加四个地支的本气里，属 E 的有三个以上（「一派」「重重」）；
      ju:E 地支三合局或者三会方三支全；zhi:Z、nozhi:Z 地支有、没有 Z；el:E、noel:E 天干和藏干里有、没有属 E 的字；or:a|b 任一成立。
+     原文指定了柱位、数量的（2026-11-21 复核报告第 5 条：原来只看有没有，「年月透辛」辛只在时干也算合，「有两丙透」只有一个丙也算合）：
+     at:柱:X X 透在这几柱里的某一柱上（柱是年、月、时里的几个字，at:年月:辛 是辛透在年干或者月干）；all:柱:X 这几柱的天干都是 X；n2:X 年、月、时三个天干里 X 有两个以上。
    has、no、zang、el、noel 说的「地支」不算月支：月支是这个月本来就有的，书里讲某个月「无丙」「见水」，说的是盘里另外有没有。
    寅月的寅里藏着丙，照字面算「无丙」永远不成立（五组摘录都碰到了这个问题）。root 的根、pai 的本气、ju 的三支照样算月支。
    书里的制、破、伤、合这类关系，用两边的字在不在来近似；程度词（得所、有力、太旺）数不了，条件说不通的没有收，个数记在 skip 里。 */
 const TH_JU=SANHE.map(t=>[t.slice(0,3),EL.indexOf(t[3][0])]).concat(SANHUI.map(t=>[t.slice(0,3),EL.indexOf(t[3].slice(-1))]));
 function thAtom(a,x){
   if(a.startsWith('or:')){const xs=a.slice(3).split('|').map(b=>thAtom(b,x));return {l:xs.map(o=>o.l).join('，或者'),ok:xs.some(o=>o.ok)};}
-  const [k,v]=a.split(':'), e=EL.indexOf(v), inG=x.gan.includes(v), inH=x.hid.includes(v), anyEl=()=>x.gan.concat(x.hid).some(g=>gEl(g)===e);
+  const [k,v,w]=a.split(':'), e=EL.indexOf(v), inG=x.gan.includes(v), inH=x.hid.includes(v), anyEl=()=>x.gan.concat(x.hid).some(g=>gEl(g)===e);
+  const on=c=>x.gan['年月时'.indexOf(c)]===w, cols=()=>[...v].map(c=>c+'干');      // at、all 两种：v 是柱（年、月、时里的几个），w 是天干
   return ({tou:()=>({l:`${v}透出`,ok:inG}),zang:()=>({l:`${v}不透，藏在地支里`,ok:!inG&&inH}),has:()=>({l:`盘里有${v}`,ok:inG||inH}),no:()=>({l:`盘里没有${v}`,ok:!inG&&!inH}),
     notou:()=>({l:`${v}不透`,ok:!inG}),root:()=>({l:`${v}透出，地支里有根`,ok:inG&&x.all.some(h=>gEl(h)===gEl(v))}),
     pai:()=>({l:`${v}有三个以上`,ok:x.seven.filter(g=>gEl(g)===e).length>=3}),ju:()=>({l:`地支成${v}局`,ok:TH_JU.some(([zs,el])=>el===e&&zs.every(z=>x.zs.includes(z)))}),
     zhi:()=>({l:`地支有${v}`,ok:x.zs.includes(v)}),nozhi:()=>({l:`地支没有${v}`,ok:!x.zs.includes(v)}),
-    el:()=>({l:`盘里有${v}`,ok:anyEl()}),noel:()=>({l:`盘里没有${v}`,ok:!anyEl()})})[k]();
+    el:()=>({l:`盘里有${v}`,ok:anyEl()}),noel:()=>({l:`盘里没有${v}`,ok:!anyEl()}),
+    at:()=>({l:`${w}透在${cols().join('或者')}`,ok:[...v].some(on)}),all:()=>({l:`${cols().join('、')}都是${w}`,ok:[...v].every(on)}),
+    n2:()=>({l:`${v}透出两个以上`,ok:x.gan.filter(g=>g===v).length>=2})})[k]();
 }
 /* 书里有几种情形带着节令的前提（秋分后、冬至之后、上半月），页面没有算这些日子（节气表里只有十二个节，没有中气）。
    这几种和接着这句话往下说的几种，别的条件都合时记作待核对（ok 是 null），不算进合的数目；别的条件不合照样是不合。
@@ -1473,10 +1482,11 @@ const gjbNow=()=>memo('gjb',()=>gjbOf(DM,NATAL,gjbGes().ges));
    并且把是哪一条、欠哪一项接在后面（gjbLimits）。原来不管另外的条件，一律写成格；中间一版只写「有成格条件相符」，没有结论也没有人话 */
 const GJB_V={成:'重心有帮手，没有被搅，照这一章这个结构是完整的。',带忌:'重心有帮手，可是也有来搅局的字，照这一章是成中有败。',败:'重心被别的字搅坏了，或者缺了该有的帮手，照这一章这个结构不完整。',
   救应:'有来搅局的字，又有别的字把它管住了，照这一章是败中有成。',都不合:'这一章给这一格列的条件一条也不合，书里没有说这种情形算成还是算败。',
-  成欠:'重心有帮手，可是书里讲这一格时另外要的条件没有全合，照书还算不上完整的成格。'};
-const GJB_VN={成:'成格',带忌:'成中有败',败:'败格',救应:'败中有救应',都不合:'成败的条件都不合',成欠:'成格的条件合，另外的条件没有全合'};
+  成欠:'重心有帮手，可是书里讲这一格时另外要的条件没有全合，照书还算不上完整的成格。',
+  未定:'这一章给这一格列的条件，没有一条确认合；可是有的条件要看强弱，这张盘强弱居中，定不了，所以还不能说都不合。'};
+const GJB_VN={成:'成格',带忌:'成中有败',败:'败格',救应:'败中有救应',都不合:'成败的条件都不合',成欠:'成格的条件合，另外的条件没有全合',未定:'没有一条确认合的，有的还定不了'};
 const gjbShort=o=>o.ok===true&&o.more.some(m=>m[1]!==true);      // 这一条合了，书里另外要的条件却有不合或者定不了的
-const gjbV=g=>g.v==='成'&&g.rows.some(gjbShort)?'成欠':g.v;
+const gjbV=g=>g.v==='成'&&g.rows.some(gjbShort)?'成欠':g.v==='都不合'&&g.unsure?'未定':g.v;      // 一条也没有确认合、可是有的条件强弱居中定不了的，不说「都不合」（2026-11-21 复核报告第 6 条：前半句说有一条定不了，后半句说都不合）
 function gjbCaveat(o){
   const no=o.more.filter(m=>m[1]===false).map(m=>m[0]), pending=o.more.filter(m=>m[1]===null).map(m=>m[0]);
   return (no.length?'补充条件不合：'+no.join('、')+'。':'')+(pending.length?'补充条件定不了（强弱居中）：'+pending.join('、')+'。':'')+(o.todo?'书里还有页面没有核对的条件，见这一条的解释。':'');
@@ -1581,12 +1591,12 @@ function metaRows(){return memo('meta',()=>{
       ['星座',`${P.xingzuo}座是西方占星里的太阳星座，和八字是两套互不相干的体系，排盘软件习惯一并列出。`]]},
     {k:'节气',dd:`${pj.name}后 ${rough(pj.min)}，${nj.name}前 ${rough(nj.min)}`,t:'出生节气',p:[
       ['是什么','二十四节气里，立春、惊蛰、清明等十二个节是八字月份的分界。'],
-      ['这张盘',`${pj.name}（${pj.at[1]} 月 ${pj.at[2]} 日）到${nj.name}（${nj.at[1]} 月 ${nj.at[2]} 日）之间是${mz}月。出生在${pj.name}之后 ${span(pj.min)}、${nj.name}之前 ${span(nj.min)}`+(close?`。离${nearJ.name}不到一天，${nearJ.name==='立春'?'年柱和月柱':'月柱'}要看交接的具体时刻（北京时间 ${nearJ.at[1]} 月 ${nearJ.at[2]} 日 ${hm(nearJ.at)}）。`+(P.shichen&&!P.nohour?`出生时间只记到时辰，页面拿${sc.z}时的中点当钟表时间去比。`:'交节是一个确定的时刻，页面拿出生的那一刻去比。'):`，离两头都超过一天，月柱${mp}没有疑问。`)],
+      ['这张盘',`${pj.name}（${pj.at[1]} 月 ${pj.at[2]} 日）到${nj.name}（${nj.at[1]} 月 ${nj.at[2]} 日）之间是${mz}月。出生在${pj.name}之后 ${span(pj.min)}、${nj.name}之前 ${span(nj.min)}`+(close?`。离${nearJ.name}不到一天，${nearJ.name==='立春'?'年柱和月柱':'月柱'}要看交接的具体时刻（北京时间 ${nearJ.at[1]} 月 ${nearJ.at[2]} 日 ${hm(nearJ.at)}）。`+(P.jie?`出生时间只记到时辰，${nearJ.name}正落在${sc.z}时里，这张盘照${nearJ.name}${P.jie==='after'?'之后':'之前'}那一边排，见下面一段。`:P.shichen&&!P.nohour?`出生时间只记到时辰，页面拿${sc.z}时的中点当钟表时间去比。`:'交节是一个确定的时刻，页面拿出生的那一刻去比。'):`，离两头都超过一天，月柱${mp}没有疑问。`)],
       side?['注意',`真太阳时是 ${t[1]} 月 ${t[2]} 日 ${hm(t)}，落在${side<0?pj.name+'之前':nj.name+'之后'}。有的排法直接拿真太阳时去比，会排成${side<0?'上':'下'}一个月。同一个时刻不会因为出生地的经度不同就换了月份，页面照出生的那一刻排，${(side<0?pj:nj).name==='立春'?`年柱${yp}、`:''}月柱${mp}。`]:null,
       // 只知道时辰、交节又落在这个时辰前后的：时辰照当地太阳定，换成北京时间要看经度，出生在交节之前还是之后其实定不了。
       // 原来照中点排了就当确定的写（2026-11-18 审阅）。三小时：时辰本身两小时的一半，加上经度偏西偏东的余量
       P.shichen&&!P.nohour&&nearJ.min<180?['只知道时辰',(()=>{const up=nearJ===nj?1:-1, alt=gz=>JZ(((gz60(gz[0],gz[1])+up)%60+60)%60);
-        return `时辰是照当地太阳定的，换成北京时间还要看出生地的经度；这里只知道时辰，不知道是其中的哪一刻。${nearJ.name}离${sc.z}时的中点只有 ${span(nearJ.min)}，出生的那一刻在${nearJ.name}之前还是之后，其实定不了。排到${nearJ.name}${up>0?'之后':'之前'}的话，月柱是${alt(mp)}`+(nearJ.name==='立春'?`，年柱是${alt(yp)}，大运的顺逆也跟着变`:'')+`。页面照中点排，${nearJ.name==='立春'?`年柱${yp}、`:''}月柱${mp}。`;})()]:null]},
+        return `时辰是照当地太阳定的，换成北京时间还要看出生地的经度；这里只知道时辰，不知道是其中的哪一刻。${nearJ.name}离${sc.z}时的中点只有 ${span(Math.floor(Math.abs(secOf(nearJ.at)-secOf(P.clock))/60))}，出生的那一刻在${nearJ.name}之前还是之后，其实定不了。排到${nearJ.name}${up>0?'之后':'之前'}的话，月柱是${alt(mp)}`+(nearJ.name==='立春'?`，年柱是${alt(yp)}，大运的顺逆也跟着变`:'')+(P.jie?`。这张盘的出生信息里另记着是${nearJ.name}${P.jie==='after'?'之后':'之前'}出生的（从八字反查日期的，记的是四柱对得上的那一边），年柱、月柱和大运照这一边排：取${sc.z}时里${nearJ.name}${P.jie==='after'?'之后':'之前'}那一段的中点 ${hm(P.jieClock)} 当出生的时刻，${nearJ.name==='立春'?`年柱${yp}、`:''}月柱${mp}。`:`。页面照中点排，${nearJ.name==='立春'?`年柱${yp}、`:''}月柱${mp}。`);})()]:null]},
     {k:'空亡',dd:`日柱查：${xd} · 年柱查：${xy}`,t:'空亡',p:[
       ['是什么','十个天干配十二个地支，每配完一轮（一旬）会剩下两个地支，这两个叫空亡。'],
       ['怎么来的',`日柱${dp}在甲${Z[xunHead(dp[0],dp[1])]}旬，剩下${xd[0]}、${xd[1]}。年柱${yp}在甲${Z[xunHead(yp[0],yp[1])]}旬，剩下${xy[0]}、${xy[1]}。`],
@@ -2035,7 +2045,7 @@ function readLq(){
   return box('解读','<p>这套配法是顺着生克推出来的。生日主的正印是母亲；母亲的丈夫是偏财，所以偏财是父亲；男命以所克的财为妻，以克自己的正官、七杀为子女；女命以正官为夫，以所生的食神、伤官为子女。近代的《千里命稿》配法不同：父母都看印，子女不分男女命都看食神和伤官。</p>');
 }
 /* 时辰不详时，十二个时辰里哪些结果跟着变。rows 是每个时辰排出来的：四柱 p、强弱计分 help 和 tier、扶抑取的喜用 xi、大运 dy */
-function hoursSay(rows){
+function hoursSay(rows,late){      // late：这一天晚上十点以后交的节（renderHours 找的），十二个中点都在它之前
   const same=k=>rows.every(r=>r.p[k]===rows[0].p[k]), hs=rows.map(r=>r.help), cnt=t=>rows.filter(r=>r.tier===t).length, groups={};
   rows.forEach(r=>{const k=r.xi?elNames(r.xi):'';(groups[k]=groups[k]||[]).push(r.h);});
   const fixed=['年柱','月柱','日柱'].filter((x,k)=>same(k)), dyS=rows.every(r=>r.dy===rows[0].dy);
@@ -2056,7 +2066,9 @@ function hoursSay(rows){
     +`十二个时辰里，强弱计分从 ${Math.min(...hs)} 分到 ${Math.max(...hs)} 分：${cnt('弱')} 个算身弱，${cnt('强')} 个算身强`+(cnt('间')?`，${cnt('间')} 个在两条线之间`:'')+'。'
     +(gs.length===1?(gs[0][0]?`扶抑取的喜用都一样，是${gs[0][0]}。`:'扶抑都取不了喜用。')
       :`扶抑取的喜用跟着变：${gs.map(([k,v])=>`${v.join('、')}时${k?'喜'+k:'取不了'}`).join('；')}。`)
-    +qy;
+    +qy
+    +(late?`这一天北京时间 ${hm(late.at)} 才交${late.name}，上面十二个时辰照中点排，都在交节之前。交节以后出生的（亥时剩下的那一小段，和晚上 11 点以后），`
+      +`${late.name==='立春'?`年柱是${late.yp}、`:''}月柱是${late.mp}`+(late.fw!==rows[0].fw?`，大运改成${late.fw?'顺':'逆'}排`:'')+'，这里没有排到。知道大概的钟点，可以改用「按出生时间」填。':'');
 }
 function footItems(){
   return [
