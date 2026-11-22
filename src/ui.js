@@ -164,7 +164,9 @@ function cols(){
 }
 
 /* ---------- 换人 ---------- */
-function usePerson(i){
+/* place：停在哪里，只改 sel、不画，默认的位置定好以后、画之前调用。换时辰、打开链接、存下来自链接的人都走这里，只画一遍：
+   原来先照默认的画、再照要停的地方画一遍，没有变的也跟着动，横条的平滑滚动还会停在默认的那一格（2026-11-22 审阅） */
+function usePerson(i,place){
   sel.p=i; P=PEOPLE[i]; MEMO={};
   DM=P.pillars[2][0]; DMN=gN(DM);
   NATAL='年月日时'.split('').map((k,j)=>({k,g:P.pillars[j][0],z:P.pillars[j][1],day:j===2}));
@@ -180,6 +182,7 @@ function usePerson(i){
   sel.m=NOW_M<0?0:NOW_M; sel.d=TODAY; sel.x=null;
   // 今天不在大运范围里的人，从起运的那一天看起：起运日落在第一年的哪个流月，就停在那个月的那一天。起运日在那一年立春以前的，照旧停在第一个月
   if(!inRange){const s0=dyStart(0);for(let m=0;m<12;m++){if(monthDays(Y_MIN,m).includes(s0)){sel.m=m;sel.d=s0;}}}
+  if(place) place();
   $('sheet').hidden=true;
   renderPerson();markOn();      // 模板里写死的表头不随换人重画，「解释正开着」的标记要另外消掉
   if(!P.temp){try{localStorage.setItem('bz-person',P.id);}catch(e){}}      // 画完再记；来自链接、还没保存的人不记
@@ -198,6 +201,7 @@ function anchorOf(key,n,home){const all=sameKey(key,home);return all[n]||all[0]|
 function placeSheet(el){
   const s=$('sheet'), inn=s.firstElementChild;
   if(!el||!el.getBoundingClientRect) return;
+  settle(el);      // 所指的字正在移动的，先让它到位
   const r=el.getBoundingClientRect(), vw=document.documentElement.clientWidth, vh=window.innerHeight;
   const below=vh-r.bottom, above=r.top, up=below<300&&above>below;
   inn.style.maxHeight=Math.max(170,Math.min(460,(up?above:below)-24))+'px';
@@ -232,6 +236,7 @@ function refreshSheet(){
 const TABS={natal:['bz','tk','wx','qr','gods','gj','ys','lq'],pan:['pan','rel','gt','sy']};      // 六亲宫位（lq）是原局的最后一页：它不在强弱、格局、喜忌那条读盘的线上，所以排在喜忌后面。原来是页面最下面单独的一张卡片，2026-11-18 用户问能不能放到上面，挪进了标签栏
 function setTab(card,id,focus){
   if(!TABS[card]||!TABS[card].includes(id)) return;
+  const was=sel.tab[card];
   sel.tab[card]=id;
   TABS[card].forEach(t=>{
     const on=t===id, b=$('h-'+t);
@@ -246,6 +251,7 @@ function setTab(card,id,focus){
     if(!el||el.closest('[role="tabpanel"][hidden]')) closeSheet(); else placeSheet(el);
   }
   reveal();
+  turnPage(was,id);
 }
 /* 浅色、深色：默认跟着系统；点了右上角的按钮就换成另一种，记在 localStorage 的 bz-theme 里，读写包在 try/catch 里 */
 const darkNow=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);};
@@ -260,6 +266,8 @@ function setRead(on){
 }
 
 /* ---------- 渲染 ---------- */
+const paras=t=>t.split('\n').map(s=>`<span class="pa">${esc(s)}</span>`).join('');      // 长说明（.note.long）：文字里的换行是分段，一段一块，分两栏时不拆开
+const parasHTML=h=>h.split('<br>').map(s=>`<span class="pa">${s}</span>`).join('');      // 带网页代码的（gjbSay）按 <br> 分段
 const xb=(cls,key,html)=>`<button type="button" class="${cls}" data-x="${esc(key)}">${html}</button>`;
 const ic=i=>`<svg class="ic" aria-hidden="true" focusable="false"><use href="#i-${ELC[i]}"/></svg>`;      // 五行的小图标
 /* 细盘里的干支大字。kind 是 'g'（天干）或 'z'（地支）；地支带上生肖，由样式显示在右下角 */
@@ -290,6 +298,7 @@ function renderPeopleRow(){
     +'<button type="button" class="pp add" id="pp-share">分享</button>';
 }
 function renderPerson(){
+  SWITCH=!SHOWN||SHOWN.who!==whoNow();
   renderPeopleRow();
   renderLinkBar();
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
@@ -301,7 +310,7 @@ function renderPerson(){
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');
   $('meta-yun').innerHTML=meta.filter(r=>META_YUN.includes(r.k)).map(mrow).join('');
   ['bz','pan','yun','rel','rel2','wx','tk','qr','gods','gj','ys','lq','gt','gw'].forEach(s=>{$('rd-'+s).innerHTML=readHTML(s);});
-  $('note-yun').textContent=noteYun();
+  $('note-yun').innerHTML=paras(noteYun());
   $('note-wx').textContent=noteWx();
   // 日主一页最上面是四项（quadItems）：日主属性、阴阳参考就是「日主」「阴阳」两行，旺衰参考、格局参考是「强弱」「格局」两页的结论
   const kv=kvRows(), quad=quadItems(), part={kv:[],'kv-qr':[],'kv-gj':[],kv2:[]};
@@ -312,10 +321,11 @@ function renderPerson(){
   Object.keys(part).forEach(id=>{$(id).innerHTML=dl(part[id]);});
   $('note-qr').textContent=noteQr();
   $('foot').innerHTML=footItems().map(x=>`<li>${x}</li>`).join('');
-  $('note-sk').textContent=noteSK();
-  $('note-gt').textContent=noteGT();
+  $('note-sk').innerHTML=paras(noteSK());
+  $('note-gt').innerHTML=paras(noteGT());
   $('note-gw').textContent=noteGw();
   renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  showPerson();SWITCH=false;
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
 function renderHours(){
@@ -332,7 +342,7 @@ function renderHours(){
   }
   box.innerHTML=`<p class="hours-h"><b>时辰不详</b>现在按${P.shichen}时排，点别的时辰换着看</p>`
     +`<div class="hours-b" role="group" aria-label="选一个时辰">${rows.map(r=>`<button type="button" class="hr" data-hour="${r.h}" aria-pressed="${r.h===P.shichen}"><b>${r.h}时</b><span class="gz">${gzSpan(r.p[3])}</span></button>`).join('')}</div>`
-    +`<p class="note">${hoursSay(rows,late)}</p>`;
+    +`<p class="note long">${paras(hoursSay(rows,late))}</p>`;
 }
 /* 五行一页的生克图：五行排成一圈，火在最上面，顺时针是土、金、水、木，正好是相生的次序。相邻的相生（实线），隔一个的相克（虚线），
    箭头指向被生、被克的一方。每个圈旁边是这一类十神对日主的合称，日主所属的那一行圈加粗 */
@@ -344,7 +354,7 @@ function pent(cx,cy,R,top){return [0,1,2,3,4].map(k=>{const a=(k-top)*72*Math.PI
 function ringLines(pos,mk,A,B){
   const cut=(ux,uy)=>1/Math.sqrt((ux/A)**2+(uy/B)**2);
   const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
-    return `<line class="${cls}" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+5))}" y2="${f1(y2-uy*(t+5))}" marker-end="url(#${mk})"/>`;};
+    return `<line class="${cls}" data-l="${a}${b}" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+5))}" y2="${f1(y2-uy*(t+5))}" marker-end="url(#${mk})"/>`;};
   const ks=[0,1,2,3,4];
   return ks.map(k=>seg(k,(k+1)%5,'sh')).join('')+ks.map(k=>seg(k,(k+2)%5,'ke')).join('');
 }
@@ -368,7 +378,7 @@ function renderWxMap(){
   const key=e=>(by==='nl'?'nl|':by==='cnt'?'wx|':'wxf|')+e, open=by==='nl'?'点开看是怎么加出来的':'点开看在哪里';
   const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，')+'。'+[0,1,2,3,4].map(e=>`${EL[e]} ${s[e]} ${u}`).join('，');
   $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="group" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3)}`
-    +pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-x="${key(e)}" tabindex="0" role="button" aria-label="${EL[e]} ${s[e]} ${u}，${open}">${fillCircle('wxc'+e,x,y,r,s[e]/mx)}<text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text><text class="gp" x="${f1(x)}" y="${f1(y<cy?y-r-8:y+r+16)}">${s[e]} ${u}${e===de?'（日主）':''}</text></g>`).join('')
+    +pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-n="${e}" data-x="${key(e)}" tabindex="0" role="button" aria-label="${EL[e]} ${s[e]} ${u}，${open}">${fillCircle('wxc'+e,x,y,r,s[e]/mx)}<text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text><text class="gp" x="${f1(x)}" y="${f1(y<cy?y-r-8:y+r+16)}">${s[e]} ${u}${e===de?'（日主）':''}</text></g>`).join('')
     +`</svg>`;
   $('note-wxmap').textContent=`圈填多少照表上面选的数法，最多的一行填满，其余照比例。实线是相生，虚线是相克，箭头指向被生、被克的一方。加粗的一圈是日主所属的一行。点圈看这一行${by==='nl'?'的分数是怎么加出来的':'的字在哪里'}。`;
 }
@@ -386,10 +396,10 @@ function renderGodMap(){
     p.forEach((o,j)=>{const a=(base+(j?17:-17))*Math.PI/180, x=C+R2*Math.sin(a), y=C-R2*Math.cos(a), dx=x-x0, dy=y-y0, d=Math.hypot(dx,dy);
       const lx=C+(R2+r2+11)*Math.sin(a), ly=C-(R2+r2+11)*Math.cos(a);
       gods+=`<line class="br" x1="${f1(x0+dx/d*(r1+2))}" y1="${f1(y0+dy/d*(r1+2))}" x2="${f1(x-dx/d*(r2+2))}" y2="${f1(y-dy/d*(r2+2))}"/>`
-        +`<g class="nd sm ${ELC[e]}" data-x="tg|${o.n}" tabindex="0" role="button" aria-label="${o.n} ${o.c} ${u}，点开看解释">${fillCircle(`gdg${k}${j}`,x,y,r2,o.c/mxG)}<text class="nm" x="${f1(x)}" y="${f1(y-4)}">${o.n}</text><text class="ct" x="${f1(x)}" y="${f1(y+8)}">${o.c} ${u}</text>`
+        +`<g class="nd sm ${ELC[e]}" data-n="${k}" data-x="tg|${o.n}" tabindex="0" role="button" aria-label="${o.n} ${o.c} ${u}，点开看解释">${fillCircle(`gdg${k}${j}`,x,y,r2,o.c/mxG)}<text class="nm" x="${f1(x)}" y="${f1(y-4)}">${o.n}</text><text class="ct" x="${f1(x)}" y="${f1(y+8)}">${o.c} ${u}</text>`
         +`<text class="sx" x="${f1(lx)}" y="${f1(ly)}">${o.same?'同性':'异性'}</text></g>`;});
   });
-  const cats=pos.map(([x,y],k)=>`<g class="nd ${ELC[(de+k)%5]}" data-x="grp|${k}" tabindex="0" role="button" aria-label="${GRP[k]}，${REL[k]}，点开看解释">${fillCircle('gdc'+k,x,y,r1,sums[k]/mxC)}<text class="ch2" x="${f1(x)}" y="${f1(y-5)}">${GRP[k]}</text><text class="ct" x="${f1(x)}" y="${f1(y+11)}">${REL[k]}</text></g>`).join('');
+  const cats=pos.map(([x,y],k)=>`<g class="nd ${ELC[(de+k)%5]}" data-n="${k}" data-x="grp|${k}" tabindex="0" role="button" aria-label="${GRP[k]}，${REL[k]}，点开看解释">${fillCircle('gdc'+k,x,y,r1,sums[k]/mxC)}<text class="ch2" x="${f1(x)}" y="${f1(y-5)}">${GRP[k]}</text><text class="ct" x="${f1(x)}" y="${f1(y+11)}">${REL[k]}</text></g>`).join('');
   const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DM}，点开看解释"><circle class="bg" cx="${C}" cy="${C}" r="22"/><circle class="ring" cx="${C}" cy="${C}" r="22"/><circle class="halo" cx="${C}" cy="${C}" r="26.5"/><text class="ch" x="${C}" y="${C-3}">${DM}</text><text class="ct" x="${C}" y="${C+12}">日主</text></g>`;
   const say=ks.map(k=>`${GRP[k]}生${GRP[(k+1)%5]}`).join('，')+'；'+ks.map(k=>`${GRP[k]}克${GRP[(k+2)%5]}`).join('，')+'。'+pairs.flat().map(o=>`${o.n} ${o.c} ${u}`).join('，');
   $('note-godmap').textContent='中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。'
@@ -499,7 +509,7 @@ function renderRelations(){
 /* 干支关系图：八柱横排，和细盘的列对齐。一张图里画两样东西。
    中间是八柱的干支。相邻的两个字之间一条细线、一个小圈，圈里写生、克或者同，箭头从生或克的一方指向另一方（按五行，地支用它自己的五行）。
    前四列（流日到大运）连成一串，原局四柱连成一串，两串之间不连；每一柱的干和支之间也标。
-   上面是天干之间的合、冲、克，下面是地支之间的合、冲、刑、害：每一组有关系的字是一条横线，各圈一个圈，线上面是关系的名字；
+   上面是天干之间的合、冲、克，下面是地支之间的合、冲、刑、害：每一组有关系的字是一条横线，各圈一个圈，关系的名字压在线上（放不下的在线的上面）；
    同一组字有几种关系的（比如巳申同时是六合、相刑、相破）并排写在同一条线上。互不重叠的几条排在同一行，原局的靠近干支，各层带来的往外排。
    每个名字和下面对应的小签是同一个解释（data-x 相同）。电脑上显示这张图，窄屏上显示小签。 */
 const LK_COL={流日:0,流月:1,流年:2,大运:3,年:4,月:5,日:6,时:7};
@@ -530,7 +540,11 @@ function renderLinks(all){
   const link=(it,row,isG)=>{
     const k=it.b-it.a+1, he=it.rels.map(o=>HE_TYPES.includes(o.r.t));
     const tone=he.some(Boolean)?'':' bad';       // 线型：全是冲刑害破克的用虚线，只要有相合一类的就用实线
-    return `<span class="lk${tone}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
+    // 名字压在线上放不放得下：两个圈之间空着的长度是 (k−1) 列减一个圈（30），两头各留 4；名字的宽度照字数估（字 13、附注 12，每个小签另加边和内距 20、附注前的空 5）。
+    // 列宽：九百宽的窗口 85，一千一百宽 110，一千二百八十宽 133（都扣了滚动条）。三个圈的中间有一个圈挡着，放在线上面
+    const need=it.rels.reduce((s,o)=>s+o.r.t.length*13+20+(o.r.n?o.r.n.length*12+5:0),5*(it.rels.length-1)), room=w=>(k-1)*w-38;
+    const inl=it.ix.length!==2?'':need<=room(85)?' in':need<=room(110)?' wide':need<=room(133)?' max':'';
+    return `<span class="lk${tone}${inl}" data-k="${esc(it.id+'#'+it.rels.map(o=>o.key).join())}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
       +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}" data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
       +'</span><span class="lk-l"></span>'
       +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)} cx" data-x="${isG?'g':'z'}|${cs[i].k}|${isG?cs[i].g:cs[i].z}" role="button" tabindex="0" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';      // 线两头圈出来的字和中间那两行的字是同一条解释
@@ -547,7 +561,7 @@ function renderLinks(all){
       +`<span class="lk-cell" style="${col};grid-row:${R+3}">${xb('x lk-c '+gCls(c.g),`g|${c.k}|${c.g}`,c.g)}</span>`
       +sk(gEl(c.g),zEl(c.z),'sk-y',`${col};grid-row:${R+4}`,`gz|${c.k}`)
       +`<span class="lk-cell" style="${col};grid-row:${R+5}">${xb('x lk-c '+zCls(c.z),`z|${c.k}|${c.z}`,c.z)}</span>`
-      +`<span class="lk-g" style="${col};grid-row:${R+6}">${godZ(c.z)}</span>`;
+      +`<span class="lk-g z" style="${col};grid-row:${R+6}">${godZ(c.z)}</span>`;
     if(i!==DYN-1&&i<cs.length-1){            // 大运和年柱之间不连：前四列是一串，原局是一串
       const n=cs[i+1], span=`grid-column:${i+2}/${i+4}`;
       mid+=sk(gEl(c.g),gEl(n.g),'sk-x',`${span};grid-row:${R+3}`,`sk|${c.k}|g|${n.k}|g`)+sk(zEl(c.z),zEl(n.z),'sk-x',`${span};grid-row:${R+5}`,`sk|${c.k}|z|${n.k}|z`);
@@ -605,7 +619,7 @@ function renderSy(){
   const what=yb.mode==='sum'?grp(lyXi+chips(yb.parts[0].want))+grp('<span>加上</span>'+lyYs+chips(yb.parts[1].want))
     :grp((yb.mode==='ys'?lyYs:x.xi?lyXi:'<span>不定喜用，画帮日主的</span>')+chips(yb.want));
   $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+what+`<span class="rest"><i></i>其余</span><span>满分 ${yb.max}</span>`;
-  $('note-syfig').textContent=noteSyFig(); $('note-sy').textContent=noteSy();      // 两句都跟着小卡的按钮变
+  $('note-syfig').innerHTML=paras(noteSyFig()); $('note-sy').innerHTML=paras(noteSy());      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }
 /* 格局一页的格局组合（text.js 的 gjzNow）：成格、败格两组。盘里有的组合一行一个：名字和全称的一句、透出还是藏着、谁在哪里、
@@ -617,7 +631,7 @@ function renderThc(){
   const row=(title,xs)=>xs.length?`<div class="tgrow"><h4>${title}</h4><div class="rels">${xs.map(tag).join('')}</div></div>`:'';
   $('thc').innerHTML=row('这张盘合的',t.cases.filter(o=>o.ok===true))+row('待核对的',t.cases.filter(o=>o.ok===null))+row('没有合的',t.cases.filter(o=>o.ok===false));
   $('thc-say').innerHTML=thcSay();
-  $('note-thc').textContent=noteThc();
+  $('note-thc').innerHTML=paras(noteThc());
 }
 /* 格局一页的两张表一次只显示一张：上面两个小标签「成败救应」「格局组合」，点哪个看哪个。
    2026-11-18 用户说两张表连着排太长，「做成可以点的小标签」，意思是标签页：「一个写这个一个写那个」。
@@ -636,7 +650,7 @@ function renderGjz(){
     return `<tr class="gjz-h"><th colspan="4" scope="colgroup">${title}</th></tr>`+yes.map(row).join('')+(no.length?`<tr class="gjz-no"><td colspan="4">这张盘没有：${no.map(o=>xb('x','gjz|'+o.n,o.n)).join('、')}</td></tr>`:'');};
   $('gjz').innerHTML=grp('成','书里算成格的')+grp('败','书里算败格的')
     +`<tr class="gjz-no"><td colspan="4">${xb('x','kv|从格','从格')}在「强弱」一页另有一行，这张盘${congNow().ok?'合':'不合'}那一行核对的条件。</td></tr>`;
-  $('note-gjz').textContent=noteGjz();
+  $('note-gjz').innerHTML=paras(noteGjz());
 }
 /* 格局一页的成败救应表（标签「成败救应」下面）：照这张盘归的格（一个或两个），把「论用神成败救应」的各条按成、败、带忌、救应分四段列出来。
    每一行：书里的话（点开是解释）和一句白话；合、不合或者定不了；几项条件，没有合的那一项后面标出来。表上面一句话是四类各合几条和归纳 */
@@ -646,8 +660,8 @@ function renderGjb(){
     +`<td>${xb('gjz-st'+(o.ok===true?' t':''),'gjb|'+o.id,o.ok===null?'定不了':o.ok?'合':'不合')}<span class="gjz-w">${o.need.map(([l,v])=>l+(v===null?'（定不了）':v?'':'（不合）')).join('；')}${o.ok===true&&gjbCaveat(o)?'<br>'+gjbCaveat(o):''}</span></td></tr>`;
   $('gjb').innerHTML=r.groups.map(g=>(r.groups.length>1?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${g.ge}</th></tr>`:'')
     +GJB_K.map(([k,title])=>{const rs=g.rows.filter(o=>o.k===k);return rs.length?`<tr class="gjz-h"><th colspan="2" scope="colgroup">${title}</th></tr>`+rs.map(row).join(''):'';}).join('')).join('');
-  $('gjb-say').innerHTML=gjbSay();
-  $('note-gjb').textContent=noteGjb();
+  $('gjb-say').innerHTML=parasHTML(gjbSay());
+  $('note-gjb').innerHTML=paras(noteGjb());
 }
 /* 强弱一页中间的强弱分析：日主，强弱计分归的类和分数，一条标着 25 分、30 分两道线和这张盘分数的条，分数从哪里来，扶抑取的喜用和忌 */
 function renderQs(){
@@ -708,7 +722,7 @@ function renderBars(){
     return `<tr><td class="${ELC[i]}">${xb('x',key(i),`<span class="el">${ic(i)}${EL[i]}</span>`)}</td><td>${CAT[k][1]}<span class="gp">${xb('x','grp|'+k,GRP[k])}</span><small class="mn">${GOD_MEAN[k]}</small></td>`
       +`<td class="${ELC[i]}"><span class="wn"><b>${v[i]} ${u}</b><span class="track${by==='nl'?' avg':''}"${by==='nl'?` style="--avg:${(tot/5/mx*100).toFixed(2)}%"`:''}><span class="fill" style="width:${Math.round(v[i]/mx*100)}%"></span></span></span></td>`
       +`<td>${pct(v[i],tot)}</td><td>${xb('st','wst|'+i,wxState(i))}</td><td class="wh">${wxWhere(i,by)}</td></tr>`;}).join('');
-  $('note-nl').textContent=by==='nl'?noteNl():by==='cnt'?'含藏干数：四个天干，加上地支里藏的每一个天干各算一个，不分主次，月支也不加倍。':'五行个数：四个天干，加上四个地支各按自己的五行算一个，不看地支里藏的天干。';
+  $('note-nl').innerHTML=paras(by==='nl'?noteNl():by==='cnt'?'含藏干数：四个天干，加上地支里藏的每一个天干各算一个，不分主次，月支也不加倍。':'五行个数：四个天干，加上四个地支各按自己的五行算一个，不看地支里藏的天干。');
   $('note-wx').textContent=noteWx();
 }
 const GOD_MEAN=['和我一样的人：自我、同辈、朋友和竞争者','我产出的东西：表达、才艺、作品','我能支配的东西：财物、资源','约束我的东西：规则、职位、压力','滋养我的东西：学问、庇护、长辈'];
@@ -724,17 +738,24 @@ function renderGods(){
   $('liuqin').innerHTML=liuqinRows().map(r=>`<tr><td>${r.who}</td><td>${xb('x','tg|'+r.god,r.god)}</td><td>${r.at}</td><td>${r.gong}</td></tr>`).join('');
   $('note-lq').textContent=noteLq();
 }
-/* 横条里选中的那一格不在看得见的范围里时，把它挪到中间 */
-function reveal(){
-  ['dayun','liunian','liuyue','liuri'].forEach(id=>{
+/* 横条里选中的那一格不在看得见的范围里时，把它挪到中间。34：两头淡出的一截也算看不见。ids：只管哪几条，不写就是四条。
+   平常是滑过去；换人、解释正开在这一条里（卡片要跟着字摆）的时候直接到位。
+   不用挪的也要说一声停在原处：上一次的平滑滚动可能还没走完，会把选中的带出去（2026-11-22 审阅） */
+const midOf=(box,b)=>b.offsetLeft-(box.clientWidth-b.offsetWidth)/2, outOf=(box,b)=>b.offsetLeft<box.scrollLeft+34||b.offsetLeft+b.offsetWidth>box.scrollLeft+box.clientWidth-34;
+function rollTo(box,left,smooth){if(smooth&&!calm()&&box.scrollTo) box.scrollTo({left,behavior:'smooth'});else box.scrollLeft=left;}
+function reveal(ids){
+  const own=sel.x?anchorOf(sel.x,sel.xn,sel.xh):null;
+  (ids||PICK).forEach(id=>{
     const box=$(id), b=box.querySelector('[aria-pressed="true"]');
     if(!b||!box.clientWidth) return;
-    const l=b.offsetLeft, r=l+b.offsetWidth;
-    if(l<box.scrollLeft||r>box.scrollLeft+box.clientWidth) box.scrollLeft=l-(box.clientWidth-b.offsetWidth)/2;
+    if(outOf(box,b)) rollTo(box,midOf(box,b),!SWITCH&&!(own&&box.contains(own))); else rollTo(box,box.scrollLeft);
   });
+  edges();
 }
+/* 横条滚得动的时候，哪一头还有没露出来的卡片，那一头淡出（样式里的 .sl、.sr） */
+function edges(){document.querySelectorAll('.picker').forEach(p=>{const m=p.scrollWidth-p.clientWidth, can=m>3&&getComputedStyle(p).overflowX!=='visible';p.classList.toggle('sl',can&&p.scrollLeft>3);p.classList.toggle('sr',can&&p.scrollLeft<m-3);});}      // 电脑上的流日是一格一格排的，不滚，不淡出
 function renderDyNote(){const t=dyNote(), n=$('note-dy'); n.textContent=t; n.hidden=!t;}      // 选中的日子不在选中的那一步大运里时，选择器下面说一句
-function renderDynamic(){fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();}
+function renderDynamic(){moving(()=>{fixDay();renderPan();renderDayun();renderLiunian();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();});}
 
 /* ---------- 添加、编辑、导入、导出 ---------- */
 let editing=null;                  // 正在编辑的那个人的 id；新添加时是 null
@@ -760,6 +781,7 @@ function refreshShare(){
   $('share-t').textContent=`分享${P.name}：链接里有${s.what}，发给谁，谁打开就能看到这张盘，也会停在现在看的这一页和这一年。链接里的内容不经过任何服务器，但收到链接的人都能看到。`;
 }
 function openShare(){
+  if($('share').hidden) openBox($('share'));
   $('share').hidden=false;$('share-msg').textContent='';
   refreshShare();copyShare();
 }
@@ -776,9 +798,9 @@ function openLink(hash,fallback){
   const q=new URLSearchParams(s), keys=[...q.keys()];
   if(!keys.some(k=>['p','b','bz','n','g','sh','nh','lon'].includes(k))){
     if(!keys.some(k=>['tab','dy','y','m','d','h','by'].includes(k))) return false;
-    if(!P) usePerson(fallback||0);
-    if(pickHour(q,sel.p)) usePerson(sel.p);
-    applyView(q);return true;
+    const at=P?sel.p:fallback||0;
+    if(pickHour(q,at)||!P){setBy(q);usePerson(at,()=>goView(q));setTabs(q);}else applyView(q);
+    return true;
   }
   let i=-1;
   if(q.has('p')&&!q.has('b')&&!q.has('bz')){
@@ -792,7 +814,7 @@ function openLink(hash,fallback){
     i=PEOPLE.findIndex(p=>{const x=infoOf(p);return x&&!checkInfo(x)&&infoKey(x)===k;});
     if(i<0){TEMP={info:r.info,dates:r.dates};rebuildPeople();i=PEOPLE.length-1;}
   }
-  pickHour(q,i);usePerson(i);applyView(q);
+  setBy(q);pickHour(q,i);usePerson(i,()=>goView(q));setTabs(q);
   say(P.temp?'':'链接里的这一位已经在页面上了，换到了这一位。');
   return true;
 }
@@ -803,20 +825,32 @@ function pickHour(q,i){
   HOUR_PICK[p.id]=h;rebuildPeople();return true;
 }
 /* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
-function applyView(q){
-  (q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});
-  // by：五行、十神数法、小卡计分、格局子标签，前三项的旧链接保留当前格局子标签；照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置
+function setTabs(q){(q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});}
+/* by：五行、十神数法、小卡计分、格局子标签，前三项的旧链接保留当前格局子标签；照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置。
+   只改 MAPBY，不画；改了的返回 true */
+function setBy(q){
   const by=(q.get('by')||'').split(','); let mapped=false;
   ['wx','gods','yun','gj'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
-  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){} if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
+  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}}
+  return mapped;
+}
+/* 同一位，只换位置和数法 */
+function applyView(q){
+  setTabs(q);
+  const mapped=setBy(q);
+  if(mapped){if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();renderBars();renderWxMap();renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}
+  if(goView(q)||mapped) renderDynamic();
+}
+/* 停在链接里的大运、年、月、日：只改 sel，不画；链接里一样也没带的返回 false */
+function goView(q){
   const int=k=>q.has(k)&&/^\d+$/.test(q.get(k))?Number(q.get(k)):null;
   const dy=int('dy'), y=int('y'), m=int('m'), d=q.get('d');
-  if(dy===null&&y===null&&m===null&&!d){if(mapped) renderDynamic();return;}
+  if(dy===null&&y===null&&m===null&&!d) return false;
   if(dy!==null&&dy<P.dayun.length){sel.dy=dy;const r=P.dayun[dy];sel.y=REAL_Y>=r.y0&&REAL_Y<=r.y1?REAL_Y:r.y0;}
   if(y!==null){const k=P.dayun.findIndex(r=>y>=r.y0&&y<=r.y1);if(k>=0){sel.dy=k;sel.y=y;}}
   if(m!==null&&m<12) sel.m=m;
   if(d&&/^\d{4}-\d{2}-\d{2}$/.test(d)){const t=Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));if(monthDays(sel.y,sel.m).includes(t)) sel.d=t;}
-  renderDynamic();
+  return true;
 }
 /* 从链接来的人上面那一条：没有保存；直接给八字的，可以在对得上的几个日子里换一个 */
 function renderLinkBar(){
@@ -838,8 +872,7 @@ function saveTemp(){
   if(HOUR_PICK.link) HOUR_PICK[info.id]=HOUR_PICK.link;
   delete HOUR_PICK.link;                 // 来自链接的人都用 link 这个编号，记的时辰不能留给下一个链接
   LOCAL.push(info);TEMP=null;writeLocal();rebuildPeople();
-  usePerson(PEOPLE.findIndex(p=>p.id===info.id));
-  keepView(keep);
+  usePerson(PEOPLE.findIndex(p=>p.id===info.id),()=>stayAt(keep));
   say(STORE_OK?'已经存进这个浏览器。':NO_STORE);
 }
 function say(s){$('pp-hint').textContent=s||'';$('pp-hint').hidden=!s;}
@@ -864,6 +897,7 @@ function openForm(info){
   say('');
   $('pf-lonhint').textContent='';
   setMode('time');
+  if($('pform').hidden) openBox($('pform'));
   $('pform').hidden=false;
 }
 function closeForm(){$('pform').hidden=true;editing=null;}
@@ -1050,21 +1084,21 @@ function exportLocal(){
 document.addEventListener('click',e=>{
   const b=e.target.closest('button,[data-x]');      // 生克图里的圈是 SVG 的 g，带着 data-x，也算可点的
   if(!b){if(sel.x&&!e.target.closest('#sheet')) closeSheet();return;}     // 点空白处收起解释
-  if(b.id==='rd'){setRead(b.getAttribute('aria-pressed')!=='true');return;}
+  if(b.id==='rd'){const on=b.getAttribute('aria-pressed')!=='true';setRead(on);if(on) showReads();return;}
   const hadFocus=document.activeElement===b, boxId=b.parentElement&&b.parentElement.closest('[id]')?b.parentElement.closest('[id]').id:'';
   if(b.dataset.hour){        // 时辰不详的人换一个时辰看。选中的大运、年、月、日留着（换了时辰起运可能变，留不住的照常换）
     const keep={dy:sel.dy,y:sel.y,m:sel.m,d:sel.d}, i=sel.p;
-    HOUR_PICK[P.id]=b.dataset.hour;rebuildPeople();usePerson(i);keepView(keep);
+    HOUR_PICK[P.id]=b.dataset.hour;rebuildPeople();usePerson(i,()=>stayAt(keep));
     if(hadFocus) refocus(b,boxId);
     return;
   }
-  if(b.id==='theme'){const t=darkNow()?'light':'dark';setTheme(t);try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
+  if(b.id==='theme'){const t=darkNow()?'light':'dark';fadeTheme(()=>setTheme(t));try{localStorage.setItem('bz-theme',t);}catch(e){}return;}
   if(b.dataset.tab){const [card,id]=b.dataset.tab.split(':');setTab(card,id);return;}
   if(b.dataset.map){        // 生克图、选择器图例里的按钮：换数法或者看法，重画，焦点放回同一个按钮
     if(b.disabled) return;
     const [k,v]=b.dataset.map.split(':');
     if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
-      if(k==='wx'){renderBars();renderWxMap();} else if(k==='yun') renderDynamic(); else if(k==='gj'){if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();} else {renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');}      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
+      if(k==='wx') recount(k,()=>{renderBars();renderWxMap();}); else if(k==='yun') renderDynamic(); else if(k==='gj'){if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();fadeIn($(v+'-block'));} else recount(k,()=>{renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');});      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
       refreshSheet();refreshShare();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
     return;
@@ -1100,13 +1134,12 @@ function refocus(b,boxId){
   const n=[...box.querySelectorAll('button')].find(x=>x.dataset[k]===b.dataset[k]);
   if(n) n.focus({preventScroll:true});
 }
-/* 换了排法（换时辰、存下来自链接的人）以后，把原来选中的大运、年、月、日放回去。年份不在新的大运范围里的，就照换人时的默认 */
-function keepView(v){
+/* 换了排法（换时辰、存下来自链接的人）以后，停在原来选中的大运、年、月、日。年份不在新的大运范围里的，就照换人时的默认。只改 sel，不画（usePerson 的 place） */
+function stayAt(v){
   const k=P.dayun.findIndex(r=>v.y>=r.y0&&v.y<=r.y1);
   if(k<0) return;
   sel.dy=k;sel.y=v.y;sel.m=v.m;
   if(monthDays(sel.y,sel.m).includes(v.d)) sel.d=v.d;
-  renderDynamic();
 }
 /* 换大运、流年、流月、流日。选择器的卡片走这里；不是这四样的按钮返回 false */
 function pickLayer(b){
@@ -1121,10 +1154,10 @@ function pickLayer(b){
     renderDynamic();
   }else if(b.dataset.m!==undefined){
     sel.m=Number(b.dataset.m);
-    fixDay();renderPan();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();
+    moving(()=>{fixDay();renderPan();renderLiuyue();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal();refreshSheet();});
   }else if(b.dataset.d!==undefined){
     sel.d=Number(b.dataset.d);
-    renderPan();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();refreshSheet();      // 选中的日子在不在选中的那一步大运里，跟着流月、流日变
+    moving(()=>{renderPan();renderLiuri();renderDyNote();renderRelations();renderGT();renderSy();renderYunRead();reveal(['liuri']);refreshSheet();});      // 只挪流日这一条，别的三条停在用户划到的地方。选中的日子在不在选中的那一步大运里，跟着流月、流日变
   }else return false;
   return true;
 }
@@ -1148,7 +1181,12 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();
   setTab(card,e.key==='Home'?list[0]:e.key==='End'?list[list.length-1]:list[(i+(e.key==='ArrowRight'?1:list.length-1))%list.length],true);
 });
-window.addEventListener('resize',()=>{if(sel.x) placeSheet(anchorOf(sel.x,sel.xn,sel.xh));});
+window.addEventListener('resize',()=>{edges();if(sel.x) placeSheet(anchorOf(sel.x,sel.xn,sel.xh));});
+document.querySelectorAll('.picker').forEach(p=>{
+  p.addEventListener('scroll',edges,{passive:true});
+  // 按 Tab 走到的小卡要是落在两头淡出的一截里，也挪到中间。只认键盘：鼠标按下去时横条滚动，这一下就点不中了
+  p.addEventListener('focusin',e=>{const b=e.target.closest('.pk');if(b&&byKey(e.target)&&outOf(p,b)) rollTo(p,midOf(p,b),true);});
+});
 /* 拖动人物那一排的名字调整先后。鼠标按住拖动超过 5 像素就开始拖；手指要按住 0.35 秒再拖，在这之前挪动超过 8 像素就当是滚动页面，不拖。
    拖的时候把这个按钮在那一排里挪到指针最近的那个名字前面或后面，松手时照按钮的新先后排 PEOPLE（applyOrder），记进 bz-order。
    来自链接的那一位排在最后，不能拖，别的名字也挪不到它后面 */

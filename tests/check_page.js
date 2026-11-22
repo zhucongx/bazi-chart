@@ -3,7 +3,7 @@
 //
 //   node tests/check_page.js            检查公开的示例页面 index.html，约五分钟
 //   node tests/check_page.js --private  检查个人页面 private/build/index.html
-//   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），几秒钟
+//   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），十几秒
 //   加 --base <目录>                    检查 <目录>/index.html，预期也从这个目录里找（tools/fuzz.py 在用）
 //   加 --quiet                          只打印失败的项目和最后的结论
 //
@@ -778,7 +778,7 @@ people.forEach((id, pi) => {
   eq('五行个数（只数盘面八个字）和含藏干数：五行一页的表点按钮换数法', [wxCol('face'), wxCol('cnt')], [E.wuxing.face.map(n => `${n} 个`), E.wuxing.all.map(n => `${n} 个`)]);
   wxCol('nl');
   eq('神煞', rows['神煞'].slice(DYN).map(td => [...td.querySelectorAll('[data-x]')].map(txt).sort()), E.shensha.map(a => [...a].sort()));
-  eq('解读方框有 15 个：每一页一个，干支关系、计分、六亲三页各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length), $('p-lq').querySelectorAll('.read').length], [15, [1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2], 2]);
+  eq('解读有 15 块：每一页一个，干支关系、计分、六亲三页各两个', [d.querySelectorAll('.read').length, [...d.querySelectorAll('[role="tabpanel"]')].map(p => p.querySelectorAll('.read').length), $('p-lq').querySelectorAll('.read').length], [15, [1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2], 2]);
   eq('标题下面四柱都有标注，「日主」只标在日干上', [[...$('title').querySelectorAll('.pl')].map(x => x.dataset.k), [...$('title').querySelectorAll('.dm')].map(txt)], [['年柱', '月柱', '日柱', '时柱'], [E.pillars[2][0]]]);
   const metaKeys = q => [...d.querySelectorAll(q + ' dt')].map(txt);
   eq('顶部信息分两处放，一行不少：起运和交运在大运旁边，其余的在标题下面，公历排第一', [metaKeys('#meta')[0], metaKeys('#meta-yun'), metaKeys('#meta').concat(metaKeys('#meta-yun')).sort()], ['公历', ['起运', '交运'], JSON.parse(ev('JSON.stringify(metaRows().map(r=>r.k))')).sort()]);
@@ -1505,6 +1505,149 @@ pick(0);
     click(d.querySelectorAll('#people [data-p]')[0]);
     click($('h-tk')); click($('h-pan'));
   }
+}
+
+// ---------- 4y. 样式里的几样、长说明、关系图 ----------
+console.log('样式和排版');
+pick(0);
+{
+  const css = [...d.querySelectorAll('style')].map(s => s.textContent).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+  const block = re => { const m = css.match(re); return m ? Object.fromEntries([...m[1].matchAll(/(--[\w-]+):([^;]+);/g)].map(x => [x[1], x[2].trim()])) : {}; };
+  const light = block(/:root\{([\s\S]*?)\n\}/), sys = block(/:root:not\(\[data-theme="light"\]\)\{([\s\S]*?)\n\s*\}/), dark = block(/:root\[data-theme="dark"\]\{([\s\S]*?)\n\}/);
+  // 浅色里是颜色、阴影、不透明度的，两处深色都要有；字体不用
+  const themed = Object.keys(light).filter(k => !/^--(display|body)$/.test(k));
+  eq('颜色在三个地方都有定义：浅色、跟着系统的深色、手动选的深色；两处深色一样', [themed.filter(k => !sys[k] || !dark[k]), Object.keys(dark).filter(k => !light[k]), JSON.stringify(sys) === JSON.stringify(dark), themed.length > 30], [[], [], true, true]);
+  // 填色彼此分得开：任意两种的色差（Lab 里的距离）不小于 25。金和土原来画成条看着是一种颜色，2026-11-17 用户说过太像。写法要是六位十六进制
+  const lab = h => { if (!/^#[0-9a-f]{6}$/.test(h)) return [NaN, NaN, NaN]; const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+    const f = v => v > .008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116, x = f((.4124 * c[0] + .3576 * c[1] + .1805 * c[2]) / .95047), y = f(.2126 * c[0] + .7152 * c[1] + .0722 * c[2]), z = f((.0193 * c[0] + .1192 * c[1] + .9505 * c[2]) / 1.08883);
+    return [116 * y - 16, 500 * (x - y), 200 * (y - z)]; };
+  const ES = ['wood', 'fire', 'earth', 'metal', 'water'], near = [];
+  [light, dark].forEach((b, n) => ES.forEach((p, i) => ES.slice(i + 1).forEach(q => { const u = lab(b[`--${p}-f`]), v = lab(b[`--${q}-f`]), de = Math.hypot(u[0] - v[0], u[1] - v[1], u[2] - v[2]); if (!(de >= 25)) near.push([n ? '深色' : '浅色', p, q, Math.round(de)]); })));
+  eq('五行的填色任意两种都分得开（色差不小于 25），浅色、深色都是', near, []);
+  // 弦纹只有三处：顶部信息下面（粗的在上）、页脚上面（粗的在下）、解读左边（粗的在左）。宫位表的小条也叫 .top，任何画 ::before、::after 的规则都不能落到它上面
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => [m[1].trim(), m[2].trim()]);
+  const rings = rules.filter(([, b]) => /border:solid var\(--accent\)/.test(b)).flatMap(([s]) => s.split(',').map(x => x.trim())).sort();
+  const wide3 = s => (rules.filter(([x, b]) => x.split(',').some(y => y.trim() === s) && /border-width:/.test(b)).map(([, b]) => (b.match(/border-width:([^;}]+)/) || [])[1]))[0];
+  eq('弦纹只有三处，粗的一道各在外侧', [rings, wide3('header.top::after'), wide3('footer::before'), wide3('.read::before')], [['.read::before', 'footer::before', 'header.top::after'], '2px 0 1px', '1px 0 2px', '0 1px 0 2px']);
+  const bar0 = d.querySelector('#gwmap .stkw.top');
+  ok('宫位表的小条（也叫 .top）上没有画出来的线', !!bar0 && !rules.flatMap(([s]) => s.split(',')).filter(s => /::?(before|after)\s*$/.test(s)).some(s => { try { return bar0.matches(s.replace(/::?(before|after)\s*$/, '') || '*'); } catch (e) { return false; } }));
+  // 减弱动态效果：动画、过渡、平滑滚动只能写在 no-preference 那一段里，没有循环的
+  const np = css.match(/@media \(prefers-reduced-motion:no-preference\)\{([\s\S]*?)\n\}/), rest = css.replace(np ? np[0] : '', '');
+  eq('样式里的动画、过渡、平滑滚动都写在「没有减弱动态效果」那一段里，没有循环的', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(css)], [true, [], false]);
+  // 长说明：照意思分成几段，一段一块，文字一个字不少。每位人物、每种数法、每种看法各走一遍（快速模式只走三位）
+  const nPa = { 'note-yun': 2, 'note-sk': 2, 'note-gt': 2, 'note-sy': 2, 'note-syfig': 2, 'note-gjz': 3, 'note-gjb': 3, 'note-thc': 2 };
+  const sayAt = { 'note-yun': 'noteYun()', 'note-nl': null, 'note-sk': 'noteSK()', 'note-gt': 'noteGT()', 'note-sy': 'noteSy()', 'note-syfig': 'noteSyFig()', 'note-thc': 'noteThc()', 'note-gjz': 'noteGjz()', 'note-gjb': 'noteGjb()', 'thc-say': 'thcSay()', 'gjb-say': 'gjbSay()' };
+  const wrong = [], flat = s => strip(s.replace(/<br>/g, '')).replace(/\n/g, '');
+  const look = who => {
+    Object.entries(nPa).forEach(([id, n]) => { if ($(id).children.length !== n || ![...$(id).children].every(c => c.className === 'pa')) wrong.push([who, id, $(id).children.length]); });
+    Object.entries(sayAt).forEach(([id, f]) => { if (f && $(id).textContent !== flat(ev(f))) wrong.push([who, id, '文字不同']); });
+    if ($('gjb-say').children.length !== 2 * ev('gjbNow().groups.length')) wrong.push([who, 'gjb-say', $('gjb-say').children.length]);
+    [...d.querySelectorAll('.note.long')].forEach(n => { if ([...n.childNodes].some(c => c.nodeType === 3 && c.textContent.trim())) wrong.push([who, n.id, '有没包成一段的文字']); });
+  };
+  people.slice(0, quick ? 3 : people.length).forEach((id, i) => { pick(i); look(id);
+    ['fy', 'ys', 'sum'].forEach(v => { const b = d.querySelector(`[data-map="yun:${v}"]`); if (b && !b.disabled) { click(b); look(id + ' ' + v); } });
+    ['face', 'cnt', 'nl'].forEach(v => { click(d.querySelector(`[data-map="wx:${v}"]`)); if ($('note-nl').children.length !== (v === 'nl' ? 2 : 1)) wrong.push([id, 'note-nl', v, $('note-nl').children.length]); }); });
+  click(d.querySelector('[data-map="yun:fy"]')); pick(0);
+  const fixed = [...d.querySelectorAll('#p-rel .note.long')].find(n => !n.id);
+  eq('长说明照意思分成几段，一段一块，文字一个字不少', [wrong.slice(0, 5), fixed && fixed.children.length, fixed && txt(fixed).endsWith('流日对前面所有各层。')], [[], 2, true]);
+  ok('只有一段的说明不分栏（五行一页的两种个数）', /\.note\.long>\.pa:only-child\{column-span:all\}/.test(css));
+  // 关系图：名字压在线上的，都只有两个圈，用的是放得下的最窄一档；三个圈的都放在线的上面。估宽用的几个数和样式里的一样
+  const tier = need => k => ['in', 'wide', 'max'].find((c, i) => need <= (k - 1) * [85, 110, 133][i] - 38), off = [];
+  people.forEach((id, i) => { pick(i); d.querySelectorAll('#lkmap .lk').forEach(el => {
+    const c = ['in', 'wide', 'max'].find(k => el.classList.contains(k)), n = [...el.querySelectorAll('i')].length, k = +el.style.getPropertyValue('--k');
+    const need2 = [...el.querySelectorAll('.lk-t')].reduce((s, b) => { const sm = b.querySelector('small'); return s + (txt(b).length - (sm ? txt(sm).length : 0)) * 13 + 20 + (sm ? txt(sm).length * 12 + 5 : 0); }, 0) + 5 * (el.querySelectorAll('.lk-t').length - 1);
+    if (c !== (n === 2 ? tier(need2)(k) : undefined)) off.push([id, el.dataset.k, c, need2]); }); });
+  eq('关系图：只有两个圈的，名字照宽窄压在线上，用放得下的最窄一档；三个圈的放在线的上面', off.slice(0, 5), []);
+  const rule = s => (rules.find(([x]) => x === s) || [])[1] || '';
+  eq('估宽用的几个数和样式里的一样：名字的字 13、左右内距 9、边 1，附注的字 12、前面空 5，圈 30，名字之间空 5',
+    [/font-size:13px/.test(rule('.lk-t')), /padding:0 9px/.test(rule('.lk-t')), /border:1px solid/.test(rule('.lk-t')), /font-size:12px/.test(rule('.lk-t small')) && /margin-left:5px/.test(rule('.lk-t small')), /width:30px/.test(rule('.lk>i')), /gap:3px 5px/.test(rule('.lk-ts'))], [true, true, true, true, true, true]);
+  eq('压线的三档各在自己的宽度起作用：.in 一直，.wide 从 1100，.max 从 1280', [/@media \(min-width:900px\)\{[\s\S]*?\.lk\.in\{padding:0;height:30px\}/.test(css), /@media \(min-width:1100px\)\{\s*\.lk\.wide\{padding:0;height:30px\}/.test(css), /@media \(min-width:1280px\)\{\s*\.lk\.max\{padding:0;height:30px\}/.test(css)], [true, true, true]);
+  // 名字那一层横跨整条线，盖着两头的圈：它不接点击，名字才接。圈点不点得到要在真的浏览器里量（tools/shot.py），这里只看样式
+  ok('关系图里名字那一层不挡两头的圈', /pointer-events:none/.test(rule('.lk-ts')) && /pointer-events:auto/.test(rule('.lk-t')));
+  pick(0);
+  // 标题右边的八卦：和页面图标同一张画，八个卦各三道爻，一个太极，颜色都换成了单色。太极那一层里只有半边和两个鱼眼
+  const gua = d.querySelector('.titlerow .gua'), g3 = gua ? [...gua.querySelectorAll('g')].filter(g => [...g.children].length === 3 && [...g.children].every(c => c.tagName.toLowerCase() === 'path')) : [];
+  eq('标题右边的八卦：八个卦各三道爻、一个太极，颜色只有 currentColor 和页面的底色，读屏软件不念',
+    [g3.length, g3.map(g => g.getAttribute('transform') || 'rotate(0 32 32)').join() === [0, 45, 90, 135, 180, 225, 270, 315].map(a => `rotate(${a} 32 32)`).join(), gua && [...gua.querySelectorAll('.tj')].map(x => [...x.children].map(c => c.tagName.toLowerCase()).join()), gua && [...new Set([...gua.querySelectorAll('*')].flatMap(x => ['fill', 'stroke', 'style'].map(a => x.getAttribute(a))).filter(Boolean))].sort(), gua && gua.getAttribute('aria-hidden')],
+    [8, true, ['path,circle,circle'], ['currentColor', 'var(--paper)'], 'true']);
+  click($('h-bz')); click($('h-pan'));
+}
+
+// ---------- 4y'. 小动画 ----------
+console.log('小动画');
+pick(0);
+{
+  // jsdom 不排版，也没有 Element.prototype.animate，上面全部检查走的都是「不动」的那条路。这里另开三页：有动画的、设了减弱动态效果的、浏览器不支持的，
+  // 给一套假的版面（位置照兄弟的次序，藏着的没有位置）、假的 animate（到时间叫 onfinish）、拨得动的钟（setTimeout、逐帧、微任务都走它），
+  // 三页走同样的操作，拨到动画全做完，再原样比，不替页面收拾
+  const open = (reduce, fake) => {
+    const errs = [], v = new VirtualConsole(); v.on('jsdomError', e => errs.push(String(e.detail && e.detail.message || e.message)));
+    const D = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', virtualConsole: v, pretendToBeVisual: true, url: 'https://bazi.test/', beforeParse(win) {
+      win.matchMedia = q => ({ matches: reduce && /reduced-motion/.test(q), addEventListener() {}, removeEventListener() {} });
+      const clock = win.__clock = { t: 0, q: [], n: 0 }, later = (f, at) => { clock.q.push({ f, at, i: clock.n++ }); return clock.n; };
+      win.setTimeout = (f, ms) => later(f, clock.t + (ms || 0)); win.clearTimeout = i => { clock.q = clock.q.filter(x => x.i + 1 !== i); };
+      win.requestAnimationFrame = f => later(() => f(clock.t), clock.t + 16); win.queueMicrotask = f => later(f, clock.t); win.performance.now = () => clock.t;
+      const shown = e => !e.closest('[hidden]'), tmp = /tab-ink|pk-ghost/;
+      win.Element.prototype.getClientRects = function () { return shown(this) ? [{}] : []; };
+      const idx = e => e.parentElement ? [...e.parentElement.children].filter(x => !tmp.test(x.className)).indexOf(e) : 0, get = (k, f) => Object.defineProperty(win.HTMLElement.prototype, k, { configurable: true, get: f });
+      get('offsetLeft', function () { return 70 * idx(this); }); get('offsetTop', () => 0); get('offsetHeight', () => 10);
+      get('offsetWidth', function () { const n = this.style && this.style.getPropertyValue('--n'); return n ? 9 * n : 66; });
+      get('offsetParent', function () { return shown(this) ? this.parentElement : null; });
+      get('clientWidth', function () { return this.classList.contains('picker') ? 330 : 0; });
+      win.__rolls = []; win.Element.prototype.scrollTo = function (o) { win.__rolls.push(o && o.behavior); };
+      win.__n = 0; win.__a = []; win.__ink = 0;
+      if (fake) win.Element.prototype.animate = function (fr, o) {
+        win.__n++; const a = { onfinish: null, oncancel: null, fr, o, el: this }; win.__a.push(a);
+        win.document.querySelectorAll('.tabbar').forEach(b => { win.__ink = Math.max(win.__ink, b.querySelectorAll('.tab-ink').length); });
+        later(() => a.onfinish && a.onfinish(), clock.t + (o.duration || 0) + (o.delay || 0)); return a;
+      };
+    } });
+    const tick = ms => { const c = D.window.__clock, end = c.t + ms; for (let k = 0; k < 20000; k++) { c.q.sort((a, b) => a.at - b.at || a.i - b.i); if (!c.q.length || c.q[0].at > end) break; const x = c.q.shift(); c.t = Math.max(c.t, x.at); x.f(); } c.t = end; };
+    return { D, w: D.window, d: D.window.document, errs, tick, ev: s => D.window.eval(s) };
+  };
+  const g = id => p => p.d.getElementById(id), m = s => p => p.d.querySelector(`[data-map="${s}"]`), other = (id, i) => p => p.d.querySelectorAll(`#${id} .pk[aria-pressed="false"]`)[i];      // 没选中的第 i 张小卡：点选中的那张什么也不变
+  const steps = [['换到五行', g('h-wx')], ['五行个数', m('wx:face')], ['五行能量', m('wx:nl')], ['换到十神', g('h-gods')], ['十神能量', m('gods:nl')], ['十神含藏干', m('gods:cnt')], ['换到强弱', g('h-qr')], ['换到六亲', g('h-lq')], ['换到格局', g('h-gj')], ['格局组合', m('gj:gjz')], ['成败救应', m('gj:gjb')],
+    ['换大运', other('dayun', 2)], ['换流年', other('liunian', 4)], ['换流月', other('liuyue', 7)], ['换流日', other('liuri', 9)], ['再换流日', other('liuri', 20)], ['小卡两种相加', m('yun:sum')], ['小卡照扶抑', m('yun:fy')], ['换到关系', g('h-rel')], ['关系里换流年', other('liunian', 2)],
+    ['打开一条解释', p => p.d.querySelector('#lkmap [data-x]')], ['解释开着换流日', other('liuri', 5)], ['解释开着换页', g('h-gt')], ['关掉解读', g('rd')], ['打开解读', g('rd')], ['换深色', g('theme')], ['换浅色', g('theme')], ['打开表单', g('pp-add')], ['收起表单', g('pf-cancel')], ['分享', g('pp-share')], ['关掉分享', g('share-x')],
+    ['换人', p => p.d.querySelectorAll('#people [data-p]')[people.length > 1 ? 1 : 0]], ['换回八字', g('h-bz')], ['马上换到喜忌', g('h-ys')], ['再马上换回来', g('h-bz')]];
+  const still = /关掉解读|收起表单|打开一条解释|关掉分享|小卡照扶抑|小卡两种相加|十神能量|十神含藏干|五行个数|五行能量/;      // 不动的，和两种数法正好一样时不动的
+  const go = p => steps.map(([name, f]) => { const n0 = p.w.__n; f(p).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(0); const n = p.w.__n - n0; if (!/马上/.test(name)) p.tick(60); return [name, n]; });
+  const body = p => p.d.body.outerHTML.replace(/<script[\s\S]*<\/script>/, '');
+  const A = open(false, true), B = open(true, true), C = open(false, false); [A, B, C].forEach(p => p.tick(0));
+  const first = A.w.__n, na = go(A), nb = go(B); go(C); [A, B, C].forEach(p => p.tick(4000));
+  eq('打开页面、换人、换页、换数法、换选择、换主题、打开解读和表单，各动一下', [first > 0, na.filter(([k, n]) => !n && !still.test(k) && !(k === '换人' && people.length < 2)).map(x => x[0]), na.filter(([k, n]) => n && /关掉解读|收起表单|打开一条解释|关掉分享/.test(k)).map(x => x[0])], [true, [], []]);
+  eq('系统里设了「减弱动态效果」的：一个动画也没有，横条也不滑', [B.w.__n, nb.reduce((a, b) => a + b[1], 0), B.w.__rolls.includes('smooth'), A.w.__rolls.includes('smooth')], [0, 0, false, true]);
+  const diff = (x, y) => { let i = 0; while (i < x.length && x[i] === y[i]) i++; return i < Math.max(x.length, y.length) ? [x.slice(Math.max(0, i - 80), i + 60), y.slice(Math.max(0, i - 20), i + 60)] : ''; };
+  eq('有动画、减弱动态效果、浏览器不支持动画，走同样的操作，拨到动画全做完，最后的页面一字不差，都没有报错', [diff(body(A), body(B)), diff(body(B), body(C)), A.errs, B.errs, C.errs], ['', '', [], [], []]);
+  eq('滑动用的临时的块：两种都有，都带 aria-hidden，同一时间一排标签里最多一块，最后一块也不剩', [['tab-ink', 'pk-ghost'].every(c => A.w.__a.some(a => a.el.className === c)), A.w.__a.filter(a => /tab-ink|pk-ghost/.test(a.el.className)).every(a => a.el.getAttribute('aria-hidden') === 'true'), A.w.__ink, A.d.querySelectorAll('.tab-ink,.pk-ghost,.sliding').length], [true, true, 1, 0]);
+  const long = A.w.__a.filter(a => (a.o.duration || 0) + (a.o.delay || 0) > 1500 || a.o.iterations || /forwards|both/.test(a.o.fill || '')), hid = A.w.__a.filter(a => a.fr.some(x => x.opacity === 0) && (a.o.duration || 0) + (a.o.delay || 0) > 1000);
+  eq('每个动画都在一秒半以内做完，没有循环的，没有停在最后一帧的；内容最迟一秒以内全部露出来', [long.length, hid.length], [0, 0]);
+  // 太极转的是整整一圈：外面的八卦照先天的方位排，不能停在歪的位置上。别的只有小印按一下时歪一点
+  const spin = A.w.__a.filter(a => a.el.classList.contains('tj')), turn = A.w.__a.filter(a => !a.el.classList.contains('tj') && !a.o.pseudoElement && JSON.stringify(a.fr).includes('rotate'));
+  eq('换人时只有太极转，转整整一圈', [spin.length > 0, spin.every(a => a.fr[0].transform === 'rotate(0deg)' && a.fr[1].transform === 'rotate(360deg)'), turn.length], [true, true, 0]);
+  // 时辰不详的人换一个时辰看：没有变的小卡、细盘都不动，只动时柱，只画一遍
+  A.ev("openLink('#n=甲&g=m&b=1993-10-10&nh=1')"); A.tick(3000); other('dayun', 1)(A).dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(3000);
+  const k0 = A.w.__a.length; A.d.querySelector('#hours [data-hour="寅"]').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(3000);
+  eq('时辰不详的人换时辰：只动时柱那一柱，和长短真的变了的条（喜用跟着时辰变）', A.w.__a.slice(k0).filter(a => a.el.className !== 'mb-fill').map(a => a.el.className + (a.el.dataset && a.el.dataset.k ? ' ' + a.el.dataset.k : '')), ['pl guess 时柱（不详）']);
+  // 换到另一个链接里的人（编号都是 link）算换人；存下来只换了编号，不算
+  const k1 = A.w.__a.length; A.ev("openLink('#n=乙&g=f&b=1975-05-05&nh=1')"); A.tick(3000); const turned = A.w.__a.slice(k1).some(a => a.el.classList.contains('tj'));
+  const k2 = A.w.__a.length; A.d.getElementById('pp-save').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(3000); const kept = A.w.__a.slice(k2).map(a => a.el.className || a.el.id);
+  eq('换到另一个链接里的人算换人；存下来只换了编号，什么也不动', [turned, kept], [true, []]);
+  // 图一位只画一遍：第一次翻到画，翻走再回来不画；换了人重来。圈里填的一截动完，停在和不动的一页一样的高低上
+  const tap = (p, id) => { const n0 = p.w.__a.length; p.d.getElementById(id).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(3000); return p.w.__a.slice(n0).filter(a => a.el.className === 'fill').length; };
+  const draws = [tap(A, 'h-wx'), tap(A, 'h-bz'), tap(A, 'h-wx')]; tap(A, 'h-bz'); A.ev("openLink('#n=丙&g=m&b=2001-07-07&nh=1')"); A.tick(3000);
+  eq('图一位只画一遍，换了人重来', [...draws, tap(A, 'h-wx')].map(n => n > 0), [true, false, false, true]);
+  const lv = p => { p.ev("openLink('#n=丁&g=f&b=1988-08-18&nh=1')"); p.tick(3000); return [['wx', 'wxmap', ['face', 'cnt', 'nl']], ['gods', 'godmap', ['face', 'nl', 'cnt']]].map(([t, m, vs]) => { p.d.getElementById('h-' + t).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(3000);
+    return vs.map(v => { p.d.querySelector(`[data-map="${t}:${v}"]`).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(3000); return p.d.getElementById(m).innerHTML; }).join(''); }).join(''); };
+  eq('两张生克图换数法：圈里填的一截动完以后，和不动的一页一字不差', diff(lv(A), lv(C)), '');
+  // 生克图：线记着两头是谁，圈记着自己是谁；指着一个圈，有关的四条线不变淡。鼠标指着的和键盘选中的分开记，一样没有了另一样还算
+  ['wxmap', 'godmap'].forEach(id => {
+    const q = s => [...C.d.querySelectorAll(`#${id} ${s}`)], ls = q('line[data-l]').map(l => l.getAttribute('data-l')), ns = [...new Set(q('.nd[data-n]').map(n => n.getAttribute('data-n')))].sort();
+    const svg = q('svg')[0], hl = () => svg.getAttribute('data-hl'), over = el => el.dispatchEvent(new C.w.Event('pointerover', { bubbles: true })), two = q('.nd[data-n="2"]')[0];
+    over(two); const on = hl(); two.dispatchEvent(new C.w.Event('focusout', { bubbles: true })); const stay = hl(); over(C.d.body); const gone = hl();
+    eq(`${id === 'wxmap' ? '五行' : '十神'}生克图：十条线两两不同，一个圈连着四条；指着一个圈只留有关的线，别的圈失去焦点不影响，移开就恢复`, [ls.length, new Set(ls).size, ns, ['0', '1', '2', '3', '4'].map(k => ls.filter(l => l.includes(k)).length), on, stay, gone], [10, 10, ['0', '1', '2', '3', '4'], [4, 4, 4, 4, 4], '2', '2', null]);
+  });
+  [A, B, C].forEach(p => p.D.window.close());
 }
 
 // ---------- 4z. 页面图标 ----------

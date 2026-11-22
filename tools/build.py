@@ -4,7 +4,7 @@
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
   python3 tools/build.py --private   private/build/data/people.json → private/build/index.html
 
-模板 src/page.tpl.html 里有十个占位符，每个必须恰好出现一次：
+模板 src/page.tpl.html 里有十二个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
   /*TABLES*/   换成 data/tables.json：节的时刻表和农历表，页面内排盘要用
   /*CITIES*/   换成 data/cities.json 里的城市经度表，只留 [名字, 省份, 经度]，添加表单里选城市用
@@ -12,9 +12,11 @@
   /*CHART*/    换成 src/chart.js
   /*CLASSICS*/ 换成 src/classics.js：从典籍里摘出来的引文
   /*TEXT*/     换成 src/text.js
+  /*MOTION*/   换成 src/motion.js：小动画
   /*UI*/       换成 src/ui.js
   {{TITLE}}    换成数据里的 title，做 HTML 转义
   {{ICONS}}    换成页面图标的三个 <link>：src/icon.svg 和它生成的两张 PNG，都写成 data: 网址（见 icon_links）
+  {{GUA}}      换成标题右边那个八卦，由 src/icon.svg 换成单色（见 gua_mark）
 
 people.json 里的 jie（每年十二个节的日期）不放进页面：页面从 tables.json 的时刻表自己推。
 它留在 people.json 里，是给检查脚本对照用的。
@@ -29,7 +31,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*CHART*/': 'chart.js', '/*CLASSICS*/': 'classics.js', '/*TEXT*/': 'text.js', '/*UI*/': 'ui.js'}
+SCRIPTS = {'/*ENGINE*/': 'engine.js', '/*CHART*/': 'chart.js', '/*CLASSICS*/': 'classics.js', '/*TEXT*/': 'text.js', '/*MOTION*/': 'motion.js', '/*UI*/': 'ui.js'}
 
 
 def render(tpl, fill):
@@ -73,6 +75,22 @@ def icon_links():
             f'<link rel="apple-touch-icon" href="data:image/png;base64,{b64(touch_file.read_bytes())}">')
 
 
+def gua_mark():
+    """标题右边那个很淡的八卦，和页面图标是同一张画：去掉垫底的白色八边形，五行的颜色和墨色都换成 currentColor，白的地方换成页面的底色。
+    中间的太极另包一层（class="tj"），换人的时候只有它转。"""
+    svg = re.sub(r'<!--.*?-->\s*', '', (ROOT / 'src' / 'icon.svg').read_text(encoding='utf-8'), flags=re.S)
+    body = re.search(r'<svg[^>]*>(.*)</svg>', svg, flags=re.S).group(1)
+    body, n = re.subn(r'<polygon[^>]*/>\s*', '', body)
+    guas = body.count('data-gua=')
+    body = re.sub(r' data-gua="."', '', body)
+    body = re.sub(r'fill="(#[0-9a-fA-F]{3,6})"', lambda m: 'fill="var(--paper)"' if m.group(1).lower() in ('#fff', '#ffffff') else 'fill="currentColor"', body)
+    body = re.sub(r'\n\s*', '', body).strip()
+    cut = body.find('<path fill="var(--paper)"')      # 太极里面：白的半边和两个鱼眼，都排在八个卦后面
+    if n != 1 or guas != 8 or cut < body.rfind('<g transform=') or re.search(r'#[0-9a-fA-F]{3}|style=|stroke=|<title', body):
+        raise SystemExit('src/icon.svg 的画法和预想的不一样（一个垫底的八边形，八个卦，后面是太极的半边和两个鱼眼；颜色都写成 fill="#…"，白色写 #fff），tools/build.py 的 gua_mark 要跟着改。')
+    return body[:cut] + '<g class="tj">' + body[cut:] + '</g>'
+
+
 def make_page(data):
     """由人物数据（people.json 的内容）拼出整个页面的 HTML。"""
     rel = lambda p: str(p.relative_to(ROOT))
@@ -104,6 +122,7 @@ def make_page(data):
         '/*CITIES*/': json_for_script(json.dumps(cities, ensure_ascii=False, separators=(',', ':'))),
         '{{TITLE}}': html.escape(title),
         '{{ICONS}}': icon_links(),
+        '{{GUA}}': gua_mark(),
     }
     for mark, path in sources.items():
         text = path.read_text(encoding='utf-8')

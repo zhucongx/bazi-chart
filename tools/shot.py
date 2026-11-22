@@ -8,7 +8,8 @@
 桌面整页（两张卡片都在第一页）、桌面上十二个标签页各一张（tab_名字.png）、桌面打开一条解释、
 手机顶部、手机上十二个标签页各一张（m_tab_名字.png）、手机打开一条解释、手机上的添加表单、深色。
 页面上不止一个人时，再切到第二个人截一张桌面整页。
-同时报告每一页有没有横向溢出、有没有脚本报错。
+同时报告每一页有没有横向溢出、有没有脚本报错，有没有点不到的字：能点开解释的每一处，用真的浏览器看它的正中点下去是不是它自己，
+被别的东西盖住的列出来。检查脚本用的 jsdom 不排版，查不出这一类（2026-11-22 关系图的圈就这样被名字那一层盖住过）。
 
 页面用了 Google 的网络字体。取不到的时候不等它，照样截图，这时图里是系统自带的宋体。
 
@@ -27,6 +28,25 @@ os.environ.setdefault('PW_TEST_SCREENSHOT_NO_FONTS_READY', '1')     # 截图时�
 TABS = [('card-natal', ['bz', 'tk', 'wx', 'qr', 'gods', 'gj', 'ys', 'lq']), ('card-pan', ['pan', 'rel', 'gt', 'sy'])]      # 两张卡片各自的标签，和 src/ui.js 的 TABS 相同
 TAB_SHOTS = [f'{pre}tab_{t}.png' for pre in ('', 'm_') for _, ts in TABS for t in ts]
 NAMES = ['desktop.png', 'desktop_sheet.png', 'mobile_top.png', 'mobile_sheet.png', 'mobile_form.png', 'dark.png', 'desktop_p2.png'] + TAB_SHOTS
+
+
+# 能点开解释的每一处（data-x），看得见的，正中那一点点下去是不是它自己。窗口开得很高，不用滚动；横条和表格里没露出来的不算
+HIT = '''() => {
+  const bad = [];
+  document.querySelectorAll('[data-x]').forEach(el => {
+    const box = el.classList.contains('nd') ? el.querySelector('.ring') : el, r = box.getClientRects()[0];
+    if (!r || r.width < 1 || r.height < 1) return;
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    for (let n = el.parentElement; n; n = n.parentElement) {
+      const s = getComputedStyle(n), b = n.getBoundingClientRect();
+      if (s.overflowX !== 'visible' && (x < b.left || x > b.right)) return;
+    }
+    if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return;
+    const hit = document.elementFromPoint(x, y);
+    if (!hit || !el.contains(hit)) bad.push(el.dataset.x + ' 被 ' + (hit ? (hit.getAttribute('class') || hit.tagName) : '空白') + ' 盖住');
+  });
+  return bad;
+}'''
 
 
 def launch(p):
@@ -61,7 +81,7 @@ def main():
         b = launch(p)
 
         def page(w, h, scheme):
-            pg = b.new_page(viewport={'width': w, 'height': h}, color_scheme=scheme, device_scale_factor=1)
+            pg = b.new_page(viewport={'width': w, 'height': h}, color_scheme=scheme, device_scale_factor=1, reduced_motion='reduce')      # 小动画不做，免得截在半路上
             pg.on('pageerror', lambda e: msgs.append(str(e)))
             try:
                 pg.goto(url, timeout=15000)
@@ -100,6 +120,12 @@ def main():
                     if sw > cw:
                         print(f'{where}，标签 {t}: 宽 {cw}，内容宽 {sw}  ← 有横向溢出')
                     pg.locator(f'#{card}').screenshot(path=str(out / f'{pre}tab_{t}.png'))
+                    size = pg.viewport_size
+                    pg.set_viewport_size({'width': size['width'], 'height': 9000})
+                    bad = pg.evaluate(HIT)
+                    if bad:
+                        print(f'{where}，标签 {t}: {len(bad)} 处点不到，比如 {bad[0]}')
+                    pg.set_viewport_size(size)
                 click_first(pg, f'#h-{tabs[0]}', f'{where}翻回第一页')
 
         pg = page(1440, 900, 'light')
