@@ -234,7 +234,7 @@ function refreshSheet(){
    两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、格局、喜忌、六亲，大运流年是四柱细盘、干支关系、根和透、计分。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
 const TABS={natal:['bz','tk','wx','qr','gods','gj','ys','lq'],pan:['pan','rel','gt','sy']};      // 六亲宫位（lq）是原局的最后一页：它不在强弱、格局、喜忌那条读盘的线上，所以排在喜忌后面。原来是页面最下面单独的一张卡片，2026-11-18 用户问能不能放到上面，挪进了标签栏
-function setTab(card,id,focus){
+function setTab(card,id,focus,save){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   const was=sel.tab[card];
   sel.tab[card]=id;
@@ -244,7 +244,7 @@ function setTab(card,id,focus){
     $('p-'+t).hidden=!on;
   });
   if(focus) $('h-'+id).focus();
-  try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}
+  if(save!==false){try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}}
   refreshShare();
   if(sel.x){                                   // 打开的解释所指的字要是在换下去的那一页里，就收起来；还在的话重新摆位置
     const el=anchorOf(sel.x,sel.xn,sel.xh);
@@ -360,9 +360,9 @@ function ringLines(pos,mk,A,B){
 }
 const arrowDef=mk=>`<marker id="${mk}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker>`;
 function fillCircle(id,x,y,r,frac){
-  const h=2*r*Math.max(0,Math.min(1,frac||0));
+  const h=2*r*Math.max(0,Math.min(1,frac||0)), hh=h>0.05?h:0;
   return `<clipPath id="${id}"><circle cx="${f1(x)}" cy="${f1(y)}" r="${r}"/></clipPath><circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/>`
-    +(h>0.05?`<rect class="lvl" x="${f1(x-r)}" y="${f1(y+r-h)}" width="${2*r}" height="${f1(h)}" clip-path="url(#${id})"/>`:'')
+    +`<rect class="lvl" x="${f1(x-r)}" y="${f1(y+r-hh)}" width="${2*r}" height="${f1(hh)}" clip-path="url(#${id})"/>`
     +`<circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="halo" cx="${f1(x)}" cy="${f1(y)}" r="${r+4.5}"/>`;      // halo：点开或键盘选中时外面的一圈
 }
 /* 两张生克图的圈照什么数：图上方三个按钮，记在 MAPBY 里，也存进浏览器（bz-map），读写都包在 try/catch 里。
@@ -824,14 +824,14 @@ function pickHour(q,i){
   if(!p||!p.nohour||!h||h.length!==1||!Z.includes(h)||(HOUR_PICK[p.id]||'午')===h) return false;
   HOUR_PICK[p.id]=h;rebuildPeople();return true;
 }
-/* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期 */
-function setTabs(q){(q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t);else if(TABS.pan.includes(t)) setTab('pan',t);});}
+/* 链接里带着的位置：tab 是一个或几个标签的名字（逗号隔开），dy 是第几步大运（从 0 数），y 年，m 第几个月（从立春那个月数，从 0 数），d 日期。
+   链接里的标签和数法只对这一次打开生效，不覆盖用户自己存在浏览器里的偏好（bz-tabs、bz-map） */
+function setTabs(q){(q.get('tab')||'').split(',').forEach(t=>{if(TABS.natal.includes(t)) setTab('natal',t,false,false);else if(TABS.pan.includes(t)) setTab('pan',t,false,false);});}
 /* by：五行、十神数法、小卡计分、格局子标签，前三项的旧链接保留当前格局子标签；照 MAP_OPTS 核对，认不出的那一项不动；没带 by 的旧链接保持对方原来的设置。
-   只改 MAPBY，不画；改了的返回 true */
+   只改 MAPBY，不画、不写进浏览器；改了的返回 true */
 function setBy(q){
   const by=(q.get('by')||'').split(','); let mapped=false;
   ['wx','gods','yun','gj'].forEach((k,i)=>{const v=by[i];if(v&&MAP_OPTS[k].some(o=>o[0]===v)&&MAPBY[k]!==v){MAPBY[k]=v;mapped=true;}});
-  if(mapped){try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}}
   return mapped;
 }
 /* 同一位，只换位置和数法 */
@@ -873,6 +873,7 @@ function saveTemp(){
   delete HOUR_PICK.link;                 // 来自链接的人都用 link 这个编号，记的时辰不能留给下一个链接
   LOCAL.push(info);TEMP=null;writeLocal();rebuildPeople();
   usePerson(PEOPLE.findIndex(p=>p.id===info.id),()=>stayAt(keep));
+  if(location.hash){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}      // 存下来以后清掉网址里的 #，刷新不再重走一遍链接
   say(STORE_OK?'已经存进这个浏览器。':NO_STORE);
 }
 function say(s){$('pp-hint').textContent=s||'';$('pp-hint').hidden=!s;}
@@ -1246,8 +1247,8 @@ readLocal();readOrder();rebuildPeople();
 if(BROKEN.length) say(`浏览器里存的 ${BROKEN.length} 个人排不出盘，没有显示：${BROKEN.join('、')}。`);      // say() 写进 textContent，不用再转义
 let startAt=0; try{const i=PEOPLE.findIndex(p=>p.id===localStorage.getItem('bz-person'));if(i>=0) startAt=i;}catch(e){}
 if(!openLink(location.hash,startAt)) usePerson(startAt);
-setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);
-window.addEventListener('hashchange',()=>{openLink(location.hash);setTab('natal',sel.tab.natal);setTab('pan',sel.tab.pan);});
+setTab('natal',sel.tab.natal,false,false);setTab('pan',sel.tab.pan,false,false);
+window.addEventListener('hashchange',()=>{openLink(location.hash);setTab('natal',sel.tab.natal,false,false);setTab('pan',sel.tab.pan,false,false);});
 // 别的标签页存了人、删了人：这一页的名单跟着更新。正在看的人没有变就只重画人物那一排，选中的大运、年、月、日都不动；
 // 正在看的人被改了就照新的重排，被删了就换到第一位。来自链接、还没保存的那一位不受影响
 window.addEventListener('storage',e=>{

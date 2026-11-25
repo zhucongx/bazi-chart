@@ -113,6 +113,7 @@ function moveLevels(svg,was){
     if(Math.abs(h-h0)<.1) return;
     const set=v=>{r.setAttribute('height',v.toFixed(2));r.setAttribute('y',(base-v).toFixed(2));};
     const t0=performance.now(), step=t=>{
+      if(!r.isConnected) return;
       const k=Math.min(1,Math.max(0,(t-t0)/560));
       if(k<1){set(h0+(h-h0)*(1-Math.pow(1-k,3)));requestAnimationFrame(step);}else{r.setAttribute('height',H);r.setAttribute('y',Y);}
     };

@@ -1426,6 +1426,8 @@ pick(0);
   click($('theme')); const th2 = d.documentElement.dataset.theme, st2 = w.localStorage.getItem('bz-theme');
   ok('右上角的按钮在浅色和深色之间换，选的那一种记在浏览器里', ['light', 'dark'].includes(th1) && ['light', 'dark'].includes(th2) && th1 !== th2 && st1 === th1 && st2 === th2 && $('theme').title === (th2 === 'dark' ? '换成浅色' : '换成深色'), [th1, th2, st1, st2]);
   delete d.documentElement.dataset.theme; w.localStorage.removeItem('bz-theme');
+  const headScript = d.head.querySelector('script'), headStyle = d.head.querySelector('style');
+  ok('head 里样式前面有提前设主题的小脚本，避免手动切主题后刷新闪屏', !!headScript && !!headStyle && !!(headScript.compareDocumentPosition(headStyle) & 4) && headScript.textContent.includes('bz-theme'));
   ok('右上角有指向 GitHub 项目的链接，在新窗口打开', !!$('gh') && $('gh').getAttribute('href') === 'https://github.com/zhucongx/bazi-chart' && $('gh').getAttribute('target') === '_blank');
   click(byX('row|神煞'));
   d.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -1640,6 +1642,20 @@ pick(0);
   const lv = p => { p.ev("openLink('#n=丁&g=f&b=1988-08-18&nh=1')"); p.tick(3000); return [['wx', 'wxmap', ['face', 'cnt', 'nl']], ['gods', 'godmap', ['face', 'nl', 'cnt']]].map(([t, m, vs]) => { p.d.getElementById('h-' + t).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(3000);
     return vs.map(v => { p.d.querySelector(`[data-map="${t}:${v}"]`).dispatchEvent(new p.w.MouseEvent('click', { bubbles: true })); p.tick(3000); return p.d.getElementById(m).innerHTML; }).join(''); }).join(''); };
   eq('两张生克图换数法：圈里填的一截动完以后，和不动的一页一字不差', diff(lv(A), lv(C)), '');
+  // 某一行从有降到 0 时平滑收起；动画中途再换数法，已移除的旧节点不再继续跑帧
+  {
+    A.ev("openLink('#n=戊&g=m&b=1990-01-01&nh=1')"); A.tick(3000);
+    A.d.getElementById('h-wx').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(3000);
+    A.d.querySelector('[data-map="wx:nl"]').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(3000);
+    A.d.querySelector('[data-map="wx:cnt"]').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(80);
+    const oldRects = [...A.d.querySelectorAll('#wxmap .lvl')], oldH = oldRects.map(r => r.getAttribute('height'));
+    const dropIdx = oldRects.findIndex((r, i) => +r.getAttribute('height') > 0 && A.ev(`wxCounts().face[${i}]`) === 0);
+    A.d.querySelector('[data-map="wx:face"]').dispatchEvent(new A.w.MouseEvent('click', { bubbles: true })); A.tick(100);
+    const midH = +A.d.querySelectorAll('#wxmap .lvl')[dropIdx].getAttribute('height');
+    A.tick(3000);
+    const endH = +A.d.querySelectorAll('#wxmap .lvl')[dropIdx].getAttribute('height');
+    eq('生克图降到 0 时也会平滑收起，旧节点被替换后不再继续跑帧', [dropIdx >= 0, midH > 0, endH === 0, oldRects.every((r, i) => r.getAttribute('height') === oldH[i])], [true, true, true, true]);
+  }
   // 生克图：线记着两头是谁，圈记着自己是谁；指着一个圈，有关的四条线不变淡。鼠标指着的和键盘选中的分开记，一样没有了另一样还算
   ['wxmap', 'godmap'].forEach(id => {
     const q = s => [...C.d.querySelectorAll(`#${id} ${s}`)], ls = q('line[data-l]').map(l => l.getAttribute('data-l')), ns = [...new Set(q('.nd[data-n]').map(n => n.getAttribute('data-n')))].sort();
@@ -2090,12 +2106,19 @@ console.log('分享链接');
   if (people.length > 1) click(d.querySelector('#people [data-p="1"]'));
   eq('打开已经在页面上的人的链接，人物那一排下面有一句提示；换到别的人，提示收起', [hintOn, people.length < 2 || $('pp-hint').hidden], [true, true]);
   pick(0);
-  // 带着链接打开整个页面：一开始显示的就是链接里的人和那一页
+  // 带着链接打开整个页面：一开始显示的就是链接里的人和那一页；不顶掉浏览器里原有的标签和数法偏好；保存后清掉网址里的 #
   const errs2 = [], vc2 = new VirtualConsole(); vc2.on('jsdomError', e => errs2.push(e.message));
-  const dom2 = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', virtualConsole: vc2, pretendToBeVisual: true, url: 'https://bazi.test/#' + linkFor(INFOS[3]) + '&tab=qr' });
+  const savedMap = JSON.stringify({ wx: 'nl', gods: 'cnt', yun: 'fy', gj: 'gjb' });
+  const dom2 = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously', virtualConsole: vc2, pretendToBeVisual: true, url: 'https://bazi.test/#' + linkFor(INFOS[3]) + '&tab=qr,sy&by=face,nl,fy,gjz',
+    beforeParse(win) { win.localStorage.setItem('bz-theme', 'dark'); win.localStorage.setItem('bz-tabs', 'wx,gt'); win.localStorage.setItem('bz-map', savedMap); } });
   const w2 = dom2.window;
   eq('带着链接打开页面：一开始就是链接里的人（时辰不详的也行），停在链接里的那一页，脚本没有报错',
-    [w2.eval('!!P.temp'), w2.eval('!!P.nohour'), w2.eval('P.pillars.join(" ")') === pillarsOf(INFOS[3]), w2.eval('sel.tab.natal'), !w2.document.getElementById('hours').hidden, errs2], [true, true, true, 'qr', true, []]);
+    [w2.eval('!!P.temp'), w2.eval('!!P.nohour'), w2.eval('P.pillars.join(" ")') === pillarsOf(INFOS[3]), w2.eval('sel.tab.natal'), w2.eval('sel.tab.pan'), !w2.document.getElementById('hours').hidden, w2.document.documentElement.dataset.theme, errs2], [true, true, true, 'qr', 'sy', true, 'dark', []]);
+  eq('打开链接里的标签和数法只对这一次生效，不顶掉浏览器里原有的偏好',
+    [w2.eval('MAPBY.wx'), w2.eval('MAPBY.gj'), w2.localStorage.getItem('bz-tabs'), w2.localStorage.getItem('bz-map')],
+    ['face', 'gjz', 'wx,gt', savedMap]);
+  w2.document.getElementById('pp-save').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
+  eq('保存来自链接的人以后清掉网址里的 #，刷新不再重走一遍链接', [w2.location.hash, w2.eval('!!P.temp'), w2.eval('!!P.local')], ['', false, true]);
   dom2.window.close();
 }
 
