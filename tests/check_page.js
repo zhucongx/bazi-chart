@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // 页面检查。
 //
-//   node tests/check_page.js            检查公开的示例页面 index.html，约五分钟
-//   node tests/check_page.js --private  检查个人页面 private/build/index.html
+//   node tests/check_page.js            检查页面 index.html，约五分钟
 //   加 --quick                          跳过耗时的两项（神煞口诀的全量对照、所有状态的遍历），十几秒
 //   加 --base <目录>                    检查 <目录>/index.html，预期也从这个目录里找（tools/fuzz.py 在用）
 //   加 --quiet                          只打印失败的项目和最后的结论
@@ -10,7 +9,7 @@
 // 检查四件事：
 //   1. 计算部分（src/engine.js）：干支换算、十五种干支关系、神煞口诀。和具体的人无关。
 //   2. 每个人的细盘，对照 lunar_python 独立算出的预期（data/expected.json，由 tools/gen_data.py 生成）。
-//   3. 人工核对过的事实：people/<id>.facts.json；个人的在 private/people/ 里。
+//   3. 人工核对过的事实：people/<id>.facts.json。
 //   4. 解释面板的行为，在页面上添加、编辑、删除、导入人物，以及所有状态下每一条解释都有内容。
 //
 // 需要先 npm install（只用到 jsdom）。有任何一项失败，退出码为 1。
@@ -19,7 +18,6 @@ const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const ROOT = path.join(__dirname, '..');
-const priv = process.argv.includes('--private');
 const quick = process.argv.includes('--quick');
 if (process.argv.includes('--quiet')) {   // 只打印失败的项目和最后的结论
   const say = console.log;
@@ -27,11 +25,11 @@ if (process.argv.includes('--quiet')) {   // 只打印失败的项目和最后�
 }
 const baseArg = process.argv.indexOf('--base');
 // BASE 是页面和生成的数据所在的目录，PEOPLE 是出生信息和人工核对过的事实所在的目录
-const BASE = baseArg > 0 ? path.resolve(process.argv[baseArg + 1]) : priv ? path.join(ROOT, 'private', 'build') : ROOT;
-const PEOPLE = baseArg > 0 ? path.join(BASE, 'people') : priv ? path.join(ROOT, 'private', 'people') : path.join(ROOT, 'people');
+const BASE = baseArg > 0 ? path.resolve(process.argv[baseArg + 1]) : ROOT;
+const PEOPLE = baseArg > 0 ? path.join(BASE, 'people') : path.join(ROOT, 'people');
 const FILE = path.join(BASE, 'index.html');
 const readJSON = (f, fallback) => fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback;
-if (!fs.existsSync(FILE)) { console.log(`找不到 ${path.relative(ROOT, FILE)}，先运行 python3 tools/build.py${priv ? ' --private' : ''}`); process.exit(1); }
+if (!fs.existsSync(FILE)) { console.log(`找不到 ${path.relative(ROOT, FILE)}，先运行 python3 tools/build.py`); process.exit(1); }
 const expected = readJSON(path.join(BASE, 'data', 'expected.json'), {});
 const facts = {};        // {人物的 id: 人工核对过的事实}，每个人一个文件：<id>.facts.json
 if (fs.existsSync(PEOPLE)) fs.readdirSync(PEOPLE).filter(f => f.endsWith('.facts.json')).forEach(f => { facts[f.slice(0, -'.facts.json'.length)] = readJSON(path.join(PEOPLE, f), {}); });
@@ -514,7 +512,7 @@ console.log('成败救应、用神变化、相神');
     checks.push(...JSON.parse(ev(`JSON.stringify(gjbNow().groups.flatMap(g=>g.rows.filter(o=>o.ok===true&&o.more.some(m=>m[1]!==true)).map(o=>({summary:gjbSay().includes(gjbCaveat(o)),row:document.getElementById('gjb').textContent.includes(gjbCaveat(o)),candidate:xiangRow().dd.includes('候选'),verdict:/结构是完整的|靠这几个字成/.test(gjbSay()+xiangRow().dd)}))))`)));
   }
   ok('有补充条件不合或待核对的命中项：汇总和表内显示限制，相神只列候选', checks.every(c=>c.summary&&c.row&&c.candidate&&!c.verdict), checks);
-  if(!priv) ok('公开示例确实覆盖本章条件相符而补充条件不合的情形', checks.length>0);
+  if(baseArg<0) ok('公开示例确实覆盖本章条件相符而补充条件不合的情形', checks.length>0);
   const caveat=ev("gjbCaveat({more:[['身强',null,'q'],['不透七杀',false,'q']],todo:'尚有前提未实现'})");
   ok('补充条件的定不了、不合、没有核对三种状态分别交代', caveat.includes('补充条件定不了（强弱居中）：身强')&&caveat.includes('补充条件不合：不透七杀')&&caveat.includes('没有核对的条件'));
   // 每张盘都给一个归纳的词和一句人话；合了成格的条件、书里另外的条件没有全合的，写「成格的条件合，另外的条件没有全合」，不写成完整的成格
@@ -1533,9 +1531,11 @@ pick(0);
   eq('弦纹只有三处，粗的一道各在外侧', [rings, wide3('header.top::after'), wide3('footer::before'), wide3('.read::before')], [['.read::before', 'footer::before', 'header.top::after'], '2px 0 1px', '1px 0 2px', '0 1px 0 2px']);
   const bar0 = d.querySelector('#gwmap .stkw.top');
   ok('宫位表的小条（也叫 .top）上没有画出来的线', !!bar0 && !rules.flatMap(([s]) => s.split(',')).filter(s => /::?(before|after)\s*$/.test(s)).some(s => { try { return bar0.matches(s.replace(/::?(before|after)\s*$/, '') || '*'); } catch (e) { return false; } }));
-  // 减弱动态效果：动画、过渡、平滑滚动只能写在 no-preference 那一段里，没有循环的
+  // 减弱动态效果：样式里的动画、过渡、平滑滚动和装饰性循环动画，都只能写在 no-preference 那一段里，外面一条也不能有
   const np = css.match(/@media \(prefers-reduced-motion:no-preference\)\{([\s\S]*?)\n\}/), rest = css.replace(np ? np[0] : '', '');
-  eq('样式里的动画、过渡、平滑滚动都写在「没有减弱动态效果」那一段里，没有循环的', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(css)], [true, [], false]);
+  eq('样式里的动画、过渡、平滑滚动和装饰循环都写在「没有减弱动态效果」那一段里', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(rest)], [true, [], false]);
+  const ringEl = d.querySelector('.titlerow .gua-ring');
+  eq('装饰动画元素：外圈星轨、五行气韵微光、生克图流光线都对读屏隐藏且跟随日主五行', [!!ringEl && ringEl.getAttribute('aria-hidden') === 'true', d.querySelector('header.top').dataset.el === ev('ELC[gEl(DM)]'), [...d.querySelectorAll('#wxmap line.flow')].every(l => l.getAttribute('aria-hidden') === 'true') && d.querySelectorAll('#wxmap line.flow').length === 5], [true, true, true]);
   // 长说明：照意思分成几段，一段一块，文字一个字不少。每位人物、每种数法、每种看法各走一遍（快速模式只走三位）
   const nPa = { 'note-yun': 2, 'note-sk': 2, 'note-gt': 2, 'note-sy': 2, 'note-syfig': 2, 'note-gjz': 3, 'note-gjb': 3, 'note-thc': 2 };
   const sayAt = { 'note-yun': 'noteYun()', 'note-nl': null, 'note-sk': 'noteSK()', 'note-gt': 'noteGT()', 'note-sy': 'noteSy()', 'note-syfig': 'noteSyFig()', 'note-thc': 'noteThc()', 'note-gjz': 'noteGjz()', 'note-gjb': 'noteGjb()', 'thc-say': 'thcSay()', 'gjb-say': 'gjbSay()' };
@@ -1657,12 +1657,28 @@ pick(0);
     eq('生克图降到 0 时也会平滑收起，旧节点被替换后不再继续跑帧', [dropIdx >= 0, midH > 0, endH === 0, oldRects.every((r, i) => r.getAttribute('height') === oldH[i])], [true, true, true, true]);
   }
   // 生克图：线记着两头是谁，圈记着自己是谁；指着一个圈，有关的四条线不变淡。鼠标指着的和键盘选中的分开记，一样没有了另一样还算
-  ['wxmap', 'godmap'].forEach(id => {
+  ['wxmap', 'godmap', 'ysmap'].forEach(id => {
     const q = s => [...C.d.querySelectorAll(`#${id} ${s}`)], ls = q('line[data-l]').map(l => l.getAttribute('data-l')), ns = [...new Set(q('.nd[data-n]').map(n => n.getAttribute('data-n')))].sort();
     const svg = q('svg')[0], hl = () => svg.getAttribute('data-hl'), over = el => el.dispatchEvent(new C.w.Event('pointerover', { bubbles: true })), two = q('.nd[data-n="2"]')[0];
     over(two); const on = hl(); two.dispatchEvent(new C.w.Event('focusout', { bubbles: true })); const stay = hl(); over(C.d.body); const gone = hl();
-    eq(`${id === 'wxmap' ? '五行' : '十神'}生克图：十条线两两不同，一个圈连着四条；指着一个圈只留有关的线，别的圈失去焦点不影响，移开就恢复`, [ls.length, new Set(ls).size, ns, ['0', '1', '2', '3', '4'].map(k => ls.filter(l => l.includes(k)).length), on, stay, gone], [10, 10, ['0', '1', '2', '3', '4'], [4, 4, 4, 4, 4], '2', '2', null]);
+    eq(`${id === 'wxmap' ? '五行' : id === 'godmap' ? '十神' : '用神'}生克图：十条线两两不同，一个圈连着四条；指着一个圈只留有关的线，别的圈失去焦点不影响，移开就恢复`, [ls.length, new Set(ls).size, ns, ['0', '1', '2', '3', '4'].map(k => ls.filter(l => l.includes(k)).length), on, stay, gone], [10, 10, ['0', '1', '2', '3', '4'], [4, 4, 4, 4, 4], '2', '2', null]);
   });
+  // 四张新增示意图：十二长生盘、用神五神关系图、六亲推演示意图、八步大运喜用分走势图
+  {
+    pick(0);
+    const csN = [...d.querySelectorAll('#csmap [data-x^="cs|"]')];
+    const csHit = [...d.querySelectorAll('#csmap .cs-tag')].map(txt).join('');
+    eq('日主一页十二长生盘：十二地支齐全、每个可点、原局四柱地支都有标注', [csN.length, csN.every(n => !!ev(`X(${JSON.stringify(n.dataset.x)})`)), '年月日时'.split('').every(k => csHit.includes(k))], [12, true, true]);
+    const ysN = [...d.querySelectorAll('#ysmap .nd[data-n]')];
+    eq('喜忌一页用神五神关系图：五个五行齐全、都有可点解释', [ysN.length, ysN.every(n => !!ev(`X(${JSON.stringify(n.dataset.x)})`))], [5, true]);
+    const lqN = [...d.querySelectorAll('#lqmap .lq-nd')];
+    eq('六亲一页生克推演示意图：六位亲属齐全、中心有日主、全部可点', [lqN.length, !!d.querySelector('#lqmap .nd.me'), lqN.every(n => !!ev(`X(${JSON.stringify(n.dataset.x)})`))], [6, true, true]);
+    const syCheck = (id, want) => { const cs = [...d.querySelectorAll(`#${id} .sy-col`)]; return [cs.length, cs.map(c => +txt(c.querySelector('.sy-val'))), cs.every(c => !!ev(`X(${JSON.stringify(c.dataset.x)})`))]; };
+    const wantDy = JSON.parse(ev('JSON.stringify(P.dayun.map(d=>xiPillar(d.gz).score))'));
+    const wantLn = JSON.parse(ev('JSON.stringify((()=>{const d=P.dayun[sel.dy],a=[];for(let y=d.y0;y<=d.y1;y++)a.push(xiPillar(yearGZ(y)).score);return a;})())'));
+    const wantLy = JSON.parse(ev('JSON.stringify((()=>{const a=[];for(let m=0;m<12;m++)a.push(xiPillar(monthGZ(sel.y,m)).score);return a;})())'));
+    eq('计分一页大运、流年、流月三张喜用分走势图：柱数与分数一致、每柱可点', [syCheck('symap-dy', wantDy), syCheck('symap-ln', wantLn), syCheck('symap-ly', wantLy)], [[8, wantDy, true], [10, wantLn, true], [12, wantLy, true]]);
+  }
   [A, B, C].forEach(p => p.D.window.close());
 }
 

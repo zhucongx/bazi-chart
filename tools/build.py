@@ -2,7 +2,6 @@
 """把模板、脚本和数据合成一个自包含的页面。只用标准库。
 
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
-  python3 tools/build.py --private   private/build/data/people.json → private/build/index.html
 
 模板 src/page.tpl.html 里有十二个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
@@ -134,23 +133,20 @@ def make_page(data):
 
 
 def main():
-    unknown = [a for a in sys.argv[1:] if a != '--private']
-    if unknown:
-        raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
-    private = '--private' in sys.argv
-    base = ROOT / 'private' / 'build' if private else ROOT          # 个人的生成物都放在 private/build/ 里
+    if sys.argv[1:]:
+        raise SystemExit(f'不认识的参数：{sys.argv[1:]}。用法见文件开头的说明。')
     rel = lambda p: str(p.relative_to(ROOT))
 
-    data_file = base / 'data' / 'people.json'
+    data_file = ROOT / 'data' / 'people.json'
     if not data_file.exists():
-        raise SystemExit(f'找不到 {rel(data_file)}。先运行 .venv/bin/python tools/gen_data.py' + (' --private' if private else '') + '。')
+        raise SystemExit(f'找不到 {rel(data_file)}。先运行 .venv/bin/python tools/gen_data.py。')
     try:
         data = json.loads(data_file.read_text(encoding='utf-8'))
     except ValueError as e:
         raise SystemExit(f'{rel(data_file)} 不是合法的 JSON：{e}')
 
     out = make_page(data)
-    target = base / 'index.html'
+    target = ROOT / 'index.html'
     target.write_text(out, encoding='utf-8', newline='\n')
     print(f'已生成 {rel(target)}，{len(out.encode("utf-8"))} 字节')
 

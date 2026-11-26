@@ -24,7 +24,7 @@
   --accent:#1d3f94; --accent-soft:#e7edf9; --warn:#96392b; --warn-soft:#f8ebe7; --seal:#b23a2c; --seal-ink:#ffffff; --tint:rgba(29,63,148,.07); --tint-ring:rgba(29,63,148,.3);
   --wood:#2c7a57; --fire:#bd3b2d; --earth:#7a4523; --metal:#8f7300; --water:#2360ad;
   --wood-s:#edf6f1; --fire-s:#fbeeeb; --earth-s:#f6ece4; --metal-s:#faf4d6; --water-s:#e0ebfb;
-  --wood-f:#4aa37b; --fire-f:#d9604f; --earth-f:#9c6a3c; --metal-f:#c9a127; --water-f:#4a88d6; --dot:#b7becb; --lvl:.4;
+  --wood-f:#4aa37b; --fire-f:#d9604f; --earth-f:#9c6a3c; --metal-f:#c9a127; --water-f:#4a88d6; --dot:#b7becb; --lvl:.4; --ao1:.08; --ao2:.16;
   --shadow:0 1px 2px rgba(19,26,42,.04),0 6px 20px rgba(19,26,42,.05);
   --pop:0 2px 6px rgba(19,26,42,.08),0 14px 36px rgba(19,26,42,.18);
   --display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
@@ -36,7 +36,7 @@
     --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
     --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
     --wood-s:#163a2b; --fire-s:#45231f; --earth-s:#402a17; --metal-s:#3a350f; --water-s:#173560;
-    --wood-f:#4fb086; --fire-f:#e07a6c; --earth-f:#b3763a; --metal-f:#dcc452; --water-f:#6299e2; --dot:#4d576b; --lvl:.32;
+    --wood-f:#4fb086; --fire-f:#e07a6c; --earth-f:#b3763a; --metal-f:#dcc452; --water-f:#6299e2; --dot:#4d576b; --lvl:.32; --ao1:.13; --ao2:.23;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
     --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
     color-scheme:dark;
@@ -47,7 +47,7 @@
   --accent:#8eb0f2; --accent-soft:#1c2740; --warn:#e59a85; --warn-soft:#33201c; --seal:#c4493a; --seal-ink:#ffffff; --tint:rgba(142,176,242,.1); --tint-ring:rgba(142,176,242,.4);
   --wood:#63c394; --fire:#f0877a; --earth:#d48a3c; --metal:#ebd35f; --water:#79adf3;
   --wood-s:#163a2b; --fire-s:#45231f; --earth-s:#402a17; --metal-s:#3a350f; --water-s:#173560;
-  --wood-f:#4fb086; --fire-f:#e07a6c; --earth-f:#b3763a; --metal-f:#dcc452; --water-f:#6299e2; --dot:#4d576b; --lvl:.32;
+  --wood-f:#4fb086; --fire-f:#e07a6c; --earth-f:#b3763a; --metal-f:#dcc452; --water-f:#6299e2; --dot:#4d576b; --lvl:.32; --ao1:.13; --ao2:.23;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.22);
   --pop:0 2px 6px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.55);
   color-scheme:dark;
@@ -80,8 +80,10 @@ th .x,dt .x,.gods .x,.bars .x,.eyebrow .x,.qd-k .x,.qs-h .x,.qx .x,.sd-h .x,.lg 
 .ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
 /* 弦纹：青花瓷口沿和圈足上一粗一细两道蓝线。顶部信息下面一道、页脚上面一道，粗的在外；解读框左边一道竖的，代替原来的灰底，像书页边上的批注。
-   只用在这三处，别处不加。2026-11-22 用户让加 */
-header.top{position:relative;display:flex;flex-direction:column;gap:16px;padding-bottom:22px}      /* 写明 header：宫位表的小条也叫 .top */
+   只用在这三处，别处不加。2026-11-22 用户让加。顶部右上角另有一缕极淡的日主五行气韵微光（header.top::before，只落到 header.top 上） */
+header.top{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:16px;padding-bottom:22px}      /* 写明 header：宫位表的小条也叫 .top */
+header.top[data-el="wood"]{--aura:var(--wood-f)} header.top[data-el="fire"]{--aura:var(--fire-f)} header.top[data-el="earth"]{--aura:var(--earth-f)} header.top[data-el="metal"]{--aura:var(--metal-f)} header.top[data-el="water"]{--aura:var(--water-f)}
+header.top::before{content:"";position:absolute;right:0;top:-10px;width:min(440px,92%);height:210px;border-radius:50%;background:radial-gradient(closest-side,var(--aura,var(--accent)),transparent 72%);opacity:var(--ao1);pointer-events:none;z-index:-1}
 header.top::after,footer::before{content:"";position:absolute;left:0;right:0;height:5px;border:solid var(--accent);opacity:.8}
 header.top::after{bottom:0;border-width:2px 0 1px}
 .toprow{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap}
@@ -106,8 +108,11 @@ h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32p
 h1 span{white-space:nowrap}
 /* 标题右边空着的地方放一个很淡的八卦，和页面图标是同一张画，换成单色的钴蓝。只在电脑上有 */
 .titlerow{position:relative}
-.gua{display:none}
+.gua,.gua-ring{display:none}
 .gua .tj{transform-origin:32px 32px}
+.gua-ring .gr-o{fill:none;stroke:currentColor;stroke-width:.8;stroke-dasharray:2.5 5.5;opacity:.75}
+.gua-ring .gr-i{fill:none;stroke:currentColor;stroke-width:.5;opacity:.45}
+.gua-ring .gr-d{fill:currentColor;opacity:.85}
 /* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱；每个字上面一个小字，日柱的天干是「日主」（一枚淡蓝的小签），其余七个字是它的位置（年干、年支、月干、月支、日支、时干、时支，灰色小字）。都用样式生成，不占文字内容 */
 h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;padding-top:16px}
 h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
@@ -508,9 +513,11 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .wxmap svg{display:block;width:100%;max-width:320px;height:auto}
 .wxmap line{stroke:var(--ink3);stroke-width:1.3}
 .wxmap line.ke{stroke-dasharray:4 3}
+.wxmap line.flow{display:none}
 .wxmap marker path{fill:var(--ink3)}
 /* 指着一个圈（data-hl），只留和它有关的线，别的淡下去。线的 data-l 是两头的序号，圈的 data-n 是它的序号 */
 .wxmap svg[data-hl="0"] line[data-l]:not([data-l*="0"]),.wxmap svg[data-hl="1"] line[data-l]:not([data-l*="1"]),.wxmap svg[data-hl="2"] line[data-l]:not([data-l*="2"]),.wxmap svg[data-hl="3"] line[data-l]:not([data-l*="3"]),.wxmap svg[data-hl="4"] line[data-l]:not([data-l*="4"]){opacity:.13}
+.wxmap svg[data-hl="0"] line.flow:not([data-fl*="0"]),.wxmap svg[data-hl="1"] line.flow:not([data-fl*="1"]),.wxmap svg[data-hl="2"] line.flow:not([data-fl*="2"]),.wxmap svg[data-hl="3"] line.flow:not([data-fl*="3"]),.wxmap svg[data-hl="4"] line.flow:not([data-fl*="4"]){opacity:.06}
 .wxmap .nd .ring{fill:none;stroke:currentColor;stroke-width:1.3}
 .wxmap .nd.wood .bg{fill:var(--wood-s)} .wxmap .nd.fire .bg{fill:var(--fire-s)} .wxmap .nd.earth .bg{fill:var(--earth-s)} .wxmap .nd.metal .bg{fill:var(--metal-s)} .wxmap .nd.water .bg{fill:var(--water-s)}
 .wxmap .nd .lvl{fill:var(--f,currentColor);opacity:var(--lvl)}      /* 圈里填的那一截：多少照分数或者个数 */
@@ -531,6 +538,72 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .wxmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central;transform:translateY(-.08em)}      /* 往上托一点：字的墨迹比基线算出来的中心低 */
 .wxmap .gp{font:400 12px var(--body);fill:var(--ink2);text-anchor:middle}
 .wxmap .nd.me .gp{font-weight:600;fill:var(--ink)}
+/* 十二长生盘（日主页）：十二地支罗盘环 */
+.csmap svg{max-width:380px}
+.csmap .cs-track{fill:none;stroke:var(--line);stroke-width:1.2}
+.csmap .cs-dir{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 4;opacity:.45;transform-origin:206px 206px}
+.csmap .cs-z{font:700 15px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.csmap .cs-s{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.csmap .nd.weak .bg{fill:var(--card)}
+.csmap .nd.weak .ring{stroke:var(--line)}
+.csmap .nd.vig .bg{fill:var(--wash)}
+.csmap .nd.hit .ring{stroke-width:2.4}
+.csmap .nd.hit .cs-s{fill:var(--ink);font-weight:600}
+.csmap .cs-tag{font:600 10.5px var(--body);fill:var(--accent);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-dm{font:700 25px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.csmap .cs-sub{font:500 10.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-way{font:400 9.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
+/* 六亲生克推演示意图（六亲页） */
+.lqmap{margin:0;display:flex;flex-direction:column;align-items:center}
+.lqmap svg{display:block;width:100%;max-width:560px;height:auto}
+.lqmap .lq-ln{stroke:var(--ink3);stroke-width:1.3;fill:none}
+.lqmap .lq-ln.ke{stroke-dasharray:4 3}
+.lqmap marker path{fill:var(--ink3)}
+.lqmap .lq-lb{font:400 10.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-nd{cursor:pointer;outline:none}
+.lqmap .lq-nd .box{fill:var(--card);stroke:var(--line);stroke-width:1.3;stroke-dasharray:4 3}
+.lqmap .lq-nd.hit .box{stroke:currentColor;stroke-width:1.4;stroke-dasharray:none}
+.lqmap .lq-nd.hit.wood .box{fill:var(--wood-s)} .lqmap .lq-nd.hit.fire .box{fill:var(--fire-s)} .lqmap .lq-nd.hit.earth .box{fill:var(--earth-s)} .lqmap .lq-nd.hit.metal .box{fill:var(--metal-s)} .lqmap .lq-nd.hit.water .box{fill:var(--water-s)}
+.lqmap .lq-nd:hover .box{stroke:currentColor;stroke-width:2}
+.lqmap .lq-nd.on .box,.lqmap .lq-nd:focus-visible .box{stroke:var(--accent);stroke-width:2.2;stroke-dasharray:none}
+.lqmap .lq-who{font:700 13px var(--body);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-gd{font:600 11px var(--body);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-at{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.lqmap .nd .ring{fill:none;stroke:currentColor;stroke-width:2.8}
+.lqmap .nd.wood .bg{fill:var(--wood-s)} .lqmap .nd.fire .bg{fill:var(--fire-s)} .lqmap .nd.earth .bg{fill:var(--earth-s)} .lqmap .nd.metal .bg{fill:var(--metal-s)} .lqmap .nd.water .bg{fill:var(--water-s)}
+.lqmap .nd .halo{fill:none;stroke:none}
+.lqmap .nd.on .halo,.lqmap .nd:focus-visible .halo{stroke:var(--accent);stroke-width:1.5}
+.lqmap .nd{cursor:pointer;outline:none}
+.lqmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central;transform:translateY(-.06em)}
+.lqmap .ct{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+/* 大运、流年、流月喜用分走势图（计分页） */
+.sy-grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 28px;align-items:start}
+.sy-box{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sy-box h4{margin:0;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sy-box h4 small{font-size:12px;font-weight:400;color:var(--ink3)}
+.symap{margin:0;width:100%}
+.symap svg{display:block;width:100%;height:auto}
+.symap .sy-grid{stroke:var(--line);stroke-width:1}
+.symap .sy-ax{font:400 11px var(--body);fill:var(--ink3);text-anchor:end;dominant-baseline:central}
+.symap .sy-sel{fill:var(--accent-soft)}
+.symap .sy-col{cursor:pointer;outline:none}
+.symap .sy-hit{fill:transparent}
+.symap .sy-col:hover .sy-hit{fill:var(--tint)}
+.symap .sy-col.on .sy-hit,.symap .sy-col:focus-visible .sy-hit{stroke:var(--accent);stroke-width:1.5;fill:var(--accent-soft)}
+.symap .sy-seg{fill:var(--f,currentColor)}
+.symap .sy-line{fill:none;stroke:var(--accent);stroke-width:1.8;opacity:.7;pointer-events:none}
+.symap .sy-dot{fill:var(--card);stroke:var(--accent);stroke-width:1.8;pointer-events:none}
+.symap .sy-dot.cur{fill:var(--accent)}
+.symap .sy-val{font:600 11.5px var(--body);fill:var(--ink2);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.symap .sy-col.sel .sy-val{fill:var(--accent)}
+.symap .sy-gz{font:700 13.5px var(--display);text-anchor:middle;pointer-events:none}
+.symap .sy-ag{font:400 10px var(--body);fill:var(--ink3);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.symap .sy-now{fill:var(--seal);pointer-events:none}
+.cs-t th,.cs-t td{padding:7px 8px;font-size:13.5px}
+.cs-t th:nth-child(-n+3),.cs-t td:nth-child(-n+3){white-space:nowrap}
+.cs-t .tag{display:inline-block;margin-left:5px;padding:0 5px;border-radius:4px;font-size:11px;line-height:1.5;background:var(--wash);color:var(--ink2)}
+.cs-t .tag.hi{background:var(--accent-soft);color:var(--accent)}
+.split{display:flex;flex-direction:column;gap:14px}
 /* 生克图上方的按钮：圈照什么数。选中的和人物、大运这些「选中」一样，是钴蓝的边框和淡蓝底；下面一行小字说这种数法数的是什么 */
 .seg{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 .seg button{font:inherit;font-size:12.5px;line-height:1.4;color:var(--ink2);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 12px;cursor:pointer}
@@ -619,7 +692,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   main{max-width:1280px;padding:44px 32px 72px;gap:28px}
   header.top{gap:20px;padding-bottom:26px}
   .titlerow{margin-top:8px}
-  .gua{display:block;position:absolute;right:4px;top:50%;width:124px;height:124px;transform:translateY(-50%);color:var(--accent);opacity:.15;pointer-events:none}
+  .gua{display:block;position:absolute;right:10px;top:50%;width:124px;height:124px;transform:translateY(-50%);color:var(--accent);opacity:.17;pointer-events:none}
+  .gua-ring{display:block;position:absolute;right:0;top:50%;width:144px;height:144px;transform:translateY(-50%);color:var(--accent);opacity:.22;pointer-events:none}
   .eyebrow{font-size:13.5px}
   .switch{font-size:14px;padding:5px 14px 5px 7px}
   .pp{font-size:14.5px;padding:6px 18px}
@@ -847,7 +921,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 表和右边一栏并排：右边一栏 340 像素，表占剩下的七百来像素。再窄，表里的字就挤得折行，所以上下排 */
   .beside{grid-template-columns:minmax(0,1fr) minmax(0,340px)}
   .beside .gods th:nth-child(-n+2),.beside .gods td:nth-child(-n+2){white-space:nowrap}
-  /* 强弱一页下半：左边强弱计分的卡片，右边解读。卡片里四块排成两行两列 */
+  /* 强弱一页下半：左边强弱计分的卡片，右边解读。卡片里四块排成两行两列；计分页四块走同一个两栏网格，中缝上下对齐 */
+  .sy-grid2{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 36px}
   .beside.qsrow{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
   .qsrow .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -949,9 +1024,40 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 @media (min-width:900px){.pk-ghost{border-radius:12px}}
 .pk.sliding{border-color:transparent!important;background:none!important}
 @media (prefers-reduced-motion:no-preference){
-  header.top::after{animation:draw .9s cubic-bezier(.3,.1,.2,1) both;transform-origin:left}
+  header.top::before{animation:aura 11s ease-in-out infinite}
+  @keyframes aura{0%,100%{transform:translate3d(0,0,0) scale(1);opacity:var(--ao1)}50%{transform:translate3d(-14px,6px,0) scale(1.07);opacity:var(--ao2)}}
+  header.top::after{background:linear-gradient(90deg,transparent 0%,transparent 38%,var(--accent-soft) 46%,var(--accent) 50%,var(--accent-soft) 54%,transparent 62%,transparent 100%) -40% 0/220% 100% no-repeat;animation:draw .9s cubic-bezier(.3,.1,.2,1) both,glaze 8s ease-in-out 1.4s infinite;transform-origin:left}
+  footer::before{background:linear-gradient(90deg,transparent 0%,transparent 38%,var(--accent-soft) 46%,var(--accent) 50%,var(--accent-soft) 54%,transparent 62%,transparent 100%) -40% 0/220% 100% no-repeat;animation:glaze 8s ease-in-out 4s infinite}
   @keyframes draw{from{transform:scaleX(0)}to{transform:none}}
-  .wxmap line[data-l]{transition:opacity .16s}
+  @keyframes glaze{0%,55%{background-position:120% 0}100%{background-position:-40% 0}}
+  .gua .tj{animation:tj-spin 54s linear infinite}
+  @keyframes tj-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  .gua-ring{animation:ring-spin 96s linear infinite}
+  @keyframes ring-spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(-360deg)}}
+  .wxmap line[data-l],.wxmap line.flow{transition:opacity .16s}
+  .wxmap line.flow{display:inline;stroke:var(--accent);stroke-width:2.1;stroke-linecap:round;stroke-dasharray:6 26;opacity:.55;pointer-events:none;animation:qi-flow 2.8s linear infinite}
+  @keyframes qi-flow{from{stroke-dashoffset:32}to{stroke-dashoffset:0}}
+  .wxmap line.ke{animation:ke-flow 2.4s linear infinite}
+  @keyframes ke-flow{from{stroke-dashoffset:14}to{stroke-dashoffset:0}}
+  .wxmap .nd.me:not(.on):not(:focus-visible) .halo,.lqmap .nd.me:not(.on):not(:focus-visible) .halo{stroke:currentColor;stroke-width:1.4;transform-box:fill-box;transform-origin:center;animation:me-pulse 3.6s ease-out infinite}
+  @keyframes me-pulse{0%{opacity:.46;transform:scale(.94)}75%,100%{opacity:0;transform:scale(1.22)}}
+  .csmap .cs-dir.cw{animation:cs-cw 44s linear infinite}
+  .csmap .cs-dir.ccw{animation:cs-ccw 44s linear infinite}
+  @keyframes cs-cw{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes cs-ccw{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+  .lqmap .lq-ln.ke{animation:ke-flow 2.4s linear infinite}
+  .pk.now::after{animation:seal-glow 3.4s ease-in-out infinite}
+  @keyframes seal-glow{0%,100%{box-shadow:0 0 0 0 rgba(178,58,44,0)}45%{box-shadow:0 0 0 4px rgba(178,58,44,.22)}75%{box-shadow:0 0 0 6px rgba(178,58,44,0)}}
+  .wood:hover .ic{animation:ic-wood .6s ease-in-out;transform-origin:bottom center}
+  .fire:hover .ic{animation:ic-fire .55s ease-in-out;transform-origin:bottom center}
+  .earth:hover .ic{animation:ic-earth .55s ease-out}
+  .metal:hover .ic{animation:ic-metal .65s cubic-bezier(.22,.75,.25,1)}
+  .water:hover .ic{animation:ic-water .6s ease-in-out;transform-origin:center}
+  @keyframes ic-wood{0%,100%{transform:none}35%{transform:rotate(-10deg)}70%{transform:rotate(7deg)}}
+  @keyframes ic-fire{0%,100%{transform:none}35%{transform:scale(1.12,.92) rotate(-5deg)}70%{transform:scale(.95,1.1) rotate(5deg)}}
+  @keyframes ic-earth{0%,100%{transform:none}45%{transform:translateY(-2px)}}
+  @keyframes ic-metal{from{transform:rotate(0deg)}to{transform:rotate(180deg)}}
+  @keyframes ic-water{0%,100%{transform:none}35%{transform:translateY(-2px) scale(.94,1.08)}70%{transform:translateY(1px) scale(1.06,.94)}}
   .pk,.pp,.x,.glyph,.hs,.rel,.lk-t,.gt-c,.tab,.switch .knob,.switch .knob::after{transition:color .12s,border-color .12s,background-color .12s,box-shadow .12s,left .12s}
   .sheet:not([hidden]){animation:pop .14s ease-out}
   @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -1030,7 +1136,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <input type="file" id="pf-file" accept=".json,application/json" hidden>
     </div>
   </form>
-  <div class="titlerow"><h1 id="title"></h1><svg class="gua" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><g fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(45 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(90 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(135 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(180 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(225 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(270 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(315 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><circle cx="32" cy="32" r="12.4"/></g><g class="tj"><path fill="var(--paper)" d="M32 21.4a10.6 10.6 0 0 0 0 21.2 5.3 5.3 0 0 0 0-10.6 5.3 5.3 0 0 1 0-10.6z"/><circle cx="32" cy="26.7" r="1.8" fill="var(--paper)"/><circle cx="32" cy="37.3" r="1.8" fill="currentColor"/></g></svg></div>
+  <div class="titlerow"><h1 id="title"></h1><svg class="gua-ring" viewBox="0 0 144 144" aria-hidden="true" focusable="false"><circle class="gr-o" cx="72" cy="72" r="68"/><circle class="gr-i" cx="72" cy="72" r="61"/><circle class="gr-d" cx="72" cy="4" r="2.2"/><circle class="gr-d" cx="72" cy="140" r="2.2"/><circle class="gr-d" cx="4" cy="72" r="1.6"/><circle class="gr-d" cx="140" cy="72" r="1.6"/></svg><svg class="gua" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g fill="currentColor"><g fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(45 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(90 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(135 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(180 32 32)" fill="currentColor"><path d="M24.71 12.6H30.7L30.7 16.8H26.45zM33.3 12.6H39.29L37.55 16.8H33.3z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(225 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><g transform="rotate(270 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H30.7L30.7 10.8H23.97zM33.3 6.6H41.77L40.03 10.8H33.3z"/><path d="M19.74 0.6H44.26L42.52 4.8H21.48z"/></g><g transform="rotate(315 32 32)" fill="currentColor"><path d="M24.71 12.6H39.29L37.55 16.8H26.45z"/><path d="M22.23 6.6H41.77L40.03 10.8H23.97z"/><path d="M19.74 0.6H30.7L30.7 4.8H21.48zM33.3 0.6H44.26L42.52 4.8H33.3z"/></g><circle cx="32" cy="32" r="12.4"/></g><g class="tj"><path fill="var(--paper)" d="M32 21.4a10.6 10.6 0 0 0 0 21.2 5.3 5.3 0 0 0 0-10.6 5.3 5.3 0 0 1 0-10.6z"/><circle cx="32" cy="26.7" r="1.8" fill="var(--paper)"/><circle cx="32" cy="37.3" r="1.8" fill="currentColor"/></g></svg></div>
   <div class="hours" id="hours" hidden></div>
   <dl class="meta" id="meta"></dl>
 </header>
@@ -1076,12 +1182,29 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       </div>
     </div>
   </div>
-  <div class="panel split" role="tabpanel" id="p-tk" aria-labelledby="h-tk" hidden>
-    <div class="pane">
-      <p class="sub">日主是什么，八个字的阴阳；旺衰和格局是后面「强弱」「格局」两页的结论，先在这里列出来</p>
-      <div class="quad" id="quad"></div>
+  <div class="panel" role="tabpanel" id="p-tk" aria-labelledby="h-tk" hidden>
+    <div class="split">
+      <div class="pane">
+        <p class="sub">日主是什么，八个字的阴阳；旺衰和格局是后面「强弱」「格局」两页的结论，先在这里列出来</p>
+        <div class="quad" id="quad"></div>
+      </div>
+      <div class="read" id="rd-tk"></div>
     </div>
-    <div class="read" id="rd-tk"></div>
+    <div class="gjzblock">
+      <h3>十二长生盘 <small>日主走过十二地支的一周：阳干顺行，阴干逆行；标出原局四个地支落在哪里</small></h3>
+      <div class="beside fig">
+        <figure class="wxmap csmap" id="csmap"></figure>
+        <div class="side">
+          <div class="tablewrap">
+            <table class="gods cs-t">
+              <thead><tr><th scope="col">柱位</th><th scope="col">地支</th><th scope="col">十二长生</th><th scope="col">含义</th></tr></thead>
+              <tbody id="cs-list"></tbody>
+            </table>
+          </div>
+          <p class="note" id="note-csmap"></p>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="panel" role="tabpanel" id="p-wx" aria-labelledby="h-wx" hidden>
     <p class="sub">五行各有多少。按钮换三种数法：只数盘面的八个字，连地支里藏的天干一起数，照一种算法换成分数；下面的表和五行生克图一起换</p>
@@ -1159,6 +1282,21 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
     <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
     <div class="xi" id="xi"></div>
+    <div class="gjzblock">
+      <h3>用神五神关系图 <small>照任铁樵《滴天髓阐微》的注，把用神、喜神、忌神、仇神、闲神放到五行生克环上</small></h3>
+      <div class="beside fig">
+        <figure class="wxmap" id="ysmap"></figure>
+        <div class="side">
+          <div class="tablewrap">
+            <table class="gods cs-t">
+              <thead><tr><th scope="col">名目</th><th scope="col">五行 · 分数</th><th scope="col">与用神</th><th scope="col">作用</th></tr></thead>
+              <tbody id="ys-list"></tbody>
+            </table>
+          </div>
+          <p class="note" id="note-ysmap"></p>
+        </div>
+      </div>
+    </div>
     <div class="kvs" id="kv2"></div>
     <div class="gjzblock">
       <h3>调候的情形 <small>《穷通宝鉴》在开头一句后面分的各种情形，只取条件；点一条看解释</small></h3>
@@ -1170,19 +1308,24 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel" role="tabpanel" id="p-lq" aria-labelledby="h-lq" hidden>
     <p class="sub">六亲指父母、兄弟姐妹、配偶、子女这些亲属。典籍里把亲属配到盘上有两种办法：一种照十神配，一种照四柱的位置配，叫宫位。页面只列位置，不下断语</p>
-    <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
-    <div class="beside">
-      <div class="tablewrap">
-        <table class="gods">
-          <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
-          <tbody id="liuqin"></tbody>
-        </table>
-      </div>
-      <div class="side">
-        <p class="note" id="note-lq"></p>
-        <div class="read" id="rd-lq"></div>
+    <div class="gjzblock">
+      <h3>六亲生克推演示意图 <small>以日主为中心，照《渊海子平》的生克推演配出六亲；有色框的表示原局里有这个十神</small></h3>
+      <div class="beside fig god">
+        <figure class="lqmap" id="lqmap"></figure>
+        <div class="side">
+          <p class="note" id="note-lqmap"></p>
+          <div class="read" id="rd-lq"></div>
+        </div>
       </div>
     </div>
+    <h3>六亲 <small>每一位亲属看哪个十神，这个十神在盘里的什么位置</small></h3>
+    <div class="tablewrap">
+      <table class="gods">
+        <thead><tr><th scope="col">亲属</th><th scope="col">看哪个十神</th><th scope="col">这个十神在盘里的位置</th><th scope="col">对应的宫位</th></tr></thead>
+        <tbody id="liuqin"></tbody>
+      </table>
+    </div>
+    <p class="note" id="note-lq"></p>
     <h3>宫位 <small>四柱各配一类亲属；每一柱里有哪些十神，和别的柱有什么关系</small></h3>
     <div class="tablewrap" id="gwmap"></div>
     <p class="note" id="note-gw"></p>
@@ -1256,6 +1399,15 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
     <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条照哪一种看法算，见选择器上面的按钮和表下面的说明</p>
+    <div class="gjzblock">
+      <h3>大运 · 流年 · 流月喜用分走势 <small>把大运、选中这步大运的十年流年、选中这一年的十二流月并排画出来，点任意一柱看明细</small></h3>
+      <div class="sy-grid2">
+        <div class="sy-box"><h4 id="sy-t-dy">八步大运</h4><figure class="symap" id="symap-dy"></figure></div>
+        <div class="sy-box"><h4 id="sy-t-ln">十年流年</h4><figure class="symap" id="symap-ln"></figure></div>
+        <div class="sy-box"><h4 id="sy-t-ly">十二流月</h4><figure class="symap" id="symap-ly"></figure><p class="note" id="note-symap"></p></div>
+        <div class="read" id="rd-tr"></div>
+      </div>
+    </div>
     <div class="tablewrap">
       <table class="gods sy">
         <thead id="sy-h"></thead>
@@ -1264,7 +1416,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </div>
     <p class="note long" id="note-sy"></p>
     <p class="note long" id="note-syfig"></p>
-    <div class="read" id="rd-tr"></div>
     <div class="read" id="rd-yun"></div>
   </div>
 </section>
@@ -4986,6 +5137,17 @@ function X0(key){
       hc?['有多常见',hc]:null,s.c?['注意',s.c]:null]};
   }
   if(k==='rel') return xRel(a[1],a[2],a[3],a[4],+a[5],a[6]);
+  if(k==='cs'){          // 日主一页「十二长生盘」：点十二个地支里的任意一个
+    const z=a[1]; if(!z||z.length!==1||!Z.includes(z)) return null;
+    const s=stage(DM,z), yin=isYin(DM), st=CS_START[DM], yang=G[G.indexOf(DM)-1];
+    const seq=STAGES.map((n,i)=>Z[((yin?st-i:st+i)%12+12)%12]+n).join('，');
+    const hits=NATAL.filter(x=>x.z===z).map(x=>`${x.k}支${x.z}`);
+    return {t:`十二长生 · ${DMN}在${z}：${s}`,p:[
+      ['意思',`日主${DMN}走到地支${z}，处在十二长生的${s}。${STG[s]}`],
+      ['顺序',`长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。${DMN}是${yy(DM)}干，${yin?'逆':'顺'}行：${seq}。`],
+      ['这张盘',hits.length?`原局的${hits.join('、')}落在这里。${STAGES.indexOf(s)<5?'长生到帝旺五步传统上算气盛。':'衰到养七步传统上算气衰。'}`:'原局四个地支里没有'+z+'，只在大运或流年逢到'+z+'时走过这一位。'],
+      ['注意',(yin?`阴干是不是逆行，各派有分歧。另一派认为${DMN}跟着同五行的阳干${yang}顺行，那样它在${z}是${stage(yang,z)}。`:'阳干顺行没有争议，有争议的是阴干是不是逆行。')+('戊己'.includes(DM)?'土没有自己的十二长生，通行跟火走，也有跟水走的。':'')]]};
+  }
   const c=cols().find(x=>x.k===a[1]); if(!c) return null;
   const posG=c.dyn?c.k+'天干':c.k+'干', posZ=c.dyn?c.k+'地支':c.k+'支';
   if(k==='g'){
@@ -5098,8 +5260,8 @@ function showPerson(){
     if(all||was.p[i]!==P.pillars[i]) anim(el,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:440,delay:all?i*75:0});
   });
   if(!all) return;
-  // 只转中间的太极，转整整一圈：外面的八卦照先天的方位排，不能停在歪的位置上
-  anim(document.querySelector('.gua .tj'),[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:1200,easing:'cubic-bezier(.45,0,.2,1)',fill:'none'});
+  // 只转中间的太极，转整整一圈：外面的八卦照先天的方位排，不能停在歪的位置上；叠加在常驻缓转之上，结束无缝衔接
+  anim(document.querySelector('.gua .tj'),[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:1200,easing:'cubic-bezier(.45,0,.2,1)',fill:'none',composite:'add'});
   if(was) Object.keys(TABS).forEach(card=>fadeIn($('p-'+sel.tab[card]),{duration:280}));
   queueMicrotask(()=>Object.keys(TABS).forEach(card=>drawPanel(sel.tab[card])));      // 等手上这一段跑完：刚打开页面时，上次翻到的那一页要在后面才换出来
   document.querySelectorAll('.pk.now').forEach(b=>onSight(b,()=>anim(b,[{transform:'none'},{transform:'scale(1.4) rotate(-5deg)',offset:.35},{transform:'none'}],{duration:380,delay:160,fill:'none',pseudoElement:'::after'})));      // 「当前」「今天」的小印按一下
@@ -5135,6 +5297,7 @@ function drawPanel(id){
   const p=$('p-'+id), all=s=>[...p.querySelectorAll(s)];
   if(id==='wx'){widths(all('.wxt .fill'),[]);drawMap($('wxmap').querySelector('svg'));}
   if(id==='gods'){widths(all('.gn i'),[]);drawMap($('godmap').querySelector('svg'));}
+  if(id==='ys') drawMap($('ysmap').querySelector('svg'));
   if(id==='qr') all('.qg').forEach(q=>onSight(q,()=>{      // 强弱计分的条从 0 涂到这张盘的分数，分数跟着走
     const f=q.querySelector('.qg-fill'), v=q.querySelector('.qg-v');
     anim(f,[{width:'0%'},{width:f.style.width}],{duration:700,delay:100});
@@ -5548,6 +5711,7 @@ function renderPeopleRow(){
 }
 function renderPerson(){
   SWITCH=!SHOWN||SHOWN.who!==whoNow();
+  document.querySelector('header.top').dataset.el=ELC[gEl(DM)];
   renderPeopleRow();
   renderLinkBar();
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
@@ -5573,7 +5737,7 @@ function renderPerson(){
   $('note-sk').innerHTML=paras(noteSK());
   $('note-gt').innerHTML=paras(noteGT());
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderCsMap();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderYsMap();renderLqMap();renderGw();renderQs();renderSd();renderXi();renderDynamic();
   showPerson();SWITCH=false;
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
@@ -5604,8 +5768,10 @@ function ringLines(pos,mk,A,B){
   const cut=(ux,uy)=>1/Math.sqrt((ux/A)**2+(uy/B)**2);
   const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
     return `<line class="${cls}" data-l="${a}${b}" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+5))}" y2="${f1(y2-uy*(t+5))}" marker-end="url(#${mk})"/>`;};
+  const flow=(a,b)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
+    return `<line class="flow" data-fl="${a}${b}" aria-hidden="true" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+9))}" y2="${f1(y2-uy*(t+9))}"/>`;};
   const ks=[0,1,2,3,4];
-  return ks.map(k=>seg(k,(k+1)%5,'sh')).join('')+ks.map(k=>seg(k,(k+2)%5,'ke')).join('');
+  return ks.map(k=>seg(k,(k+1)%5,'sh')).join('')+ks.map(k=>flow(k,(k+1)%5)).join('')+ks.map(k=>seg(k,(k+2)%5,'ke')).join('');
 }
 const arrowDef=mk=>`<marker id="${mk}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker>`;
 function fillCircle(id,x,y,r,frac){
@@ -5654,6 +5820,129 @@ function renderGodMap(){
   $('note-godmap').textContent='中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。'
     +`圈填多少照十神表上面选的数法，${by==='nl'?'这里是每个十神分到的五行能量':by==='cnt'?'这里是它在盘里出现几处，连地支里藏的天干一起数':'这里是它在盘面上出现几处，地支只算本气'}，最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。`;
   $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="group" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`;      // 怎么看这张图写在模板里图右边的一栏，和解读放在一起
+}
+/* 日主一页的十二长生盘：十二地支照传统罗盘排成一圈（午上子下、卯左酉右），阳干顺行、阴干逆行，标出原局四个地支落在哪里 */
+function renderCsMap(){
+  const C=206, R=130, RT=173, r=22, de=gEl(DM), yin=isYin(DM);
+  const arc=(a1,a2)=>{const p=d=>[C+62*Math.sin(d*Math.PI/180),C-62*Math.cos(d*Math.PI/180)], [x1,y1]=p(a1),[x2,y2]=p(a2);
+    return `<path class="cs-dir ${yin?'ccw':'cw'}" d="M${f1(x1)} ${f1(y1)} A62 62 0 0 ${yin?0:1} ${f1(x2)} ${f1(y2)}" marker-end="url(#csm-a)"/>`;};
+  const dirs=yin?arc(155,25)+arc(335,205):arc(25,155)+arc(205,335);
+  const nodes=Z.split('').map((z,zi)=>{
+    const a=(zi-6)*30*Math.PI/180, x=C+R*Math.sin(a), y=C-R*Math.cos(a), s=stage(DM,z), vig=STAGES.indexOf(s)<5;
+    const hits=NATAL.filter(p=>p.z===z).map(p=>p.k), cls=ELC[zEl(z)]+(hits.length?' hit':vig?' vig':' weak');
+    const tag=hits.length?`<text class="cs-tag" x="${f1(C+RT*Math.sin(a))}" y="${f1(C-RT*Math.cos(a))}">${hits.join('·')}支</text>`:'';
+    return `<g class="nd ${cls}" data-x="cs|${z}" tabindex="0" role="button" aria-label="${z}，${DMN}处在${s}${hits.length?'，原局'+hits.join('、')+'支落在这里':''}，点开看解释">`
+      +`<circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="halo" cx="${f1(x)}" cy="${f1(y)}" r="${r+4.5}"/>`
+      +`<text class="cs-z" x="${f1(x)}" y="${f1(y-6)}">${z}</text><text class="cs-s" x="${f1(x)}" y="${f1(y+9)}">${s}</text></g>${tag}`;
+  }).join('');
+  const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，${yin?'阴干逆行':'阳干顺行'}，点开看解释"><circle class="bg" cx="${C}" cy="${C}" r="36"/><circle class="ring" cx="${C}" cy="${C}" r="36"/><circle class="halo" cx="${C}" cy="${C}" r="41"/><text class="cs-dm" x="${C}" y="${C-9}">${DM}</text><text class="cs-sub" x="${C}" y="${C+11}">${yy(DM)}${EL[de]}</text><text class="cs-way" x="${C}" y="${C+24}">${yin?'逆行':'顺行'}</text></g>`;
+  const falls=NATAL.map(p=>`${p.k}支${p.z}在${stage(DM,p.z)}`).join('，');
+  $('csmap').innerHTML=`<svg viewBox="0 16 412 380" role="group" aria-label="十二长生盘：日主${DMN}${yin?'逆行':'顺行'}，${falls}"><defs>${arrowDef('csm-a')}</defs><circle class="cs-track" cx="${C}" cy="${C}" r="${R}"/>${dirs}${nodes}${dm}</svg>`;
+  $('cs-list').innerHTML=NATAL.map(p=>{const s=stage(DM,p.z), vig=STAGES.indexOf(s)<5;
+    return `<tr><td>${p.k}支</td><td>${xb('x '+zCls(p.z),`z|${p.k}|${p.z}`,p.z)}</td><td>${xb('x','cs|'+p.z,s)}<span class="tag${vig?' hi':''}">${vig?'气盛':'气衰'}</span></td><td>${STG[s]}</td></tr>`;}).join('');
+  $('note-csmap').textContent=`外圈十二地支按传统罗盘方位排列（午在上、子在下、卯在左、酉在右）。日主${DMN}是${yy(DM)}干，照通行算法${yin?'逆时针':'顺时针'}走过十二位。浅灰底是气盛的五位（长生到帝旺），带五行色底和加粗边的是原局四个地支落位；点盘上任意地支可看完整顺逆顺序和流派分歧。`;
+}
+/* 喜忌一页的用神五神关系图：照任铁樵《滴天髓阐微》把用神、喜神、忌神、仇神、闲神标在五行生克五边形上 */
+function renderYsMap(){
+  const y=yongNow(), de=gEl(DM), sum=nlNow().sum, mx=Math.max(1,...sum), r=26, cy=148;
+  const top=y.yong!==null?(de+y.yong)%5:y.pair?(de+y.pair[0])%5:de, pos=pent(170,cy,88,top);
+  const role={}, sub={}, xkey={}, meSet=new Set();
+  const ysRows=[];
+  if(y.yong!==null){
+    const u=(de+y.yong)%5, relN={4:'生用神',1:'用神所生',2:'用神所克',3:'克用神'};
+    const why={用神:'全盘最需要的一行',喜神:y.you?'泄用神有余，帮用神':'生助用神，帮用神',忌神:y.you?'克制用神，伤用神':'被用神耗克，伤用神',仇神:y.you?'生用神使其过旺':'克制用神，与用神作对',闲神:'不帮也不伤'};
+    const pairs=[['用神',y.yong],['喜神',y.shen.xi],['忌神',y.shen.ji],['仇神',y.shen.chou],['闲神',y.shen.xian]];
+    pairs.forEach(([nm,k])=>{const e=(de+k)%5; role[e]=nm; xkey[e]='ys|'+nm; sub[e]=e===u?(y.you?'有余 · 超 12 分':'不足 · 未超 12 分'):relN[(e-u+5)%5];
+      ysRows.push([nm,e,e===u?(y.you?'主用 · 有余':'主用 · 不足'):relN[(e-u+5)%5],why[nm],'ys|'+nm]);});
+    meSet.add(u);
+  }else if(y.pair){
+    const ps=y.pair.map(k=>(de+k)%5);
+    [0,1,2,3,4].forEach(e=>{const isY=ps.includes(e); role[e]=isY?'用神':'其余'; xkey[e]=isY?'ys|用神':'xe|'+e; sub[e]=isY?'两类用神之一':EL[e]; if(isY){meSet.add(e); ysRows.push(['用神',e,'两类用神之一','与另一类并作全盘用神','ys|用神']);}});
+  }else{
+    [0,1,2,3,4].forEach(e=>{role[e]=EL[e]; xkey[e]='xe|'+e; sub[e]=sum[e]+' 分';});
+  }
+  const say=[0,1,2,3,4].map(e=>`${EL[e]}是${role[e]}（${sum[e]} 分）`).join('，');
+  $('ysmap').innerHTML=`<svg viewBox="0 0 340 284" role="group" aria-label="用神五神关系图：${say}"><defs>${arrowDef('ysm-a')}</defs>${ringLines(pos,'ysm-a',r+3,r+3)}`
+    +pos.map(([x,yy2],e)=>`<g class="nd ${ELC[e]}${meSet.has(e)?' me':''}" data-n="${e}" data-x="${xkey[e]}" tabindex="0" role="button" aria-label="${role[e]}，${EL[e]} ${sum[e]} 分，${sub[e]}，点开看依据">${fillCircle('ysc'+e,x,yy2,r,sum[e]/mx)}<text class="ch2" x="${f1(x)}" y="${f1(yy2-5)}">${role[e]}</text><text class="ct" x="${f1(x)}" y="${f1(yy2+11)}">${EL[e]} ${sum[e]}分</text><text class="gp" x="${f1(x)}" y="${f1(yy2<cy?yy2-r-9:yy2+r+17)}">${sub[e]}</text></g>`).join('')
+    +`</svg>`;
+  $('ys-list').innerHTML=ysRows.map(([nm,e,relS,w,xk])=>`<tr><td>${xb('x',xk,nm)}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span> ${sum[e]} 分</td><td>${relS}</td><td>${w}</td></tr>`).join('');
+  $('note-ysmap').textContent=y.yong!==null
+    ?`把用神放在最上方，五边形按五行相生（实线）和相克（虚线）排列，圈填多少照五行能量。点图上圆圈或表里名目可看任铁樵原文依据。`
+    :`这张盘照任铁樵的注取了两类用神（${y.pair.map(k=>EL[(de+k)%5]).join('、')}），图里加粗标出这两行；两类用神分不出喜神、忌神、仇神、闲神。`;
+}
+/* 六亲一页的六亲生克推演示意图：以日主为中心，按《渊海子平》的生克链路画出六亲位置和盘内有无 */
+function renderLqMap(){
+  const male=!!P.gender, de=gEl(DM), rows=liuqinRows();
+  const byWho=Object.fromEntries(rows.map(r=>[r.who,r]));
+  const spWho=male?'妻子':'丈夫';
+  const cards=[
+    {who:'母亲',x:176,y:48},{who:'父亲',x:384,y:48},
+    {who:'兄弟姐妹',x:76,y:162},{who:spWho,x:484,y:162},
+    {who:'儿子',x:186,y:276},{who:'女儿',x:374,y:276}
+  ];
+  const arrow=(x1,y1,x2,y2,ke,arr,lx,ly,lb)=>`<line class="lq-ln${ke?' ke':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${arr?' marker-end="url(#lqm-a)"':''}/>`
+    +`<text class="lq-lb" x="${lx}" y="${ly}">${lb}</text>`;
+  const lines=
+    arrow(196,75,256,136,false,true,209,115,'生我')
+    +arrow(323,48,241,48,true,true,280,35,'克印 · 母之夫')
+    +arrow(137,162,248,162,false,false,192,148,'同我')
+    +(male?arrow(312,162,419,162,true,true,366,148,'我克'):arrow(423,162,316,162,true,true,366,148,'克我'))
+    +(male?arrow(204,247,258,190,true,true,214,213,'克我'):arrow(258,186,206,243,false,true,214,213,'我生'))
+    +(male?arrow(356,247,302,190,true,true,346,213,'克我'):arrow(302,186,354,243,false,true,346,213,'我生'));
+  const boxes=cards.map(c=>{
+    const r=byWho[c.who], s=stemOfGod(r.god), hit=r.at!=='原局里没有', cnt=whereGod(g=>god(g)===r.god).length;
+    return `<g class="lq-nd ${gCls(s)}${hit?' hit':''}" data-x="tg|${r.god}" tabindex="0" role="button" aria-label="${c.who}看${r.god}，${hit?'原局有 '+cnt+' 处':'原局里没有'}，点开看解释">`
+      +`<rect class="box" x="${c.x-59}" y="${c.y-27}" width="118" height="54" rx="12"/>`
+      +`<text class="lq-who" x="${c.x}" y="${c.y-10}">${c.who}</text>`
+      +`<text class="lq-gd" x="${c.x}" y="${c.y+6}">${r.god}（${s}）</text>`
+      +`<text class="lq-at" x="${c.x}" y="${c.y+20}">${hit?`原局 ${cnt} 处`:'原局里没有'}</text></g>`;
+  }).join('');
+  const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，自己，点开看解释"><circle class="bg" cx="280" cy="162" r="30"/><circle class="ring" cx="280" cy="162" r="30"/><circle class="halo" cx="280" cy="162" r="35"/><text class="ch" x="280" y="157">${DM}</text><text class="ct" x="280" y="174">自己 · 日主</text></g>`;
+  $('lqmap').innerHTML=`<svg viewBox="8 14 544 298" role="group" aria-label="六亲生克推演示意图：以日主${DMN}为中心，${rows.map(r=>r.who+'看'+r.god).join('，')}"><defs>${arrowDef('lqm-a')}</defs>${lines}${boxes}${dm}</svg>`;
+  $('note-lqmap').textContent=`这张图画出《渊海子平》里六亲十神的生克推演链路：正印生我为母亲，偏财克印（母之夫）为父亲，比肩同我为兄弟姐妹；${male?'男命我克的正财为妻子，克我的七杀、正官为儿子、女儿':'女命克我的正官为丈夫，我生的食神、伤官为儿子、女儿'}。实线表示相生或同类，虚线表示相克；有五行淡底和实线框的表示原局里有这个十神，虚线空框表示原局里没有。这里只展示传统分类办法，不作个人判断。`;
+}
+/* 计分一页的大运、流年、流月三张喜用分走势图：跟着选择器上方的三种看法和选中的大运、流年、流月实时更新 */
+function syChart(items,bw,label){
+  const yb=yunBasis(), max=yb.max, vw=560, L=30, R=552, T=28, B=134, H=B-T, W=R-L, cw=W/items.length;
+  const ticks=max===26?[0,10,20,26]:[0,5,10,13];
+  const grid=ticks.map(v=>{const y=B-v/max*H;return `<line class="sy-grid" x1="${L}" y1="${f1(y)}" x2="${R}" y2="${f1(y)}"/><text class="sy-ax" x="${L-7}" y="${f1(y)}">${v}</text>`;}).join('');
+  const pts=[];
+  const colsHtml=items.map((it,i)=>{
+    const v=xiPillar(it.gz), cx=L+(i+.5)*cw, py=B-v.score/max*H;
+    pts.push([cx,py,it.sel]);
+    let curY=B, segs='';
+    v.basis.parts.forEach(part=>{
+      part.want.forEach(e=>{
+        const sc=v.sum[e]; if(!sc) return;
+        const sh=sc/max*H; curY-=sh;
+        segs+=`<rect class="sy-seg ${ELC[e]}" x="${f1(cx-bw/2)}" y="${f1(curY)}" width="${bw}" height="${f1(Math.max(1,sh))}" rx="2"/>`;
+      });
+    });
+    const nowDot=it.now?`<circle class="sy-now" cx="${f1(cx)}" cy="${B+46}" r="3"><title>当前</title></circle>`:'';
+    return `<g class="sy-col${it.sel?' sel':''}" data-x="${it.key}" tabindex="0" role="button" aria-label="${it.say}，${v.score} 分，点开看明细">`
+      +(it.sel?`<rect class="sy-sel" x="${f1(L+i*cw+2)}" y="6" width="${f1(cw-4)}" height="184" rx="8"/>`:'')
+      +`<rect class="sy-hit" x="${f1(L+i*cw+1)}" y="6" width="${f1(cw-2)}" height="184" rx="8"/>`
+      +segs
+      +`<text class="sy-val" x="${f1(cx)}" y="${f1(py-9)}">${v.score}</text>`
+      +`<text class="sy-gz" x="${f1(cx)}" y="${B+19}"><tspan class="${gCls(it.gz[0])}">${it.gz[0]}</tspan><tspan class="${zCls(it.gz[1])}">${it.gz[1]}</tspan></text>`
+      +`<text class="sy-ag" x="${f1(cx)}" y="${B+34}">${it.sub}</text>${nowDot}</g>`;
+  }).join('');
+  const line=`<polyline class="sy-line" points="${pts.map(p=>`${f1(p[0])},${f1(p[1])}`).join(' ')}"/>`
+    +pts.map(p=>`<circle class="sy-dot${p[2]?' cur':''}" cx="${f1(p[0])}" cy="${f1(p[1])}" r="${p[2]?3.6:2.6}"/>`).join('');
+  return `<svg viewBox="0 0 ${vw} 196" role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
+}
+function renderSyMap(){
+  const yb=yunBasis(), dy=P.dayun[sel.dy], y=sel.y;
+  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}岁`,key:`pk|大运|${d.gz}|${d.y0}`,sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
+  const lnItems=[]; for(let yr=dy.y0;yr<=dy.y1;yr++){const gz=yearGZ(yr);lnItems.push({gz,sub:String(yr),key:`pk|流年|${gz}|${yr}`,sel:yr===y,now:yr===REAL_Y,say:`流年${yr}年${gz}`});}
+  const lyItems=[]; for(let m=0;m<12;m++){const gz=monthGZ(y,m);lyItems.push({gz,sub:JIE[m],key:`pk|流月|${gz}|${y}-${m}`,sel:m===sel.m,now:y===REAL_Y&&m===NOW_M,say:`流月${JIE[m]}起${gz}`});}
+  $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年</small>`;
+  $('sy-t-ln').innerHTML=`十年流年<small>${dy.gz}运 · ${dy.y0}–${dy.y1} 年</small>`;
+  $('sy-t-ly').innerHTML=`十二流月<small>${y} ${yearGZ(y)}年</small>`;
+  $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图');
+  $('symap-ln').innerHTML=syChart(lnItems,19,'十年流年喜用分走势图');
+  $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图');
+  $('note-symap').textContent=`三张图纵轴都是每一柱里算进去的${yb.name}分数（满分 ${yb.max} 分），柱子按五行分段。淡蓝底是当前选中的一柱，底下的红点是今天所在的那一柱；点任意一柱打开明细。这里只把分数并排画出来方便比较高低，不代表哪步运或哪一年好坏。`;
 }
 /* 细盘的各行。cs 是要排的列：四柱细盘一页是 cols() 的八列，八字一页只有原局四列（NATAL）。
    原局的列就是 NATAL 里的对象，神煞照它在 NATAL 里的位置取 */
@@ -5868,6 +6157,7 @@ function renderSy(){
   const what=yb.mode==='sum'?grp(lyXi+chips(yb.parts[0].want))+grp('<span>加上</span>'+lyYs+chips(yb.parts[1].want))
     :grp((yb.mode==='ys'?lyYs:x.xi?lyXi:'<span>不定喜用，画帮日主的</span>')+chips(yb.want));
   $('sy-lg').innerHTML='<span>小卡底下的条</span>'+seg+what+`<span class="rest"><i></i>其余</span><span>满分 ${yb.max}</span>`;
+  renderSyMap();
   $('note-syfig').innerHTML=paras(noteSyFig()); $('note-sy').innerHTML=paras(noteSy());      // 两句都跟着小卡的按钮变
   $('rd-tr').innerHTML=readHTML('tr');      // 小卡底下那些条的解读跟着选中的大运和年份变
 }

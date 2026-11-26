@@ -4,10 +4,7 @@
 
 用户是八字的初学者，同时是会写代码的研究者。用中文交流。说清楚改了什么、怎么核对的；不确定的地方直说，不要含糊带过。
 
-项目分成两部分：
-
-- **公开的通用部分**：git 管理的全部内容，发布在 GitHub 上。仓库根目录的 `index.html` 就是网页，由 GitHub Pages 直接托管。页面自带几位名人作示例；使用者自己添加的人只保存在他们的浏览器里。
-- **个人数据**：`private/`，写在 `.gitignore` 里，永远不入库。个人部分的说明在 `private/CLAUDE.md`，这个文件存在时先读它。`private/` 里要保留的只有 `people/` 下的 JSON 和这份说明；`private/build/` 是生成的，随时可以整个删掉。
+仓库根目录的 `index.html` 就是网页，由 GitHub Pages 直接托管。页面自带几位公众人物作示例；使用者自己添加或导入的人只保存在他们的浏览器里，不上传。
 
 ## 命令
 
@@ -16,17 +13,10 @@ npm install                                    # 只需一次，装 jsdom
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # 只需一次，装 lunar_python 和 playwright
 
 .venv/bin/python tools/gen_data.py             # 重新排盘：people/*.json → data/people.json、data/expected.json
-python3 tools/build.py                         # 构建公开的页面：src/ + data/ → index.html（仓库根目录）
-node tests/check_page.js                       # 检查示例页面，约五分钟；加 --quick 十几秒
+python3 tools/build.py                         # 构建页面：src/ + data/ → index.html（仓库根目录）
+node tests/check_page.js                       # 检查页面，约五分钟；加 --quick 十几秒
 .venv/bin/python tools/shot.py                 # 截图到 shots/
 
-# 个人页面：同样的四条命令，各加 --private。读的是 private/people/，生成的东西都在 private/build/ 里，页面是 private/build/index.html
-.venv/bin/python tools/gen_data.py --private
-python3 tools/build.py --private
-node tests/check_page.js --private
-.venv/bin/python tools/shot.py --private
-
-python3 tools/check_private.py                 # 检查个人数据有没有漏到 private/ 之外
 .venv/bin/python tools/fuzz.py                 # 随机生成几百个虚构的出生时间，逐个排盘、对照、检查解释，约四分钟
 .venv/bin/python tools/shensha_freq.py         # 重算神煞频率和对照文件，约两分钟；加 --check-only 只生成对照文件，约一分钟。要先删掉 data/shensha_freq.json 才会写新的频率
 .venv/bin/python tools/gen_tables.py           # 重新导出节气时刻表和农历表 data/tables.json，约半分钟；一般不用重跑
@@ -35,28 +25,26 @@ node tools/check_quotes.js                     # 把典籍的出处抓下来，�
 .venv/bin/python tools/gen_icon.py              # 由 src/icon.svg 重新生成页面图标的两张 PNG；改了图标才跑，跑完再构建
 ```
 
-## 个人数据的规矩
+## 隐私与示例人物的规矩
 
-1. 真实的出生信息、四柱、个人页面、手写解读、artifact 链接，只能出现在 `private/` 里。不要把它们写进其他任何文件，也不要写进提交信息、示例、测试数据。四柱连在一起就能反推出出生日期和时辰，所以四柱本身也算个人数据。
-2. 提交之前运行 `python3 tools/check_private.py`，有命中就不提交。
-3. 公开部分的示例只用公众人物，放哪几位由用户定：2026-11-14 用户定的是黄仁勋、孙宇晨、蒋介石，前两位在世；2026-11-15 用户加了马云，用的是用户笔记里的八字甲辰、甲戌、丁酉、癸卯（存成公历 1964-10-15 卯时）。这副八字和公开的生日对不上：报道里他 2018、2019 年的公历 9 月 10 日过 54、55 岁生日，照公历排是甲辰、癸酉、壬戌，笔记那副相当于把 9 月 10 日当成农历九月初十。两种都摆给用户看过，用户选了笔记那副，出处里照实写明。马云没有人工核对过的事实文件；在这之前的规矩是只放已经去世的历史人物。2026-11-17 用户从一份查过出处的候选名单里加了雍正（名字照用户说的写「雍正」，不写「雍正帝」）、爱因斯坦、乔布斯、奥巴马、伊丽莎白二世：雍正照《清实录》，四位外国人照 AstroDatabank 评 AA 的出生证或官方公告。出生日期必须有查得到的出处，出处写在人物文件的 `source` 里；史料记的是农历的，由公历换算出来的农历日期用 `expectLunar` 核对。时辰没有出生记录、只有网上流传的说法的，在 `source` 里照实写明。不放用户身边的人。测试和随机检查用虚构的出生时间。
-4. 截图里有个人页面时，只存到 `private/build/shots/`。
+1. 不要把真实的个人出生信息、四柱、手写解读或个人链接写进仓库里的任何文件、提交信息、示例或测试数据。四柱连在一起就能反推出出生日期和时辰，所以四柱本身也算个人隐私。
+2. 页面自带的示例只用公众人物，放哪几位由用户定：2026-11-14 用户定的是黄仁勋、孙宇晨、蒋介石，前两位在世；2026-11-15 用户加了马云，用的是用户笔记里的八字甲辰、甲戌、丁酉、癸卯（存成公历 1964-10-15 卯时）。这副八字和公开的生日对不上：报道里他 2018、2019 年的公历 9 月 10 日过 54、55 岁生日，照公历排是甲辰、癸酉、壬戌，笔记那副相当于把 9 月 10 日当成农历九月初十。两种都摆给用户看过，用户选了笔记那副，出处里照实写明。马云没有人工核对过的事实文件；在这之前的规矩是只放已经去世的历史人物。2026-11-17 用户从一份查过出处的候选名单里加了雍正（名字照用户说的写「雍正」，不写「雍正帝」）、爱因斯坦、乔布斯、奥巴马、伊丽莎白二世：雍正照《清实录》，四位外国人照 AstroDatabank 评 AA 的出生证或官方公告。出生日期必须有查得到的出处，出处写在人物文件的 `source` 里；史料记的是农历的，由公历换算出来的农历日期用 `expectLunar` 核对。时辰没有出生记录、只有网上流传的说法的，在 `source` 里照实写明。不放用户身边的人。测试和随机检查用虚构的出生时间。
 
 ## 工作方式
 
-- 这份说明是 `CLAUDE.md`，Claude Code 和 Codex 共用。`AGENTS.md` 是指向它的符号链接，给读 `AGENTS.md` 的工具用，两个名字是同一份内容：只改 `CLAUDE.md`，不要把链接换回单独的文件。个人部分的说明只有 `private/CLAUDE.md` 一份。
+- 这份说明是 `CLAUDE.md`，Claude Code 和 Codex 共用。`AGENTS.md` 是指向它的符号链接，给读 `AGENTS.md` 的工具用，两个名字是同一份内容：只改 `CLAUDE.md`，不要把链接换回单独的文件。
   - 来历：`AGENTS.md` 原来是 Codex 桌面版 2026-11-14 打开这个项目时，照当时的 `CLAUDE.md` 抄出来的一份（只把文件名换了），之后没有人维护。2026-11-18 用户让「整理信息合并后换成链接」，逐句比过：它有而 `CLAUDE.md` 没有的 23 句，都是后来被用户的决定取代的旧说法（示例只放去世的历史人物、每次改动都跑全套检查、神煞 55 个、图标只用在三处等），没有要并回来的。
   - 页面的结构和各版块的来历、实现细节另写在 `docs/页面结构.md`（2026-11-25 从这里拆出，原来整份文件将近 90 KB，会超出不少工具的加载上限），改页面时按需查阅。
-- 页面的源文件在 `src/`：`page.tpl.html`（结构和样式）、`engine.js`（干支计算）、`chart.js`（页面内排盘）、`classics.js`（典籍引文）、`text.js`（解释文字）、`motion.js`（小动画）、`ui.js`（渲染、事件、人物管理）。`index.html` 和 `private/build/index.html` 是构建产物，不要手改。
-- 公开的页面发布在 <https://zhucongx.github.io/bazi-chart/>，由 GitHub Pages 从 `main` 分支的根目录托管，推送之后一两分钟生效。改了 `src/` 之后要重新构建并把 `index.html` 一起提交，否则线上还是旧的页面。
+- 页面的源文件在 `src/`：`page.tpl.html`（结构和样式）、`engine.js`（干支计算）、`chart.js`（页面内排盘）、`classics.js`（典籍引文）、`text.js`（解释文字）、`motion.js`（小动画）、`ui.js`（渲染、事件、人物管理）。`index.html` 是构建产物，不要手改。
+- 页面发布在 <https://zhucongx.github.io/bazi-chart/>，由 GitHub Pages 从 `main` 分支的根目录托管，推送之后一两分钟生效。改了 `src/` 之后要重新构建并把 `index.html` 一起提交，否则线上还是旧的页面。
 - 核对按改动的大小来，不要每改一处都跑全套。2026-11-14 用户说「每次检查推送太复杂太慢了，是不是有点过度审核了」。
-  - 平时改一处：构建公开页，跑 `node tests/check_page.js --quick`，截改到的那一页看一眼。
-  - 提交之前：两份页面都构建，公开页跑完整的 `check_page.js`，个人页跑 `--quick`，再跑 `tools/check_private.py`（这一条不能省，有命中就不提交）。改了排盘（`chart.js`、`engine.js`、`tools/gen_data.py`）才跑 `tools/fuzz.py`；改了样式才用 `tools/shot.py` 截桌面、手机、深色；它还用真的浏览器核对每一处能点的字点下去是不是它自己，列出「点不到」的要改掉（检查脚本用的 jsdom 不排版，查不出被盖住的）。
+  - 平时改一处：构建页面，跑 `node tests/check_page.js --quick`，截改到的那一页看一眼。
+  - 提交之前：构建页面，跑完整的 `check_page.js`。改了排盘（`chart.js`、`engine.js`、`tools/gen_data.py`）才跑 `tools/fuzz.py`；改了样式才用 `tools/shot.py` 截桌面、手机、深色；它还用真的浏览器核对每一处能点的字点下去是不是它自己，列出「点不到」的要改掉（检查脚本用的 jsdom 不排版，查不出被盖住的）。
   - 推送以后不用守着线上页面逐字节比对，GitHub Pages 一两分钟就会更新。
   - 检查没过就不算完成。
 - 改了 `src/classics.js` 里的引文，运行 `node tools/check_quotes.js`，通过之后把 `data/quotes_check.json` 一起提交。不要为了核对去安装新的依赖；要装之前先问用户。
-- 改了取法，同步更新 `docs/取法约定.md`。改了某个人的事实，同步更新这个人的 `people/<id>.facts.json`（个人的在 `private/people/`）。
-- 个人页面不发布成 artifact，要看就直接打开本地的 `private/build/index.html`。原来用户要看效果时把它发布到一个固定的 artifact 链接，2026-11-18 用户说「个人页面的 artifact 可以不保留」，那个 artifact 删掉了，链接已经失效。个人页面带着真实的出生信息，没有用户开口，不要发布到任何地方。公开的页面通过 GitHub Pages 发布，也不发布成 artifact，除非用户要求。
+- 改了取法，同步更新 `docs/取法约定.md`。改了某个人的事实，同步更新这个人的 `people/<id>.facts.json`。
+- 页面通过 GitHub Pages 发布，不发布成 artifact，除非用户要求。2026-11-26 用户决定删掉原来的 `private/` 个人页流程，需要看自己的盘和手写解读时直接在页面里添加或通过「导入文件」读入浏览器。
 - 页面必须是单个自包含文件。外部资源只允许 Google Fonts 的字体，其他样式、脚本、数据、图片全部内联。
 - 做 `docs/进度与待办.md` 里的待办之前先问用户要哪一项，不要自己挑着做。
 - 提交和推送都等用户开口。

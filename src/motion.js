@@ -40,8 +40,8 @@ function showPerson(){
     if(all||was.p[i]!==P.pillars[i]) anim(el,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],{duration:440,delay:all?i*75:0});
   });
   if(!all) return;
-  // 只转中间的太极，转整整一圈：外面的八卦照先天的方位排，不能停在歪的位置上
-  anim(document.querySelector('.gua .tj'),[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:1200,easing:'cubic-bezier(.45,0,.2,1)',fill:'none'});
+  // 只转中间的太极，转整整一圈：外面的八卦照先天的方位排，不能停在歪的位置上；叠加在常驻缓转之上，结束无缝衔接
+  anim(document.querySelector('.gua .tj'),[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:1200,easing:'cubic-bezier(.45,0,.2,1)',fill:'none',composite:'add'});
   if(was) Object.keys(TABS).forEach(card=>fadeIn($('p-'+sel.tab[card]),{duration:280}));
   queueMicrotask(()=>Object.keys(TABS).forEach(card=>drawPanel(sel.tab[card])));      // 等手上这一段跑完：刚打开页面时，上次翻到的那一页要在后面才换出来
   document.querySelectorAll('.pk.now').forEach(b=>onSight(b,()=>anim(b,[{transform:'none'},{transform:'scale(1.4) rotate(-5deg)',offset:.35},{transform:'none'}],{duration:380,delay:160,fill:'none',pseudoElement:'::after'})));      // 「当前」「今天」的小印按一下
@@ -77,6 +77,7 @@ function drawPanel(id){
   const p=$('p-'+id), all=s=>[...p.querySelectorAll(s)];
   if(id==='wx'){widths(all('.wxt .fill'),[]);drawMap($('wxmap').querySelector('svg'));}
   if(id==='gods'){widths(all('.gn i'),[]);drawMap($('godmap').querySelector('svg'));}
+  if(id==='ys') drawMap($('ysmap').querySelector('svg'));
   if(id==='qr') all('.qg').forEach(q=>onSight(q,()=>{      // 强弱计分的条从 0 涂到这张盘的分数，分数跟着走
     const f=q.querySelector('.qg-fill'), v=q.querySelector('.qg-v');
     anim(f,[{width:'0%'},{width:f.style.width}],{duration:700,delay:100});

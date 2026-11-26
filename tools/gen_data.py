@@ -3,7 +3,6 @@
 
 用法（需要 lunar_python，用虚拟环境里的 Python 跑）：
   .venv/bin/python tools/gen_data.py             读 people/*.json，写 data/people.json 和 data/expected.json
-  .venv/bin/python tools/gen_data.py --private   读 private/people/*.json，写 private/build/data/ 下的同名文件
 
 people.json 是页面的数据。expected.json 是用 lunar_python 自己的方法另算的一份事实，
 检查脚本拿它对照页面，所以它不能从页面的算法推出来。
@@ -460,12 +459,10 @@ def dump_expected(expected):
 
 
 def main():
-    unknown = [a for a in sys.argv[1:] if a != '--private']
-    if unknown:
-        raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
-    private = '--private' in sys.argv
-    src_dir = ROOT / 'private' / 'people' if private else ROOT / 'people'
-    out = ROOT / 'private' / 'build' / 'data' if private else ROOT / 'data'      # 个人的生成物都放在 private/build/ 里，随时可以删
+    if sys.argv[1:]:
+        raise SystemExit(f'不认识的参数：{sys.argv[1:]}。用法见文件开头的说明。')
+    src_dir = ROOT / 'people'
+    out = ROOT / 'data'
     freq_file = ROOT / 'data' / 'shensha_freq.json'
     if not freq_file.exists():
         raise SystemExit('找不到 data/shensha_freq.json。先运行 .venv/bin/python tools/shensha_freq.py。')

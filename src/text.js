@@ -2526,6 +2526,17 @@ function X0(key){
       hc?['有多常见',hc]:null,s.c?['注意',s.c]:null]};
   }
   if(k==='rel') return xRel(a[1],a[2],a[3],a[4],+a[5],a[6]);
+  if(k==='cs'){          // 日主一页「十二长生盘」：点十二个地支里的任意一个
+    const z=a[1]; if(!z||z.length!==1||!Z.includes(z)) return null;
+    const s=stage(DM,z), yin=isYin(DM), st=CS_START[DM], yang=G[G.indexOf(DM)-1];
+    const seq=STAGES.map((n,i)=>Z[((yin?st-i:st+i)%12+12)%12]+n).join('，');
+    const hits=NATAL.filter(x=>x.z===z).map(x=>`${x.k}支${x.z}`);
+    return {t:`十二长生 · ${DMN}在${z}：${s}`,p:[
+      ['意思',`日主${DMN}走到地支${z}，处在十二长生的${s}。${STG[s]}`],
+      ['顺序',`长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。${DMN}是${yy(DM)}干，${yin?'逆':'顺'}行：${seq}。`],
+      ['这张盘',hits.length?`原局的${hits.join('、')}落在这里。${STAGES.indexOf(s)<5?'长生到帝旺五步传统上算气盛。':'衰到养七步传统上算气衰。'}`:'原局四个地支里没有'+z+'，只在大运或流年逢到'+z+'时走过这一位。'],
+      ['注意',(yin?`阴干是不是逆行，各派有分歧。另一派认为${DMN}跟着同五行的阳干${yang}顺行，那样它在${z}是${stage(yang,z)}。`:'阳干顺行没有争议，有争议的是阴干是不是逆行。')+('戊己'.includes(DM)?'土没有自己的十二长生，通行跟火走，也有跟水走的。':'')]]};
+  }
   const c=cols().find(x=>x.k===a[1]); if(!c) return null;
   const posG=c.dyn?c.k+'天干':c.k+'干', posZ=c.dyn?c.k+'地支':c.k+'支';
   if(k==='g'){

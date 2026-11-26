@@ -2,7 +2,6 @@
 """给构建好的页面截图，用来在发布前看一眼。
 
   .venv/bin/python tools/shot.py             截 index.html，存到 shots/
-  .venv/bin/python tools/shot.py --private   截 private/build/index.html，存到 private/build/shots/
 
 页面上有两张带标签栏的卡片，一次只显示一页，所以每个标签页都要点开来截：
 桌面整页（两张卡片都在第一页）、桌面上十二个标签页各一张（tab_名字.png）、桌面打开一条解释、
@@ -63,15 +62,12 @@ def launch(p):
 
 
 def main():
-    unknown = [a for a in sys.argv[1:] if a != '--private']
-    if unknown:
-        raise SystemExit(f'不认识的参数：{unknown}。用法见文件开头的说明。')
-    private = '--private' in sys.argv
-    base = ROOT / 'private' / 'build' if private else ROOT
-    src = base / 'index.html'
-    out = base / 'shots'
+    if sys.argv[1:]:
+        raise SystemExit(f'不认识的参数：{sys.argv[1:]}。用法见文件开头的说明。')
+    src = ROOT / 'index.html'
+    out = ROOT / 'shots'
     if not src.exists():
-        raise SystemExit(f'找不到 {src.relative_to(ROOT)}。先运行 python3 tools/build.py' + (' --private' if private else '') + '。')
+        raise SystemExit(f'找不到 {src.relative_to(ROOT)}。先运行 python3 tools/build.py。')
     url = src.as_uri()
     out.mkdir(parents=True, exist_ok=True)
     for name in NAMES:              # 先清掉上一次的，免得这次跳过的那几张还留着旧图

@@ -5,10 +5,8 @@
   "description": "单文件的八字命盘页面：任意出生时间、多个人，排盘、干支关系和白话解读",
   "scripts": {
     "build": "python3 tools/build.py",
-    "build:private": "python3 tools/build.py --private",
     "check": "node tests/check_page.js",
     "check:quick": "node tests/check_page.js --quick",
-    "check:private": "node tests/check_page.js --private",
     "test": "python3 tools/build.py && node tests/check_page.js"
   },
   "devDependencies": {
