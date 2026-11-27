@@ -23,6 +23,8 @@ node tests/check_page.js                       # 检查页面，约五分钟；�
 python3 tools/gen_cities.py                    # 从维基数据重取城市经度表 data/cities.json，要联网，约一分钟；加 --check 只核对不联网。一般不用重跑
 node tools/check_quotes.js                     # 把典籍的出处抓下来，核对 src/classics.js 里每一句引文，约半分钟，要联网；改了引文之后必须跑
 .venv/bin/python tools/gen_icon.py              # 由 src/icon.svg 重新生成页面图标的两张 PNG；改了图标才跑，跑完再构建
+blender -b -P tools/gen_glyphs.py                # 用 Blender 重新渲染标题大字的 22 张干支字 src/glyph/*.webp，约半分钟，要装 Blender；改了材质才跑，跑完再构建
+blender -b -P tools/gen_gua.py                   # 用 Blender 照 src/icon.svg 重新渲染标题右边的八卦盘 src/gua-*.webp，几秒；改了图标或材质才跑，跑完再构建
 ```
 
 ## 隐私与示例人物的规矩

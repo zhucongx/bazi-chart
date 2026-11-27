@@ -104,13 +104,27 @@ header.top::after{bottom:0;border-width:2px 0 1px}
 :root[data-theme="dark"] #theme .sun{display:block} :root[data-theme="dark"] #theme .moon{display:none}
 h1{margin:2px 0 0;font-family:var(--display);font-weight:700;font-size:clamp(32px,7.4vw,50px);line-height:1.12;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:.1em .5em;text-wrap:balance}
 h1 span{white-space:nowrap}
-/* 标题右边空着的地方放一个很淡的八卦，和页面图标是同一张画，换成单色的钴蓝。只在电脑上有 */
+/* 标题右边空着的地方放一只青花瓷的八卦盘：白瓷的盘、钴蓝的卦画，中间的太极是另一张图，单独转。两张都是 Blender 照页面图标渲染的（tools/gen_gua.py）。
+   原来是一个很淡的单色线稿，2026-11-27 用户说可以用 Blender 了、让看看有什么可以渲染。只在电脑上有 */
 .titlerow{position:relative}
 .gua,.gua-ring{display:none}
-.gua .tj{transform-origin:32px 32px}
+.gua span{position:absolute;inset:0;background:center/contain no-repeat}
 .gua-ring .gr-o{fill:none;stroke:currentColor;stroke-width:.8;stroke-dasharray:2.5 5.5;opacity:.75}
 .gua-ring .gr-i{fill:none;stroke:currentColor;stroke-width:.5;opacity:.45}
 .gua-ring .gr-d{fill:currentColor;opacity:.85}
+/* 标题四柱的大字是渲染出来的立体字：有厚度、带倒角，照五行各用一种材质。木是上了绿色的木头，火是自己发光的火，土是干裂的赭色泥土，
+   金是拉丝的黄金，水是带光纹的深蓝水面。2026-11-27 用户要的：先在字上画几道线，用户说「我说的是质感，包括光晕啊之类的。不行你用blender做一下贴图先」；
+   再把 Blender 渲染的贴图叠在文字上，用户说「真的不试试直接渲染吗」，就直接渲染了 22 个干支字（tools/gen_glyphs.py，构建时内联成下面 22 条样式）。
+   字还是真的文字（.mat 里的那个字，读屏、复制、查找都认），只是颜色透明，后面垫着同一个字的图；图里一个字高是 1em，四周留了 0.15em 给倒角和光晕。
+   图只有一套，浅色深色两种底上都看得清；光晕用样式加在图外面。打印的时候背景不印，换回文字 */
+h1 .mat{display:inline-block;padding:.15em;margin:-.15em;color:transparent;background:center/1.3em 1.3em no-repeat}      /* 只用在标题上：八字表和细盘的大字试过，32 像素下材质看不出来，深色下木的字和深绿的底糊在一起，没有用 */
+/*GLYPHS*/
+/* 每个字一圈细的描边（--ol，墨色，浅色底上是深的、深色底上是浅的），字和底、字和光晕才分得开；再加一点投影。
+   火和水另有一圈很淡的自己颜色的光。原来火和水的光晕很重，用户说「太强了，看不清，或者你都加个描边」，2026-11-27 改淡并加了描边 */
+h1 .mat{--ol:color-mix(in srgb,var(--ink) 62%,transparent);--edge:drop-shadow(.011em 0 0 var(--ol)) drop-shadow(-.011em 0 0 var(--ol)) drop-shadow(0 .011em 0 var(--ol)) drop-shadow(0 -.011em 0 var(--ol));filter:var(--edge) drop-shadow(0 .03em .03em rgba(0,0,0,.22))}
+h1 .fire .mat{filter:var(--edge) drop-shadow(0 0 .07em color-mix(in srgb,var(--fire-f) 38%,transparent))}
+h1 .water .mat{filter:var(--edge) drop-shadow(0 0 .07em color-mix(in srgb,var(--water-f) 38%,transparent))}
+@media print{h1 .mat{color:inherit;background:none;filter:none}}
 /* 标题里四柱的标注：下面是年柱、月柱、日柱、时柱；每个字上面一个小字，日柱的天干是「日主」（一枚淡蓝的小签），其余七个字是它的位置（年干、年支、月干、月支、日支、时干、时支，灰色小字）。都用样式生成，不占文字内容 */
 h1 .pl{position:relative;display:inline-flex;flex-direction:column;align-items:center;padding-top:16px}
 h1 .pl::after{content:attr(data-k);margin-top:6px;font:400 12px/1 var(--body);letter-spacing:.14em;color:var(--ink3)}
@@ -737,7 +751,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   main{max-width:1280px;padding:44px 32px 72px;gap:28px}
   header.top{gap:20px;padding-bottom:26px}
   .titlerow{margin-top:8px}
-  .gua{display:block;position:absolute;right:10px;top:50%;width:124px;height:124px;transform:translateY(-50%);color:var(--accent);opacity:.17;pointer-events:none}
+  .gua{display:block;position:absolute;right:10px;top:50%;width:124px;height:124px;transform:translateY(-50%);pointer-events:none;filter:drop-shadow(0 3px 6px rgba(19,26,42,.22))}
   .gua-ring{display:block;position:absolute;right:0;top:50%;width:144px;height:144px;transform:translateY(-50%);color:var(--accent);opacity:.22;pointer-events:none}
   .eyebrow{font-size:13.5px}
   .switch{font-size:14px;padding:5px 14px 5px 7px}
@@ -1077,6 +1091,11 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
 .pk.sliding{border-color:transparent!important;background:none!important}
 @media (prefers-reduced-motion:no-preference){
   header.top::before{animation:aura 11s ease-in-out infinite}
+  /* 标题大字的光晕：火的一明一暗，像火苗在跳；水的慢慢涨落。幅度都小，不盖住字。字本身是渲染好的图，不动 */
+  h1 .fire .mat{animation:mat-fire 1.7s ease-in-out infinite alternate}
+  @keyframes mat-fire{to{filter:var(--edge) drop-shadow(0 0 .11em color-mix(in srgb,var(--fire-f) 55%,transparent))}}
+  h1 .water .mat{animation:mat-water 4.2s ease-in-out infinite alternate}
+  @keyframes mat-water{to{filter:var(--edge) drop-shadow(0 0 .11em color-mix(in srgb,var(--water-f) 52%,transparent))}}
   @keyframes aura{0%,100%{transform:translate3d(0,0,0) scale(1);opacity:var(--ao1)}50%{transform:translate3d(-14px,6px,0) scale(1.07);opacity:var(--ao2)}}
   header.top::after{background:linear-gradient(90deg,transparent 0%,transparent 38%,var(--accent-soft) 46%,var(--accent) 50%,var(--accent-soft) 54%,transparent 62%,transparent 100%) -40% 0/220% 100% no-repeat;animation:draw .9s cubic-bezier(.3,.1,.2,1) both,glaze 8s ease-in-out 1.4s infinite;transform-origin:left}
   footer::before{background:linear-gradient(90deg,transparent 0%,transparent 38%,var(--accent-soft) 46%,var(--accent) 50%,var(--accent-soft) 54%,transparent 62%,transparent 100%) -40% 0/220% 100% no-repeat;animation:glaze 8s ease-in-out 4s infinite}
@@ -1229,7 +1248,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <input type="file" id="pf-file" accept=".json,application/json" hidden>
     </div>
   </form>
-  <div class="titlerow"><h1 id="title"></h1><svg class="gua-ring" viewBox="0 0 144 144" aria-hidden="true" focusable="false"><circle class="gr-o" cx="72" cy="72" r="68"/><circle class="gr-i" cx="72" cy="72" r="61"/><circle class="gr-d" cx="72" cy="4" r="2.2"/><circle class="gr-d" cx="72" cy="140" r="2.2"/><circle class="gr-d" cx="4" cy="72" r="1.6"/><circle class="gr-d" cx="140" cy="72" r="1.6"/></svg><svg class="gua" viewBox="0 0 64 64" aria-hidden="true" focusable="false">{{GUA}}</svg></div>
+  <div class="titlerow"><h1 id="title"></h1><svg class="gua-ring" viewBox="0 0 144 144" aria-hidden="true" focusable="false"><circle class="gr-o" cx="72" cy="72" r="68"/><circle class="gr-i" cx="72" cy="72" r="61"/><circle class="gr-d" cx="72" cy="4" r="2.2"/><circle class="gr-d" cx="72" cy="140" r="2.2"/><circle class="gr-d" cx="4" cy="72" r="1.6"/><circle class="gr-d" cx="140" cy="72" r="1.6"/></svg><div class="gua" aria-hidden="true">{{GUA}}</div></div>
   <div class="hours" id="hours" hidden></div>
   <dl class="meta" id="meta"></dl>
 </header>

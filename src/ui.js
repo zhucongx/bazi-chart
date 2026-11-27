@@ -320,7 +320,7 @@ function renderPerson(){
   $('eyebrow').innerHTML=`${P.gender?'男命':'女命'} · ${xb('x','term|造',P.gender?'乾造':'坤造')}`;
   $('title').setAttribute('aria-label',P.pillars.join(' '));
   // 每一柱带上「年柱」这样的标注，日柱的天干带上「日主」。标注由样式显示，标题的文字内容仍然只有八个字
-  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span class="cx" data-x="gz|${p.k}" role="button" tabindex="0"><span class="${gCls(p.g)}${p.day?' dm':' gd'}"${p.day?'':` data-g="${p.k}干"`}>${p.g}</span><span class="${zCls(p.z)} gd" data-g="${p.k}支">${p.z}</span></span></span>`).join('');      // 每个字上面一个小字，写它的位置：年干、年支……日干那里是「日主」。都由样式生成，不占文字内容。2026-11-18 用户说「只标记了日主，别的也写一下吧」；我先标成了十神，用户说「不是标记十神吧，表日干日支之类的」
+  $('title').innerHTML=NATAL.map(p=>`<span class="pl${P.nohour&&p.k==='时'?' guess':''}" data-k="${p.k}柱${P.nohour&&p.k==='时'?'（不详）':''}"><span class="cx" data-x="gz|${p.k}" role="button" tabindex="0"><span class="${gCls(p.g)}${p.day?' dm':' gd'}"${p.day?'':` data-g="${p.k}干"`}><span class="mat" data-c="${p.g}">${p.g}</span></span><span class="${zCls(p.z)} gd" data-g="${p.k}支"><span class="mat" data-c="${p.z}">${p.z}</span></span></span></span>`).join('');      // 每个字上面一个小字，写它的位置：年干、年支……日干那里是「日主」。都由样式生成，不占文字内容。2026-11-18 用户说「只标记了日主，别的也写一下吧」；我先标成了十神，用户说「不是标记十神吧，表日干日支之类的」
   const meta=metaRows(), mrow=r=>`<div><dt>${xb('x','meta|'+r.k,r.k)}</dt><dd>${r.dd}</dd></div>`;
   const top=meta.filter(r=>!META_YUN.includes(r.k));
   $('meta').innerHTML=top.filter(r=>META_MAIN.includes(r.k)).concat(top.filter(r=>!META_MAIN.includes(r.k))).map(mrow).join('');

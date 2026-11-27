@@ -1534,6 +1534,13 @@ pick(0);
   // 减弱动态效果：样式里的动画、过渡、平滑滚动和装饰性循环动画，都只能写在 no-preference 那一段里，外面一条也不能有
   const np = css.match(/@media \(prefers-reduced-motion:no-preference\)\{([\s\S]*?)\n\}/), rest = css.replace(np ? np[0] : '', '');
   eq('样式里的动画、过渡、平滑滚动和装饰循环都写在「没有减弱动态效果」那一段里', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(rest)], [true, [], false]);
+  // 标题四柱的大字是渲染好的立体字：22 个干支各一张图，照字上的 data-c 取；字还是真的文字（内容不变），只是颜色透明；打印时换回文字
+  {
+    const all22 = [...'甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥'], mats = [...d.querySelectorAll('#title .mat')];
+    eq('标题大字：22 个干支各有一张渲染好的图，八个字各带自己的 data-c，文字内容不变，打印时换回文字',
+      [all22.filter(c => !new RegExp('h1 \\.mat\\[data-c="' + c + '"\\]\\{background-image:url\\(data:image/webp;base64,[A-Za-z0-9+/=]{2000,}\\)\\}').test(css)), mats.length, mats.every(m => m.dataset.c === txt(m) && all22.includes(txt(m))), txt($('title')) === ev('P.pillars.join("")'),
+        /h1 \.mat\{[^}]*color:transparent/.test(css), /@media print\{h1 \.mat\{color:inherit;background:none/.test(css)], [[], 8, true, true, true, true]);
+  }
   ok('生克图上的流光不用钴蓝，用五行的颜色', !/line\.flow\{[^}]*var\(--accent\)/.test(css) && /line\.flow\{[^}]*stroke:var\(--f/.test(css));
   const ringEl = d.querySelector('.titlerow .gua-ring');
   eq('装饰动画元素：外圈星轨、五行气韵微光、生克图流光线都对读屏隐藏且跟随日主五行', [!!ringEl && ringEl.getAttribute('aria-hidden') === 'true', d.querySelector('header.top').dataset.el === ev('ELC[gEl(DM)]'), [...d.querySelectorAll('#wxmap line.flow')].every(l => l.getAttribute('aria-hidden') === 'true') && d.querySelectorAll('#wxmap line.flow').length === 5], [true, true, true]);
@@ -1571,10 +1578,11 @@ pick(0);
   ok('关系图里名字那一层不挡两头的圈', /pointer-events:none/.test(rule('.lk-ts')) && /pointer-events:auto/.test(rule('.lk-t')));
   pick(0);
   // 标题右边的八卦：和页面图标同一张画，八个卦各三道爻，一个太极，颜色都换成了单色。太极那一层里只有半边和两个鱼眼
-  const gua = d.querySelector('.titlerow .gua'), g3 = gua ? [...gua.querySelectorAll('g')].filter(g => [...g.children].length === 3 && [...g.children].every(c => c.tagName.toLowerCase() === 'path')) : [];
-  eq('标题右边的八卦：八个卦各三道爻、一个太极，颜色只有 currentColor 和页面的底色，读屏软件不念',
-    [g3.length, g3.map(g => g.getAttribute('transform') || 'rotate(0 32 32)').join() === [0, 45, 90, 135, 180, 225, 270, 315].map(a => `rotate(${a} 32 32)`).join(), gua && [...gua.querySelectorAll('.tj')].map(x => [...x.children].map(c => c.tagName.toLowerCase()).join()), gua && [...new Set([...gua.querySelectorAll('*')].flatMap(x => ['fill', 'stroke', 'style'].map(a => x.getAttribute(a))).filter(Boolean))].sort(), gua && gua.getAttribute('aria-hidden')],
-    [8, true, ['path,circle,circle'], ['currentColor', 'var(--paper)'], 'true']);
+  // 标题右边的八卦盘：盘和太极各一张渲染好的图，叠在一起，太极那一张带 tj（换人、平时转的是它）；读屏软件不念。
+  // 卦画的排法不在这里核对：图是 Blender 照 src/icon.svg 渲染的，那张图在下面「页面图标」一段逐卦核对
+  const gua = d.querySelector('.titlerow .gua'), layers = gua ? [...gua.children] : [];
+  eq('标题右边的八卦盘：盘和太极两张图，太极单独一层，读屏软件不念',
+    [layers.map(x => x.className), layers.every(x => /^url\(["']?data:image\/webp;base64,[A-Za-z0-9+\/=]{2000,}["']?\)$/.test(x.style.backgroundImage)), gua && gua.getAttribute('aria-hidden')], [['gua-p', 'tj'], true, 'true']);
   click($('h-bz')); click($('h-pan'));
 }
 

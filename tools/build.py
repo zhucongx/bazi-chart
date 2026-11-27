@@ -3,7 +3,7 @@
 
   python3 tools/build.py             data/people.json → index.html（仓库根目录，GitHub Pages 发布的就是它）
 
-模板 src/page.tpl.html 里有十二个占位符，每个必须恰好出现一次：
+模板 src/page.tpl.html 里有十三个占位符，每个必须恰好出现一次：
   /*DATA*/     换成人物数据（people.json 去掉节的日期表之后的内容）
   /*TABLES*/   换成 data/tables.json：节的时刻表和农历表，页面内排盘要用
   /*CITIES*/   换成 data/cities.json 里的城市经度表，只留 [名字, 省份, 经度]，添加表单里选城市用
@@ -15,7 +15,8 @@
   /*UI*/       换成 src/ui.js
   {{TITLE}}    换成数据里的 title，做 HTML 转义
   {{ICONS}}    换成页面图标的三个 <link>：src/icon.svg 和它生成的两张 PNG，都写成 data: 网址（见 icon_links）
-  {{GUA}}      换成标题右边那个八卦，由 src/icon.svg 换成单色（见 gua_mark）
+  {{GUA}}      换成标题右边那只八卦盘的两张图：盘和太极，由 tools/gen_gua.py 用 Blender 照 src/icon.svg 渲染（见 gua_mark）
+  /*GLYPHS*/   换成标题大字用的 22 张渲染好的干支字（src/glyph/*.webp，由 tools/gen_glyphs.py 用 Blender 渲染），写成 22 条样式（见 glyph_rules）
 
 people.json 里的 jie（每年十二个节的日期）不放进页面：页面从 tables.json 的时刻表自己推。
 它留在 people.json 里，是给检查脚本对照用的。
@@ -74,20 +75,29 @@ def icon_links():
             f'<link rel="apple-touch-icon" href="data:image/png;base64,{b64(touch_file.read_bytes())}">')
 
 
+def glyph_rules():
+    """标题大字用的干支字：十个天干 g0…g9、十二个地支 z0…z11，各一张渲染好的透明底的图，写成 22 条样式，
+    照字上的 data-c 取（h1 .mat[data-c="甲"]）。图都内联成 data: 网址，页面仍然是单个文件。"""
+    out = []
+    for kind, chars in (('g', '甲乙丙丁戊己庚辛壬癸'), ('z', '子丑寅卯辰巳午未申酉戌亥')):
+        for i, ch in enumerate(chars):
+            f = ROOT / 'src' / 'glyph' / f'{kind}{i}.webp'
+            if not f.exists():
+                raise SystemExit(f'找不到 src/glyph/{kind}{i}.webp（{ch}）。先运行 blender -b -P tools/gen_glyphs.py。')
+            out.append(f'h1 .mat[data-c="{ch}"]{{background-image:url(data:image/webp;base64,{base64.b64encode(f.read_bytes()).decode()})}}')
+    return '\n'.join(out)
+
+
 def gua_mark():
-    """标题右边那个很淡的八卦，和页面图标是同一张画：去掉垫底的白色八边形，五行的颜色和墨色都换成 currentColor，白的地方换成页面的底色。
-    中间的太极另包一层（class="tj"），换人的时候只有它转。"""
-    svg = re.sub(r'<!--.*?-->\s*', '', (ROOT / 'src' / 'icon.svg').read_text(encoding='utf-8'), flags=re.S)
-    body = re.search(r'<svg[^>]*>(.*)</svg>', svg, flags=re.S).group(1)
-    body, n = re.subn(r'<polygon[^>]*/>\s*', '', body)
-    guas = body.count('data-gua=')
-    body = re.sub(r' data-gua="."', '', body)
-    body = re.sub(r'fill="(#[0-9a-fA-F]{3,6})"', lambda m: 'fill="var(--paper)"' if m.group(1).lower() in ('#fff', '#ffffff') else 'fill="currentColor"', body)
-    body = re.sub(r'\n\s*', '', body).strip()
-    cut = body.find('<path fill="var(--paper)"')      # 太极里面：白的半边和两个鱼眼，都排在八个卦后面
-    if n != 1 or guas != 8 or cut < body.rfind('<g transform=') or re.search(r'#[0-9a-fA-F]{3}|style=|stroke=|<title', body):
-        raise SystemExit('src/icon.svg 的画法和预想的不一样（一个垫底的八边形，八个卦，后面是太极的半边和两个鱼眼；颜色都写成 fill="#…"，白色写 #fff），tools/build.py 的 gua_mark 要跟着改。')
-    return body[:cut] + '<g class="tj">' + body[cut:] + '</g>'
+    """标题右边那只青花瓷的八卦盘：盘和太极各一张渲染好的图（src/gua-plate.webp、src/gua-tj.webp，由 tools/gen_gua.py 用 Blender 照 src/icon.svg 渲染），
+    画幅一样、中心重合，叠在一起；太极那一张（class="tj"）单独转。图内联成 data: 网址。"""
+    out = []
+    for cls, name in (('gua-p', 'gua-plate'), ('tj', 'gua-tj')):
+        f = ROOT / 'src' / f'{name}.webp'
+        if not f.exists():
+            raise SystemExit(f'找不到 src/{name}.webp。先运行 blender -b -P tools/gen_gua.py。')
+        out.append(f'<span class="{cls}" style="background-image:url(data:image/webp;base64,{base64.b64encode(f.read_bytes()).decode()})"></span>')
+    return ''.join(out)
 
 
 def make_page(data):
@@ -122,6 +132,7 @@ def make_page(data):
         '{{TITLE}}': html.escape(title),
         '{{ICONS}}': icon_links(),
         '{{GUA}}': gua_mark(),
+        '/*GLYPHS*/': glyph_rules(),
     }
     for mark, path in sources.items():
         text = path.read_text(encoding='utf-8')
