@@ -1534,6 +1534,7 @@ pick(0);
   // 减弱动态效果：样式里的动画、过渡、平滑滚动和装饰性循环动画，都只能写在 no-preference 那一段里，外面一条也不能有
   const np = css.match(/@media \(prefers-reduced-motion:no-preference\)\{([\s\S]*?)\n\}/), rest = css.replace(np ? np[0] : '', '');
   eq('样式里的动画、过渡、平滑滚动和装饰循环都写在「没有减弱动态效果」那一段里', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(rest)], [true, [], false]);
+  ok('生克图上的流光是墨色，不用钴蓝：生克的线不占颜色，颜色只留给五行', !/line\.flow\{[^}]*var\(--accent\)/.test(css) && /line\.flow\{[^}]*stroke:var\(--ink\)/.test(css));
   const ringEl = d.querySelector('.titlerow .gua-ring');
   eq('装饰动画元素：外圈星轨、五行气韵微光、生克图流光线都对读屏隐藏且跟随日主五行', [!!ringEl && ringEl.getAttribute('aria-hidden') === 'true', d.querySelector('header.top').dataset.el === ev('ELC[gEl(DM)]'), [...d.querySelectorAll('#wxmap line.flow')].every(l => l.getAttribute('aria-hidden') === 'true') && d.querySelectorAll('#wxmap line.flow').length === 5], [true, true, true]);
   // 长说明：照意思分成几段，一段一块，文字一个字不少。每位人物、每种数法、每种看法各走一遍（快速模式只走三位）
@@ -1678,6 +1679,19 @@ pick(0);
     const wantLn = JSON.parse(ev('JSON.stringify((()=>{const d=P.dayun[sel.dy],a=[];for(let y=d.y0;y<=d.y1;y++)a.push(xiPillar(yearGZ(y)).score);return a;})())'));
     const wantLy = JSON.parse(ev('JSON.stringify((()=>{const a=[];for(let m=0;m<12;m++)a.push(xiPillar(monthGZ(sel.y,m)).score);return a;})())'));
     eq('计分一页大运、流年、流月三张喜用分走势图：柱数与分数一致、每柱可点', [syCheck('symap-dy', wantDy), syCheck('symap-ln', wantLn), syCheck('symap-ly', wantLy)], [[8, wantDy, true], [10, wantLn, true], [12, wantLy, true]]);
+    const wantLr = JSON.parse(ev('JSON.stringify(monthDays(sel.y,sel.m).map(t=>xiPillar(dayGZ(t)).score))'));
+    eq('计分一页流日走势图：这个月有几天就有几柱，分数和选择器里的流日一致，每柱可点', syCheck('symap-lr', wantLr), [wantLr.length, wantLr, true]);
+    const trText = txt(d.getElementById('rd-tr')), syNote = txt(d.getElementById('note-symap'));
+    eq('计分一页的解读照传统的说法写好运、差运，不再写「不说哪一柱好、哪一柱坏」', [/好运/.test(trText) && /差运/.test(trText), /不说哪一柱好|不代表哪步运|不说哪一年会怎样/.test(trText + syNote)], [true, false]);
+    // 点走势图里的一柱：换到那一柱（和点选择器的小卡一样），同时打开这一柱的明细，卡片跟到新画的那一柱上。2026-11-27 用户要的
+    const was = ev('JSON.stringify({dy:sel.dy,y:sel.y,m:sel.m,d:sel.d,pan:sel.tab.pan})');
+    click(d.getElementById('h-sy'));
+    const goCol = (id, k) => { const c = d.querySelector(`#${id} .sy-col:not(.sel)`); if (!c) return 'no column'; const key = c.dataset.x, want = c.getAttribute('data-' + k); click(c);
+      const now = d.querySelector(`#${id} .sy-col.sel`); return [!!now && now.dataset.x === key, String(ev('sel.' + k)) === want, ev('sel.x') === key, !d.getElementById('sheet').hidden, w.eval('anchorOf(sel.x,sel.xn,sel.xh)') === now]; };
+    eq('点走势图里的一柱：换到那一步大运、那一年、那个月、那一天，同时打开这一柱的明细，卡片挂在新画的那一柱上', [goCol('symap-dy', 'dy'), goCol('symap-ln', 'y'), goCol('symap-ly', 'm'), goCol('symap-lr', 'd')], Array(4).fill([true, true, true, true, true]));
+    const selC = d.querySelector('#symap-lr .sy-col.sel'); if (selC) click(selC);
+    eq('再点一下已经选中的那一柱：只收起明细，选中的不变', [!!selC, d.getElementById('sheet').hidden, !!selC && (d.querySelector('#symap-lr .sy-col.sel') || {}).dataset?.x === selC.dataset.x], [true, true, true]);
+    ev(`(()=>{const v=${was};sel.dy=v.dy;sel.y=v.y;sel.m=v.m;sel.d=v.d;renderDynamic();})()`); click(d.getElementById('h-' + JSON.parse(was).pan));
   }
   [A, B, C].forEach(p => p.D.window.close());
 }
@@ -2133,6 +2147,10 @@ console.log('分享链接');
   eq('打开链接里的标签和数法只对这一次生效，不顶掉浏览器里原有的偏好',
     [w2.eval('MAPBY.wx'), w2.eval('MAPBY.gj'), w2.localStorage.getItem('bz-tabs'), w2.localStorage.getItem('bz-map')],
     ['face', 'gjz', 'wx,gt', savedMap]);
+  w2.document.getElementById('h-tk').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
+  w2.document.querySelector('[data-map="wx:cnt"]').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
+  eq('打开链接以后随手点一个标签、一个数法：只存点的那一项，链接带来的其余几项不会存成自己的',
+    [w2.localStorage.getItem('bz-tabs'), JSON.parse(w2.localStorage.getItem('bz-map'))], ['tk,gt', { wx: 'cnt', gods: 'cnt', yun: 'fy', gj: 'gjb' }]);
   w2.document.getElementById('pp-save').dispatchEvent(new w2.MouseEvent('click', { bubbles: true }));
   eq('保存来自链接的人以后清掉网址里的 #，刷新不再重走一遍链接', [w2.location.hash, w2.eval('!!P.temp'), w2.eval('!!P.local')], ['', false, true]);
   dom2.window.close();

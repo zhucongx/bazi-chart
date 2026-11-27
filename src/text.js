@@ -1,6 +1,6 @@
 /* 解释文字。
    针对某一张盘的句子，都由这里的函数按干支现算出来，换一个人就换一套。
-   手写的解读只来自人物数据里的 notes：公开的示例没有 notes，个人的放在 private/ 里。
+   手写的解读只来自人物数据里的 notes：页面自带的示例没有 notes，使用者自己的随出生信息一起导入，存在浏览器里。
    生成的段落标题用「这张盘」；notes 里标题是「你的盘」的段落会顶替它。 */
 
 /* ---------- 当前这个人（由 ui.js 的 usePerson 设置） ---------- */
@@ -2131,23 +2131,28 @@ function readGT(){
 function readTr(){
   const x=xiNow(), de=gEl(DM), b=yunBasis(), what=b.short, ord=ordCn;
   const d=P.dayun[sel.dy], ys=[]; for(let y=d.y0;y<=d.y1;y++) ys.push(y);
-  const hiLo=(list,name)=>{const vs=list.map(o=>o.v), hi=Math.max(...vs), lo=Math.min(...vs), pick=v=>list.filter(o=>o.v===v).map(o=>o.n).join('、');
+  // 同分的不止三个时只列前三个，后面写一共几个：流日三十来天，同分的常有好几天
+  const hiLo=(list,name)=>{const vs=list.map(o=>o.v), hi=Math.max(...vs), lo=Math.min(...vs), pick=v=>{const a=list.filter(o=>o.v===v).map(o=>o.n);return a.length>3?a.slice(0,3).join('、')+`等 ${a.length} 个`:a.join('、');};
     return hi===lo?`${name}都是 ${hi} 分，高低一样。`:`${name}里最高的是${pick(hi)}，${hi} 分；最低的是${pick(lo)}，${lo} 分。`;};
   const dys=P.dayun.map(o=>({n:`${o.gz}运`,v:xiPillar(o.gz).score}));
   const lns=ys.map(y=>({n:`${yearGZ(y)}年（${y}）`,v:xiPillar(yearGZ(y)).score}));
   const lys=[...Array(12).keys()].map(m=>({n:`${monthGZ(sel.y,m)}月（${JIE[m]}起）`,v:xiPillar(monthGZ(sel.y,m)).score}));
+  const days=monthDays(sel.y,sel.m), lrs=days.map(t=>({n:`${dayGZ(t)}日（${mdText(t)}）`,v:xiPillar(dayGZ(t)).score}));
   const cur=dys[sel.dy], rank=1+dys.filter(o=>o.v>cur.v).length, tie=dys.filter(o=>o.v===cur.v).length>1;
+  // 好运、差运：传统上行运走到喜用的五行是好运，走到忌的是差运。原来这里写「只比较高低，不说哪一柱好、哪一柱坏」，2026-11-27 用户说「不要这个限制」
+  const luck='传统上，行运走到喜用的五行读作好运，走到忌的五行读作差运：条越长，读作越好的运。';
   return box('解读 · 小卡底下的条',`<ul class="cols">${lis([
     hiLo(dys,'八步大运')+`选中的${cur.n} ${cur.v} 分，在八步里排第${ord(rank)}${tie?'，有同分的':''}。`,
     hiLo(lns,`${d.gz}运的${cn(ys.length)}年`)+`选中的 ${sel.y} 年 ${xiPillar(yearGZ(sel.y)).score} 分。`,
     hiLo(lys,`${sel.y} 年的十二个月`),
+    hiLo(lrs,`${monthGZ(sel.y,sel.m)}月的 ${days.length} 天`)+(days.includes(sel.d)?`选中的${dayGZ(sel.d)}日（${mdText(sel.d)}）${xiPillar(dayGZ(sel.d)).score} 分。`:''),
     b.mode==='sum'?`条越长，这一柱带来的 13 分里，${b.parts[0].both}和${b.parts[1].both}两种分数加起来越多，满分 26。`
       +(b.same?'这张盘两种取的是同样两行，相加就是每一柱的分数翻一倍，高低的次序和单看一种一样。':'同一种五行两种都算的，算两遍。')
-      +'两种分数直接相加是页面自己的做法，书里没有这样算的；这里只比较分数高低，不说哪一柱好、哪一柱坏。'
-    :`条越长，这一柱带来的 13 分里${what}越多。`+(b.mode==='ys'?`用神照任铁樵《滴天髓阐微》「体用」一节的注取${yongNow().shen?'，喜神照同书「闲神」一节分':''}，见「喜忌」一页；这里只比较分数高低，不说哪一柱好、哪一柱坏。`:x.lean?'这张盘强弱居中，喜用照「喜忌」一页的用神取，和按「用神和喜神」看是同一个分数；这里只比较分数高低，不说哪一柱好、哪一柱坏。':x.xi?`照扶抑的说法，这张盘身${x.tier}，喜用的五行来得多，就是在${x.tier==='弱'?'扶':'抑'}它。《渊海子平》讲行运：${q(x.tier==='弱'?'yh_yun1':'yh_yun2')}。这里只比较分数高低，不说哪一柱好、哪一柱坏。`
-      :pairHelp()?'这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用。条画的帮日主的一组，正好就是「喜忌」一页照任铁樵的注取的用神；这里只比较分数高低，不说哪一柱好、哪一柱坏。'
+      +'两种分数直接相加是页面自己的做法，书里没有这样算的。'+luck
+    :`条越长，这一柱带来的 13 分里${what}越多。`+(b.mode==='ys'?`用神照任铁樵《滴天髓阐微》「体用」一节的注取${yongNow().shen?'，喜神照同书「闲神」一节分':''}，见「喜忌」一页。${luck}`:x.lean?`这张盘强弱居中，喜用照「喜忌」一页的用神取，和按「用神和喜神」看是同一个分数。${luck}`:x.xi?`照扶抑的说法，这张盘身${x.tier}，喜用的五行来得多，就是在${x.tier==='弱'?'扶':'抑'}它。《渊海子平》讲行运：${q(x.tier==='弱'?'yh_yun1':'yh_yun2')}。${luck}`
+      :pairHelp()?`这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用。条画的帮日主的一组，正好就是「喜忌」一页照任铁樵的注取的用神。${luck}`
       :'这张盘的强弱计分在 25 分和 30 分之间，扶抑取不了喜用，这里的长短只说帮日主的字多少，不分顺逆。'+(yongNow().yong!==null||yongNow().pair?'按上面的「用神和喜神」，换成照「喜忌」一页的用神算。':'')),
-    '每一层是怎么加出来的、各是什么十神、在它那一排里排第几，点上面表里那一行的名字。扶抑只看是哪一类十神，正和偏不分；也没有算这一柱和原局的合冲，没有分大运的天干、地支各管几年。这些只是这套体系内部的推演，没有证据表明它能预测人生，页面也不说哪一年会怎样；换成从格、格局、调候的取法，高低可能整个反过来。'])}</ul>`);
+    '每一层是怎么加出来的、各是什么十神、在它那一排里排第几，点上面表里那一行的名字。扶抑只看是哪一类十神，正和偏不分；也没有算这一柱和原局的合冲，没有分大运的天干、地支各管几年。这些只是这套体系内部的推演，没有证据表明它能预测人生；换成从格、格局、调候的取法，高低可能整个反过来。'])}</ul>`);
 }
 /* 格局一页的解读：这张盘照《子平真诠》归哪一格，格局组合里有哪几个、哪几个是书里在这一格下面讲的，成和败怎么一起看 */
 function readGj(){
@@ -2534,7 +2539,7 @@ function X0(key){
     return {t:`十二长生 · ${DMN}在${z}：${s}`,p:[
       ['意思',`日主${DMN}走到地支${z}，处在十二长生的${s}。${STG[s]}`],
       ['顺序',`长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。${DMN}是${yy(DM)}干，${yin?'逆':'顺'}行：${seq}。`],
-      ['这张盘',hits.length?`原局的${hits.join('、')}落在这里。${STAGES.indexOf(s)<5?'长生到帝旺五步传统上算气盛。':'衰到养七步传统上算气衰。'}`:'原局四个地支里没有'+z+'，只在大运或流年逢到'+z+'时走过这一位。'],
+      ['这张盘',hits.length?`原局的${hits.join('、')}落在这里。${STAGES.indexOf(s)<5?'《千里命稿》把长生到帝旺五位叫气盛，这一位是其中之一。':'《千里命稿》把长生到帝旺五位叫气盛，其余七位叫气衰，这一位是气衰。'}`:'原局四个地支里没有'+z+'，只在大运或流年逢到'+z+'时走过这一位。'],
       ['注意',(yin?`阴干是不是逆行，各派有分歧。另一派认为${DMN}跟着同五行的阳干${yang}顺行，那样它在${z}是${stage(yang,z)}。`:'阳干顺行没有争议，有争议的是阴干是不是逆行。')+('戊己'.includes(DM)?'土没有自己的十二长生，通行跟火走，也有跟水走的。':'')]]};
   }
   const c=cols().find(x=>x.k===a[1]); if(!c) return null;

@@ -541,39 +541,41 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .csmap .cs-track{fill:none;stroke:var(--line);stroke-width:1.2}
 .csmap .cs-dir{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 4;opacity:.45;transform-origin:206px 206px}
 .csmap .cs-z{font:700 15px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
-.csmap .cs-s{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-s{font:400 11px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 .csmap .nd.weak .bg{fill:var(--card)}
 .csmap .nd.weak .ring{stroke:var(--line)}
 .csmap .nd.vig .bg{fill:var(--wash)}
 .csmap .nd.hit .ring{stroke-width:2.4}
 .csmap .nd.hit .cs-s{fill:var(--ink);font-weight:600}
-.csmap .cs-tag{font:600 10.5px var(--body);fill:var(--accent);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-tag{font:600 11px var(--body);fill:var(--accent);text-anchor:middle;dominant-baseline:central}
 .csmap .cs-dm{font:700 25px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
-.csmap .cs-sub{font:500 10.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
-.csmap .cs-way{font:400 9.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-sub{font:500 11px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.csmap .cs-way{font:400 11px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
+/* 用神五神关系图（喜忌页）：和五行图共用 .wxmap 的样子；这张图画得比五行图小一点，圈里的分数放大一档，电脑上不小于 10 像素 */
+#ysmap .ct{font-size:11px}
 /* 六亲生克推演示意图（六亲页） */
 .lqmap{margin:0;display:flex;flex-direction:column;align-items:center}
 .lqmap svg{display:block;width:100%;max-width:560px;height:auto}
 .lqmap .lq-ln{stroke:var(--ink3);stroke-width:1.3;fill:none}
 .lqmap .lq-ln.ke{stroke-dasharray:4 3}
 .lqmap marker path{fill:var(--ink3)}
-.lqmap .lq-lb{font:400 10.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-lb{font:400 11.5px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
 .lqmap .lq-nd{cursor:pointer;outline:none}
 .lqmap .lq-nd .box{fill:var(--card);stroke:var(--line);stroke-width:1.3;stroke-dasharray:4 3}
 .lqmap .lq-nd.hit .box{stroke:currentColor;stroke-width:1.4;stroke-dasharray:none}
 .lqmap .lq-nd.hit.wood .box{fill:var(--wood-s)} .lqmap .lq-nd.hit.fire .box{fill:var(--fire-s)} .lqmap .lq-nd.hit.earth .box{fill:var(--earth-s)} .lqmap .lq-nd.hit.metal .box{fill:var(--metal-s)} .lqmap .lq-nd.hit.water .box{fill:var(--water-s)}
 .lqmap .lq-nd:hover .box{stroke:currentColor;stroke-width:2}
 .lqmap .lq-nd.on .box,.lqmap .lq-nd:focus-visible .box{stroke:var(--accent);stroke-width:2.2;stroke-dasharray:none}
-.lqmap .lq-who{font:700 13px var(--body);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
-.lqmap .lq-gd{font:600 11px var(--body);fill:currentColor;text-anchor:middle;dominant-baseline:central}
-.lqmap .lq-at{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-who{font:700 14px var(--body);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-gd{font:600 12px var(--body);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.lqmap .lq-at{font:400 11.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 .lqmap .nd .ring{fill:none;stroke:currentColor;stroke-width:2.8}
 .lqmap .nd.wood .bg{fill:var(--wood-s)} .lqmap .nd.fire .bg{fill:var(--fire-s)} .lqmap .nd.earth .bg{fill:var(--earth-s)} .lqmap .nd.metal .bg{fill:var(--metal-s)} .lqmap .nd.water .bg{fill:var(--water-s)}
 .lqmap .nd .halo{fill:none;stroke:none}
 .lqmap .nd.on .halo,.lqmap .nd:focus-visible .halo{stroke:var(--accent);stroke-width:1.5}
 .lqmap .nd{cursor:pointer;outline:none}
 .lqmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central;transform:translateY(-.06em)}
-.lqmap .ct{font:400 10px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.lqmap .ct{font:400 11.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 /* 大运、流年、流月喜用分走势图（计分页） */
 .sy-grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 28px;align-items:start}
 .sy-box{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -582,7 +584,7 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .symap{margin:0;width:100%}
 .symap svg{display:block;width:100%;height:auto}
 .symap .sy-grid{stroke:var(--line);stroke-width:1}
-.symap .sy-ax{font:400 11px var(--body);fill:var(--ink3);text-anchor:end;dominant-baseline:central}
+.symap .sy-ax{font:400 12px var(--body);fill:var(--ink3);text-anchor:end;dominant-baseline:central}
 .symap .sy-sel{fill:var(--accent-soft)}
 .symap .sy-col{cursor:pointer;outline:none}
 .symap .sy-hit{fill:transparent}
@@ -592,11 +594,15 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .symap .sy-line{fill:none;stroke:var(--accent);stroke-width:1.8;opacity:.7;pointer-events:none}
 .symap .sy-dot{fill:var(--card);stroke:var(--accent);stroke-width:1.8;pointer-events:none}
 .symap .sy-dot.cur{fill:var(--accent)}
-.symap .sy-val{font:600 11.5px var(--body);fill:var(--ink2);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.symap .sy-val{font:600 12.5px var(--body);fill:var(--ink2);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
 .symap .sy-col.sel .sy-val{fill:var(--accent)}
 .symap .sy-gz{font:700 13.5px var(--display);text-anchor:middle;pointer-events:none}
-.symap .sy-ag{font:400 10px var(--body);fill:var(--ink3);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.symap .sy-ag{font:400 12px var(--body);fill:var(--ink3);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
 .symap .sy-now{fill:var(--seal);pointer-events:none}
+/* 流日那张：占满一整行；图的宽度照天数算，铺满这一行，最多缩到 0.84（ui.js 的 syChart 写在 min-width 里），再窄就横着滚 */
+.sy-days{grid-column:1/-1}
+.sy-days .symap{overflow-x:auto}
+@media (max-width:1099px){.symap{overflow-x:auto}.symap svg{min-width:540px}}      /* 一栏排的时候小图不缩到 540 以下，手机上横着滚 */
 .cs-t th,.cs-t td{padding:7px 8px;font-size:13.5px}
 .cs-t th:nth-child(-n+3),.cs-t td:nth-child(-n+3){white-space:nowrap}
 .cs-t .tag{display:inline-block;margin-left:5px;padding:0 5px;border-radius:4px;font-size:11px;line-height:1.5;background:var(--wash);color:var(--ink2)}
@@ -1033,7 +1039,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gua-ring{animation:ring-spin 96s linear infinite}
   @keyframes ring-spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(-360deg)}}
   .wxmap line[data-l],.wxmap line.flow{transition:opacity .16s}
-  .wxmap line.flow{display:inline;stroke:var(--accent);stroke-width:2.1;stroke-linecap:round;stroke-dasharray:6 26;opacity:.55;pointer-events:none;animation:qi-flow 2.8s linear infinite}
+  .wxmap line.flow{display:inline;stroke:var(--ink);stroke-width:2.1;stroke-linecap:round;stroke-dasharray:6 26;opacity:.5;pointer-events:none;animation:qi-flow 2.8s linear infinite}      /* 墨色：生克的线不占颜色，颜色只留给五行（用户说过蓝和红会和水、火混）。原来是钴蓝，2026-11-27 改 */
   @keyframes qi-flow{from{stroke-dashoffset:32}to{stroke-dashoffset:0}}
   .wxmap line.ke{animation:ke-flow 2.4s linear infinite}
   @keyframes ke-flow{from{stroke-dashoffset:14}to{stroke-dashoffset:0}}
@@ -1285,12 +1291,6 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <div class="beside fig">
         <figure class="wxmap" id="ysmap"></figure>
         <div class="side">
-          <div class="tablewrap">
-            <table class="gods cs-t">
-              <thead><tr><th scope="col">名目</th><th scope="col">五行 · 分数</th><th scope="col">与用神</th><th scope="col">作用</th></tr></thead>
-              <tbody id="ys-list"></tbody>
-            </table>
-          </div>
           <p class="note" id="note-ysmap"></p>
         </div>
       </div>
@@ -1307,7 +1307,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="panel" role="tabpanel" id="p-lq" aria-labelledby="h-lq" hidden>
     <p class="sub">六亲指父母、兄弟姐妹、配偶、子女这些亲属。典籍里把亲属配到盘上有两种办法：一种照十神配，一种照四柱的位置配，叫宫位。页面只列位置，不下断语</p>
     <div class="gjzblock">
-      <h3>六亲生克推演示意图 <small>以日主为中心，照《渊海子平》的生克推演配出六亲；有色框的表示原局里有这个十神</small></h3>
+      <h3>六亲生克推演示意图 <small>以日主为中心，照《渊海子平》的生克推演配出六亲</small></h3>
       <div class="beside fig god">
         <figure class="lqmap" id="lqmap"></figure>
         <div class="side">
@@ -1398,12 +1398,13 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   <div class="panel" role="tabpanel" id="p-sy" aria-labelledby="h-sy" hidden>
     <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条照哪一种看法算，见选择器上面的按钮和表下面的说明</p>
     <div class="gjzblock">
-      <h3>大运 · 流年 · 流月喜用分走势 <small>把大运、选中这步大运的十年流年、选中这一年的十二流月并排画出来，点任意一柱看明细</small></h3>
+      <h3>大运 · 流年 · 流月 · 流日喜用分走势 <small>八步大运、选中这步大运的十年、选中这一年的十二个月、选中这个月的每一天；点一柱就换到那里，同时看明细</small></h3>
       <div class="sy-grid2">
         <div class="sy-box"><h4 id="sy-t-dy">八步大运</h4><figure class="symap" id="symap-dy"></figure></div>
         <div class="sy-box"><h4 id="sy-t-ln">十年流年</h4><figure class="symap" id="symap-ln"></figure></div>
         <div class="sy-box"><h4 id="sy-t-ly">十二流月</h4><figure class="symap" id="symap-ly"></figure><p class="note" id="note-symap"></p></div>
         <div class="read" id="rd-tr"></div>
+        <div class="sy-box sy-days"><h4 id="sy-t-lr">流日</h4><figure class="symap" id="symap-lr"></figure></div>
       </div>
     </div>
     <div class="tablewrap">

@@ -233,7 +233,18 @@ function refreshSheet(){
 /* ---------- 标签栏 ----------
    两张卡片各有一排标签，一次显示一页：原局是八字、日主、五行、强弱、十神、格局、喜忌、六亲，大运流年是四柱细盘、干支关系、根和透、计分。
    标签是 #h-名字，对应的那一页是 #p-名字。翻到哪一页记在 sel.tab 里，也存进浏览器，下次打开还在那一页 */
-const TABS={natal:['bz','tk','wx','qr','gods','gj','ys','lq'],pan:['pan','rel','gt','sy']};      // 六亲宫位（lq）是原局的最后一页：它不在强弱、格局、喜忌那条读盘的线上，所以排在喜忌后面。原来是页面最下面单独的一张卡片，2026-11-18 用户问能不能放到上面，挪进了标签栏
+const TABS={natal:['bz','tk','wx','qr','gods','gj','ys','lq'],pan:['pan','rel','gt','sy']};
+/* 点了标签、数法按钮才存，而且只改点的那一项，另一张卡片、另外几种数法照浏览器里原来存的写回去：打开别人发来的链接以后，
+   链接里带的标签和数法只在这一次有效，随手点一下别的也不会把它们存成自己的（2026-11-27 复核 Gemini 的修改时发现原来会） */
+function saveTab(card,id){
+  try{const t=(localStorage.getItem('bz-tabs')||'').split(','), o={natal:TABS.natal.includes(t[0])?t[0]:TABS.natal[0],pan:TABS.pan.includes(t[1])?t[1]:TABS.pan[0]};
+    o[card]=id;localStorage.setItem('bz-tabs',o.natal+','+o.pan);}catch(e){}
+}
+function saveMap(k,v){      // 四项都写：没存过的、存的认不出的照默认（MAP_DEFAULT），不照现在用着的（可能是链接带来的）
+  try{let m=JSON.parse(localStorage.getItem('bz-map')||'{}');if(!m||typeof m!=='object'||Array.isArray(m)) m={};
+    const o={};Object.keys(MAP_DEFAULT).forEach(x=>{o[x]=MAP_OPTS[x].some(p=>p[0]===m[x])?m[x]:MAP_DEFAULT[x];});o[k]=v;
+    localStorage.setItem('bz-map',JSON.stringify(o));}catch(e){}
+}      // 六亲宫位（lq）是原局的最后一页：它不在强弱、格局、喜忌那条读盘的线上，所以排在喜忌后面。原来是页面最下面单独的一张卡片，2026-11-18 用户问能不能放到上面，挪进了标签栏
 function setTab(card,id,focus,save){
   if(!TABS[card]||!TABS[card].includes(id)) return;
   const was=sel.tab[card];
@@ -244,7 +255,7 @@ function setTab(card,id,focus,save){
     $('p-'+t).hidden=!on;
   });
   if(focus) $('h-'+id).focus();
-  if(save!==false){try{localStorage.setItem('bz-tabs',sel.tab.natal+','+sel.tab.pan);}catch(e){}}
+  if(save!==false) saveTab(card,id);
   refreshShare();
   if(sel.x){                                   // 打开的解释所指的字要是在换下去的那一页里，就收起来；还在的话重新摆位置
     const el=anchorOf(sel.x,sel.xn,sel.xh);
@@ -372,6 +383,7 @@ function fillCircle(id,x,y,r,frac){
    五行图默认五行能量；十神图默认含藏干数，和十神表的个数一样。2026-11-15 用户要的：照五行一页三种数法的样子，给图加几个按钮换着看 */
 const MAP_OPTS={wx:[['face','五行个数'],['cnt','含藏干数'],['nl','五行能量']],gods:[['face','十神个数'],['cnt','含藏干数'],['nl','能量']],yun:[['fy','扶抑的喜用'],['ys','用神和喜神'],['sum','两种相加']],gj:[['gjb','成败救应'],['gjz','格局组合']]};
 const MAPBY={wx:'nl',gods:'cnt',yun:'fy',gj:'gjb'};      // yun：选择器小卡底下的条照哪一种看法（text.js 的 yunBasis）
+const MAP_DEFAULT=Object.assign({},MAPBY);      // 默认的数法，saveMap 补齐没存过的几项用
 try{const m=JSON.parse(localStorage.getItem('bz-map')||'{}');Object.keys(MAPBY).forEach(k=>{if(MAP_OPTS[k].some(o=>o[0]===m[k])) MAPBY[k]=m[k];});}catch(e){}
 const mapSeg=(k,sub,label)=>`<div class="seg" role="group" aria-label="${label||'圈照什么数'}">${MAP_OPTS[k].map(([v,l])=>`<button type="button" data-map="${k}:${v}" aria-pressed="${MAPBY[k]===v}">${l}</button>`).join('')}</div><p class="seg-s">${sub}</p>`;
 /* 五行一页的生克图：只画五行。火在最上面，顺时针是相生的次序。圈填多少照选中的数法（五行个数、含藏干数、五行能量），最多的一行填满；圈旁边写数。
@@ -428,24 +440,22 @@ function renderCsMap(){
   $('csmap').innerHTML=`<svg viewBox="0 16 412 380" role="group" aria-label="十二长生盘：日主${DMN}${yin?'逆行':'顺行'}，${falls}"><defs>${arrowDef('csm-a')}</defs><circle class="cs-track" cx="${C}" cy="${C}" r="${R}"/>${dirs}${nodes}${dm}</svg>`;
   $('cs-list').innerHTML=NATAL.map(p=>{const s=stage(DM,p.z), vig=STAGES.indexOf(s)<5;
     return `<tr><td>${p.k}支</td><td>${xb('x '+zCls(p.z),`z|${p.k}|${p.z}`,p.z)}</td><td>${xb('x','cs|'+p.z,s)}<span class="tag${vig?' hi':''}">${vig?'气盛':'气衰'}</span></td><td>${STG[s]}</td></tr>`;}).join('');
-  $('note-csmap').textContent=`外圈十二地支按传统罗盘方位排列（午在上、子在下、卯在左、酉在右）。日主${DMN}是${yy(DM)}干，照通行算法${yin?'逆时针':'顺时针'}走过十二位。浅灰底是气盛的五位（长生到帝旺），带五行色底和加粗边的是原局四个地支落位；点盘上任意地支可看完整顺逆顺序和流派分歧。`;
+  $('note-csmap').textContent=`外圈十二地支照传统罗盘的方位排（午在上、子在下、卯在左、酉在右）。日主${DMN}是${yy(DM)}干，照通行的算法${yin?'逆时针':'顺时针'}走过十二位。《千里命稿》把长生到帝旺五位叫气盛，其余七位叫气衰，浅灰底的是气盛的五位；带五行颜色和粗边的，是原局四个地支所在的位置。点一个地支，看完整的顺序和别家的说法。`;
 }
 /* 喜忌一页的用神五神关系图：照任铁樵《滴天髓阐微》把用神、喜神、忌神、仇神、闲神标在五行生克五边形上 */
 function renderYsMap(){
   const y=yongNow(), de=gEl(DM), sum=nlNow().sum, mx=Math.max(1,...sum), r=26, cy=148;
   const top=y.yong!==null?(de+y.yong)%5:y.pair?(de+y.pair[0])%5:de, pos=pent(170,cy,88,top);
   const role={}, sub={}, xkey={}, meSet=new Set();
-  const ysRows=[];
+  // 原来图旁边另有一张表，列的五项和上面「用神」那一块一样，2026-11-27 去掉了；名目和用神的生克写在每个圈的旁边
   if(y.yong!==null){
     const u=(de+y.yong)%5, relN={4:'生用神',1:'用神所生',2:'用神所克',3:'克用神'};
-    const why={用神:'全盘最需要的一行',喜神:y.you?'泄用神有余，帮用神':'生助用神，帮用神',忌神:y.you?'克制用神，伤用神':'被用神耗克，伤用神',仇神:y.you?'生用神使其过旺':'克制用神，与用神作对',闲神:'不帮也不伤'};
     const pairs=[['用神',y.yong],['喜神',y.shen.xi],['忌神',y.shen.ji],['仇神',y.shen.chou],['闲神',y.shen.xian]];
-    pairs.forEach(([nm,k])=>{const e=(de+k)%5; role[e]=nm; xkey[e]='ys|'+nm; sub[e]=e===u?(y.you?'有余 · 超 12 分':'不足 · 未超 12 分'):relN[(e-u+5)%5];
-      ysRows.push([nm,e,e===u?(y.you?'主用 · 有余':'主用 · 不足'):relN[(e-u+5)%5],why[nm],'ys|'+nm]);});
+    pairs.forEach(([nm,k])=>{const e=(de+k)%5; role[e]=nm; xkey[e]='ys|'+nm; sub[e]=e===u?(y.you?'有余 · 超过 12 分':'不足 · 没超过 12 分'):relN[(e-u+5)%5];});
     meSet.add(u);
   }else if(y.pair){
     const ps=y.pair.map(k=>(de+k)%5);
-    [0,1,2,3,4].forEach(e=>{const isY=ps.includes(e); role[e]=isY?'用神':'其余'; xkey[e]=isY?'ys|用神':'xe|'+e; sub[e]=isY?'两类用神之一':EL[e]; if(isY){meSet.add(e); ysRows.push(['用神',e,'两类用神之一','与另一类并作全盘用神','ys|用神']);}});
+    [0,1,2,3,4].forEach(e=>{const isY=ps.includes(e); role[e]=isY?'用神':'其余'; xkey[e]=isY?'ys|用神':'xe|'+e; sub[e]=isY?'两类用神之一':EL[e]; if(isY) meSet.add(e);});
   }else{
     [0,1,2,3,4].forEach(e=>{role[e]=EL[e]; xkey[e]='xe|'+e; sub[e]=sum[e]+' 分';});
   }
@@ -453,10 +463,9 @@ function renderYsMap(){
   $('ysmap').innerHTML=`<svg viewBox="0 0 340 284" role="group" aria-label="用神五神关系图：${say}"><defs>${arrowDef('ysm-a')}</defs>${ringLines(pos,'ysm-a',r+3,r+3)}`
     +pos.map(([x,yy2],e)=>`<g class="nd ${ELC[e]}${meSet.has(e)?' me':''}" data-n="${e}" data-x="${xkey[e]}" tabindex="0" role="button" aria-label="${role[e]}，${EL[e]} ${sum[e]} 分，${sub[e]}，点开看依据">${fillCircle('ysc'+e,x,yy2,r,sum[e]/mx)}<text class="ch2" x="${f1(x)}" y="${f1(yy2-5)}">${role[e]}</text><text class="ct" x="${f1(x)}" y="${f1(yy2+11)}">${EL[e]} ${sum[e]}分</text><text class="gp" x="${f1(x)}" y="${f1(yy2<cy?yy2-r-9:yy2+r+17)}">${sub[e]}</text></g>`).join('')
     +`</svg>`;
-  $('ys-list').innerHTML=ysRows.map(([nm,e,relS,w,xk])=>`<tr><td>${xb('x',xk,nm)}</td><td class="${ELC[e]}"><span class="eli">${ic(e)}${EL[e]}</span> ${sum[e]} 分</td><td>${relS}</td><td>${w}</td></tr>`).join('');
   $('note-ysmap').textContent=y.yong!==null
-    ?`把用神放在最上方，五边形按五行相生（实线）和相克（虚线）排列，圈填多少照五行能量。点图上圆圈或表里名目可看任铁樵原文依据。`
-    :`这张盘照任铁樵的注取了两类用神（${y.pair.map(k=>EL[(de+k)%5]).join('、')}），图里加粗标出这两行；两类用神分不出喜神、忌神、仇神、闲神。`;
+    ?`用神放在最上面，五行照相生的次序排成一圈：实线是相生，虚线是相克，箭头指向被生、被克的一方。圈旁边的小字是它和用神的关系，圈填多少照五行能量。点一个圈，看任铁樵的原文。`
+    :`这张盘照任铁樵的注取了两类用神（${y.pair.map(k=>EL[(de+k)%5]).join('、')}），图里加粗标出这两行；两类用神分不出喜神、忌神、仇神、闲神。实线是相生，虚线是相克，圈填多少照五行能量。`;
 }
 /* 六亲一页的六亲生克推演示意图：以日主为中心，按《渊海子平》的生克链路画出六亲位置和盘内有无 */
 function renderLqMap(){
@@ -480,18 +489,21 @@ function renderLqMap(){
   const boxes=cards.map(c=>{
     const r=byWho[c.who], s=stemOfGod(r.god), hit=r.at!=='原局里没有', cnt=whereGod(g=>god(g)===r.god).length;
     return `<g class="lq-nd ${gCls(s)}${hit?' hit':''}" data-x="tg|${r.god}" tabindex="0" role="button" aria-label="${c.who}看${r.god}，${hit?'原局有 '+cnt+' 处':'原局里没有'}，点开看解释">`
-      +`<rect class="box" x="${c.x-59}" y="${c.y-27}" width="118" height="54" rx="12"/>`
-      +`<text class="lq-who" x="${c.x}" y="${c.y-10}">${c.who}</text>`
-      +`<text class="lq-gd" x="${c.x}" y="${c.y+6}">${r.god}（${s}）</text>`
-      +`<text class="lq-at" x="${c.x}" y="${c.y+20}">${hit?`原局 ${cnt} 处`:'原局里没有'}</text></g>`;
+      +`<rect class="box" x="${c.x-59}" y="${c.y-29}" width="118" height="58" rx="12"/>`
+      +`<text class="lq-who" x="${c.x}" y="${c.y-13}">${c.who}</text>`
+      +`<text class="lq-gd" x="${c.x}" y="${c.y+3}">${r.god}（${s}）</text>`
+      +`<text class="lq-at" x="${c.x}" y="${c.y+18}">${hit?`原局 ${cnt} 处`:'原局里没有'}</text></g>`;
   }).join('');
-  const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，自己，点开看解释"><circle class="bg" cx="280" cy="162" r="30"/><circle class="ring" cx="280" cy="162" r="30"/><circle class="halo" cx="280" cy="162" r="35"/><text class="ch" x="280" y="157">${DM}</text><text class="ct" x="280" y="174">自己 · 日主</text></g>`;
+  const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，图里的「我」，点开看解释"><circle class="bg" cx="280" cy="162" r="30"/><circle class="ring" cx="280" cy="162" r="30"/><circle class="halo" cx="280" cy="162" r="35"/><text class="ch" x="280" y="156">${DM}</text><text class="ct" x="280" y="175">日主 · 我</text></g>`;
   $('lqmap').innerHTML=`<svg viewBox="8 14 544 298" role="group" aria-label="六亲生克推演示意图：以日主${DMN}为中心，${rows.map(r=>r.who+'看'+r.god).join('，')}"><defs>${arrowDef('lqm-a')}</defs>${lines}${boxes}${dm}</svg>`;
-  $('note-lqmap').textContent=`这张图画出《渊海子平》里六亲十神的生克推演链路：正印生我为母亲，偏财克印（母之夫）为父亲，比肩同我为兄弟姐妹；${male?'男命我克的正财为妻子，克我的七杀、正官为儿子、女儿':'女命克我的正官为丈夫，我生的食神、伤官为儿子、女儿'}。实线表示相生或同类，虚线表示相克；有五行淡底和实线框的表示原局里有这个十神，虚线空框表示原局里没有。这里只展示传统分类办法，不作个人判断。`;
+  // 怎么配、为什么这样配写在旁边的解读和下面的表里，这里只说怎么看图（原来这一段把配法又讲了一遍，2026-11-27 去掉）
+  $('note-lqmap').textContent=`图里的「我」是日主。实线是相生或同类，虚线是相克，箭头指向被生、被克的一方。带五行淡底和实线框的，是原局里有的十神；虚线空框的，原局里没有。点一个框，看这个十神的解释。`;
 }
-/* 计分一页的大运、流年、流月三张喜用分走势图：跟着选择器上方的三种看法和选中的大运、流年、流月实时更新 */
-function syChart(items,bw,label){
-  const yb=yunBasis(), max=yb.max, vw=560, L=30, R=552, T=28, B=134, H=B-T, W=R-L, cw=W/items.length;
+/* 计分一页的大运、流年、流月、流日四张喜用分走势图：跟着选择器上方的三种看法和选中的大运、年、月、日重画。
+   每一柱带着和选择器小卡一样的 data-dy、data-y、data-m、data-d（it.pick），点一柱就换到那里，同时打开这一柱的明细（2026-11-27 用户要的）。
+   unit 是每一柱占多宽（图里的单位）：不给就是三张小图的宽度，一共 522；流日三十来柱，给了 unit，整张图跟着柱数变宽，字不挤 */
+function syChart(items,bw,label,unit){
+  const yb=yunBasis(), max=yb.max, L=30, T=28, B=134, H=B-T, W=unit?unit*items.length:522, R=L+W, vw=R+8, cw=W/items.length;
   const ticks=max===26?[0,10,20,26]:[0,5,10,13];
   const grid=ticks.map(v=>{const y=B-v/max*H;return `<line class="sy-grid" x1="${L}" y1="${f1(y)}" x2="${R}" y2="${f1(y)}"/><text class="sy-ax" x="${L-7}" y="${f1(y)}">${v}</text>`;}).join('');
   const pts=[];
@@ -507,7 +519,8 @@ function syChart(items,bw,label){
       });
     });
     const nowDot=it.now?`<circle class="sy-now" cx="${f1(cx)}" cy="${B+46}" r="3"><title>当前</title></circle>`:'';
-    return `<g class="sy-col${it.sel?' sel':''}" data-x="${it.key}" tabindex="0" role="button" aria-label="${it.say}，${v.score} 分，点开看明细">`
+    const pick=Object.entries(it.pick).map(([k,n])=>` data-${k}="${n}"`).join('');
+    return `<g class="sy-col${it.sel?' sel':''}" data-x="${it.key}"${pick} tabindex="0" role="button" aria-label="${it.say}，${v.score} 分，${it.sel?'已经选中，点开看明细':'点一下换到这里并看明细'}">`
       +(it.sel?`<rect class="sy-sel" x="${f1(L+i*cw+2)}" y="6" width="${f1(cw-4)}" height="184" rx="8"/>`:'')
       +`<rect class="sy-hit" x="${f1(L+i*cw+1)}" y="6" width="${f1(cw-2)}" height="184" rx="8"/>`
       +segs
@@ -517,20 +530,25 @@ function syChart(items,bw,label){
   }).join('');
   const line=`<polyline class="sy-line" points="${pts.map(p=>`${f1(p[0])},${f1(p[1])}`).join(' ')}"/>`
     +pts.map(p=>`<circle class="sy-dot${p[2]?' cur':''}" cx="${f1(p[0])}" cy="${f1(p[1])}" r="${p[2]?3.6:2.6}"/>`).join('');
-  return `<svg viewBox="0 0 ${vw} 196" role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
+  // 流日那张：最多缩到原来的 0.84，最小的字（12）还有 10 像素；再窄就在图里横着滚（样式里 .sy-days）
+  return `<svg viewBox="0 0 ${vw} 196"${unit?` style="min-width:${Math.ceil(vw*.84)}px"`:''} role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
 }
 function renderSyMap(){
-  const yb=yunBasis(), dy=P.dayun[sel.dy], y=sel.y;
-  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}岁`,key:`pk|大运|${d.gz}|${d.y0}`,sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
-  const lnItems=[]; for(let yr=dy.y0;yr<=dy.y1;yr++){const gz=yearGZ(yr);lnItems.push({gz,sub:String(yr),key:`pk|流年|${gz}|${yr}`,sel:yr===y,now:yr===REAL_Y,say:`流年${yr}年${gz}`});}
-  const lyItems=[]; for(let m=0;m<12;m++){const gz=monthGZ(y,m);lyItems.push({gz,sub:JIE[m],key:`pk|流月|${gz}|${y}-${m}`,sel:m===sel.m,now:y===REAL_Y&&m===NOW_M,say:`流月${JIE[m]}起${gz}`});}
+  const yb=yunBasis(), dy=P.dayun[sel.dy], y=sel.y, days=monthDays(y,sel.m);
+  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}岁`,key:`pk|大运|${d.gz}|${d.y0}`,pick:{dy:i},sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
+  const lnItems=[]; for(let yr=dy.y0;yr<=dy.y1;yr++){const gz=yearGZ(yr);lnItems.push({gz,sub:String(yr),key:`pk|流年|${gz}|${yr}`,pick:{y:yr},sel:yr===y,now:yr===REAL_Y,say:`流年${yr}年${gz}`});}
+  const lyItems=[]; for(let m=0;m<12;m++){const gz=monthGZ(y,m);lyItems.push({gz,sub:JIE[m],key:`pk|流月|${gz}|${y}-${m}`,pick:{m},sel:m===sel.m,now:y===REAL_Y&&m===NOW_M,say:`流月${JIE[m]}起${gz}`});}
+  const lrItems=days.map(t=>{const gz=dayGZ(t);return {gz,sub:mdText(t),key:`pk|流日|${gz}|${t}`,pick:{d:t},sel:t===sel.d,now:t===TODAY,say:`流日${mdText(t)}${gz}`};});
   $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年</small>`;
   $('sy-t-ln').innerHTML=`十年流年<small>${dy.gz}运 · ${dy.y0}–${dy.y1} 年</small>`;
   $('sy-t-ly').innerHTML=`十二流月<small>${y} ${yearGZ(y)}年</small>`;
+  $('sy-t-lr').innerHTML=`流日<small>${monthGZ(y,sel.m)}月 · ${mdText(days[0])} 到 ${mdText(days[days.length-1])}</small>`;
   $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图');
   $('symap-ln').innerHTML=syChart(lnItems,19,'十年流年喜用分走势图');
   $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图');
-  $('note-symap').textContent=`三张图纵轴都是每一柱里算进去的${yb.name}分数（满分 ${yb.max} 分），柱子按五行分段。淡蓝底是当前选中的一柱，底下的红点是今天所在的那一柱；点任意一柱打开明细。这里只把分数并排画出来方便比较高低，不代表哪步运或哪一年好坏。`;
+  $('symap-lr').innerHTML=syChart(lrItems,14,'这个月流日喜用分走势图',37);
+  // 点一柱换过去写在标题里，好运、差运的读法写在旁边的解读里，这里只说图怎么画的
+  $('note-symap').textContent=`四张图的纵轴都是每一柱里算进去的${yb.name}分数（满分 ${yb.max} 分），柱子按五行分段。淡蓝底是选中的那一柱，底下的红点是今天所在的那一柱。`;
 }
 /* 细盘的各行。cs 是要排的列：四柱细盘一页是 cols() 的八列，八字一页只有原局四列（NATAL）。
    原局的列就是 NATAL 里的对象，神煞照它在 NATAL 里的位置取 */
@@ -1225,7 +1243,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.map){        // 生克图、选择器图例里的按钮：换数法或者看法，重画，焦点放回同一个按钮
     if(b.disabled) return;
     const [k,v]=b.dataset.map.split(':');
-    if(MAPBY[k]!==v){MAPBY[k]=v;try{localStorage.setItem('bz-map',JSON.stringify(MAPBY));}catch(e){}
+    if(MAPBY[k]!==v){MAPBY[k]=v;saveMap(k,v);
       if(k==='wx') recount(k,()=>{renderBars();renderWxMap();}); else if(k==='yun') renderDynamic(); else if(k==='gj'){if(sel.x&&/^gj[bz]\|/.test(sel.x)) closeSheet();renderGjSeg();fadeIn($(v+'-block'));} else recount(k,()=>{renderGods();renderGodMap();$('rd-gods').innerHTML=readHTML('gods');});      // 表、图（十神一页还有解读）一起换；yun 是选择器小卡底下的条
       refreshSheet();refreshShare();}
     const n=document.querySelector(`[data-map="${b.dataset.map}"]`);if(hadFocus&&n) n.focus({preventScroll:true});
@@ -1246,6 +1264,11 @@ document.addEventListener('click',e=>{
   if(b.dataset.x){
     // 再点一次同一个字收起；同一条解释挂在别的字上（比如主星和天干是同一个字），点那个字是把卡片挪过去
     if(sel.x===b.dataset.x&&!$('sheet').hidden&&anchorOf(sel.x,sel.xn,sel.xh)===b) closeSheet(); else openSheet(b.dataset.x,b);
+    // 计分一页走势图里的一柱：打开明细以后，再换到这一柱，和点选择器的小卡一样。重画以后卡片照 data-x 跟到新画的那一柱上（refreshSheet）
+    if(b.classList.contains('sy-col')&&!b.classList.contains('sel')){
+      const key=b.dataset.x; pickLayer(b);
+      const n=hadFocus&&boxId&&[...$(boxId).querySelectorAll('.sy-col')].find(x=>x.dataset.x===key); if(n) n.focus({preventScroll:true});
+    }
     return;
   }
   if(b.dataset.p!==undefined){
