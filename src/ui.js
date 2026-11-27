@@ -530,23 +530,26 @@ function syChart(items,bw,label,unit){
   }).join('');
   const line=`<polyline class="sy-line" points="${pts.map(p=>`${f1(p[0])},${f1(p[1])}`).join(' ')}"/>`
     +pts.map(p=>`<circle class="sy-dot${p[2]?' cur':''}" cx="${f1(p[0])}" cy="${f1(p[1])}" r="${p[2]?3.6:2.6}"/>`).join('');
-  // 流日那张：最多缩到原来的 0.84，最小的字（12）还有 10 像素；再窄就在图里横着滚（样式里 .sy-days）
-  return `<svg viewBox="0 0 ${vw} 196"${unit?` style="min-width:${Math.ceil(vw*.84)}px"`:''} role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
+  // 最多缩到原来的 0.8，最小的字（12.5）还有 10 像素；再窄就在图里横着滚（样式里 .symap 的 overflow-x）
+  return `<svg viewBox="0 0 ${vw} 196"${unit?` style="min-width:${Math.ceil(vw*.8)}px"`:''} role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
 }
 function renderSyMap(){
   const yb=yunBasis(), dy=P.dayun[sel.dy], y=sel.y, days=monthDays(y,sel.m);
-  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}岁`,key:`pk|大运|${d.gz}|${d.y0}`,pick:{dy:i},sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
+  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}`,key:`pk|大运|${d.gz}|${d.y0}`,pick:{dy:i},sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
   const lnItems=[]; for(let yr=dy.y0;yr<=dy.y1;yr++){const gz=yearGZ(yr);lnItems.push({gz,sub:String(yr),key:`pk|流年|${gz}|${yr}`,pick:{y:yr},sel:yr===y,now:yr===REAL_Y,say:`流年${yr}年${gz}`});}
   const lyItems=[]; for(let m=0;m<12;m++){const gz=monthGZ(y,m);lyItems.push({gz,sub:JIE[m],key:`pk|流月|${gz}|${y}-${m}`,pick:{m},sel:m===sel.m,now:y===REAL_Y&&m===NOW_M,say:`流月${JIE[m]}起${gz}`});}
   const lrItems=days.map(t=>{const gz=dayGZ(t);return {gz,sub:mdText(t),key:`pk|流日|${gz}|${t}`,pick:{d:t},sel:t===sel.d,now:t===TODAY,say:`流日${mdText(t)}${gz}`};});
-  $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年</small>`;
+  $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年 · 柱下是虚岁</small>`;
   $('sy-t-ln').innerHTML=`十年流年<small>${dy.gz}运 · ${dy.y0}–${dy.y1} 年</small>`;
   $('sy-t-ly').innerHTML=`十二流月<small>${y} ${yearGZ(y)}年</small>`;
   $('sy-t-lr').innerHTML=`流日<small>${monthGZ(y,sel.m)}月 · ${mdText(days[0])} 到 ${mdText(days[days.length-1])}</small>`;
-  $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图');
-  $('symap-ln').innerHTML=syChart(lnItems,19,'十年流年喜用分走势图');
-  $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图');
-  $('symap-lr').innerHTML=syChart(lrItems,14,'这个月流日喜用分走势图',37);
+  // 每一柱占的宽度：大运 44（下面的岁数「26–35」要放得下），别的 36。三张小图照各自的宽度分一行（--vw，样式里 .sy-box.sm）
+  const U={dy:44,ln:36,ly:36,lr:36};
+  [['dy',dyItems],['ln',lnItems],['ly',lyItems]].forEach(([k,its])=>$('sy-b-'+k).style.setProperty('--vw',38+U[k]*its.length));
+  $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图',U.dy);
+  $('symap-ln').innerHTML=syChart(lnItems,16,'十年流年喜用分走势图',U.ln);
+  $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图',U.ly);
+  $('symap-lr').innerHTML=syChart(lrItems,16,'这个月流日喜用分走势图',U.lr);
   // 点一柱换过去写在标题里，好运、差运的读法写在旁边的解读里，这里只说图怎么画的
   $('note-symap').textContent=`四张图的纵轴都是每一柱里算进去的${yb.name}分数（满分 ${yb.max} 分），柱子按五行分段。淡蓝底是选中的那一柱，底下的红点是今天所在的那一柱。`;
 }

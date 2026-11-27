@@ -579,14 +579,19 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .lqmap .ch{font:700 22px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central;transform:translateY(-.06em)}
 .lqmap .ct{font:400 11.5px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
 /* 大运、流年、流月喜用分走势图（计分页） */
-.sy-grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 28px;align-items:start}
+/* 走势图的排法：大运、流年、流月三张小图排一行，流日占下面一整行，说明和解读在四张图下面。原来四张排成两栏，解读夹在流月旁边，
+   比流月那张图高一大截，左边空出一块，流日也被隔开，2026-11-27 用户说「这里排版不好」。
+   每张图里一柱占的宽度一样（ui.js 的 syChart 的 unit），三张小图照各自的宽度（--vw）分这一行，缩放一样，字一样大；
+   最窄缩到 0.8 倍（最小的字 12.5，还有 10 像素），再窄流月就换到下一行；最宽只到原来的大小，一张图独占一行时不会放大 */
+.sy-row{display:flex;flex-wrap:wrap;gap:18px 24px;align-items:flex-start;min-width:0}      /* min-width:0：外层是 grid，不然图的最小宽度会把整页撑宽 */
+.sy-box.sm{flex:1 1 100%;min-width:0;max-width:calc(var(--vw,560)*1px)}
 .sy-box{display:flex;flex-direction:column;gap:6px;min-width:0}
 .sy-box h4{margin:0;font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .sy-box h4 small{font-size:12px;font-weight:400;color:var(--ink3)}
 .symap{margin:0;width:100%}
 .symap svg{display:block;width:100%;height:auto}
 .symap .sy-grid{stroke:var(--line);stroke-width:1}
-.symap .sy-ax{font:400 12px var(--body);fill:var(--ink3);text-anchor:end;dominant-baseline:central}
+.symap .sy-ax{font:400 12.5px var(--body);fill:var(--ink3);text-anchor:end;dominant-baseline:central}
 .symap .sy-sel{fill:var(--accent-soft)}
 .symap .sy-col{cursor:pointer;outline:none}
 .symap .sy-hit{fill:transparent}
@@ -599,12 +604,11 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .symap .sy-val{font:600 12.5px var(--body);fill:var(--ink2);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
 .symap .sy-col.sel .sy-val{fill:var(--accent)}
 .symap .sy-gz{font:700 13.5px var(--display);text-anchor:middle;pointer-events:none}
-.symap .sy-ag{font:400 12px var(--body);fill:var(--ink3);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
+.symap .sy-ag{font:400 12.5px var(--body);fill:var(--ink3);text-anchor:middle;pointer-events:none;font-variant-numeric:tabular-nums}
 .symap .sy-now{fill:var(--seal);pointer-events:none}
-/* 流日那张：占满一整行；图的宽度照天数算，铺满这一行，最多缩到 0.84（ui.js 的 syChart 写在 min-width 里），再窄就横着滚 */
-.sy-days{grid-column:1/-1}
+/* 流日那张：占满一整行；图的宽度照天数算，铺满这一行，最多缩到 0.8（ui.js 的 syChart 写在 min-width 里），再窄就横着滚 */
 .sy-days .symap{overflow-x:auto}
-@media (max-width:1099px){.symap{overflow-x:auto}.symap svg{min-width:540px}}      /* 一栏排的时候小图不缩到 540 以下，手机上横着滚 */
+@media (max-width:1099px){.symap{overflow-x:auto}}      /* 一张图一行的时候不缩到 0.8 倍以下（syChart 写在 min-width 里），手机上在图里横着滚 */
 .cs-t th,.cs-t td{padding:7px 8px;font-size:13.5px}
 .cs-t th:nth-child(-n+3),.cs-t td:nth-child(-n+3){white-space:nowrap}
 .cs-t .tag{display:inline-block;margin-left:5px;padding:0 5px;border-radius:4px;font-size:11px;line-height:1.5;background:var(--wash);color:var(--ink2)}
@@ -927,8 +931,8 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   /* 表和右边一栏并排：右边一栏 340 像素，表占剩下的七百来像素。再窄，表里的字就挤得折行，所以上下排 */
   .beside{grid-template-columns:minmax(0,1fr) minmax(0,340px)}
   .beside .gods th:nth-child(-n+2),.beside .gods td:nth-child(-n+2){white-space:nowrap}
-  /* 强弱一页下半：左边强弱计分的卡片，右边解读。卡片里四块排成两行两列；计分页四块走同一个两栏网格，中缝上下对齐 */
-  .sy-grid2{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 36px}
+  /* 强弱一页下半：左边强弱计分的卡片，右边解读。卡片里四块排成两行两列。下面一条是计分页的三张小走势图：照各自的宽度分一行 */
+  .sy-box.sm{flex:var(--vw,560) 1 0px;min-width:calc(var(--vw,560)*.8px)}
   .beside.qsrow{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
   .qsrow .qt-row{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -1401,13 +1405,14 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     <p class="sub">原局和选中的四层各带来多少分，分给了哪几种五行；点每一行的名字看是怎么加出来的。上面每张小卡底下的条照哪一种看法算，见选择器上面的按钮和表下面的说明</p>
     <div class="gjzblock">
       <h3>大运 · 流年 · 流月 · 流日喜用分走势 <small>八步大运、选中这步大运的十年、选中这一年的十二个月、选中这个月的每一天；点一柱就换到那里，同时看明细</small></h3>
-      <div class="sy-grid2">
-        <div class="sy-box"><h4 id="sy-t-dy">八步大运</h4><figure class="symap" id="symap-dy"></figure></div>
-        <div class="sy-box"><h4 id="sy-t-ln">十年流年</h4><figure class="symap" id="symap-ln"></figure></div>
-        <div class="sy-box"><h4 id="sy-t-ly">十二流月</h4><figure class="symap" id="symap-ly"></figure><p class="note" id="note-symap"></p></div>
-        <div class="read" id="rd-tr"></div>
-        <div class="sy-box sy-days"><h4 id="sy-t-lr">流日</h4><figure class="symap" id="symap-lr"></figure></div>
+      <div class="sy-row">
+        <div class="sy-box sm" id="sy-b-dy"><h4 id="sy-t-dy">八步大运</h4><figure class="symap" id="symap-dy"></figure></div>
+        <div class="sy-box sm" id="sy-b-ln"><h4 id="sy-t-ln">十年流年</h4><figure class="symap" id="symap-ln"></figure></div>
+        <div class="sy-box sm" id="sy-b-ly"><h4 id="sy-t-ly">十二流月</h4><figure class="symap" id="symap-ly"></figure></div>
       </div>
+      <div class="sy-box sy-days"><h4 id="sy-t-lr">流日</h4><figure class="symap" id="symap-lr"></figure></div>
+      <p class="note" id="note-symap"></p>
+      <div class="read" id="rd-tr"></div>
     </div>
     <div class="tablewrap">
       <table class="gods sy">
@@ -5948,23 +5953,26 @@ function syChart(items,bw,label,unit){
   }).join('');
   const line=`<polyline class="sy-line" points="${pts.map(p=>`${f1(p[0])},${f1(p[1])}`).join(' ')}"/>`
     +pts.map(p=>`<circle class="sy-dot${p[2]?' cur':''}" cx="${f1(p[0])}" cy="${f1(p[1])}" r="${p[2]?3.6:2.6}"/>`).join('');
-  // 流日那张：最多缩到原来的 0.84，最小的字（12）还有 10 像素；再窄就在图里横着滚（样式里 .sy-days）
-  return `<svg viewBox="0 0 ${vw} 196"${unit?` style="min-width:${Math.ceil(vw*.84)}px"`:''} role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
+  // 最多缩到原来的 0.8，最小的字（12.5）还有 10 像素；再窄就在图里横着滚（样式里 .symap 的 overflow-x）
+  return `<svg viewBox="0 0 ${vw} 196"${unit?` style="min-width:${Math.ceil(vw*.8)}px"`:''} role="group" aria-label="${label}：${items.map(it=>it.gz+' '+xiPillar(it.gz).score+'分').join('，')}">${grid}${colsHtml}${line}</svg>`;
 }
 function renderSyMap(){
   const yb=yunBasis(), dy=P.dayun[sel.dy], y=sel.y, days=monthDays(y,sel.m);
-  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}岁`,key:`pk|大运|${d.gz}|${d.y0}`,pick:{dy:i},sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
+  const dyItems=P.dayun.map((d,i)=>({gz:d.gz,sub:`${d.a0}–${d.a1}`,key:`pk|大运|${d.gz}|${d.y0}`,pick:{dy:i},sel:i===sel.dy,now:i===NOW_DY,say:`大运${d.gz}，${d.a0}到${d.a1}岁`}));
   const lnItems=[]; for(let yr=dy.y0;yr<=dy.y1;yr++){const gz=yearGZ(yr);lnItems.push({gz,sub:String(yr),key:`pk|流年|${gz}|${yr}`,pick:{y:yr},sel:yr===y,now:yr===REAL_Y,say:`流年${yr}年${gz}`});}
   const lyItems=[]; for(let m=0;m<12;m++){const gz=monthGZ(y,m);lyItems.push({gz,sub:JIE[m],key:`pk|流月|${gz}|${y}-${m}`,pick:{m},sel:m===sel.m,now:y===REAL_Y&&m===NOW_M,say:`流月${JIE[m]}起${gz}`});}
   const lrItems=days.map(t=>{const gz=dayGZ(t);return {gz,sub:mdText(t),key:`pk|流日|${gz}|${t}`,pick:{d:t},sel:t===sel.d,now:t===TODAY,say:`流日${mdText(t)}${gz}`};});
-  $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年</small>`;
+  $('sy-t-dy').innerHTML=`八步大运<small>${P.dayun[0].y0}–${P.dayun[P.dayun.length-1].y1} 年 · 柱下是虚岁</small>`;
   $('sy-t-ln').innerHTML=`十年流年<small>${dy.gz}运 · ${dy.y0}–${dy.y1} 年</small>`;
   $('sy-t-ly').innerHTML=`十二流月<small>${y} ${yearGZ(y)}年</small>`;
   $('sy-t-lr').innerHTML=`流日<small>${monthGZ(y,sel.m)}月 · ${mdText(days[0])} 到 ${mdText(days[days.length-1])}</small>`;
-  $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图');
-  $('symap-ln').innerHTML=syChart(lnItems,19,'十年流年喜用分走势图');
-  $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图');
-  $('symap-lr').innerHTML=syChart(lrItems,14,'这个月流日喜用分走势图',37);
+  // 每一柱占的宽度：大运 44（下面的岁数「26–35」要放得下），别的 36。三张小图照各自的宽度分一行（--vw，样式里 .sy-box.sm）
+  const U={dy:44,ln:36,ly:36,lr:36};
+  [['dy',dyItems],['ln',lnItems],['ly',lyItems]].forEach(([k,its])=>$('sy-b-'+k).style.setProperty('--vw',38+U[k]*its.length));
+  $('symap-dy').innerHTML=syChart(dyItems,22,'八步大运喜用分走势图',U.dy);
+  $('symap-ln').innerHTML=syChart(lnItems,16,'十年流年喜用分走势图',U.ln);
+  $('symap-ly').innerHTML=syChart(lyItems,16,'十二流月喜用分走势图',U.ly);
+  $('symap-lr').innerHTML=syChart(lrItems,16,'这个月流日喜用分走势图',U.lr);
   // 点一柱换过去写在标题里，好运、差运的读法写在旁边的解读里，这里只说图怎么画的
   $('note-symap').textContent=`四张图的纵轴都是每一柱里算进去的${yb.name}分数（满分 ${yb.max} 分），柱子按五行分段。淡蓝底是选中的那一柱，底下的红点是今天所在的那一柱。`;
 }
