@@ -320,6 +320,10 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .rel small{color:var(--ink2)}
 .rel b{font-family:var(--display);font-weight:700;font-size:15px}
 .rel small{font-size:12px}
+/* 相合一类里化出、合成哪一行（ui.js 的 heEl），小签的边和附注、关系图里那条线就用哪一行的颜色。别的关系不上色 */
+.rel[data-el="wood"],.lk[data-el="wood"],.lk-t[data-el="wood"]{--c:var(--wood)} .rel[data-el="fire"],.lk[data-el="fire"],.lk-t[data-el="fire"]{--c:var(--fire)} .rel[data-el="earth"],.lk[data-el="earth"],.lk-t[data-el="earth"]{--c:var(--earth)} .rel[data-el="metal"],.lk[data-el="metal"],.lk-t[data-el="metal"]{--c:var(--metal)} .rel[data-el="water"],.lk[data-el="water"],.lk-t[data-el="water"]{--c:var(--water)}
+.rel[data-el]{border-color:var(--c)}
+.rel[data-el] small:first-of-type{color:var(--c);font-weight:600}
 .none{font-size:13px;color:var(--ink3)}
 .relblock{display:flex;flex-direction:column;gap:8px}
 .relblock h4{margin:0;font-size:12.5px;font-weight:600;color:var(--ink3)}      /* 八字一页右边一栏：天干、地支两小段 */
@@ -495,11 +499,17 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 @media (hover:hover){.sd-t[data-x]:hover,.sd-st i[data-x]:hover{box-shadow:0 0 0 1.5px var(--tint-ring)} .sd-t.on:hover,.sd-st i.on:hover{box-shadow:0 0 0 1.5px var(--accent)}}
 .sd-s{font-size:12.5px;color:var(--ink2)}
 /* 喜忌一页最上面：两套取法各一块（.xi-g），各有标题、一排结果（.xi-r）和一句说明。手机上上下排、中间一道虚线；电脑上左右并排、中间一道竖的虚线 */
-.xi{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:14px}
+/* 整张卡片（.xi-wrap）：两块取法（.xi）加用神的生克图（.xi-fig）。电脑上左边两块上下排、右边是图；九百到一千一百宽两块并排、图在下面，图旁边是说明；手机上一样一行。
+   原来图单独一块放在卡片下面，旁边只有一句说明，空出一大片，2026-11-27 用户说「这里也很糟糕」 */
+.xi-wrap{display:grid;grid-template-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:14px}
+.xi{display:grid;grid-template-columns:minmax(0,1fr);min-width:0}
+.xi-fig{display:grid;grid-template-columns:minmax(0,1fr);gap:10px 28px;align-items:center;min-width:0;padding:16px 18px;border-top:1px dashed var(--line)}
+.xi-fig .note{margin:0}
+@media (min-width:700px) and (max-width:1099px){.xi-fig{grid-template-columns:300px minmax(0,1fr)}.xi-fig h4{grid-column:1/-1}}
 .xi-g{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 18px}
 .xi-g+.xi-g{border-top:1px dashed var(--line)}
-.xi-g h4{margin:0;font:600 13.5px/1.4 var(--body);color:var(--ink)}
-.xi-g h4 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
+.xi-g h4,.xi-fig h4{margin:0;font:600 13.5px/1.4 var(--body);color:var(--ink)}
+.xi-g h4 small,.xi-fig h4 small{margin-left:8px;font-size:12px;font-weight:400;color:var(--ink3)}
 .xi-r{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:flex-start}
 .xi .sub{margin:0}
 .qx{display:flex;flex-direction:column;gap:7px;min-width:0}
@@ -555,6 +565,33 @@ button:focus-visible,[data-x]:focus-visible,a:focus-visible{outline:2px solid va
 .csmap .cs-way{font:400 11px var(--body);fill:var(--ink3);text-anchor:middle;dominant-baseline:central}
 /* 用神五神关系图（喜忌页）：和五行图共用 .wxmap 的样子；这张图画得比五行图小一点，圈里的分数放大一档，电脑上不小于 10 像素 */
 #ysmap .ct{font-size:11px}
+.csmap .nd .step{fill:none;stroke:var(--dm,var(--ink));stroke-width:2.4;opacity:0}      /* 轮到这一位时亮的圈，样式里的 cs-step 才让它亮 */
+/* 五行一页下半：生克图、月令和四季两张图各带一句说明，再加解读。电脑上三样排一行（两张图各 300，解读占剩下的），
+   七百到一千一百宽两张图并排、解读在下面，再窄就一样一行。原来两张图上下叠着，各自右边只有一句说明，空出一大块（2026-11-27 用户说「注意排版」） */
+.wx-figs{display:grid;grid-template-columns:minmax(0,1fr);gap:22px 36px;align-items:start;margin-top:8px}
+.wx-fig{display:flex;flex-direction:column;gap:10px;min-width:0}
+@media (min-width:700px){.wx-figs{grid-template-columns:repeat(2,minmax(0,1fr))}.wx-figs>.read{grid-column:1/-1}}
+@media (min-width:1100px){.wx-figs{grid-template-columns:300px 300px minmax(0,1fr)}.wx-figs>.read{grid-column:auto}}
+/* 月令和四季（五行页）：里面一圈五行，外面一圈旺相死囚休，中间写哪一行当令。不动的时候停在这张盘出生的月份 */
+.wlmap .wl-track{fill:none;stroke:var(--line);stroke-width:1.2;stroke-dasharray:2 5}
+.wlmap .wl-ring{transform-origin:150px 142px}
+.wlmap .wl-st circle{fill:var(--card);stroke:var(--line);stroke-width:1.2}
+.wlmap .wl-st.up circle{fill:var(--wash);stroke:var(--ink3)}
+.wlmap .wl-t{font:600 13px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central;transform-box:fill-box;transform-origin:center}
+.wlmap .wl-st.up .wl-t{fill:var(--ink)}
+.wlmap .wl-s{opacity:0}
+.wlmap .wl-s.now{opacity:1}
+.wlmap .wl-a{font:700 15px var(--display);fill:currentColor;text-anchor:middle;dominant-baseline:central}
+.wlmap .wl-b{font:400 11px var(--body);fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+/* 指着细盘、八字表里的一个天干，它在地支里的根亮起来；指着一个地支或者藏干，它托着的天干亮起来（motion.js 的 litUp） */
+.pan [data-lit]{box-shadow:0 0 0 1.5px currentColor}
+.pan .hs[data-lit]{background-color:var(--wash)}
+/* 藏干里透出的字（原局的天干里有同一个字）后面一个朝上的小尖 */
+.hs.tou::after{content:"";display:inline-block;width:5px;height:5px;margin:0 0 1px 5px;border:solid currentColor;border-width:1.5px 0 0 1.5px;transform:rotate(45deg);vertical-align:middle}
+@media (max-width:1099px){.hs.tou{position:relative}.hs.tou::after{position:absolute;right:0;top:2px;width:4px;height:4px;margin:0}}      /* 细盘八列窄的时候小尖不占位置，贴在右上角，不把格子撑宽 */
+/* 六亲图：指着一个框（data-hl），只留它是怎么推出来的那一条路。线、字、框的 data-i 是它属于哪几位的推演 */
+.lqmap line.flow{display:none}
+.lqmap svg[data-hl="0"] [data-i]:not([data-i~="0"]),.lqmap svg[data-hl="1"] [data-i]:not([data-i~="1"]),.lqmap svg[data-hl="2"] [data-i]:not([data-i~="2"]),.lqmap svg[data-hl="3"] [data-i]:not([data-i~="3"]),.lqmap svg[data-hl="4"] [data-i]:not([data-i~="4"]),.lqmap svg[data-hl="5"] [data-i]:not([data-i~="5"]){opacity:.22}
 /* 六亲生克推演示意图（六亲页） */
 .lqmap{margin:0;display:flex;flex-direction:column;align-items:center}
 .lqmap svg{display:block;width:100%;max-width:560px;height:auto}
@@ -858,12 +895,18 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .lk-t{font:inherit;font-size:13px;line-height:19px;white-space:nowrap;color:var(--ink);background:var(--card);border:1px solid var(--ink3);border-radius:999px;padding:0 9px;margin:0;cursor:pointer;pointer-events:auto}
   .lk-t.bad{border-style:dashed}
   .lk-t small{margin-left:5px;font-size:12px;color:var(--ink2)}
-  .lk-l{position:absolute;left:calc(50%/var(--k));right:calc(50%/var(--k));bottom:15px;height:0;border-top:1px solid var(--ink3)}
-  .lk.bad .lk-l{border-top-style:dashed}
-  /* 名字压在线的正中，一行只占一个圈的高度。放得下才这样：两个圈、名字的总宽小于中间空着的长度（ui.js 的 renderLinks 算，.in 是九百宽就放得下的，.wide 要一千一百宽，.max 要一千二百八十宽）；
-     放不下的、三个圈的（中间有一个圈挡着）仍然放在线的上面。原来一律放在上面，整张图一千五百像素高，2026-11-22 用户让收紧 */
-  .lk.in{padding:0;height:30px}
-  .lk.in .lk-ts{position:relative;z-index:1;height:30px;align-items:center;flex-wrap:nowrap}      /* .wide、.max 的同样两条在 1100、1280 的媒体查询里 */
+  .lk[data-el] .lk-l{border-top-color:var(--c);border-top-width:1.5px}
+  .lk-t[data-el]{border-color:var(--c)}
+  .lk-t[data-el] small{color:var(--c);font-weight:600}
+  .lk-l{position:absolute;left:var(--s);right:calc(100% - var(--e));bottom:15px;height:0;border-top:1px solid var(--ink3)}      /* --s、--e：两头的圈心在这一格里的位置，--m 是线的正中，--n 是名字压在哪里（ui.js 的 renderLinks） */
+  .lk.bad .lk-l{border-top:0;bottom:14px;height:1.5px;background:linear-gradient(90deg,var(--c1,var(--ink3)),var(--c2,var(--ink3)));-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 8px)}      /* 冲刑害破克：虚线从一头那一行的颜色渐变到另一头的 */
+  /* 名字一律和线在同一行，一行只占一个圈的高度：两个圈之间放得下就压在线的正中（.in）；放不下的、三个圈的，写在线的右边（.sr）或者左边（.sl），
+     多占几列（ui.js 的 renderLinks 排）。原来放不下的放在线上面，一张图里名字忽上忽下，2026-11-27 用户问了，改成现在这样 */
+  .lk.in,.lk.sr,.lk.sl{padding:0;height:30px}
+  .lk.in .lk-ts,.lk.sr .lk-ts,.lk.sl .lk-ts{position:absolute;z-index:1;top:0;height:30px;align-items:center;flex-wrap:nowrap}
+  .lk.in .lk-ts{left:var(--n);transform:translateX(-50%)}      /* --n：名字压在哪一段线的正中 */      /* 写在线旁边的：从圈心往外 22 像素起 */
+  .lk.sr .lk-ts{left:calc(var(--e) + 22px)}
+  .lk.sl .lk-ts{right:calc(100% - var(--s) + 22px)}
   /* 圈出来的字：和细盘的干支大字一样，字、边和淡底都是它自己五行的颜色。
      字要在圈的正中：汉字的墨迹比行框的中心低字号的百分之五上下（页面用到的三种宋体量出来都是这样），所以下面垫 2 像素把字往上托 1 像素；
      字号用 18，圈里左右各剩整 5 像素，一倍的屏幕上不会因为半个像素偏到一边。2026-11-18 用户说「这些字不够居中」，原来是 17 像素、不垫 */
@@ -873,6 +916,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
      横的那种跨两列，线从左边那个字的右侧画到右边那个字的左侧；竖的在一列里，夹在天干和地支之间 */
   .sk-x,.sk-y{--skc:var(--ink3);position:relative;pointer-events:none}
   .sk-x.tong,.sk-y.tong{--skc:var(--line)}
+  .by-wood{--skc:var(--wood)} .by-fire{--skc:var(--fire)} .by-earth{--skc:var(--earth)} .by-metal{--skc:var(--metal)} .by-water{--skc:var(--water)}      /* 生、克的小圈和箭头：出力的那一方是哪一行，就用哪一行的颜色 */
   .sk-x{align-self:center;height:22px}
   .sk-x::before{content:"";position:absolute;left:calc(25% + 27px);right:calc(25% + 27px);top:50%;border-top:1px solid var(--skc)}
   .sk-x.ke::before{border-top-style:dashed}
@@ -887,6 +931,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .sk-x b,.sk-y b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border:1px solid var(--skc);border-radius:50%;background:var(--card);color:var(--ink2);font:500 12px/18px var(--body);text-align:center}
   .sk-x.ke b,.sk-y.ke b{border-style:dashed}
   .sk-x.tong b,.sk-y.tong b{color:var(--ink3)}
+  .sk-x[class*="by-"] b,.sk-y[class*="by-"] b{color:var(--skc)}
   .sk-x b,.sk-y b{pointer-events:auto}      /* 线不挡下面的字，只有小圈能点 */
   .pform{padding:20px 22px 22px;gap:14px 16px}
   .pform label{font-size:14px}
@@ -894,6 +939,11 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .hint{font-size:13px}
 }
 @media (min-width:1100px){
+  /* 喜忌一页最上面的卡片：左边两块上下排，右边是用神的生克图 */
+  .xi-wrap{grid-template-columns:minmax(0,1fr) 360px}
+  .xi{grid-template-columns:minmax(0,1fr)}
+  .xi-g+.xi-g{border-left:0;border-top:1px dashed var(--line)}
+  .xi-fig{border-top:0;border-left:1px dashed var(--line);align-content:start;align-items:start}
   .beside.fig.god{grid-template-columns:480px minmax(0,1fr)}      /* 再窄右边一栏只剩两百多像素，解读一行不到十个字，照 400 像素排 */
 }
 @media (min-width:704px){
@@ -920,13 +970,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   #liuri{column-gap:2px}
   #liuri .pk .gd{font-size:10.5px}      /* 这个宽度每张卡五十多像素，「食神·正官」四个字要小一号才不贴边 */
 }
-@media (min-width:1280px){
-  .lk.max{padding:0;height:30px}
-  .lk.max .lk-ts{position:relative;z-index:1;height:30px;align-items:center;flex-wrap:nowrap}
-}
 @media (min-width:1100px){
-  .lk.wide{padding:0;height:30px}
-  .lk.wide .lk-ts{position:relative;z-index:1;height:30px;align-items:center;flex-wrap:nowrap}
   .gt-c small{display:block}
   /* 表和右边一栏并排：右边一栏 340 像素，表占剩下的七百来像素。再窄，表里的字就挤得折行，所以上下排 */
   .beside{grid-template-columns:minmax(0,1fr) minmax(0,340px)}
@@ -1045,7 +1089,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   .gua-ring{animation:ring-spin 96s linear infinite}
   @keyframes ring-spin{from{transform:translateY(-50%) rotate(0deg)}to{transform:translateY(-50%) rotate(-360deg)}}
   .wxmap line[data-l],.wxmap line.flow{transition:opacity .16s}
-  .wxmap line.flow{display:inline;stroke:var(--ink);stroke-width:2.1;stroke-linecap:round;stroke-dasharray:6 26;opacity:.5;pointer-events:none;animation:qi-flow 2.8s linear infinite}      /* 墨色：生克的线不占颜色，颜色只留给五行（用户说过蓝和红会和水、火混）。原来是钴蓝，2026-11-27 改 */
+  .wxmap line.flow{display:inline;stroke:var(--f,var(--ink));stroke-width:2.6;stroke-linecap:round;stroke-dasharray:7 25;opacity:.9;pointer-events:none;animation:qi-flow 2.8s linear infinite}      /* 流光是生的那一方的颜色：木生火，就是一道木色的光流向火（ui.js 的 ringLines 给了五行的样式名）。原来是钴蓝，和水混，先改成墨色，2026-11-27 用户让照五行配色 */
   @keyframes qi-flow{from{stroke-dashoffset:32}to{stroke-dashoffset:0}}
   .wxmap line.ke{animation:ke-flow 2.4s linear infinite}
   @keyframes ke-flow{from{stroke-dashoffset:14}to{stroke-dashoffset:0}}
@@ -1056,6 +1100,47 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   @keyframes cs-cw{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   @keyframes cs-ccw{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
   .lqmap .lq-ln.ke{animation:ke-flow 2.4s linear infinite}
+  /* 下面几样是「能帮助理解的动画」（2026-11-27 用户要的，一直循环）：动的方式就是它的意思 */
+  /* 六亲图相生的线：顺着箭头流；指着一个框时别的淡下去 */
+  .lqmap line.flow{display:inline;stroke:var(--f,var(--ink));stroke-width:2.6;stroke-linecap:round;stroke-dasharray:7 25;opacity:.9;pointer-events:none;animation:qi-flow 2.8s linear infinite}
+  .lqmap [data-i]{transition:opacity .16s}
+  /* 十二长生盘：从长生起一位一位亮过去，一位 1.2 秒，十二位走完再来。--i 是这一位排第几（ui.js 的 renderCsMap） */
+  .csmap .nd .step{animation:cs-step 14.4s linear infinite;animation-delay:calc(var(--i)*1.2s)}
+  @keyframes cs-step{0%{opacity:0}1.2%{opacity:1}7%{opacity:1}8.33%{opacity:0}100%{opacity:0}}
+  /* 月令和四季：外面一圈一季停一下、转一格（七十二度），字自己反着转，保持正着；中间的字一季换一行 */
+  .wlmap .wl-ring{animation:wl-ring 15s cubic-bezier(.6,0,.3,1) infinite}
+  .wlmap .wl-t{animation:wl-back 15s cubic-bezier(.6,0,.3,1) infinite}
+  @keyframes wl-ring{0%,16%{transform:rotate(0deg)}20%,36%{transform:rotate(72deg)}40%,56%{transform:rotate(144deg)}60%,76%{transform:rotate(216deg)}80%,96%{transform:rotate(288deg)}100%{transform:rotate(360deg)}}
+  @keyframes wl-back{0%,16%{transform:rotate(0deg)}20%,36%{transform:rotate(-72deg)}40%,56%{transform:rotate(-144deg)}60%,76%{transform:rotate(-216deg)}80%,96%{transform:rotate(-288deg)}100%{transform:rotate(-360deg)}}
+  .wlmap .wl-s{animation:wl-s 15s linear infinite;animation-delay:calc(var(--k)*3s)}
+  @keyframes wl-s{0%{opacity:0}2%{opacity:1}16%{opacity:1}19%{opacity:0}100%{opacity:0}}
+  /* 干支关系图：化出、合成某一行的相合，线上两道这一行颜色的光从两头往中间合拢。原来每条线上都有小虚线在流，用户说「太难看了」，去掉了；冲、刑、害、破、克的线不动 */
+  .lk[data-el] .lk-l::before,.lk[data-el] .lk-l::after{content:"";position:absolute;top:-2.5px;left:0;width:50%;height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--c),transparent) no-repeat;background-size:34% 100%;pointer-events:none;animation:lk-in 2.6s cubic-bezier(.4,0,.6,1) infinite}
+  .lk[data-el] .lk-l::after{left:auto;right:0;transform:scaleX(-1)}
+  @keyframes lk-in{0%{background-position:-50% 0;opacity:0}25%{opacity:.75}85%{opacity:.75}100%{background-position:150% 0;opacity:0}}
+  /* 冲、克、刑、害、破的线：两头各一粒那一行颜色的光（.lk 的两个伪元素；--c1、--c2 是两头的五行，--k 是这条线跨几列）。
+     相冲：两粒光对着冲到中间，撞一下弹开；相克：克的一方那一粒单向压到对面；刑、害、破：两粒慢慢靠近，没碰上又退回去。2026-11-27 用户说「冲克之类的也加一些动效吧」 */
+  .lk.bad::before,.lk.bad::after{content:"";position:absolute;z-index:0;bottom:13px;width:22px;height:4px;border-radius:2px;opacity:0;pointer-events:none}
+  .lk.bad::before{left:calc(var(--s) + 17px);background:linear-gradient(90deg,transparent,var(--c1));box-shadow:4px 0 7px -1px var(--c1)}
+  .lk.bad::after{right:calc(100% - var(--e) + 17px);background:linear-gradient(270deg,transparent,var(--c2));box-shadow:-4px 0 7px -1px var(--c2)}
+  .lk.t-chong::before{animation:hit-l 2s cubic-bezier(.5,0,.9,.6) infinite}
+  .lk.t-chong::after{animation:hit-r 2s cubic-bezier(.5,0,.9,.6) infinite}
+  @keyframes hit-l{0%{left:calc(var(--s) + 17px);opacity:0}8%{opacity:1}42%{left:calc(var(--m) - 24px);opacity:1;animation-timing-function:ease-out}62%{left:calc(var(--m) - 60px);opacity:0}100%{left:calc(var(--m) - 60px);opacity:0}}
+  @keyframes hit-r{0%{right:calc(100% - var(--e) + 17px);opacity:0}8%{opacity:1}42%{right:calc(100% - var(--m) - 24px);opacity:1;animation-timing-function:ease-out}62%{right:calc(100% - var(--m) - 60px);opacity:0}100%{right:calc(100% - var(--m) - 60px);opacity:0}}
+  .lk.t-xing::before{animation:near-l 3.4s ease-in-out infinite}
+  .lk.t-xing::after{animation:near-r 3.4s ease-in-out infinite}
+  @keyframes near-l{0%,100%{left:calc(var(--s) + 17px);opacity:0}15%{opacity:.8}50%{left:calc(var(--m) - 46px);opacity:.8}85%{opacity:.8}}
+  @keyframes near-r{0%,100%{right:calc(100% - var(--e) + 17px);opacity:0}15%{opacity:.8}50%{right:calc(100% - var(--m) - 46px);opacity:.8}85%{opacity:.8}}
+  .lk.t-ke:not(.rev)::before{animation:press-l 2.4s cubic-bezier(.4,0,.7,1) infinite}
+  .lk.t-ke.rev::after{animation:press-r 2.4s cubic-bezier(.4,0,.7,1) infinite}
+  @keyframes press-l{0%{left:calc(var(--s) + 17px);opacity:0}10%{opacity:1}70%{opacity:1}85%,100%{left:calc(var(--e) - 39px);opacity:0}}
+  @keyframes press-r{0%{right:calc(100% - var(--e) + 17px);opacity:0}10%{opacity:1}70%{opacity:1}85%,100%{right:calc(100% - var(--s) - 39px);opacity:0}}
+  /* 藏干里透出的字：小尖一下一下往上顶 */
+  .hs.tou::after{animation:tou-up 1.8s ease-in-out infinite}
+  @keyframes tou-up{0%,100%{transform:translateY(2px) rotate(45deg);opacity:.35}50%{transform:translateY(-2px) rotate(45deg);opacity:1}}
+  /* 指着一个字，和它有根的关系的字一下一下放大 */
+  .pan [data-lit]{animation:lit 1.1s ease-in-out infinite}
+  @keyframes lit{0%,100%{transform:none}50%{transform:scale(1.07)}}
   .pk.now::after{animation:seal-glow 3.4s ease-in-out infinite}
   @keyframes seal-glow{0%,100%{box-shadow:0 0 0 0 rgba(178,58,44,0)}45%{box-shadow:0 0 0 4px rgba(178,58,44,.22)}75%{box-shadow:0 0 0 6px rgba(178,58,44,0)}}
   .wood:hover .ic{animation:ic-wood .6s ease-in-out;transform-origin:bottom center}
@@ -1227,12 +1312,18 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
     </div>
     <p class="note long" id="note-nl"></p>
     <p class="note" id="note-wx"></p>
-    <div class="beside fig">
-      <figure class="wxmap" id="wxmap"></figure>
-      <div class="side">
+    <div class="wx-figs">
+      <div class="wx-fig">
+        <h3>五行生克 <small>圈填多少照上面选的数法</small></h3>
+        <figure class="wxmap" id="wxmap"></figure>
         <p class="note" id="note-wxmap"></p>
-        <div class="read" id="rd-wx"></div>
       </div>
+      <div class="wx-fig">
+        <h3>月令和四季 <small>换一季，转一格</small></h3>
+        <figure class="wxmap wlmap" id="wlmap"></figure>
+        <p class="note" id="note-wlmap"></p>
+      </div>
+      <div class="read" id="rd-wx"></div>
     </div>
   </div>
   <div class="panel" role="tabpanel" id="p-qr" aria-labelledby="h-qr" hidden>
@@ -1291,14 +1382,12 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
   </div>
   <div class="panel" role="tabpanel" id="p-ys" aria-labelledby="h-ys" hidden>
     <p class="sub">对这张盘有益的五行叫喜用，和它作对的叫忌。最上面照扶抑一家取，再照任铁樵的注细分出用神、喜神、忌神、仇神、闲神；下面几行各照一本书走一遍，不合成结论</p>
-    <div class="xi" id="xi"></div>
-    <div class="gjzblock">
-      <h3>用神五神关系图 <small>照任铁樵《滴天髓阐微》的注，把用神、喜神、忌神、仇神、闲神放到五行生克环上</small></h3>
-      <div class="beside fig">
+    <div class="xi-wrap">
+      <div class="xi" id="xi"></div>
+      <div class="xi-fig">
+        <h4>用神的生克位置<small>把这几个名目放到五行生克的圈上</small></h4>
         <figure class="wxmap" id="ysmap"></figure>
-        <div class="side">
-          <p class="note" id="note-ysmap"></p>
-        </div>
+        <p class="note" id="note-ysmap"></p>
       </div>
     </div>
     <div class="kvs" id="kv2"></div>
@@ -1385,7 +1474,7 @@ footer ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px
       <h3>原局 · 地支</h3>
       <div class="rels" id="rel-nz"></div>
     </div>
-    <p class="note long"><span class="pa">实线是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），虚线是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</span><span class="pa">每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</span></p>
+    <p class="note long"><span class="pa">实线是相合一类（五合、六合、三合、半合、拱合、三会、拱会、暗合），虚线是相冲、相刑、相害、相破、相克。拱合、拱会指三个字里缺了中间那个。</span><span class="pa">相合一类里写着化什么、什么局的，线和小签用那一行的颜色；这是名义上化出、合成的五行，化不化得成见「强弱」一页的「合化」一行。每一层只列它新带来的关系：大运对原局，流年对原局和大运，流月对原局、大运和流年，流日对前面所有各层。</span></p>
     <div class="read" id="rd-rel"></div>
     <div class="relgrid relpills">
       <div><h3 id="h-rdy"></h3><div class="rels" id="rel-dy"></div></div>
@@ -4401,7 +4490,7 @@ function rowX(name){
   if(name==='十神') return {t:'十神',p:[['是什么',`每一柱的天干相对于日主${DMN}是什么，一共十种叫法，合称十神。地支的十神看藏干一行里的小字。排盘软件里这一行常叫主星。`],['这张盘',N.filter(p=>!p.day).map(p=>`${K(p)}干${p.g}是${god(p.g)}`).join('，')+'。日干就是日主自己。'],['怎么读','天干露在外面，传统上说它主看得见的一面；藏在地支里的十神主内里。点任意一个天干，可以看它的十神是怎么推出来的。']]};
   if(name==='天干') return {t:'天干',p:[['是什么','甲乙丙丁戊己庚辛壬癸，共十个。两个一组配五行：甲乙木、丙丁火、戊己土、庚辛金、壬癸水。每组前一个为阳，后一个为阴。'],['颜色和图标','绿是木，红是火，棕是土，金黄是金，蓝是水。大字右上角的小图标也是五行：嫩芽是木，火苗是火，山是土，铜钱是金，水滴是水。'],['典籍',`《滴天髓》说${q('dts_yy')}：十个天干里，丙火最阳，癸水最阴。`]]};
   if(name==='地支') return {t:'地支',p:[['是什么','子丑寅卯辰巳午未申酉戌亥，共十二个，对应十二个月、十二个时辰，也就是十二生肖。'],['怎么读','地支本身不直接定十神，要看它里面藏的天干。地支之间的合、冲、刑、害见下面的干支关系。'],['颜色和图标','颜色和右上角的图标是这个地支的五行。右下角的小字是它的生肖，屏幕窄的时候不显示。']]};
-  if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
+  if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['小尖和根','原局这几列里，后面带一个朝上小尖的藏干是透出的：原局的天干里有同一个字。指着一个天干，它在地支里的根会亮起来，也就是和它同一五行的藏干；指着一个地支或者藏干，它托着的天干会亮起来。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
   if(name==='星运'){
     const good=N.filter(p=>['长生','临官','帝旺'].includes(stage(DM,p.z))).map(p=>`${K(p)}支${p.z}`);
     return {t:'星运',p:[['是什么',`日主${DMN}走到每一柱的地支时，处在十二长生的哪个阶段。十二长生把一个五行的兴衰比作人的一生：长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。`],['这张盘',N.map(p=>`${K(p)}支${p.z}是${stage(DM,p.z)}`).join('，')+`。按长生、临官、帝旺算得力来看，${DMN}${good.length?'在'+good.join('、')+'上得力':'在四个地支上都不算得力'}。`],['注意','阴干的十二长生是不是倒着走，各派有分歧。这里按通行的阳干顺行、阴干逆行。'],['典籍',`《子平真诠》主张阳顺阴逆，理由是${q('zp_sn')}`]]};
@@ -4546,7 +4635,7 @@ function readRel(){
     const grp=zr.filter(x=>x.c===r.c), where=r.where.map(gapText).join('');
     if(grp.length>1){li.push(`<b>${r.c}，一对字有${cn(grp.length)}种关系。</b>同时是${grp.map(x=>x.t).join('、')}。${where}`);return;}
     let s=`<b>${r.c}${r.t}。</b>`;
-    if(r.t==='拱合'||r.t==='拱会'){const x=r.n[1], b=bringers(x);s+=`${r.n}。两头在、中间空，只算有这个趋势。等大运或流年把${x}带来，局才凑齐`+(b.length?`，比如 ${b.join('、')}。`:'。');}
+    if(r.t==='拱合'||r.t==='拱会'){const x=r.n[1], b=bringers(x);s+=`${r.n}。两头在、中间空，只算有这个趋势。`+(gongNow(r.t,x,0)||`等大运或流年把${x}带来，局才凑齐`+(b.length?`，比如 ${b.join('、')}。`:'。'));}
     else if(r.t==='六合') s+=`旧说${r.n}。`;
     else if(r.t==='半合') s+=`${r.n}的一半，带着中间的旺支。`;
     else if(r.t==='三合'||r.t==='三会') s+=`${r.n}，三个字凑齐了。`;
@@ -4788,6 +4877,14 @@ function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slo
 
 /* ---------- 点开的解释 ---------- */
 function layerGZ(top){return top===1?P.dayun[sel.dy].gz:top===2?yearGZ(sel.y):top===3?monthGZ(sel.y,sel.m):dayGZ(sel.d);}
+/* 拱合、拱会缺的那一支 x，现在选中的几层里来了没有。top 是这条拱合、拱会自己在哪一层（原局 0），只看它后面的大运、流年、流月、流日：
+   来了就说是哪一层带来的、三合或者三会已经凑齐（凑齐的那一条列在最早带来 x 的那一层，engine.js 的 relations），没来返回空。
+   原来解释里固定写「等 x 来了才凑齐」，选中的流年正好带着 x 时还这样写，2026-11-27 用户问「有子了为啥还是写的缺子」 */
+function gongNow(t,x,top){
+  const N=['','大运','流年','流月','流日'], full=t==='拱合'?'三合':'三会';
+  for(let k=(top||0)+1;k<=4;k++) if(layerGZ(k)[1]===x) return `${top?'':'这说的是原局自己。'}现在选中的${N[k]}${layerGZ(k)}带来了${x}，${full}已经凑齐，见${N[k]}那一层的${full}。`;
+  return '';
+}
 /* 原局的一条关系，结合这张盘能补充什么 */
 function natalRelNote(t,c,n,grp){
   const out=[];
@@ -4795,7 +4892,7 @@ function natalRelNote(t,c,n,grp){
     const same=relations(NATAL).filter(r=>r.grp==='z'&&r.c===c);
     if(same.length>1) out.push(`${c}这一对同时是${same.map(r=>r.t).join('、')}。`);
   }
-  if(t==='拱合'||t==='拱会'){const x=n[1], b=bringers(x);out.push(`等${x}来了才凑齐。`+(b.length?`${b.join('、')}会带来${x}。`:''));}
+  if((t==='拱合'||t==='拱会')&&!gongNow(t,n[1],0)){const x=n[1], b=bringers(x);out.push(`等${x}来了才凑齐。`+(b.length?`${b.join('、')}会带来${x}。`:''));}      // 已经来了的，在「细节」里说（xRel）
   return out.join('');
 }
 function xRel(t,c,n,where,top,grp){
@@ -4829,7 +4926,7 @@ function xRel(t,c,n,where,top,grp){
     if(t==='六合') d=`${c}相合，旧说${n}。`+(c==='巳申'?'这一对同时还是相刑、相破。':c==='寅亥'?'这一对同时还是相破。':'');
     else if(t==='三合'||t==='三会') d=`${c}，${n}。`;
     else if(t==='半合') d=`${c}是${n}的一半，带着中间的旺支。`;
-    else if(t==='拱合'||t==='拱会') d=`${c}，${n}。`;
+    else if(t==='拱合'||t==='拱会') d=`${c}，${n}。`+gongNow(t,n[1],top);
     else if(t==='暗合') d=AN[c]||'';
     else if(t==='相冲'){const ea=zEl(chars[0]), eb=zEl(chars[1]); d=ea===eb?'两个都属土，旧说这种冲会把库里藏的天干冲出来。':`${EL[ea]}和${EL[eb]}相克。`;}
     else if(t==='相刑') d='寅巳申'.includes(chars[0])&&'寅巳申'.includes(chars[1])?'属于寅巳申一组，旧称无恩之刑。':'丑戌未'.includes(chars[0])?'属于丑戌未一组，旧称恃势之刑。':'子卯一组，旧称无礼之刑。';
@@ -5233,7 +5330,8 @@ function X(key){
    动的只是变化本身：打开页面、换人、换页、换选择、换数法、换主题、打开一块、指着生克图的圈，各动一下，大多在半秒以内；平时不动，没有循环的动画。
    都是先照常画好，再从旧的样子过渡到新的样子，所以动画做不做，最后的页面完全一样；动的时候内容最迟一秒以内全部露出来。
    系统里设了「减弱动态效果」的人，一样也不动；浏览器不支持的、页面在后台的、检查脚本用的 jsdom，也都不动（calm）。
-   样式里另有两样：顶部弦纹打开页面时画一道，指着圈时线淡下去，都写在模板 prefers-reduced-motion:no-preference 那一段。 */
+   样式里另有几类：顶部弦纹打开页面时画一道，指着圈时线淡下去；2026-11-26 用户要的装饰动画，2026-11-27 用户要的「能帮助理解的动画」（一直循环），
+   都写在模板 prefers-reduced-motion:no-preference 那一段。 */
 const EASE='cubic-bezier(.22,.75,.25,1)';
 const byKey=el=>{try{return el.matches(':focus-visible');}catch(e){return false;}};      // 焦点是键盘来的：鼠标、手指点出来的焦点不算
 function calm(){return !Element.prototype.animate||document.hidden||!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
@@ -5362,18 +5460,33 @@ function recount(k,f){
   cells().forEach((i,j)=>{if(i) widths([i],[was[j]]);});
   moveLevels(svg(),lv);
 }
-/* 生克图：指着哪个圈（鼠标移上去，或者键盘选中），只留和它有关的线：生它的、它生的、克它的、它克的，别的淡下去 */
+/* 生克图：指着哪个圈（鼠标移上去，或者键盘选中），只留和它有关的线：生它的、它生的、克它的、它克的，别的淡下去。
+   六亲图也一样：指着一位亲属的框，只留它是怎么推出来的那一条路（样式里照 data-hl 和 data-i 淡掉别的） */
 let HOVER=null, FOCUS=null;        // 鼠标指着的圈、键盘选中的圈，两样分开记：一样没有了，另一样还算
-const nodeOf=el=>el&&el.closest?el.closest('.wxmap .nd[data-n]'):null;
+const nodeOf=el=>el&&el.closest?el.closest('.wxmap .nd[data-n],.lqmap .lq-nd[data-n]'):null;
 function hlMap(){
   const n=[HOVER,FOCUS].find(x=>x&&x.isConnected)||null, svg=n?n.ownerSVGElement:null;
-  document.querySelectorAll('.wxmap svg[data-hl]').forEach(s=>{if(s!==svg) s.removeAttribute('data-hl');});
+  document.querySelectorAll('svg[data-hl]').forEach(s=>{if(s!==svg) s.removeAttribute('data-hl');});
   if(svg) svg.setAttribute('data-hl',n.getAttribute('data-n'));
 }
-document.addEventListener('pointerover',e=>{HOVER=e.pointerType==='touch'?null:nodeOf(e.target);hlMap();});
-document.addEventListener('focusin',e=>{FOCUS=byKey(e.target)?nodeOf(e.target):null;hlMap();});
-document.addEventListener('focusout',()=>{FOCUS=null;hlMap();});
-document.documentElement.addEventListener('pointerleave',()=>{HOVER=null;hlMap();});
+/* 细盘和八字表：指着一个天干，它在地支里的根（同一五行的藏干）亮起来；指着一个地支或者一个藏干，它托着的天干（和它里面的藏干同一五行的）亮起来。
+   亮的字带 data-lit，怎么亮写在样式里。只在同一张表里找。2026-11-27 用户要「能帮助理解的动画」 */
+let LIT_H=null, LIT_F=null;        // 鼠标指着的字、键盘选中的字，和上面一样分开记
+const cellOf=el=>{const b=el&&el.closest?el.closest('table.pan [data-x]'):null;return b&&/^[gzh]\|/.test(b.dataset.x)?b:null;};
+function litUp(){
+  const b=[LIT_H,LIT_F].find(x=>x&&x.isConnected)||null, on=new Set();
+  if(b){
+    const a=b.dataset.x.split('|'), ch=a[2], tb=b.closest('table'), last=x=>x.dataset.x.split('|')[2];
+    if(a[0]==='g') tb.querySelectorAll('[data-x^="h|"]').forEach(x=>{if(gEl(last(x))===gEl(ch)) on.add(x);});
+    else{const els=new Set((a[0]==='z'?HID[ch].split(''):[ch]).map(gEl));tb.querySelectorAll('.glyph[data-x^="g|"]').forEach(x=>{if(els.has(gEl(last(x)))) on.add(x);});}
+  }
+  document.querySelectorAll('.pan [data-lit]').forEach(x=>{if(!on.has(x)) x.removeAttribute('data-lit');});
+  on.forEach(x=>x.setAttribute('data-lit',''));
+}
+document.addEventListener('pointerover',e=>{const t=e.pointerType==='touch';HOVER=t?null:nodeOf(e.target);hlMap();LIT_H=t?null:cellOf(e.target);litUp();});
+document.addEventListener('focusin',e=>{const k=byKey(e.target);FOCUS=k?nodeOf(e.target):null;hlMap();LIT_F=k?cellOf(e.target):null;litUp();});
+document.addEventListener('focusout',()=>{FOCUS=null;hlMap();LIT_F=null;litUp();});
+document.documentElement.addEventListener('pointerleave',()=>{HOVER=null;hlMap();LIT_H=null;litUp();});
 
 /* ---------- 换大运、流年、流月、流日 ---------- */
 /* 把 f（重画）包起来：选中的那一格滑到新的位置；换成别的一排，小卡淡入；条从旧的长短变到新的；
@@ -5710,11 +5823,15 @@ function glyph(kind,c){
   return `<button type="button" class="glyph ${ELC[e]}" data-x="${esc(kind+'|'+c.k+'|'+ch)}"${kind==='z'?` data-z="${ANIMALS[Z.indexOf(ch)]}"`:''}>${ch}${ic(e)}</button>`;
 }
 function gzSpan(gz){return `<span class="${gCls(gz[0])}">${gz[0]}</span><span class="${zCls(gz[1])}">${gz[1]}</span>`;}
+/* 相合一类里写着化什么、什么局的（附注 r.n：化水、木局……），是哪一行。线和小签照这一行上色（样式里的 data-el）：2026-11-27 用户说关系图线上的流动「太难看了」，
+   让「按照颜色比如相合产生啥之类的配一配颜色」。这只是名义上化出、合成的五行，化不化得成另看「强弱」一页的「合化」一行。别的关系仍然不上色 */
+const heEl=r=>{const i=HE_TYPES.includes(r.t)&&r.n?[...EL].findIndex(c=>r.n.includes(c)):-1;return i>=0?ELC[i]:'';};
+const elAttr=r=>heEl(r)?` data-el="${heEl(r)}"`:'';
 function relChips(list){
   if(!list.length) return '<span class="none">没有</span>';
   return list.map(r=>{const w=(r.top?'对':'')+r.where.join('、');
     const key=['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|');
-    return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}" data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
+    return `<button type="button" class="rel${HE_TYPES.includes(r.t)?'':' bad'}"${elAttr(r)} data-x="${esc(key)}">${esc(r.t)}<b>${esc(r.c)}</b>${r.n?`<small>${esc(r.n)}</small>`:''}<small>${esc(w)}</small></button>`;}).join('');
 }
 /* kvRows 的几行按先后分段放到各页：「强弱参考」以前的月令透干在「强弱」一页强弱分析卡片的下面（月令、根、印三行并进了四张卡片，不单独显示），
    从「强弱参考」起在「强弱」一页四张卡片的下面，从「格局参考」起在「格局」一页，从「调候参考」起在「喜忌」。
@@ -5759,7 +5876,7 @@ function renderPerson(){
   $('note-sk').innerHTML=paras(noteSK());
   $('note-gt').innerHTML=paras(noteGT());
   $('note-gw').textContent=noteGw();
-  renderHours();renderBz();renderCsMap();renderBars();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderYsMap();renderLqMap();renderGw();renderQs();renderSd();renderXi();renderDynamic();
+  renderHours();renderBz();renderCsMap();renderBars();renderWlMap();renderWxMap();renderGodMap();renderGods();renderGjb();renderGjz();renderGjSeg();renderThc();renderYsMap();renderLqMap();renderGw();renderQs();renderSd();renderXi();renderDynamic();
   showPerson();SWITCH=false;
 }
 /* 时辰不详的人：标题下面一排十二个时辰，点哪个就按哪个排（HOUR_PICK）。下面一段说十二个时辰里哪些跟着变（text.js 的 hoursSay） */
@@ -5786,12 +5903,12 @@ function renderHours(){
    fillCircle：一个从下往上填了 frac（0 到 1）的圈，id 给裁剪用，一页里要唯一。arrowDef：箭头，一页里有两张图，id 不能重复 */
 const f1=v=>v.toFixed(1);
 function pent(cx,cy,R,top){return [0,1,2,3,4].map(k=>{const a=(k-top)*72*Math.PI/180;return [cx+R*Math.sin(a),cy-R*Math.cos(a)];});}
-function ringLines(pos,mk,A,B){
+function ringLines(pos,mk,A,B,elc){      // elc(k)：第 k 个圈属哪一行（样式名），相生的流光照生的那一方上色
   const cut=(ux,uy)=>1/Math.sqrt((ux/A)**2+(uy/B)**2);
   const seg=(a,b,cls)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
     return `<line class="${cls}" data-l="${a}${b}" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+5))}" y2="${f1(y2-uy*(t+5))}" marker-end="url(#${mk})"/>`;};
   const flow=(a,b)=>{const [x1,y1]=pos[a],[x2,y2]=pos[b],d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d,t=cut(ux,uy);
-    return `<line class="flow" data-fl="${a}${b}" aria-hidden="true" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+9))}" y2="${f1(y2-uy*(t+9))}"/>`;};
+    return `<line class="flow ${elc?elc(a):''}" data-fl="${a}${b}" aria-hidden="true" x1="${f1(x1+ux*(t+2))}" y1="${f1(y1+uy*(t+2))}" x2="${f1(x2-ux*(t+9))}" y2="${f1(y2-uy*(t+9))}"/>`;};
   const ks=[0,1,2,3,4];
   return ks.map(k=>seg(k,(k+1)%5,'sh')).join('')+ks.map(k=>flow(k,(k+1)%5)).join('')+ks.map(k=>seg(k,(k+2)%5,'ke')).join('');
 }
@@ -5815,10 +5932,24 @@ function renderWxMap(){
   const de=gEl(DM), by=MAPBY.wx, wc=wxCounts(), s=by==='nl'?nlNow().sum:by==='cnt'?wc.cnt:wc.face, u=by==='nl'?'分':'个', mx=Math.max(1,...s), r=25, cy=136, pos=pent(150,cy,86,1);
   const key=e=>(by==='nl'?'nl|':by==='cnt'?'wx|':'wxf|')+e, open=by==='nl'?'点开看是怎么加出来的':'点开看在哪里';
   const say=[0,1,2,3,4].map(e=>`${EL[e]}生${EL[(e+1)%5]}`).join('，')+'；'+[0,1,2,3,4].map(e=>`${EL[e]}克${EL[(e+2)%5]}`).join('，')+'。'+[0,1,2,3,4].map(e=>`${EL[e]} ${s[e]} ${u}`).join('，');
-  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="group" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3)}`
+  $('wxmap').innerHTML=`<svg viewBox="0 0 300 258" role="group" aria-label="五行生克图：${say}"><defs>${arrowDef('wxm-a')}</defs>${ringLines(pos,'wxm-a',r+3,r+3,k=>ELC[k])}`
     +pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-n="${e}" data-x="${key(e)}" tabindex="0" role="button" aria-label="${EL[e]} ${s[e]} ${u}，${open}">${fillCircle('wxc'+e,x,y,r,s[e]/mx)}<text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text><text class="gp" x="${f1(x)}" y="${f1(y<cy?y-r-8:y+r+16)}">${s[e]} ${u}${e===de?'（日主）':''}</text></g>`).join('')
     +`</svg>`;
   $('note-wxmap').textContent=`圈填多少照表上面选的数法，最多的一行填满，其余照比例。实线是相生，虚线是相克，箭头指向被生、被克的一方。加粗的一圈是日主所属的一行。点圈看这一行${by==='nl'?'的分数是怎么加出来的':'的字在哪里'}。`;
+}
+/* 五行一页的「月令和四季」：里面一圈是五行（和生克图一样照相生的次序排，火在上），外面一圈是旺、相、死、囚、休。
+   外面这一圈和当令的五行是固定的搭配（当令的旺，它生的相，它克的死，克它的囚，生它的休），所以换一季就是整圈转一格：
+   样式里让它一季停一下、转七十二度，中间的字跟着换（wl-ring、wl-s），先停在这张盘出生的月份；不动的时候就停在这张盘上。
+   季节照相生的次序走（木、火、土、金、水），辰、未、戌、丑四个月合成土当令的一格，和五行表的月令一列是同一种分法。2026-11-27 用户要「能帮助理解的动画」 */
+function renderWlMap(){
+  const mz=NATAL[1].z, L=zEl(mz), de=gEl(DM), cx=150, cy=142, r=21, pos=pent(cx,cy,68,1), out=pent(cx,cy,114,1);
+  const SEAS=['春 · 寅卯月','夏 · 巳午月','辰未戌丑月','秋 · 申酉月','冬 · 亥子月'];
+  const nodes=pos.map(([x,y],e)=>`<g class="nd ${ELC[e]}${e===de?' me':''}" data-x="wst|${e}" tabindex="0" role="button" aria-label="${EL[e]}，${mz}月里是${wxState(e)}，点开看解释"><circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="halo" cx="${f1(x)}" cy="${f1(y)}" r="${r+4.5}"/><text class="ch" x="${f1(x)}" y="${f1(y+1)}">${EL[e]}</text></g>`).join('');
+  const ring=out.map(([x,y],e)=>{const st=wxState(e);return `<g class="wl-st${'旺相'.includes(st)?' up':''}"><circle cx="${f1(x)}" cy="${f1(y)}" r="13"/><text class="wl-t" x="${f1(x)}" y="${f1(y)}">${st}</text></g>`;}).join('');
+  const mid=[0,1,2,3,4].map(k=>{const e=(L+k)%5;
+    return `<g class="wl-s${k?'':' now'}" style="--k:${k}"><text class="wl-a ${ELC[e]}" x="${cx}" y="${cy-7}">${EL[e]}当令</text><text class="wl-b" x="${cx}" y="${cy+12}">${k?SEAS[e]:`这张盘 · ${mz}月`}</text></g>`;}).join('');
+  $('wlmap').innerHTML=`<svg viewBox="0 13 300 258" role="group" aria-label="月令和四季：${mz}月${EL[L]}当令，${[0,1,2,3,4].map(e=>EL[e]+wxState(e)).join('、')}"><circle class="wl-track" cx="${cx}" cy="${cy}" r="114"/><g class="wl-ring">${ring}</g>${nodes}${mid}</svg>`;
+  $('note-wlmap').textContent=`里面一圈是五行，外面一圈是旺、相、休、囚、死。当令的五行换一季往下走一格，外面这一圈跟着转一格。先停在这张盘出生的${mz}月，${EL[L]}当令。季节照相生的次序走，辰、未、戌、丑四个月合成土当令的一格。`;
 }
 /* 十神一页的生克图：中间是日主；里面一圈是五类十神，官杀在最上面，顺时针是相生的次序（官杀生印，印生比劫，比劫生食伤……），
    相邻的相生是实线，隔一个的相克是虚线，圈里写合称和它对日主的关系。外面一圈是十个十神，每一类两个，顺时针看前一个阴阳和日主不同（异性），
@@ -5842,9 +5973,10 @@ function renderGodMap(){
   const say=ks.map(k=>`${GRP[k]}生${GRP[(k+1)%5]}`).join('，')+'；'+ks.map(k=>`${GRP[k]}克${GRP[(k+2)%5]}`).join('，')+'。'+pairs.flat().map(o=>`${o.n} ${o.c} ${u}`).join('，');
   $('note-godmap').textContent='中间是日主，里面一圈是五类十神，圈里写着它和日主的关系；外面一圈是十个十神，每一类两个，异性是阴阳和日主不同，同性是相同。'
     +`圈填多少照十神表上面选的数法，${by==='nl'?'这里是每个十神分到的五行能量':by==='cnt'?'这里是它在盘里出现几处，连地支里藏的天干一起数':'这里是它在盘面上出现几处，地支只算本气'}，最多的填满；里面一圈照两个加起来的数。实线是相生，虚线是相克，箭头指向被生、被克的一方。每个圈都可以点开看解释。`;
-  $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="group" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3)}${cats}${dm}</svg>`;      // 怎么看这张图写在模板里图右边的一栏，和解读放在一起
+  $('godmap').innerHTML=`<svg viewBox="0 0 390 390" role="group" aria-label="十神生克图：${say}"><defs>${arrowDef('gdm-a')}</defs>${gods}${ringLines(pos,'gdm-a',r1+3,r1+3,k=>ELC[(de+k)%5])}${cats}${dm}</svg>`;      // 怎么看这张图写在模板里图右边的一栏，和解读放在一起
 }
-/* 日主一页的十二长生盘：十二地支照传统罗盘排成一圈（午上子下、卯左酉右），阳干顺行、阴干逆行，标出原局四个地支落在哪里 */
+/* 日主一页的十二长生盘：十二地支照传统罗盘排成一圈（午上子下、卯左酉右），阳干顺行、阴干逆行，标出原局四个地支落在哪里。
+   每个地支外面另有一个圈（.step），从长生起照十二长生的先后一位一位亮过去，看得出日主是顺着走还是逆着走（样式里的 cs-step，2026-11-27 用户要「能帮助理解的动画」） */
 function renderCsMap(){
   const C=206, R=130, RT=173, r=22, de=gEl(DM), yin=isYin(DM);
   const arc=(a1,a2)=>{const p=d=>[C+62*Math.sin(d*Math.PI/180),C-62*Math.cos(d*Math.PI/180)], [x1,y1]=p(a1),[x2,y2]=p(a2);
@@ -5855,12 +5987,12 @@ function renderCsMap(){
     const hits=NATAL.filter(p=>p.z===z).map(p=>p.k), cls=ELC[zEl(z)]+(hits.length?' hit':vig?' vig':' weak');
     const tag=hits.length?`<text class="cs-tag" x="${f1(C+RT*Math.sin(a))}" y="${f1(C-RT*Math.cos(a))}">${hits.join('·')}支</text>`:'';
     return `<g class="nd ${cls}" data-x="cs|${z}" tabindex="0" role="button" aria-label="${z}，${DMN}处在${s}${hits.length?'，原局'+hits.join('、')+'支落在这里':''}，点开看解释">`
-      +`<circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="halo" cx="${f1(x)}" cy="${f1(y)}" r="${r+4.5}"/>`
+      +`<circle class="bg" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="ring" cx="${f1(x)}" cy="${f1(y)}" r="${r}"/><circle class="halo" cx="${f1(x)}" cy="${f1(y)}" r="${r+4.5}"/><circle class="step" style="--i:${STAGES.indexOf(s)}" cx="${f1(x)}" cy="${f1(y)}" r="${r+5}"/>`
       +`<text class="cs-z" x="${f1(x)}" y="${f1(y-6)}">${z}</text><text class="cs-s" x="${f1(x)}" y="${f1(y+9)}">${s}</text></g>${tag}`;
   }).join('');
   const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，${yin?'阴干逆行':'阳干顺行'}，点开看解释"><circle class="bg" cx="${C}" cy="${C}" r="36"/><circle class="ring" cx="${C}" cy="${C}" r="36"/><circle class="halo" cx="${C}" cy="${C}" r="41"/><text class="cs-dm" x="${C}" y="${C-9}">${DM}</text><text class="cs-sub" x="${C}" y="${C+11}">${yy(DM)}${EL[de]}</text><text class="cs-way" x="${C}" y="${C+24}">${yin?'逆行':'顺行'}</text></g>`;
   const falls=NATAL.map(p=>`${p.k}支${p.z}在${stage(DM,p.z)}`).join('，');
-  $('csmap').innerHTML=`<svg viewBox="0 16 412 380" role="group" aria-label="十二长生盘：日主${DMN}${yin?'逆行':'顺行'}，${falls}"><defs>${arrowDef('csm-a')}</defs><circle class="cs-track" cx="${C}" cy="${C}" r="${R}"/>${dirs}${nodes}${dm}</svg>`;
+  $('csmap').innerHTML=`<svg viewBox="0 16 412 380" style="--dm:var(--${ELC[de]})" role="group" aria-label="十二长生盘：日主${DMN}${yin?'逆行':'顺行'}，${falls}"><defs>${arrowDef('csm-a')}</defs><circle class="cs-track" cx="${C}" cy="${C}" r="${R}"/>${dirs}${nodes}${dm}</svg>`;
   $('cs-list').innerHTML=NATAL.map(p=>{const s=stage(DM,p.z), vig=STAGES.indexOf(s)<5;
     return `<tr><td>${p.k}支</td><td>${xb('x '+zCls(p.z),`z|${p.k}|${p.z}`,p.z)}</td><td>${xb('x','cs|'+p.z,s)}<span class="tag${vig?' hi':''}">${vig?'气盛':'气衰'}</span></td><td>${STG[s]}</td></tr>`;}).join('');
   $('note-csmap').textContent=`外圈十二地支照传统罗盘的方位排（午在上、子在下、卯在左、酉在右）。日主${DMN}是${yy(DM)}干，照通行的算法${yin?'逆时针':'顺时针'}走过十二位。《千里命稿》把长生到帝旺五位叫气盛，其余七位叫气衰，浅灰底的是气盛的五位；带五行颜色和粗边的，是原局四个地支所在的位置。点一个地支，看完整的顺序和别家的说法。`;
@@ -5883,7 +6015,7 @@ function renderYsMap(){
     [0,1,2,3,4].forEach(e=>{role[e]=EL[e]; xkey[e]='xe|'+e; sub[e]=sum[e]+' 分';});
   }
   const say=[0,1,2,3,4].map(e=>`${EL[e]}是${role[e]}（${sum[e]} 分）`).join('，');
-  $('ysmap').innerHTML=`<svg viewBox="0 0 340 284" role="group" aria-label="用神五神关系图：${say}"><defs>${arrowDef('ysm-a')}</defs>${ringLines(pos,'ysm-a',r+3,r+3)}`
+  $('ysmap').innerHTML=`<svg viewBox="0 0 340 284" role="group" aria-label="用神五神关系图：${say}"><defs>${arrowDef('ysm-a')}</defs>${ringLines(pos,'ysm-a',r+3,r+3,k=>ELC[k])}`
     +pos.map(([x,yy2],e)=>`<g class="nd ${ELC[e]}${meSet.has(e)?' me':''}" data-n="${e}" data-x="${xkey[e]}" tabindex="0" role="button" aria-label="${role[e]}，${EL[e]} ${sum[e]} 分，${sub[e]}，点开看依据">${fillCircle('ysc'+e,x,yy2,r,sum[e]/mx)}<text class="ch2" x="${f1(x)}" y="${f1(yy2-5)}">${role[e]}</text><text class="ct" x="${f1(x)}" y="${f1(yy2+11)}">${EL[e]} ${sum[e]}分</text><text class="gp" x="${f1(x)}" y="${f1(yy2<cy?yy2-r-9:yy2+r+17)}">${sub[e]}</text></g>`).join('')
     +`</svg>`;
   $('note-ysmap').textContent=y.yong!==null
@@ -5900,18 +6032,21 @@ function renderLqMap(){
     {who:'兄弟姐妹',x:76,y:162},{who:spWho,x:484,y:162},
     {who:'儿子',x:186,y:276},{who:'女儿',x:374,y:276}
   ];
-  const arrow=(x1,y1,x2,y2,ke,arr,lx,ly,lb)=>`<line class="lq-ln${ke?' ke':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${arr?' marker-end="url(#lqm-a)"':''}/>`
-    +`<text class="lq-lb" x="${lx}" y="${ly}">${lb}</text>`;
+  // i：这条线属于哪几位亲属的推演（cards 里的序号，空格隔开）。父亲是从母亲推出来的（克印），所以母亲那一条两边都算。
+  // 相生的线上另画一条流光（.flow，样式里才动）：顺着箭头流，和生克图一样
+  const arrow=(i,x1,y1,x2,y2,ke,arr,lx,ly,lb)=>`<line class="lq-ln${ke?' ke':''}" data-i="${i}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${arr?' marker-end="url(#lqm-a)"':''}/>`
+    +(!ke&&arr?`<line class="flow ${i==='0 1'?gCls(stemOfGod(byWho['母亲'].god)):ELC[de]}" data-i="${i}" aria-hidden="true" x1="${x1}" y1="${y1}" x2="${x2-(x2-x1)/Math.hypot(x2-x1,y2-y1)*6}" y2="${y2-(y2-y1)/Math.hypot(x2-x1,y2-y1)*6}"/>`:'')
+    +`<text class="lq-lb" data-i="${i}" x="${lx}" y="${ly}">${lb}</text>`;
   const lines=
-    arrow(196,75,256,136,false,true,209,115,'生我')
-    +arrow(323,48,241,48,true,true,280,35,'克印 · 母之夫')
-    +arrow(137,162,248,162,false,false,192,148,'同我')
-    +(male?arrow(312,162,419,162,true,true,366,148,'我克'):arrow(423,162,316,162,true,true,366,148,'克我'))
-    +(male?arrow(204,247,258,190,true,true,214,213,'克我'):arrow(258,186,206,243,false,true,214,213,'我生'))
-    +(male?arrow(356,247,302,190,true,true,346,213,'克我'):arrow(302,186,354,243,false,true,346,213,'我生'));
-  const boxes=cards.map(c=>{
+    arrow('0 1',196,75,256,136,false,true,209,115,'生我')
+    +arrow('1',323,48,241,48,true,true,280,35,'克印 · 母之夫')
+    +arrow('2',137,162,248,162,false,false,192,148,'同我')
+    +(male?arrow('3',312,162,419,162,true,true,366,148,'我克'):arrow('3',423,162,316,162,true,true,366,148,'克我'))
+    +(male?arrow('4',204,247,258,190,true,true,214,213,'克我'):arrow('4',258,186,206,243,false,true,214,213,'我生'))
+    +(male?arrow('5',356,247,302,190,true,true,346,213,'克我'):arrow('5',302,186,354,243,false,true,346,213,'我生'));
+  const boxes=cards.map((c,k)=>{
     const r=byWho[c.who], s=stemOfGod(r.god), hit=r.at!=='原局里没有', cnt=whereGod(g=>god(g)===r.god).length;
-    return `<g class="lq-nd ${gCls(s)}${hit?' hit':''}" data-x="tg|${r.god}" tabindex="0" role="button" aria-label="${c.who}看${r.god}，${hit?'原局有 '+cnt+' 处':'原局里没有'}，点开看解释">`
+    return `<g class="lq-nd ${gCls(s)}${hit?' hit':''}" data-n="${k}" data-i="${k===0?'0 1':k}" data-x="tg|${r.god}" tabindex="0" role="button" aria-label="${c.who}看${r.god}，${hit?'原局有 '+cnt+' 处':'原局里没有'}，点开看解释">`
       +`<rect class="box" x="${c.x-59}" y="${c.y-29}" width="118" height="58" rx="12"/>`
       +`<text class="lq-who" x="${c.x}" y="${c.y-13}">${c.who}</text>`
       +`<text class="lq-gd" x="${c.x}" y="${c.y+3}">${r.god}（${s}）</text>`
@@ -5920,7 +6055,7 @@ function renderLqMap(){
   const dm=`<g class="nd me ${ELC[de]}" data-x="kv|日主" tabindex="0" role="button" aria-label="日主${DMN}，图里的「我」，点开看解释"><circle class="bg" cx="280" cy="162" r="30"/><circle class="ring" cx="280" cy="162" r="30"/><circle class="halo" cx="280" cy="162" r="35"/><text class="ch" x="280" y="156">${DM}</text><text class="ct" x="280" y="175">日主 · 我</text></g>`;
   $('lqmap').innerHTML=`<svg viewBox="8 14 544 298" role="group" aria-label="六亲生克推演示意图：以日主${DMN}为中心，${rows.map(r=>r.who+'看'+r.god).join('，')}"><defs>${arrowDef('lqm-a')}</defs>${lines}${boxes}${dm}</svg>`;
   // 怎么配、为什么这样配写在旁边的解读和下面的表里，这里只说怎么看图（原来这一段把配法又讲了一遍，2026-11-27 去掉）
-  $('note-lqmap').textContent=`图里的「我」是日主。实线是相生或同类，虚线是相克，箭头指向被生、被克的一方。带五行淡底和实线框的，是原局里有的十神；虚线空框的，原局里没有。点一个框，看这个十神的解释。`;
+  $('note-lqmap').textContent=`图里的「我」是日主。实线是相生或同类，虚线是相克，箭头指向被生、被克的一方。带五行淡底和实线框的，是原局里有的十神；虚线空框的，原局里没有。指着一个框，只留它是怎么推出来的那一条路；点一个框，看这个十神的解释。`;
 }
 /* 计分一页的大运、流年、流月、流日四张喜用分走势图：跟着选择器上方的三种看法和选中的大运、年、月、日重画。
    每一柱带着和选择器小卡一样的 data-dy、data-y、data-m、data-d（it.pick），点一柱就换到那里，同时打开这一柱的明细（2026-11-27 用户要的）。
@@ -5984,7 +6119,7 @@ function panRows(cs){
   return row('十神',c=>xb('x sm',`g|${c.k}|${c.g}`,c.day?'日主':god(c.g)))+
     row('天干',c=>glyph('g',c),'big')+
     row('地支',c=>glyph('z',c),'big')+
-    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
+    row('藏干',c=>HID[c.z].split('').map(h=>xb('hs '+gCls(h)+(!c.dyn&&NATAL.some(p=>p.g===h)?' tou':''),`h|${c.k}|${h}`,`${h}<small>${god(h)}</small>`)).join(''),'multi')+
     row('星运',c=>xb('x sm','st|'+c.k,stage(DM,c.z)))+
     row('自坐',c=>xb('x sm','zz|'+c.k,stage(c.g,c.z)))+
     row('空亡',c=>xb('x sm','xk|'+c.k,xunkong(c.g,c.z)))+
@@ -6066,6 +6201,7 @@ function renderRelations(){
   const byLayer=[base,brought(NATAL.concat(DY),1),brought(NATAL.concat(DY,LN),2),brought(NATAL.concat(DY,LN,LY),3),brought(NATAL.concat(DY,LN,LY,LR),4)];
   $('rel-ng').innerHTML=relChips(base.filter(r=>r.grp==='g'));
   $('rel-nz').innerHTML=relChips(base.filter(r=>r.grp==='z'));
+  if(base.some(r=>r.t==='拱合'||r.t==='拱会')) $('rd-rel').innerHTML=readHTML('rel');      // 原局的拱合、拱会缺的那一支，选中的几层里来了没有，解读跟着换（text.js 的 gongNow）
   $('h-rdy').textContent=`大运 ${d.gz} 带来的`;
   $('rel-dy').innerHTML=relChips(byLayer[1]);
   $('h-rln').textContent=`流年 ${sel.y} ${ln} 带来的`;
@@ -6097,10 +6233,26 @@ function renderLinks(all){
         it.rels.push({r,key});
       });
     });
+    /* 名字放在哪里。一律和线在同一行（2026-11-27 用户问「为啥有的在上面，有的在中间」，原来放不下的放在线上面，一张图里忽上忽下）：
+       相邻两个圈之间最宽的那一段放得下，就压在那一段线的正中（in，it.n 是那一段的正中在第几列）；放不下的写在线的右边（sr），右边到头了写在左边（sl），多占几列。
+       两边都排不开的才放在线上面，八列的图里碰不到。宽度照最窄的窗口估：九百宽时一列 85，两个圈之间空着 (列数−1)×85 减一个圈 30、两头各留 4；
+       名字的宽度照字数估（字 13、附注 12，每个小签另加边和内距 20、附注前的空 5，小签之间空 5）。写在旁边时从圈心往外 22 起，圈心到这一列的边是 42 */
+    groups.forEach(it=>{
+      it.need=it.rels.reduce((s,o)=>s+o.r.t.length*13+20+(o.r.n?o.r.n.length*12+5:0),5*(it.rels.length-1));
+      const more=Math.max(0,Math.ceil((it.need+22+8-42)/85));
+      it.l=it.r=0;
+      const gap=it.ix.slice(1).map((x,j)=>[x-it.ix[j],(x+it.ix[j])/2]).sort((p,q)=>q[0]-p[0])[0];      // 最宽的一段：[隔几列, 正中在第几列]
+      it.n=(it.a+it.b)/2;
+      if(gap&&it.need<=gap[0]*85-38){it.at='in';it.n=gap[1];}
+      else if(it.b+more<=7){it.at='sr';it.r=more;}
+      else if(it.a-more>=0){it.at='sl';it.l=more;}
+      else it.at='';
+      it.A=it.a-it.l;it.B=it.b+it.r;
+    });
     groups.sort((x,y)=>x.top-y.top||(x.b-x.a)-(y.b-y.a)||x.a-y.a);
     const rows=[];
     groups.forEach(it=>{
-      let i=rows.findIndex(row=>row.every(o=>it.a>o.b||it.b<o.a));
+      let i=rows.findIndex(row=>row.every(o=>it.A>o.B||it.B<o.A));
       if(i<0) i=rows.push([])-1;
       rows[i].push(it);it.row=i;
     });
@@ -6108,20 +6260,21 @@ function renderLinks(all){
   };
   const g=pack('g'), z=pack('z'), R=g.n;      // 中间那一块占六行，从第 R+1 行起：列名、天干的十神、天干、干支之间、地支、地支的十神
   const link=(it,row,isG)=>{
-    const k=it.b-it.a+1, he=it.rels.map(o=>HE_TYPES.includes(o.r.t));
+    const k=it.B-it.A+1, he=it.rels.map(o=>HE_TYPES.includes(o.r.t)), pc=i=>((i-it.A+.5)/k*100).toFixed(3)+'%';      // k：连名字一共占几列；pc(i)：第 i 列的圈心在这一格里的位置
     const tone=he.some(Boolean)?'':' bad';       // 线型：全是冲刑害破克的用虚线，只要有相合一类的就用实线
-    // 名字压在线上放不放得下：两个圈之间空着的长度是 (k−1) 列减一个圈（30），两头各留 4；名字的宽度照字数估（字 13、附注 12，每个小签另加边和内距 20、附注前的空 5）。
-    // 列宽：九百宽的窗口 85，一千一百宽 110，一千二百八十宽 133（都扣了滚动条）。三个圈的中间有一个圈挡着，放在线上面
-    const need=it.rels.reduce((s,o)=>s+o.r.t.length*13+20+(o.r.n?o.r.n.length*12+5:0),5*(it.rels.length-1)), room=w=>(k-1)*w-38;
-    const inl=it.ix.length!==2?'':need<=room(85)?' in':need<=room(110)?' wide':need<=room(133)?' max':'';
-    return `<span class="lk${tone}${inl}" data-k="${esc(it.id+'#'+it.rels.map(o=>o.key).join())}" style="grid-column:${it.a+2}/${it.b+3};grid-row:${row};--k:${k}"><span class="lk-ts">`
-      +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}" data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
+    const inl=it.at?' '+it.at:'';
+    const le=it.rels.map(o=>heEl(o.r)).find(Boolean);      // 这条线照哪一行上色：第一个写着化什么、什么局的
+    // 冲刑害破克的线怎么动（样式里的 t-chong、t-ke、t-xing）：有相冲的是两头的光对撞再弹开；只有相克的是克的一方的光单向过去（rev：右边克左边）；刑、害、破是两头的光靠近又退开
+    const e1=isG?gEl(cs[it.a].g):zEl(cs[it.a].z), e2=isG?gEl(cs[it.b].g):zEl(cs[it.b].z), ts=it.rels.map(o=>o.r.t);
+    const mv=tone?(ts.some(t=>t.includes('冲'))?' t-chong':ts.every(t=>t==='相克')&&e1!==e2?' t-ke'+((e2+2)%5===e1?' rev':''):' t-xing'):'';
+    return `<span class="lk${tone}${inl}${mv}"${le?` data-el="${le}"`:''} data-k="${esc(it.id+'#'+it.rels.map(o=>o.key).join())}" style="grid-column:${it.A+2}/${it.B+3};grid-row:${row};--s:${pc(it.a)};--e:${pc(it.b)};--m:${pc((it.a+it.b)/2)};--n:${pc(it.n)};--c1:var(--${ELC[isG?gEl(cs[it.a].g):zEl(cs[it.a].z)]});--c2:var(--${ELC[isG?gEl(cs[it.b].g):zEl(cs[it.b].z)]})"><span class="lk-ts">`
+      +it.rels.map((o,j)=>`<button type="button" class="lk-t${he[j]?'':' bad'}"${elAttr(o.r)} data-x="${esc(o.key)}">${esc(o.r.t)}${o.r.n?`<small>${esc(o.r.n)}</small>`:''}</button>`).join('')
       +'</span><span class="lk-l"></span>'
-      +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)} cx" data-x="${isG?'g':'z'}|${cs[i].k}|${isG?cs[i].g:cs[i].z}" role="button" tabindex="0" style="left:${((i-it.a+.5)/k*100).toFixed(3)}%">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';      // 线两头圈出来的字和中间那两行的字是同一条解释
+      +it.ix.map(i=>`<i class="${isG?gCls(cs[i].g):zCls(cs[i].z)} cx" data-x="${isG?'g':'z'}|${cs[i].k}|${isG?cs[i].g:cs[i].z}" role="button" tabindex="0" style="left:${pc(i)}">${isG?cs[i].g:cs[i].z}</i>`).join('')+'</span>';      // 线两头圈出来的字和中间那两行的字是同一条解释
   };
   // 相邻两个字之间的生克：a、b 是五行的序号。横的跨两列，竖的在一列里
   // 小圈能点：左右相邻的两个字是 sk|（生、克或者同类），一柱里上下的干和支是这一柱合起来的解释 gz|。2026-11-18 用户说这些「还是不能点」
-  const sk=(a,b,cls,style,key)=>{const [k,dir]=skOf(a,b);return `<span class="${cls} ${k==='生'?'sheng':k==='克'?'ke':'tong'}${dir<0?' rev':''}" style="${style}"><b class="cx" data-x="${key}" role="button" tabindex="0">${k}</b></span>`;};
+  const sk=(a,b,cls,style,key)=>{const [k,dir]=skOf(a,b);return `<span class="${cls} ${k==='生'?'sheng':k==='克'?'ke':'tong'}${dir<0?' rev':''}${k==='同'?'':' by-'+ELC[dir<0?b:a]}" style="${style}"><b class="cx" data-x="${key}" role="button" tabindex="0">${k}</b></span>`;};
   const dy=P.dayun[sel.dy], sub=[mdText(sel.d),jieMD(sel.y)[sel.m]+' 起',sel.y+' 年',dy.y0+'–'+dy.y1].concat(LK_GW);
   let mid='';
   cs.forEach((c,i)=>{

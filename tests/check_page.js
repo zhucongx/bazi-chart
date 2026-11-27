@@ -1534,7 +1534,7 @@ pick(0);
   // 减弱动态效果：样式里的动画、过渡、平滑滚动和装饰性循环动画，都只能写在 no-preference 那一段里，外面一条也不能有
   const np = css.match(/@media \(prefers-reduced-motion:no-preference\)\{([\s\S]*?)\n\}/), rest = css.replace(np ? np[0] : '', '');
   eq('样式里的动画、过渡、平滑滚动和装饰循环都写在「没有减弱动态效果」那一段里', [!!np, [...rest.matchAll(/(?:^|[;{\s])(animation|transition|scroll-behavior)\s*:\s*([^;}]+)/g)].map(m => m[1] + ':' + m[2]).filter(s => !/^transition:none/.test(s)), /infinite/.test(rest)], [true, [], false]);
-  ok('生克图上的流光是墨色，不用钴蓝：生克的线不占颜色，颜色只留给五行', !/line\.flow\{[^}]*var\(--accent\)/.test(css) && /line\.flow\{[^}]*stroke:var\(--ink\)/.test(css));
+  ok('生克图上的流光不用钴蓝，用五行的颜色', !/line\.flow\{[^}]*var\(--accent\)/.test(css) && /line\.flow\{[^}]*stroke:var\(--f/.test(css));
   const ringEl = d.querySelector('.titlerow .gua-ring');
   eq('装饰动画元素：外圈星轨、五行气韵微光、生克图流光线都对读屏隐藏且跟随日主五行', [!!ringEl && ringEl.getAttribute('aria-hidden') === 'true', d.querySelector('header.top').dataset.el === ev('ELC[gEl(DM)]'), [...d.querySelectorAll('#wxmap line.flow')].every(l => l.getAttribute('aria-hidden') === 'true') && d.querySelectorAll('#wxmap line.flow').length === 5], [true, true, true]);
   // 长说明：照意思分成几段，一段一块，文字一个字不少。每位人物、每种数法、每种看法各走一遍（快速模式只走三位）
@@ -1554,17 +1554,19 @@ pick(0);
   const fixed = [...d.querySelectorAll('#p-rel .note.long')].find(n => !n.id);
   eq('长说明照意思分成几段，一段一块，文字一个字不少', [wrong.slice(0, 5), fixed && fixed.children.length, fixed && txt(fixed).endsWith('流日对前面所有各层。')], [[], 2, true]);
   ok('只有一段的说明不分栏（五行一页的两种个数）', /\.note\.long>\.pa:only-child\{column-span:all\}/.test(css));
-  // 关系图：名字压在线上的，都只有两个圈，用的是放得下的最窄一档；三个圈的都放在线的上面。估宽用的几个数和样式里的一样
-  const tier = need => k => ['in', 'wide', 'max'].find((c, i) => need <= (k - 1) * [85, 110, 133][i] - 38), off = [];
+  // 关系图：名字一律和线在同一行。圈与圈之间最宽的一段放得下就压在线上（in），放不下的写在线的右边或者左边（sr、sl），没有放在线上面的。
+  // 2026-11-27 用户问「为啥有的在上面，有的在中间」。估宽用的几个数和样式里的一样
+  const off = [], lkCol = JSON.parse(ev('JSON.stringify(LK_COL)'));
   people.forEach((id, i) => { pick(i); d.querySelectorAll('#lkmap .lk').forEach(el => {
-    const c = ['in', 'wide', 'max'].find(k => el.classList.contains(k)), n = [...el.querySelectorAll('i')].length, k = +el.style.getPropertyValue('--k');
+    const at = ['in', 'sr', 'sl'].filter(k => el.classList.contains(k)), ix = [...new Set([...el.querySelectorAll('i')].map(c => lkCol[c.dataset.x.split('|')[1]]))].sort((a, b) => a - b);
     const need2 = [...el.querySelectorAll('.lk-t')].reduce((s, b) => { const sm = b.querySelector('small'); return s + (txt(b).length - (sm ? txt(sm).length : 0)) * 13 + 20 + (sm ? txt(sm).length * 12 + 5 : 0); }, 0) + 5 * (el.querySelectorAll('.lk-t').length - 1);
-    if (c !== (n === 2 ? tier(need2)(k) : undefined)) off.push([id, el.dataset.k, c, need2]); }); });
-  eq('关系图：只有两个圈的，名字照宽窄压在线上，用放得下的最窄一档；三个圈的放在线的上面', off.slice(0, 5), []);
+    const gap = Math.max(...ix.slice(1).map((x, j) => x - ix[j])), fits = need2 <= gap * 85 - 38;
+    if (at.length !== 1 || (at[0] === 'in') !== fits) off.push([id, el.dataset.k, at, need2, gap]); }); });
+  eq('关系图：名字都和线在同一行，放得下的压在线上，放不下的写在线旁边，没有放在线上面的', off.slice(0, 5), []);
   const rule = s => (rules.find(([x]) => x === s) || [])[1] || '';
   eq('估宽用的几个数和样式里的一样：名字的字 13、左右内距 9、边 1，附注的字 12、前面空 5，圈 30，名字之间空 5',
     [/font-size:13px/.test(rule('.lk-t')), /padding:0 9px/.test(rule('.lk-t')), /border:1px solid/.test(rule('.lk-t')), /font-size:12px/.test(rule('.lk-t small')) && /margin-left:5px/.test(rule('.lk-t small')), /width:30px/.test(rule('.lk>i')), /gap:3px 5px/.test(rule('.lk-ts'))], [true, true, true, true, true, true]);
-  eq('压线的三档各在自己的宽度起作用：.in 一直，.wide 从 1100，.max 从 1280', [/@media \(min-width:900px\)\{[\s\S]*?\.lk\.in\{padding:0;height:30px\}/.test(css), /@media \(min-width:1100px\)\{\s*\.lk\.wide\{padding:0;height:30px\}/.test(css), /@media \(min-width:1280px\)\{\s*\.lk\.max\{padding:0;height:30px\}/.test(css)], [true, true, true]);
+  eq('三种放法都只占一个圈的高度，写在旁边的从圈心往外排', [/\.lk\.in,\.lk\.sr,\.lk\.sl\{padding:0;height:30px\}/.test(css), /\.lk\.sr \.lk-ts\{left:calc\(var\(--e\) \+ 22px\)\}/.test(css), /\.lk\.sl \.lk-ts\{right:calc\(100% - var\(--s\) \+ 22px\)\}/.test(css), /\.lk\.(wide|max)/.test(css)], [true, true, true, false]);
   // 名字那一层横跨整条线，盖着两头的圈：它不接点击，名字才接。圈点不点得到要在真的浏览器里量（tools/shot.py），这里只看样式
   ok('关系图里名字那一层不挡两头的圈', /pointer-events:none/.test(rule('.lk-ts')) && /pointer-events:auto/.test(rule('.lk-t')));
   pick(0);
@@ -1664,6 +1666,81 @@ pick(0);
     over(two); const on = hl(); two.dispatchEvent(new C.w.Event('focusout', { bubbles: true })); const stay = hl(); over(C.d.body); const gone = hl();
     eq(`${id === 'wxmap' ? '五行' : id === 'godmap' ? '十神' : '用神'}生克图：十条线两两不同，一个圈连着四条；指着一个圈只留有关的线，别的圈失去焦点不影响，移开就恢复`, [ls.length, new Set(ls).size, ns, ['0', '1', '2', '3', '4'].map(k => ls.filter(l => l.includes(k)).length), on, stay, gone], [10, 10, ['0', '1', '2', '3', '4'], [4, 4, 4, 4, 4], '2', '2', null]);
   });
+  // 能帮助理解的动画（2026-11-27 用户要的）：动的方式就是它的意思。jsdom 不放动画，这里核对的是动画照着走的那些数对不对
+  try {
+    pick(0);
+    const over = el => el.dispatchEvent(new w.Event('pointerover', { bubbles: true })), css = [...d.querySelectorAll('style')].map(s => s.textContent).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
+    // 十二长生盘：每个地支一个轮流亮的圈，第几个亮（--i）就是它在十二长生里排第几，长生最先
+    const steps = [...d.querySelectorAll('#csmap [data-x^="cs|"]')].map(n => [n.dataset.x.slice(3), +n.querySelector('.step').style.getPropertyValue('--i')]);
+    const STG12 = JSON.parse(ev('JSON.stringify(STAGES)'));
+    eq('十二长生盘：十二个地支照十二长生的先后轮流亮，长生最先，一位不重', [steps.length, steps.every(([z, i]) => STG12[i] === ev(`stage(DM,${JSON.stringify(z)})`)), steps.map(x => x[1]).sort((a, b) => a - b)], [12, true, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]);
+    // 月令和四季：外面一圈的五个字就是这张盘的月令状态；中间五行字从这张盘的月份起，照相生的次序排；每个五行都能点开
+    people.forEach((_, pi) => {
+      pick(pi);
+      const L = ev('zEl(NATAL[1].z)'), EL5 = '木火土金水', ring = [...d.querySelectorAll('#wlmap .wl-st')].map(txt), want = [0, 1, 2, 3, 4].map(e => ev(`wxState(${e})`));
+      const mids = [...d.querySelectorAll('#wlmap .wl-s')], nd = [...d.querySelectorAll('#wlmap .nd[data-x^="wst|"]')];
+      eq(`${ev('P.name')}：月令和四季的图，外面一圈是这张盘的月令状态，当令的是旺；中间从这张盘的月份起照相生的次序换`,
+        [ring, ring[L], mids.map(g => txt(g.querySelector('.wl-a'))), mids.map(g => g.style.getPropertyValue('--k')), mids.filter(g => g.classList.contains('now')).length, txt(mids[0]).includes(ev('NATAL[1].z') + '月'), nd.length, nd.every(n => !!ev(`X(${JSON.stringify(n.dataset.x)})`))],
+        [want, '旺', [0, 1, 2, 3, 4].map(k => EL5[(L + k) % 5] + '当令'), ['0', '1', '2', '3', '4'], 1, true, 5, true]);
+    });
+    pick(0);
+    // 六亲图：相生又带箭头的线上才有流光；指着父亲，母亲那一条也留着（父亲是从母亲推出来的），别的淡下去靠样式
+    const lqSvg = d.querySelector('#lqmap svg'), solid = [...lqSvg.querySelectorAll('.lq-ln:not(.ke)[marker-end]')].length, lqBox = k => lqSvg.querySelector(`.lq-nd[data-n="${k}"]`);
+    over(lqBox(1)); const hlF = lqSvg.getAttribute('data-hl'), keepF = [...lqSvg.querySelectorAll('[data-i~="1"]')].map(x => x.getAttribute('class').split(' ')[0]).sort().join();
+    over(d.body); const hl0 = lqSvg.getAttribute('data-hl');
+    eq('六亲图：相生的线上有流光；指着父亲的框，留下父亲和母亲两条路', [lqSvg.querySelectorAll('line.flow').length, [...lqSvg.querySelectorAll('line.flow')].every(l => l.getAttribute('aria-hidden') === 'true'), hlF, keepF, hl0, /\.lqmap svg\[data-hl="1"\] \[data-i\]:not\(\[data-i~="1"\]\)/.test(css)],
+      [solid, true, '1', ['flow', 'lq-lb', 'lq-lb', 'lq-ln', 'lq-ln', 'lq-nd', 'lq-nd'].sort().join(), null, true]);
+    // 藏干里透出的字带小尖：原局的天干里有同一个字的才带；指着一个天干，同一张表里和它同一五行的藏干亮；指着地支，它托着的天干亮；移开就不亮
+    const stems = ev('NATAL.map(p=>p.g).join("")'), hsAll = [...d.querySelectorAll('#bz .hs')];
+    const gOf = ch => ev(`gEl(${JSON.stringify(ch)})`), lit = () => [...d.querySelectorAll('.pan [data-lit]')].map(x => x.dataset.x).sort();
+    const g1 = d.querySelector('#bz .glyph[data-x^="g|月|"]'), z1 = d.querySelector('#bz .glyph[data-x^="z|年|"]');
+    over(g1); const litG = lit(); over(z1); const litZ = lit(); over(d.body); const litNone = lit();
+    const wantG = hsAll.filter(h => gOf(h.dataset.x.split('|')[2]) === gOf(g1.dataset.x.split('|')[2])).map(h => h.dataset.x).sort();
+    const zEls = ev(`HID[${JSON.stringify(z1.dataset.x.split('|')[2])}]`).split('').map(gOf), wantZ = [...d.querySelectorAll('#bz .glyph[data-x^="g|"]')].filter(g => zEls.includes(gOf(g.dataset.x.split('|')[2]))).map(g => g.dataset.x).sort();
+    eq('藏干里透出的字带小尖；指着天干亮它的根，指着地支亮它托着的天干，只在同一张表里，移开就不亮',
+      [hsAll.every(h => h.classList.contains('tou') === stems.includes(h.dataset.x.split('|')[2])), litG, litZ, litNone], [true, wantG, wantZ, []]);
+    // 照五行配色（用户说「按照颜色比如相合产生啥之类的配一配颜色」「可以发散一下思路」）：相合化出、合成哪一行，小签和线就是哪一行的颜色；
+    // 冲刑害破克的线带着两头的五行；生克的流光、小圈照出力的一方
+    const EL5 = '木火土金水', ELC5 = JSON.parse(ev('JSON.stringify(ELC)')), elOfNote = t => { const i = [...EL5].findIndex(c => t.includes(c)); return i < 0 ? null : ELC5[i]; };
+    const chips = [...d.querySelectorAll('#lkmap .lk-t, .rel')], heN = chips.filter(c => !c.classList.contains('bad') && c.querySelector('small') && elOfNote(txt(c.querySelector('small'))));
+    eq('相合一类里写着化什么、什么局的，小签照那一行上色；冲刑害破克的小签不上色', [heN.length > 0, heN.every(c => c.dataset.el === elOfNote(txt(c.querySelector('small')))), chips.filter(c => c.classList.contains('bad') && c.dataset.el).length], [true, true, 0]);
+    const lks = [...d.querySelectorAll('#lkmap .lk')];
+    eq('关系图的线：有化出、合成的五行就照它上色，两头的五行都记着', [lks.length > 0, lks.every(l => (l.dataset.el || null) === ([...l.querySelectorAll('.lk-t')].map(c => c.dataset.el).find(Boolean) || null)), lks.every(l => /--c1:var\(--\w+\)/.test(l.getAttribute('style')) && /--c2:var\(--\w+\)/.test(l.getAttribute('style')))], [true, true, true]);
+    // 冲刑害破克的线怎么动：有相冲的对撞（t-chong），只有相克的单向（t-ke，右边克左边的带 rev），别的靠近又退开（t-xing）；相合的线不带这几样
+    const elIdx = l => ['--c1', '--c2'].map(k => ELC5.indexOf((l.getAttribute('style').match(new RegExp(k + ':var\\(--(\\w+)\\)')) || [])[1]));
+    const mvOk = lks.every(l => { const ts = [...l.querySelectorAll('.lk-t')].map(c => c.firstChild.textContent), c = l.classList, bad = c.contains('bad'), [e1, e2] = elIdx(l);
+      const want = !bad ? '' : ts.some(t => t.includes('冲')) ? 't-chong' : ts.every(t => t === '相克') && e1 !== e2 ? 't-ke' : 't-xing';
+      return ['t-chong', 't-ke', 't-xing'].filter(k => c.contains(k)).join() === want && (want !== 't-ke' || c.contains('rev') === ((e2 + 2) % 5 === e1 && (e1 + 2) % 5 !== e2)); });
+    eq('关系图里冲、克、刑、害、破的线：相冲对撞，相克从克的一方单向过去，其余靠近又退开；相合的线不带', [mvOk, lks.some(l => l.classList.contains('bad')), /\.lk\.t-chong::before\{animation:hit-l/.test(css) && /\.lk\.t-ke:not\(\.rev\)::before\{animation:press-l/.test(css) && /\.lk\.t-xing::before\{animation:near-l/.test(css)], [true, true, true]);
+    const flows = [...d.querySelectorAll('#wxmap line.flow')].map(l => [l.getAttribute('data-fl'), l.getAttribute('class')]);
+    eq('五行生克图的流光：木生火的那一道是木的颜色，照生的一方', flows.map(([k, c]) => c.includes(ELC5[+k[0]])), [true, true, true, true, true]);
+    ok('流光、合拢的光都用五行的颜色，不用钴蓝；原来线上流动的小虚线去掉了', /\.wxmap line\.flow\{[^}]*stroke:var\(--f/.test(css) && !/line\.flow\{[^}]*var\(--accent\)/.test(css) && /\.lk\[data-el\] \.lk-l::before/.test(css) && !/lk-out/.test(css));
+  } catch (e) { ok('「能帮助理解的动画」这一段检查没有走完：' + e.message, false); }
+  // 拱合、拱会：原局缺中间那一支，选中的流年正好带来它的时候，解释不能还说「等它来了才凑齐」（2026-11-27 用户问「有子了为啥还是写的缺子」）。
+  // 反例：每位有拱合、拱会的示例人物，先选一个带来那一支的流年，再选一个四层都没有那一支的日子
+  {
+    let seen = 0; const bad = [];
+    people.forEach((_, pi) => {
+      pick(pi);
+      const gs = JSON.parse(ev(`JSON.stringify(relations(NATAL).filter(r=>r.t==='拱合'||r.t==='拱会').map(r=>({t:r.t,c:r.c,n:r.n,key:['rel',r.t,r.c,r.n,r.where.join('、'),r.top,r.grp].join('|')})))`));
+      gs.forEach(r => {
+        const x = r.n[1], full = r.t === '拱合' ? '三合' : '三会', was = ev('JSON.stringify({dy:sel.dy,y:sel.y,m:sel.m,d:sel.d})');
+        const hit = JSON.parse(ev(`JSON.stringify((()=>{for(let k=0;k<P.dayun.length;k++){const dd=P.dayun[k];if(dd.gz[1]===${JSON.stringify(x)}) continue;for(let y=dd.y0;y<=dd.y1;y++) if(yearGZ(y)[1]===${JSON.stringify(x)}) return {k,y};}return null;})())`));
+        if (!hit) return; seen++;
+        ev(`sel.dy=${hit.k};sel.y=${hit.y};renderDynamic()`);
+        const say = JSON.stringify(ev(`X(${JSON.stringify(r.key)})`)), lnChips = [...d.querySelectorAll('#rel-ln .rel')].map(txt).join(' '), read = txt(d.getElementById('rd-rel'));
+        const got = [/已经凑齐/.test(say) && say.includes('流年') && !/才凑齐/.test(say), lnChips.includes(full), read.includes(`带来了${x}`) && !read.includes(`等大运或流年把${x}带来`)];
+        // 再找一个四层里都没有这一支的选择：解释回到「等它来了才凑齐」
+        const none = ev(`(()=>{for(let k=0;k<P.dayun.length;k++){const dd=P.dayun[k];if(dd.gz[1]===${JSON.stringify(x)}) continue;for(let y=dd.y0;y<=dd.y1;y++){if(yearGZ(y)[1]===${JSON.stringify(x)}) continue;for(let m=0;m<12;m++){if(monthGZ(y,m)[1]===${JSON.stringify(x)}) continue;const t=monthDays(y,m).find(t=>dayGZ(t)[1]!==${JSON.stringify(x)});if(t){sel.dy=k;sel.y=y;sel.m=m;sel.d=t;renderDynamic();return true;}}}}return false;})()`);
+        const say2 = JSON.stringify(ev(`X(${JSON.stringify(r.key)})`)), read2 = txt(d.getElementById('rd-rel'));
+        got.push(none && /才凑齐/.test(say2) && !/已经凑齐/.test(say2), read2.includes(`等大运或流年把${x}带来`));
+        if (!got.every(Boolean)) bad.push([ev('P.name'), r.t, r.c, got]);
+        ev(`(()=>{const v=${was};sel.dy=v.dy;sel.y=v.y;sel.m=v.m;sel.d=v.d;renderDynamic();})()`);
+      });
+    });
+    pick(0);
+    eq('拱合、拱会缺的那一支：选中的流年带来了它，解释和解读说已经凑齐、那一层列着三合或三会；四层都没有它，仍说等它来', [seen > 0, bad], [true, []]);
+  }
   // 四张新增示意图：十二长生盘、用神五神关系图、六亲推演示意图、八步大运喜用分走势图
   {
     pick(0);

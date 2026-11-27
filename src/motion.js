@@ -2,7 +2,8 @@
    动的只是变化本身：打开页面、换人、换页、换选择、换数法、换主题、打开一块、指着生克图的圈，各动一下，大多在半秒以内；平时不动，没有循环的动画。
    都是先照常画好，再从旧的样子过渡到新的样子，所以动画做不做，最后的页面完全一样；动的时候内容最迟一秒以内全部露出来。
    系统里设了「减弱动态效果」的人，一样也不动；浏览器不支持的、页面在后台的、检查脚本用的 jsdom，也都不动（calm）。
-   样式里另有两样：顶部弦纹打开页面时画一道，指着圈时线淡下去，都写在模板 prefers-reduced-motion:no-preference 那一段。 */
+   样式里另有几类：顶部弦纹打开页面时画一道，指着圈时线淡下去；2026-11-26 用户要的装饰动画，2026-11-27 用户要的「能帮助理解的动画」（一直循环），
+   都写在模板 prefers-reduced-motion:no-preference 那一段。 */
 const EASE='cubic-bezier(.22,.75,.25,1)';
 const byKey=el=>{try{return el.matches(':focus-visible');}catch(e){return false;}};      // 焦点是键盘来的：鼠标、手指点出来的焦点不算
 function calm(){return !Element.prototype.animate||document.hidden||!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
@@ -131,18 +132,33 @@ function recount(k,f){
   cells().forEach((i,j)=>{if(i) widths([i],[was[j]]);});
   moveLevels(svg(),lv);
 }
-/* 生克图：指着哪个圈（鼠标移上去，或者键盘选中），只留和它有关的线：生它的、它生的、克它的、它克的，别的淡下去 */
+/* 生克图：指着哪个圈（鼠标移上去，或者键盘选中），只留和它有关的线：生它的、它生的、克它的、它克的，别的淡下去。
+   六亲图也一样：指着一位亲属的框，只留它是怎么推出来的那一条路（样式里照 data-hl 和 data-i 淡掉别的） */
 let HOVER=null, FOCUS=null;        // 鼠标指着的圈、键盘选中的圈，两样分开记：一样没有了，另一样还算
-const nodeOf=el=>el&&el.closest?el.closest('.wxmap .nd[data-n]'):null;
+const nodeOf=el=>el&&el.closest?el.closest('.wxmap .nd[data-n],.lqmap .lq-nd[data-n]'):null;
 function hlMap(){
   const n=[HOVER,FOCUS].find(x=>x&&x.isConnected)||null, svg=n?n.ownerSVGElement:null;
-  document.querySelectorAll('.wxmap svg[data-hl]').forEach(s=>{if(s!==svg) s.removeAttribute('data-hl');});
+  document.querySelectorAll('svg[data-hl]').forEach(s=>{if(s!==svg) s.removeAttribute('data-hl');});
   if(svg) svg.setAttribute('data-hl',n.getAttribute('data-n'));
 }
-document.addEventListener('pointerover',e=>{HOVER=e.pointerType==='touch'?null:nodeOf(e.target);hlMap();});
-document.addEventListener('focusin',e=>{FOCUS=byKey(e.target)?nodeOf(e.target):null;hlMap();});
-document.addEventListener('focusout',()=>{FOCUS=null;hlMap();});
-document.documentElement.addEventListener('pointerleave',()=>{HOVER=null;hlMap();});
+/* 细盘和八字表：指着一个天干，它在地支里的根（同一五行的藏干）亮起来；指着一个地支或者一个藏干，它托着的天干（和它里面的藏干同一五行的）亮起来。
+   亮的字带 data-lit，怎么亮写在样式里。只在同一张表里找。2026-11-27 用户要「能帮助理解的动画」 */
+let LIT_H=null, LIT_F=null;        // 鼠标指着的字、键盘选中的字，和上面一样分开记
+const cellOf=el=>{const b=el&&el.closest?el.closest('table.pan [data-x]'):null;return b&&/^[gzh]\|/.test(b.dataset.x)?b:null;};
+function litUp(){
+  const b=[LIT_H,LIT_F].find(x=>x&&x.isConnected)||null, on=new Set();
+  if(b){
+    const a=b.dataset.x.split('|'), ch=a[2], tb=b.closest('table'), last=x=>x.dataset.x.split('|')[2];
+    if(a[0]==='g') tb.querySelectorAll('[data-x^="h|"]').forEach(x=>{if(gEl(last(x))===gEl(ch)) on.add(x);});
+    else{const els=new Set((a[0]==='z'?HID[ch].split(''):[ch]).map(gEl));tb.querySelectorAll('.glyph[data-x^="g|"]').forEach(x=>{if(els.has(gEl(last(x)))) on.add(x);});}
+  }
+  document.querySelectorAll('.pan [data-lit]').forEach(x=>{if(!on.has(x)) x.removeAttribute('data-lit');});
+  on.forEach(x=>x.setAttribute('data-lit',''));
+}
+document.addEventListener('pointerover',e=>{const t=e.pointerType==='touch';HOVER=t?null:nodeOf(e.target);hlMap();LIT_H=t?null:cellOf(e.target);litUp();});
+document.addEventListener('focusin',e=>{const k=byKey(e.target);FOCUS=k?nodeOf(e.target):null;hlMap();LIT_F=k?cellOf(e.target):null;litUp();});
+document.addEventListener('focusout',()=>{FOCUS=null;hlMap();LIT_F=null;litUp();});
+document.documentElement.addEventListener('pointerleave',()=>{HOVER=null;hlMap();LIT_H=null;litUp();});
 
 /* ---------- 换大运、流年、流月、流日 ---------- */
 /* 把 f（重画）包起来：选中的那一格滑到新的位置；换成别的一排，小卡淡入；条从旧的长短变到新的；

@@ -1784,7 +1784,7 @@ function rowX(name){
   if(name==='十神') return {t:'十神',p:[['是什么',`每一柱的天干相对于日主${DMN}是什么，一共十种叫法，合称十神。地支的十神看藏干一行里的小字。排盘软件里这一行常叫主星。`],['这张盘',N.filter(p=>!p.day).map(p=>`${K(p)}干${p.g}是${god(p.g)}`).join('，')+'。日干就是日主自己。'],['怎么读','天干露在外面，传统上说它主看得见的一面；藏在地支里的十神主内里。点任意一个天干，可以看它的十神是怎么推出来的。']]};
   if(name==='天干') return {t:'天干',p:[['是什么','甲乙丙丁戊己庚辛壬癸，共十个。两个一组配五行：甲乙木、丙丁火、戊己土、庚辛金、壬癸水。每组前一个为阳，后一个为阴。'],['颜色和图标','绿是木，红是火，棕是土，金黄是金，蓝是水。大字右上角的小图标也是五行：嫩芽是木，火苗是火，山是土，铜钱是金，水滴是水。'],['典籍',`《滴天髓》说${q('dts_yy')}：十个天干里，丙火最阳，癸水最阴。`]]};
   if(name==='地支') return {t:'地支',p:[['是什么','子丑寅卯辰巳午未申酉戌亥，共十二个，对应十二个月、十二个时辰，也就是十二生肖。'],['怎么读','地支本身不直接定十神，要看它里面藏的天干。地支之间的合、冲、刑、害见下面的干支关系。'],['颜色和图标','颜色和右上角的图标是这个地支的五行。右下角的小字是它的生肖，屏幕窄的时候不显示。']]};
-  if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
+  if(name==='藏干') return {t:'藏干',p:[['是什么','每个地支里藏着一到三个天干。排在第一个的是本气，是主要成分；后面的是次要成分。'],['怎么读','地支的十神按本气算。次要成分力量小，但大运、流年把它引出来时也会起作用。'],['小尖和根','原局这几列里，后面带一个朝上小尖的藏干是透出的：原局的天干里有同一个字。指着一个天干，它在地支里的根会亮起来，也就是和它同一五行的藏干；指着一个地支或者藏干，它托着的天干会亮起来。'],['这张盘',N.map(p=>`${K(p)}支${p.z}藏${HID[p.z].split('').join('、')}`).join('，')+`，共${cn(natalHidden().length)}个。`]]};
   if(name==='星运'){
     const good=N.filter(p=>['长生','临官','帝旺'].includes(stage(DM,p.z))).map(p=>`${K(p)}支${p.z}`);
     return {t:'星运',p:[['是什么',`日主${DMN}走到每一柱的地支时，处在十二长生的哪个阶段。十二长生把一个五行的兴衰比作人的一生：长生、沐浴、冠带、临官、帝旺、衰、病、死、墓、绝、胎、养。`],['这张盘',N.map(p=>`${K(p)}支${p.z}是${stage(DM,p.z)}`).join('，')+`。按长生、临官、帝旺算得力来看，${DMN}${good.length?'在'+good.join('、')+'上得力':'在四个地支上都不算得力'}。`],['注意','阴干的十二长生是不是倒着走，各派有分歧。这里按通行的阳干顺行、阴干逆行。'],['典籍',`《子平真诠》主张阳顺阴逆，理由是${q('zp_sn')}`]]};
@@ -1929,7 +1929,7 @@ function readRel(){
     const grp=zr.filter(x=>x.c===r.c), where=r.where.map(gapText).join('');
     if(grp.length>1){li.push(`<b>${r.c}，一对字有${cn(grp.length)}种关系。</b>同时是${grp.map(x=>x.t).join('、')}。${where}`);return;}
     let s=`<b>${r.c}${r.t}。</b>`;
-    if(r.t==='拱合'||r.t==='拱会'){const x=r.n[1], b=bringers(x);s+=`${r.n}。两头在、中间空，只算有这个趋势。等大运或流年把${x}带来，局才凑齐`+(b.length?`，比如 ${b.join('、')}。`:'。');}
+    if(r.t==='拱合'||r.t==='拱会'){const x=r.n[1], b=bringers(x);s+=`${r.n}。两头在、中间空，只算有这个趋势。`+(gongNow(r.t,x,0)||`等大运或流年把${x}带来，局才凑齐`+(b.length?`，比如 ${b.join('、')}。`:'。'));}
     else if(r.t==='六合') s+=`旧说${r.n}。`;
     else if(r.t==='半合') s+=`${r.n}的一半，带着中间的旺支。`;
     else if(r.t==='三合'||r.t==='三会') s+=`${r.n}，三个字凑齐了。`;
@@ -2171,6 +2171,14 @@ function readHTML(slot){const h=note('read',slot);return h===undefined?READS[slo
 
 /* ---------- 点开的解释 ---------- */
 function layerGZ(top){return top===1?P.dayun[sel.dy].gz:top===2?yearGZ(sel.y):top===3?monthGZ(sel.y,sel.m):dayGZ(sel.d);}
+/* 拱合、拱会缺的那一支 x，现在选中的几层里来了没有。top 是这条拱合、拱会自己在哪一层（原局 0），只看它后面的大运、流年、流月、流日：
+   来了就说是哪一层带来的、三合或者三会已经凑齐（凑齐的那一条列在最早带来 x 的那一层，engine.js 的 relations），没来返回空。
+   原来解释里固定写「等 x 来了才凑齐」，选中的流年正好带着 x 时还这样写，2026-11-27 用户问「有子了为啥还是写的缺子」 */
+function gongNow(t,x,top){
+  const N=['','大运','流年','流月','流日'], full=t==='拱合'?'三合':'三会';
+  for(let k=(top||0)+1;k<=4;k++) if(layerGZ(k)[1]===x) return `${top?'':'这说的是原局自己。'}现在选中的${N[k]}${layerGZ(k)}带来了${x}，${full}已经凑齐，见${N[k]}那一层的${full}。`;
+  return '';
+}
 /* 原局的一条关系，结合这张盘能补充什么 */
 function natalRelNote(t,c,n,grp){
   const out=[];
@@ -2178,7 +2186,7 @@ function natalRelNote(t,c,n,grp){
     const same=relations(NATAL).filter(r=>r.grp==='z'&&r.c===c);
     if(same.length>1) out.push(`${c}这一对同时是${same.map(r=>r.t).join('、')}。`);
   }
-  if(t==='拱合'||t==='拱会'){const x=n[1], b=bringers(x);out.push(`等${x}来了才凑齐。`+(b.length?`${b.join('、')}会带来${x}。`:''));}
+  if((t==='拱合'||t==='拱会')&&!gongNow(t,n[1],0)){const x=n[1], b=bringers(x);out.push(`等${x}来了才凑齐。`+(b.length?`${b.join('、')}会带来${x}。`:''));}      // 已经来了的，在「细节」里说（xRel）
   return out.join('');
 }
 function xRel(t,c,n,where,top,grp){
@@ -2212,7 +2220,7 @@ function xRel(t,c,n,where,top,grp){
     if(t==='六合') d=`${c}相合，旧说${n}。`+(c==='巳申'?'这一对同时还是相刑、相破。':c==='寅亥'?'这一对同时还是相破。':'');
     else if(t==='三合'||t==='三会') d=`${c}，${n}。`;
     else if(t==='半合') d=`${c}是${n}的一半，带着中间的旺支。`;
-    else if(t==='拱合'||t==='拱会') d=`${c}，${n}。`;
+    else if(t==='拱合'||t==='拱会') d=`${c}，${n}。`+gongNow(t,n[1],top);
     else if(t==='暗合') d=AN[c]||'';
     else if(t==='相冲'){const ea=zEl(chars[0]), eb=zEl(chars[1]); d=ea===eb?'两个都属土，旧说这种冲会把库里藏的天干冲出来。':`${EL[ea]}和${EL[eb]}相克。`;}
     else if(t==='相刑') d='寅巳申'.includes(chars[0])&&'寅巳申'.includes(chars[1])?'属于寅巳申一组，旧称无恩之刑。':'丑戌未'.includes(chars[0])?'属于丑戌未一组，旧称恃势之刑。':'子卯一组，旧称无礼之刑。';
